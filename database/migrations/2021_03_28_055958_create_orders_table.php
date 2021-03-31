@@ -1,6 +1,5 @@
 <?php
 
-use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\Constants\Statuses;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
