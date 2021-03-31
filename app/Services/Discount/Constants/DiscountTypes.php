@@ -7,7 +7,7 @@ class DiscountTypes
     use ConstGetter;
 
     const ORDER    = 'order';
-    const SERVICE  = 'service';
+    const SERVICE  = 'product';
     const VOUCHER  = 'voucher';
 
 }

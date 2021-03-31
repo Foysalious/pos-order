@@ -21,13 +21,14 @@ class CreateOrderSkusTable extends Migration
                 ->onUpdate('cascade')->onDelete('set null');
             $table->string('name');
             $table->bigInteger('sku_id')->nullable()->unsigned();
-            $table->json('sku_details')->nullable();
+            $table->json('details')->nullable();
             $table->decimal('quantity', 11,2)->unsigned()->default(1);
-            $table->decimal('price', 11, 2);
+            $table->decimal('unit_price', 11, 2);
             $table->string('unit')->nullable();
-            $table->decimal('vat_percentage', 11, 2)->nullable();
+            $table->decimal('vat_percentage', 5, 2)->nullable();
             $table->integer('warranty')->default(0);
             $table->enum('warranty_unit', WarrantyUnits::get())->default(WarrantyUnits::DAY);
+            $table->longText('note')->nullable();
             commonColumns($table);
         });
     }
