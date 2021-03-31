@@ -30,11 +30,11 @@ class CreateOrdersTable extends Migration
             $table->enum('payment_status', PaymentStatuses::get())->nullable();
             $table->bigInteger('sales_channel_id');
             $table->bigInteger('emi_month')->nullable();
-            $table->decimal('interest', 8, 2)->nullable();
-            $table->decimal('delivery_charge', 8, 2)->nullable();
-            $table->decimal('bank_transaction_charge', 8, 2)->nullable();
-            $table->decimal('total_amount', 8, 2)->nullable();
-            $table->decimal('paid_amount', 8, 2)->nullable();
+            $table->decimal('interest', 11, 2)->nullable();
+            $table->decimal('delivery_charge', 11, 2)->nullable();
+            $table->decimal('bank_transaction_charge', 11, 2)->nullable();
+            $table->decimal('total_amount', 11, 2)->nullable();
+            $table->decimal('paid_amount', 11, 2)->nullable();
             $table->string('delivery_name');
             $table->string('delivery_mobile');
             $table->string('delivery_address');
