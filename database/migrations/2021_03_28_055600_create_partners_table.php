@@ -17,6 +17,10 @@ class CreatePartnersTable extends Migration
             $table->id();
             $table->bigInteger('sharding_id')->nullable()->unsigned()->index();
             $table->string('sub_domain')->nullable()->index();
+            $table->tinyInteger('sms_invoice')->default(0);
+            $table->tinyInteger('auto_printing')->default(0);
+            $table->string('printer_name')->nullable();
+            $table->string('printer_model')->nullable();
             $table->softDeletes('deleted_at', 0);
             commonColumns($table);
         });

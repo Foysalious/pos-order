@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\Order\Constants\WarrantyUnits;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -23,12 +24,10 @@ class CreateOrderSkusTable extends Migration
             $table->json('sku_details')->nullable();
             $table->decimal('quantity', 11,2)->unsigned()->default(1);
             $table->decimal('price', 11, 2);
+            $table->string('unit')->nullable();
             $table->decimal('vat_percentage', 11, 2)->nullable();
             $table->integer('warranty')->default(0);
-            $table->enum('warranty_unit', array_keys(config('pos.warranty_unit')))->default('day');
-            $table->string('unit')->nullable();
-            $table->decimal('weight', 11, 2)->nullable();
-            $table->enum('weight', array_keys(config('pos.warranty_unit')))->nullable();
+            $table->enum('warranty_unit', WarrantyUnits::get())->default(WarrantyUnits::DAY);
             commonColumns($table);
         });
     }
