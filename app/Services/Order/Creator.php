@@ -59,7 +59,7 @@ class Creator
 
     public function create()
     {
-        $order_data['partner_id']            = $this->partner;
+        $order_data['partner_id']            = $this->partner->id;
         $order_data['customer_id']           = $this->resolveCustomerId();
         $order_data['address']               = $this->address;
         $order_data['previous_order_id']     = (isset($this->data['previous_order_id']) && $this->data['previous_order_id']) ? $this->data['previous_order_id'] : null;
@@ -69,8 +69,12 @@ class Creator
         $order_data['delivery_charge']       = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE ? $this->partner->delivery_charge : 0;
         $order_data['status']                = $this->status;
         $order                               = $this->orderRepositoryInterface->create($order_data);
-        return $order;
+        $skus                           =      json_decode($this->data['skus'], true);
 
+        foreach($skus as $sku)
+        {
+
+        }
     }
 
     private function resolveCustomerId()
