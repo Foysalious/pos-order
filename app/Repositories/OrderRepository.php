@@ -1,4 +1,4 @@
-<?php namespace App\Reositories;
+<?php namespace App\Repositories;
 
 use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Order;

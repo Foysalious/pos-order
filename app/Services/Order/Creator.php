@@ -69,12 +69,10 @@ class Creator
         $order_data['delivery_charge']       = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE ? $this->partner->delivery_charge : 0;
         $order_data['status']                = $this->status;
         $order                               = $this->orderRepositoryInterface->create($order_data);
-        $skus                           =      json_decode($this->data['skus'], true);
+        $skus                           =      array_column(json_decode($this->data['skus'], true),'sku_id');
+        dd($skus);
 
-        foreach($skus as $sku)
-        {
 
-        }
     }
 
     private function resolveCustomerId()
