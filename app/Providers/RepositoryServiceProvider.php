@@ -3,7 +3,7 @@
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\PartnerRepositoryInterface;
 use App\Repositories\OrderRepository;
-use App\Repositories\Pa;
+use App\Repositories\PartnerRepository;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
