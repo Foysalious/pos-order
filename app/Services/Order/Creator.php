@@ -5,9 +5,11 @@ use App\Interfaces\PartnerRepositoryInterface;
 use App\Models\Partner;
 use App\Services\Order\Constants\SalesChannels;
 use App\Services\Order\Validators\OrderCreateValidator;
+use App\Traits\ResponseAPI;
 
 class Creator
 {
+    use ResponseAPI;
     private $createValidator;
     private $partner;
     private $address;
@@ -29,16 +31,17 @@ class Creator
         $this->partnerRepositoryInterface = $partnerRepositoryInterface;
     }
 
-    public function setPartner(Partner $partner)
+    public function setPartner( $partner)
     {
-        $this->partner = $partner;
+       $partner =  Partner::find($partner);
+       $this->partner = $partner;
         return $this;
     }
 
     public function setData(array $data)
     {
         $this->data = $data;
-        $this->createValidator->setProducts(json_decode($this->data['services'], true));
+       // $this->createValidator->setProducts(json_decode($this->data['services'], true));
         if (!isset($this->data['payment_method'])) $this->data['payment_method'] = 'cod';
         if (isset($this->data['customer_address'])) $this->setAddress($this->data['customer_address']);
         return $this;
@@ -67,12 +70,9 @@ class Creator
         $order_data['emi_month']             = isset($this->data['emi_month']) ? $this->data['emi_month'] : null;
         $order_data['sales_channel']         = isset($this->data['sales_channel']) ? $this->data['sales_channel'] : SalesChannels::POS;
         $order_data['delivery_charge']       = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE ? $this->partner->delivery_charge : 0;
-        $order_data['status']                = $this->status;
+        $order_data['status']                = isset($this->data['status']) && $this->data['status'] ? : 'Pending';
         $order                               = $this->orderRepositoryInterface->create($order_data);
-        $skus                           =      array_column(json_decode($this->data['skus'], true),'sku_id');
-        dd($skus);
-
-
+        return $this->success('Successful', ['order' => $order], 200);
     }
 
     private function resolveCustomerId()
