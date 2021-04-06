@@ -3,8 +3,10 @@
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\PartnerRepositoryInterface;
 use App\Models\Partner;
+use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\SalesChannels;
 use App\Services\Order\Validators\OrderCreateValidator;
+
 use App\Traits\ResponseAPI;
 
 class Creator
@@ -23,12 +25,17 @@ class Creator
      * @var PartnerRepositoryInterface
      */
     private $partnerRepositoryInterface;
+    /**
+     * @var InventoryServerClient
+     */
+    private $client;
 
-    public function __construct(OrderCreateValidator $createValidator, OrderRepositoryInterface $orderRepositoryInterface, PartnerRepositoryInterface $partnerRepositoryInterface)
+    public function __construct(OrderCreateValidator $createValidator, OrderRepositoryInterface $orderRepositoryInterface, PartnerRepositoryInterface $partnerRepositoryInterface,InventoryServerClient $client)
     {
         $this->createValidator = $createValidator;
         $this->orderRepositoryInterface = $orderRepositoryInterface;
         $this->partnerRepositoryInterface = $partnerRepositoryInterface;
+        $this->client = $client;
     }
 
     public function setPartner( $partner)
@@ -72,7 +79,23 @@ class Creator
         $order_data['delivery_charge']       = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE ? $this->partner->delivery_charge : 0;
         $order_data['status']                = isset($this->data['status']) && $this->data['status'] ? : 'Pending';
         $order                               = $this->orderRepositoryInterface->create($order_data);
+        $this->createOrderSkus();
         return $this->success('Successful', ['order' => $order], 200);
+    }
+
+    public function createOrderSkus()
+    {
+        $sku_ids = array_column(json_decode($this->data['skus']),'id');
+        $this->skus = $this->getSkuDetails($sku_ids);
+        dd($this->skus);
+
+
+    }
+
+    private function getSkuDetails($sku_ids)
+    {
+        $url = 'api/v1/partners/'.$this->partner->id.'/skus?skus='.json_encode($sku_ids).'&channel_id=1';
+        return $this->client->get($url);
     }
 
     private function resolveCustomerId()
