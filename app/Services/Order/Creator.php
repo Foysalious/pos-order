@@ -1,7 +1,9 @@
 <?php namespace App\Services\Order;
 
 use App\Interfaces\OrderRepositoryInterface;
+use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Interfaces\PartnerRepositoryInterface;
+use App\Models\Order;
 use App\Models\Partner;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\SalesChannels;
@@ -29,12 +31,30 @@ class Creator
      * @var InventoryServerClient
      */
     private $client;
+    /**
+     * @var mixed
+     */
+    private $skus;
+    /**
+     * @var \Illuminate\Support\Collection
+     */
+    private $sku_details;
+    /**
+     * @var Order
+     */
+    private $order;
+    /**
+     * @var OrderSkuRepositoryInterface
+     */
+    private $orderSkuRepository;
 
-    public function __construct(OrderCreateValidator $createValidator, OrderRepositoryInterface $orderRepositoryInterface, PartnerRepositoryInterface $partnerRepositoryInterface,InventoryServerClient $client)
+
+    public function __construct(OrderCreateValidator $createValidator, OrderRepositoryInterface $orderRepositoryInterface, PartnerRepositoryInterface $partnerRepositoryInterface,InventoryServerClient $client, OrderSkuRepositoryInterface $orderSkuRepository)
     {
         $this->createValidator = $createValidator;
         $this->orderRepositoryInterface = $orderRepositoryInterface;
         $this->partnerRepositoryInterface = $partnerRepositoryInterface;
+        $this->orderSkuRepository = $orderSkuRepository;
         $this->client = $client;
     }
 
@@ -78,24 +98,39 @@ class Creator
         $order_data['sales_channel']         = isset($this->data['sales_channel']) ? $this->data['sales_channel'] : SalesChannels::POS;
         $order_data['delivery_charge']       = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE ? $this->partner->delivery_charge : 0;
         $order_data['status']                = isset($this->data['status']) && $this->data['status'] ? : 'Pending';
-        $order                               = $this->orderRepositoryInterface->create($order_data);
+        $this->order                               = $this->orderRepositoryInterface->create($order_data);
         $this->createOrderSkus();
-        return $this->success('Successful', ['order' => $order], 200);
+        return $this->success('Successful', ['order' => $this->order], 200);
     }
 
     public function createOrderSkus()
     {
         $sku_ids = array_column(json_decode($this->data['skus']),'id');
-        $this->skus = $this->getSkuDetails($sku_ids);
-        dd($this->skus);
-
-
+        $this->sku_details   = collect($this->getSkuDetails($sku_ids))->keyBy('id')->toArray();
+        //dd($this->sku_details);
+        $skus = json_decode($this->data['skus']);
+        foreach($skus as $sku)
+        {
+            $order_sku['order_id'] = $this->order->id;
+            $order_sku['name'] = $this->sku_details[$sku->id]['name'];
+            $order_sku['sku_id'] = $sku->id;
+            $order_sku['details'] = null;
+            $order_sku['quantity'] = $sku->quantity;
+            $order_sku['unit_price'] =  $this->sku_details[$sku->id]['sku_channel'][0]['price'];
+            $order_sku['unit'] = null;
+            $order_sku['warranty'] = $this->sku_details[$sku->id]['warranty'];
+            $order_sku['warranty_unit'] = $this->sku_details[$sku->id]['warranty_unit'];
+            $order_sku['vat_percentage'] = $this->sku_details[$sku->id]['vat_percentage'];
+            $this->orderSkuRepository->create($order_sku);
+        }
+        $this->order->calculate();
     }
 
     private function getSkuDetails($sku_ids)
     {
         $url = 'api/v1/partners/'.$this->partner->id.'/skus?skus='.json_encode($sku_ids).'&channel_id=1';
-        return $this->client->get($url);
+        $response =  $this->client->get($url);
+        return $response['skus'];
     }
 
     private function resolveCustomerId()
