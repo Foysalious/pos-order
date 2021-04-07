@@ -6,15 +6,18 @@ namespace App\Services\Order;
 
 use App\Http\Resources\OrderResource;
 use App\Interfaces\OrderRepositoryInterface;
+use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Services\BaseService;
 
 class OrderService extends BaseService
 {
     protected $orderRepositoryInterface;
+    protected $orderSkusRepositoryInterface;
 
-    public function __construct(OrderRepositoryInterface $orderRepositoryInterface)
+    public function __construct(OrderRepositoryInterface $orderRepositoryInterface, OrderSkusRepositoryInterface $orderSkusRepositoryInterface)
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
+        $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
     }
 
     public function getOrderList($partner_id, $request)
@@ -53,6 +56,8 @@ class OrderService extends BaseService
         if(!$order) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
 
         try {
+            $OrderSkusIds = $this->orderSkusRepositoryInterface->where('order_id', $order_id)->get(['id']);
+            $this->orderSkusRepositoryInterface->whereIn('id', $OrderSkusIds)->delete();
             $order->delete();
             return $this->success('Successful', null, 200, true);
         } catch (\Exception $exception) {
