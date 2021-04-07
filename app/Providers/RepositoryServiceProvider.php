@@ -1,5 +1,7 @@
 <?php namespace App\Providers;
 
+use App\Interfaces\OrderRepositoryInterface;
+use App\Repositories\OrderRepository;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -21,7 +23,7 @@ class RepositoryServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-
+        $this->app->singleton(OrderRepositoryInterface::class, OrderRepository::class);
     }
 
 }

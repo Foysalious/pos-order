@@ -16,7 +16,6 @@ class CreateOrderPaymentsTable extends Migration
     {
         Schema::create('order_payments', function (Blueprint $table) {
             $table->id();
-
             $table->bigInteger('order_id')->nullable()->unsigned()->index();
             $table->foreign('order_id')->references('id')->on('orders')
                 ->onUpdate('cascade')->onDelete('set null');
