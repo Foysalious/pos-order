@@ -7,8 +7,29 @@ use function App\Helper\Formatters\formatTakaToDecimal;
 
 class Order extends BaseModel
 {
-    protected $guarded = ['id'];
     use HasFactory;
+
+    protected $guarded = ['id'];
+    private $totalDiscount;
+    private $totalItemDiscount;
+    private $appliedDiscount;
+    private $totalBill;
+    private $originalTotal;
+    private $interest;
+    private $bank_transaction_charge;
+    private $netBill;
+    private $delivery_charge;
+    private $isCalculated;
+    private $totalPrice;
+    private $totalVat;
+    private $paymentStatus;
+    private $due;
+    private $paid;
+
+    public function payments()
+    {
+        return $this->hasMany(OrderPayment::class);
+    }
 
     public function calculate()
     {
@@ -16,12 +37,12 @@ class Order extends BaseModel
         $this->totalDiscount = $this->totalItemDiscount + $this->discountsAmountWithoutProduct();
         $this->appliedDiscount = ($this->discountsAmountWithoutProduct() > $this->totalBill) ? $this->totalBill : $this->discountsAmountWithoutProduct();
         $this->originalTotal = round($this->totalBill - $this->appliedDiscount, 2);
-        if (isset($this->emi_month) && !$this->interest) {
+        /*if (isset($this->emi_month) && !$this->interest) {
             $data = Calculations::getMonthData($this->originalTotal, (int)$this->emi_month, false);
             $this->interest = $data['total_interest'];
             $this->bank_transaction_charge = $data['bank_transaction_fee'];
             $this->update(['interest' => $this->interest, 'bank_transaction_charge' => $this->bank_transaction_charge]);
-        }
+        }*/
         $this->netBill = $this->originalTotal + round((double)$this->interest, 2) + (double)round($this->bank_transaction_charge, 2);
         $this->netBill += (double)round($this->delivery_charge, 2);
         $this->_calculatePaidAmount();
@@ -32,9 +53,8 @@ class Order extends BaseModel
         $this->isCalculated = true;
         $this->_formatAllToTaka();
         return $this;
-
-
     }
+
     private function _formatAllToTaka()
     {
         $this->totalPrice = formatTakaToDecimal($this->totalPrice);
@@ -43,20 +63,16 @@ class Order extends BaseModel
         $this->totalBill = formatTakaToDecimal($this->totalBill);
         return $this;
     }
-    private function _setPaymentStatus() {
+
+    private function _setPaymentStatus()
+    {
         $this->paymentStatus = ($this->due) ? PaymentStatuses::DUE : PaymentStatuses::PAID;
         return $this;
     }
 
     private function _calculatePaidAmount()
     {
-        /**
-         * USING AS A QUERY, THAT INCREASING LOAD TIME ON LIST VIEW
-         *
-         * $credit = $this->creditPayments()->sum('amount');
-         * $debit  = $this->debitPayments()->sum('amount');
-         *
-         */
+
         $credit = $this->creditPaymentsCollect()->sum('amount');
         $debit = $this->debitPaymentsCollect()->sum('amount');
         $this->paid = $credit - $debit;
@@ -76,7 +92,6 @@ class Order extends BaseModel
             return $payment->transaction_type === 'Debit';
         });
     }
-
 
     private function discountsAmountWithoutProduct()
     {
@@ -104,8 +119,17 @@ class Order extends BaseModel
         foreach ($this->orderSkus as $order_sku) {
             /** @var OrderSku $order_sku */
             $order_sku = $order_sku->calculate();
+            $this->_updateTotalPriceAndCost($order_sku);
         }
         return $this;
+    }
+
+    private function _updateTotalPriceAndCost(OrderSku $orderSku)
+    {
+        $this->totalPrice += $orderSku->getPrice();
+        $this->totalVat += $orderSku->getVat();
+        $this->totalItemDiscount += $orderSku->getDiscountAmount();
+        $this->totalBill += $orderSku->getTotal();
     }
 
     private function _initializeTotalsToZero()
@@ -116,5 +140,19 @@ class Order extends BaseModel
         $this->totalBill = 0;
     }
 
+    public function getDue()
+    {
+        return $this->due;
+    }
+
+    public function getPaid()
+    {
+        return $this->paid;
+    }
+
+    public function getDiscountAmount()
+    {
+        return $this->discountAmount;
+    }
 
 }

@@ -8,6 +8,7 @@ use App\Models\Partner;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\SalesChannels;
 use App\Services\Order\Validators\OrderCreateValidator;
+use App\Services\Order\Payment\Creator as PaymentCreator;
 
 use App\Traits\ResponseAPI;
 
@@ -48,13 +49,22 @@ class Creator
      */
     private $orderSkuRepository;
 
+    /**
+     * @var PaymentCreator
+     */
+    private $paymentCreator;
 
-    public function __construct(OrderCreateValidator $createValidator, OrderRepositoryInterface $orderRepositoryInterface, PartnerRepositoryInterface $partnerRepositoryInterface,InventoryServerClient $client, OrderSkuRepositoryInterface $orderSkuRepository)
+
+    public function __construct(OrderCreateValidator $createValidator,
+                                OrderRepositoryInterface $orderRepositoryInterface, PartnerRepositoryInterface
+                                $partnerRepositoryInterface,InventoryServerClient $client,
+                                OrderSkuRepositoryInterface $orderSkuRepository,PaymentCreator $paymentCreator)
     {
         $this->createValidator = $createValidator;
         $this->orderRepositoryInterface = $orderRepositoryInterface;
         $this->partnerRepositoryInterface = $partnerRepositoryInterface;
         $this->orderSkuRepository = $orderSkuRepository;
+        $this->paymentCreator =$paymentCreator;
         $this->client = $client;
     }
 
@@ -122,6 +132,12 @@ class Creator
             $order_sku['warranty_unit'] = $this->sku_details[$sku->id]['warranty_unit'];
             $order_sku['vat_percentage'] = $this->sku_details[$sku->id]['vat_percentage'];
             $this->orderSkuRepository->create($order_sku);
+        }
+        if (isset($this->data['paid_amount']) && $this->data['paid_amount'] > 0) {
+            $payment_data['pos_order_id'] = $this->order->id;
+            $payment_data['amount']       = $this->data['paid_amount'];
+            $payment_data['method']       = $this->data['payment_method'] ?: 'cod';
+            $this->paymentCreator->credit($payment_data);
         }
         $this->order->calculate();
     }

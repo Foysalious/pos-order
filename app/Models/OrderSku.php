@@ -7,6 +7,18 @@ class OrderSku extends BaseModel
 {
     use HasFactory;
 
+    private $price;
+    private $unit_price;
+    private $quantity;
+    private $discountAmount;
+    private $discount;
+    private $priceAfterDiscount;
+    private $vat_percentage;
+    private $priceWithVat;
+    private $total;
+    private $vat;
+    private $isCalculated;
+
     public function order()
     {
         return $this->belongsTo(Order::class);
@@ -33,5 +45,29 @@ class OrderSku extends BaseModel
         $this->priceWithVat = formatTakaToDecimal($this->priceWithVat);
         $this->discountAmount = formatTakaToDecimal($this->discountAmount);
         $this->total = formatTakaToDecimal($this->total);
+    }
+    public function getPrice()
+    {
+        return $this->price;
+    }
+
+    public function getVat()
+    {
+        return $this->vat;
+    }
+
+    public function getDiscountAmount()
+    {
+        return $this->discountAmount;
+    }
+
+    public function getTotal()
+    {
+        return $this->total;
+    }
+
+    public function discount()
+    {
+        return $this->hasOne(OrderDiscount::class, 'item_id');
     }
 }

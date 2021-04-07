@@ -6,6 +6,6 @@ class SalesChannels
 {
     use ConstGetter;
 
-    const POS = 'pos';
-    const WEBSTORE = 'webstore';
+    const POS = '1';
+    const WEBSTORE = '2';
 }
