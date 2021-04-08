@@ -1,7 +1,4 @@
-<?php
-
-
-namespace App\Interfaces;
+<?php namespace App\Interfaces;
 
 
 interface OrderRepositoryInterface extends BaseRepositoryInterface

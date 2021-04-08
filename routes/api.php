@@ -19,8 +19,6 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::group(['prefix' => 'V2'], function(){
-    Route::group(['prefix' => 'partners/{partner}/pos/'], function(){
-        Route::apiResource('orders', OrderController::class);
-    });
+Route::group(['prefix'=>'v1'], function(){
+    Route::apiResource('partners.orders', OrderController::class);
 });

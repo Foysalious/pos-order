@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Services\Order\OrderService;
 use Illuminate\Http\Request;
+use App\Http\Requests\OrderRequest;
+use App\Models\Partner;
+use App\Services\Order\Creator;
 
 class OrderController extends Controller
 {
@@ -27,18 +30,23 @@ class OrderController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store($partnerId, OrderRequest $request, Creator $creator)
     {
-        //
+        $partner = Partner::find($partnerId);
+        $creator->setPartner($partner)->setData($request->all());
+        /*if ($error = $creator->hasDueError())
+            return $error;*/
+
+        $order = $creator->create();
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  int  $id
+     * @param int $id
      * @return \Illuminate\Http\JsonResponse
      */
     public function show($partner_id, $order_id)
@@ -49,8 +57,8 @@ class OrderController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
+     * @param \Illuminate\Http\Request $request
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
@@ -61,8 +69,8 @@ class OrderController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $partner_id
-     * @param  int  $id
+     * @param int $partner_id
+     * @param int $id
      * @return \Illuminate\Http\JsonResponse
      */
     public function destroy($partner_id, $id)
