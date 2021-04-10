@@ -17,8 +17,6 @@ class CreateOrdersTable extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id()->startingValue(config('migration.starting_ids.orders'));
-            $table->bigInteger('previous_order_id')->unsigned()->nullable();
-            $table->foreign('previous_order_id')->references('id')->on('orders')->onUpdate('cascade')->onDelete('set null');
             $table->bigInteger('partner_wise_order_id')->unsigned();
             $table->bigInteger('partner_id')->nullable()->unsigned()->index();
             $table->foreign('partner_id')->references('id')->on('partners')
