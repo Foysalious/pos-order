@@ -18,7 +18,6 @@ class CreateOrderLogsTable extends Migration
             $table->bigInteger('order_id')->nullable()->unsigned()->index();
             $table->foreign('order_id')->references('id')->on('orders')
                 ->onUpdate('cascade')->onDelete('set null');
-            $table->string('type')->nullable();
             $table->json('old_value');
             $table->json('new_value');
             storeColumns($table);
