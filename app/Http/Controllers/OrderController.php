@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\OrderUpdateRequest;
 use App\Services\Order\OrderService;
 use Illuminate\Http\Request;
 use App\Http\Requests\OrderRequest;
@@ -33,14 +34,16 @@ class OrderController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
-    public function store($partnerId, OrderRequest $request, Creator $creator)
+    public function store($partner,Request $request, Creator $creator)
     {
-        $partner = Partner::find($partnerId);
         $creator->setPartner($partner)->setData($request->all());
-        /*if ($error = $creator->hasDueError())
-            return $error;*/
+        return $order = $creator->create();
+    }
 
-        $order = $creator->create();
+    public function updateStatus($partner,Request $request,StatusChanger $statusChanger)
+    {
+        $order = Order::/*with('orderSkus')->*/find($request->order);
+        $statusChanger->setOrder($order)->setStatus($request->status)->setModifier($request->modifier)->changeStatus();
     }
 
     /**
@@ -61,9 +64,9 @@ class OrderController extends Controller
      * @param int $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update($partner_id, OrderUpdateRequest $request, $id)
     {
-        //
+        $this->orderService->update($request, $partner_id, $id);
     }
 
     /**

@@ -13,41 +13,48 @@ class OrderService extends BaseService
 {
     protected $orderRepositoryInterface;
     protected $orderSkusRepositoryInterface;
+    protected $updater;
 
-    public function __construct(OrderRepositoryInterface $orderRepositoryInterface, OrderSkusRepositoryInterface $orderSkusRepositoryInterface)
+    public function __construct(OrderRepositoryInterface $orderRepositoryInterface, OrderSkusRepositoryInterface $orderSkusRepositoryInterface, Updater $updater)
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
+        $this->updater = $updater;
     }
 
     public function getOrderList($partner_id, $request)
     {
-        try {
-            list($offset, $limit) = calculatePagination($request);
-            $getOrderList = $this->orderRepositoryInterface->getOrderListWithOffsetLimitAndPartner($offset, $limit, $partner_id);
-            $orderList = OrderResource::collection($getOrderList);
-            if(!$orderList) return $this->error('অর্ডারটি পাওয়া যায় নি ', 404);
-            else return $this->success('Success', ['orderList' => $orderList], 200, true);
-        } catch(\Exception $exception) {
-            return $this->error($exception->getMessage(), 500);
-        }
+        list($offset, $limit) = calculatePagination($request);
+        $getOrderList = $this->orderRepositoryInterface->getOrderListWithOffsetLimitAndPartner($offset, $limit, $partner_id);
+        $orderList = OrderResource::collection($getOrderList);
+        if(!$orderList) return $this->error('অর্ডারটি পাওয়া যায় নি ', 404);
+        else return $this->success('Success', ['orderList' => $orderList], 200, true);
     }
 
     public function getOrderDetails($partner_id, $order_id)
     {
-        try {
             $orderDetails = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
-            if(!$orderDetails)
-            {
-                return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
-            }
+            if(!$orderDetails) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
+
             $order = $orderDetails;
             $order->items = $orderDetails->items;
             $order = new OrderResource($orderDetails);
             return $this->success('Success', ['order' => $order], 200, true);
-        } catch (\Exception $exception) {
-            return $this->error($exception->getMessage(), 500);
-        }
+    }
+
+    public function update($orderUpdateRequest, $partner_id, $order_id)
+    {
+        $orderDetails = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
+        if($orderDetails) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
+
+        $this->updater->setPartnerId($partner_id)->setOrderId($order_id)->setCustomerId($orderUpdateRequest->customer_id)
+            ->setStatus($orderUpdateRequest->status)->setSalesChannelId($orderUpdateRequest->sales_channel_id)->setOrderItems($orderUpdateRequest->items)
+            ->setEmiMonth($orderUpdateRequest->emi_month)->setInterest($orderUpdateRequest->interest)->setDeliveryCharge($orderUpdateRequest->delivery_charge)
+            ->setBankTransactionCharge($orderUpdateRequest->bank_transaction_charge)->setDeliveryName($orderUpdateRequest->delivery_name)
+            ->setDeliveryMobile($orderUpdateRequest->delivery_mobile)->setDeliveryAddress($orderUpdateRequest->delivery_address)
+            ->setNote($orderUpdateRequest->note)->setVoucherId($orderUpdateRequest->voucher_id)->update();
+
+        return $this->success('Successful', null, 200, true);
     }
 
     public function delete($partner_id, $order_id)
@@ -55,13 +62,9 @@ class OrderService extends BaseService
         $order = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
         if(!$order) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
 
-        try {
-            $OrderSkusIds = $this->orderSkusRepositoryInterface->where('order_id', $order_id)->get(['id']);
-            $this->orderSkusRepositoryInterface->whereIn('id', $OrderSkusIds)->delete();
-            $order->delete();
-            return $this->success('Successful', null, 200, true);
-        } catch (\Exception $exception) {
-            return $this->error($exception->getMessage(), 500);
-        }
+        $OrderSkusIds = $this->orderSkusRepositoryInterface->where('order_id', $order_id)->get(['id']);
+        $this->orderSkusRepositoryInterface->whereIn('id', $OrderSkusIds)->delete();
+        $order->delete();
+        return $this->success('Successful', null, 200, true);
     }
 }

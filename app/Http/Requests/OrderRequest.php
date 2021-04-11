@@ -37,7 +37,6 @@ class OrderRequest extends FormRequest
             'amount_without_charge' => 'sometimes|required_if:payment_method,emi|numeric|min:' . config('emi.manager.minimum_emi_amount'),
             'payment_link_amount' => 'sometimes|numeric',
             'sales_channel' => 'sometimes|string'
-
         ];
     }
 
