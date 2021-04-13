@@ -6,4 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 class Partner extends BaseModel
 {
     use HasFactory;
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 }
