@@ -5,27 +5,39 @@ namespace App\Services\Order;
 
 
 use App\Interfaces\OrderRepositoryInterface;
+use App\Interfaces\OrderSkusRepositoryInterface;
 
 class Updater
 {
     protected $partner_id, $order_id, $customer_id, $status, $sales_channel_id, $emi_month, $interest, $delivery_charge;
     protected $bank_transaction_charge, $delivery_name, $delivery_mobile, $delivery_address, $note, $voucher_id;
-    protected $orderItems;
+    protected $skus, $order;
 
-    protected $orderRepositoryInterface;
+    protected $orderRepositoryInterface, $orderSkusRepositoryInterface;
 
-    public function __construct(OrderRepositoryInterface $orderRepositoryInterface)
+    public function __construct(OrderRepositoryInterface $orderRepositoryInterface, OrderSkusRepositoryInterface $orderSkusRepositoryInterface)
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
+        $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
     }
 
     /**
-     * @param mixed $orderItems
+     * @param mixed $order
      * @return Updater
      */
-    public function setOrderItems($orderItems)
+    public function setOrder($order)
     {
-        $this->orderItems = $orderItems;
+        $this->order = $order;
+        return $this;
+    }
+
+    /**
+     * @param mixed $updatedSkus
+     * @return Updater
+     */
+    public function setUpdatedSkus($updatedSkus)
+    {
+        $this->skus = $updatedSkus;
         return $this;
     }
 
@@ -171,14 +183,25 @@ class Updater
 
     public function update()
     {
-        $orderModel = $this->orderRepositoryInterface->findOrFail($this->order_id);
-        $this->orderRepositoryInterface->update($orderModel, $this->makeData());
+        //$this->skus ? $this->orderSkusRepositoryInterface->updateOrderSkus($this->partner_id, json_decode($this->skus), $this->order_id) : null;
+        return $this->orderRepositoryInterface->update($this->order, $this->makeData());
     }
 
-    protected function makeData()
+    public function makeData() : array
     {
         $data = [];
-        //if(isset($this->))
+        if(isset($this->customer_id)) $data['customer_id'] = $this->customer_id;
+        if(isset($this->status)) $data['status'] = $this->status;
+        if(isset($this->sales_channel_id)) $data['sales_channel_id'] = $this->sales_channel_id;
+        if(isset($this->emi_month)) $data['emi_month'] = $this->emi_month;
+        if(isset($this->interest)) $data['interest'] = $this->interest;
+        if(isset($this->delivery_charge)) $data['delivery_charge'] = $this->delivery_charge;
+        if(isset($this->bank_transaction_charge)) $data['bank_transaction_charge'] = $this->bank_transaction_charge;
+        if(isset($this->delivery_name)) $data['delivery_name'] = $this->delivery_name;
+        if(isset($this->delivery_mobile)) $data['delivery_mobile'] = $this->delivery_mobile;
+        if(isset($this->delivery_address)) $data['delivery_address'] = $this->delivery_address;
+        if(isset($this->note)) $data['note'] = $this->note;
+        if(isset($this->voucher_id)) $data['voucher_id'] = $this->voucher_id;
         return $data;
     }
 }

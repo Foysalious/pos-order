@@ -45,15 +45,25 @@ class OrderService extends BaseService
     public function update($orderUpdateRequest, $partner_id, $order_id)
     {
         $orderDetails = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
-        if($orderDetails) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
+        if(!$orderDetails) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
 
-        $this->updater->setPartnerId($partner_id)->setOrderId($order_id)->setCustomerId($orderUpdateRequest->customer_id)
-            ->setStatus($orderUpdateRequest->status)->setSalesChannelId($orderUpdateRequest->sales_channel_id)->setOrderItems($orderUpdateRequest->items)
-            ->setEmiMonth($orderUpdateRequest->emi_month)->setInterest($orderUpdateRequest->interest)->setDeliveryCharge($orderUpdateRequest->delivery_charge)
-            ->setBankTransactionCharge($orderUpdateRequest->bank_transaction_charge)->setDeliveryName($orderUpdateRequest->delivery_name)
-            ->setDeliveryMobile($orderUpdateRequest->delivery_mobile)->setDeliveryAddress($orderUpdateRequest->delivery_address)
-            ->setNote($orderUpdateRequest->note)->setVoucherId($orderUpdateRequest->voucher_id)->update();
-
+        $this->updater->setPartnerId($partner_id)
+            ->setOrderId($order_id)
+            ->setOrder($orderDetails)
+            ->setCustomerId($orderUpdateRequest->customer_id)
+            ->setStatus($orderUpdateRequest->status)
+            ->setSalesChannelId($orderUpdateRequest->sales_channel_id)
+            ->setUpdatedSkus($orderUpdateRequest->skus)
+            ->setEmiMonth($orderUpdateRequest->emi_month)
+            ->setInterest($orderUpdateRequest->interest)
+            ->setDeliveryCharge($orderUpdateRequest->delivery_charge)
+            ->setBankTransactionCharge($orderUpdateRequest->bank_transaction_charge)
+            ->setDeliveryName($orderUpdateRequest->delivery_name)
+            ->setDeliveryMobile($orderUpdateRequest->delivery_mobile)
+            ->setDeliveryAddress($orderUpdateRequest->delivery_address)
+            ->setNote($orderUpdateRequest->note)
+            ->setVoucherId($orderUpdateRequest->voucher_id)
+            ->update();
         return $this->success('Successful', null, 200, true);
     }
 
