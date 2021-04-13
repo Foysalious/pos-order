@@ -1,6 +1,7 @@
 <?php namespace App\Services\DataMigration;
 
 use App\Interfaces\DiscountRepositoryInterface;
+use App\Interfaces\LogRepositoryInterface;
 use App\Interfaces\OrderPaymentsRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
@@ -22,18 +23,26 @@ class DataMigrationService extends BaseService
     /** @var OrderPaymentsRepositoryInterface */
     private OrderPaymentsRepositoryInterface $orderPaymentsRepositoryInterface;
     private $orderPayments;
+    private $logs;
+    /**
+     * @var LogRepositoryInterface
+     */
+    private $logRepositoryInterface;
+
 
     public function __construct(PartnerRepositoryInterface $partnerRepositoryInterface,
                                 DiscountRepositoryInterface $discountRepositoryInterface,
                                 OrderRepositoryInterface $orderRepositoryInterface,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
-                                OrderPaymentsRepositoryInterface $orderPaymentsRepositoryInterface)
+                                OrderPaymentsRepositoryInterface $orderPaymentsRepositoryInterface,
+                                LogRepositoryInterface $logRepositoryInterface)
     {
         $this->discountRepositoryInterface = $discountRepositoryInterface;
         $this->partnerRepositoryInterface = $partnerRepositoryInterface;
         $this->orderRepositoryInterface = $orderRepositoryInterface;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->orderPaymentsRepositoryInterface = $orderPaymentsRepositoryInterface;
+        $this->logRepositoryInterface = $logRepositoryInterface;
     }
 
     public function setPartnerInfo($partnerInfo)
@@ -66,6 +75,12 @@ class DataMigrationService extends BaseService
         return $this;
     }
 
+    public function setOrderLogs($logs)
+    {
+        $this->logs = $logs;
+        return $this;
+    }
+
     public function migrate()
     {
         if ($this->partnerInfo) $this->migratePartnerInfoData();
@@ -73,7 +88,7 @@ class DataMigrationService extends BaseService
         if ($this->orderSkus) $this->migrateOrderSkusData();
         if ($this->orderPayments) $this->migrateOrderPaymentsData();
         if ($this->discounts) $this->migrateOrderDiscountsData();
-        return $this->success('Successful', ['partner' => $this->partnerInfo->id]);
+        if ($this->logs) $this->migrateOrderLogsData();
     }
 
     private function migratePartnerInfoData()
@@ -99,6 +114,11 @@ class DataMigrationService extends BaseService
     private function migrateOrderDiscountsData()
     {
         $this->discountRepositoryInterface->insertOrIgnore($this->discounts);
+    }
+
+    private function migrateOrderLogsData()
+    {
+        $this->logRepositoryInterface->insertOrIgnore($this->logs);
     }
 
 }
