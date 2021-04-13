@@ -6,9 +6,11 @@ namespace App\Services\Order;
 
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
+use App\Traits\ModificationFields;
 
 class Updater
 {
+    use ModificationFields;
     protected $partner_id, $order_id, $customer_id, $status, $sales_channel_id, $emi_month, $interest, $delivery_charge;
     protected $bank_transaction_charge, $delivery_name, $delivery_mobile, $delivery_address, $note, $voucher_id;
     protected $skus, $order;
@@ -202,6 +204,6 @@ class Updater
         if(isset($this->delivery_address)) $data['delivery_address'] = $this->delivery_address;
         if(isset($this->note)) $data['note'] = $this->note;
         if(isset($this->voucher_id)) $data['voucher_id'] = $this->voucher_id;
-        return $data;
+        return $data + $this->modificationFields(false, true);
     }
 }
