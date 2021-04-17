@@ -1,4 +1,4 @@
-<?php
+<?php namespace App\Http\Controllers;
 
 namespace App\Http\Controllers;
 
@@ -6,11 +6,16 @@ use App\Http\Requests\OrderUpdateRequest;
 use App\Services\Order\OrderService;
 use Illuminate\Http\Request;
 use App\Http\Requests\OrderRequest;
-use App\Models\Partner;
+use App\Models\Order;
 use App\Services\Order\Creator;
+use App\Services\Order\StatusChanger;
+use App\Traits\ResponseAPI;
+
+
 
 class OrderController extends Controller
 {
+    use ResponseAPI;
     protected $orderService;
 
     public function __construct(OrderService $orderService)
