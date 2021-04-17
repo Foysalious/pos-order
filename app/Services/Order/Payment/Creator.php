@@ -29,7 +29,7 @@ class Creator
 
     private function create(array $data)
     {
-        $this->orderPaymentRepository->create($data);
+        $this->orderPaymentRepository->insert($data);
     }
 
 }
