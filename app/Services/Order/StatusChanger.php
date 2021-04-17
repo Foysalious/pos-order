@@ -44,11 +44,12 @@ class StatusChanger
 
     public function changeStatus()
     {
-        $this->orderRepositoryInterface->update($this->order, ['status' => $this->status]);
-        if ($this->order->sales_channel == SalesChannels::WEBSTORE) {
+         return $this->orderRepositoryInterface->update($this->order, ['status' => $this->status]);
+
+      /*  if ($this->order->sales_channel == SalesChannels::WEBSTORE) {
             if ($this->status == Statuses::DECLINED || $this->status == Statuses::CANCELLED) $this->refund();
             if ($this->status == Statuses::COMPLETED && $this->order->getDue()) $this->collectPayment($this->order);
-        }
+        }*/
     }
 
 

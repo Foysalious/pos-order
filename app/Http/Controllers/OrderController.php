@@ -20,9 +20,9 @@ class OrderController extends Controller
 
     public function updateStatus($partner,Request $request,StatusChanger $statusChanger)
     {
-        $order = Order::/*with('orderSkus')->*/find($request->order);
-        $statusChanger->setOrder($order)->setStatus($request->status)->setModifier($request->modifier)->changeStatus();
-
+        $order = Order::find($request->order);
+        $statusChanger->setOrder($order)->setStatus($request->status)->changeStatus();
+        return $this->success('Successful', ['order' => $order], 200);
     }
 
 

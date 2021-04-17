@@ -22,4 +22,8 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 Route::group(['prefix'=>'v1'], function(){
     Route::apiResource('partners.orders', OrderController::class);
+    Route::group(['prefix' => 'partners/{partner}/orders/{order}'], function () {
+        Route::post('update-status', [OrderController::class, 'updateStatus']);
+    });
+
 });
