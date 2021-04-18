@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\Partner;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\SalesChannels;
+use App\Services\Order\Constants\Statuses;
 use App\Services\Order\Validators\OrderCreateValidator;
 use App\Services\Order\Payment\Creator as PaymentCreator;
 
@@ -106,10 +107,10 @@ class Creator
         $order_data['emi_month'] = $this->data['emi_month'] ?? null;
         $order_data['sales_channel_id'] = $this->data['sales_channel_id'] ?? SalesChannels::POS;
         $order_data['delivery_charge'] = isset($this->data['sales_channel_id']) && $this->data['sales_channel_id'] == SalesChannels::WEBSTORE ? $this->partner->delivery_charge : 0;;
-        $order_data['status'] = isset($this->data['status']) && $this->data['status'] ?: 'Pending';
+        $order_data['status'] = $this->data['status'] ?? Statuses::PENDING;
         $this->order = $this->orderRepositoryInterface->create($order_data);
         $this->createOrderSkus();
-        $this->order->calculate();
+        //$this->order->calculate();
         return $this->success('Successful', ['order' => $this->order], 200);
     }
 

@@ -15,14 +15,14 @@ class OrderController extends Controller
     public function store($partner,Request $request, Creator $creator)
     {
         $creator->setPartner($partner)->setData($request->all());
-        return $order = $creator->create();
+        return $creator->create();
     }
 
     public function updateStatus($partner,Request $request,StatusChanger $statusChanger)
     {
         $order = Order::find($request->order);
-        $statusChanger->setOrder($order)->setStatus($request->status)->changeStatus();
-        return $this->success('Successful', ['order' => $order], 200);
+        return $statusChanger->setOrder($order)->setStatus($request->status)->changeStatus();
+
     }
 
 

@@ -5,9 +5,11 @@ use App\Models\Order;
 use App\Services\Order\Constants\SalesChannels;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Order\Payment\Creator as PaymentCreator;
+use App\Traits\ResponseAPI;
 
 class StatusChanger
 {
+    use ResponseAPI;
     protected $status;
     /** @var Order */
     protected $order;
@@ -44,7 +46,8 @@ class StatusChanger
 
     public function changeStatus()
     {
-         return $this->orderRepositoryInterface->update($this->order, ['status' => $this->status]);
+        $this->orderRepositoryInterface->update($this->order, ['status' => $this->status]);
+        return $this->success('Successful', ['order' => $this->order], 200);
 
       /*  if ($this->order->sales_channel == SalesChannels::WEBSTORE) {
             if ($this->status == Statuses::DECLINED || $this->status == Statuses::CANCELLED) $this->refund();
