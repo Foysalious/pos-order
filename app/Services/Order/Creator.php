@@ -110,7 +110,7 @@ class Creator
         $order_data['status'] = $this->data['status'] ?? Statuses::PENDING;
         $this->order = $this->orderRepositoryInterface->create($order_data);
         $this->createOrderSkus();
-        //$this->order->calculate();
+        $this->order->calculate();
         return $this->success('Successful', ['order' => $this->order], 200);
     }
 
