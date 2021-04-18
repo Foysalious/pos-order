@@ -47,7 +47,7 @@ class Order extends BaseModel
             $this->update(['interest' => $this->interest, 'bank_transaction_charge' => $this->bank_transaction_charge]);
         }*/
         $this->netBill = $this->originalTotal + round((double)$this->interest, 2) + (double)round($this->bank_transaction_charge, 2);
-        $this->netBill += (double)round($this->delivery_charge, 2);
+        $this->netBill += round($this->delivery_charge, 2);
         $this->_calculatePaidAmount();
         $this->paid = round($this->paid ?: 0, 2);
 
@@ -85,14 +85,14 @@ class Order extends BaseModel
     private function creditPaymentsCollect()
     {
         return $this->payments->filter(function ($payment) {
-            return $payment->transaction_type === 'Credit';
+            return $payment->transaction_type === 'credit';
         });
     }
 
     private function debitPaymentsCollect()
     {
         return $this->payments->filter(function ($payment) {
-            return $payment->transaction_type === 'Debit';
+            return $payment->transaction_type === 'debit';
         });
     }
 

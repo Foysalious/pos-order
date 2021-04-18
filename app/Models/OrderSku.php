@@ -26,7 +26,7 @@ class OrderSku extends BaseModel
 
     public function calculate()
     {
-        $this->price = ($this->unit_price * $this->quantity);
+        $this->price = ($this['unit_price'] * $this['quantity']);
         $this->discountAmount = $this->discount ? (($this->price > $this->discount->amount) ? $this->discount->amount : $this->price) : 0.00;
         $this->priceAfterDiscount = $this->price - $this->discountAmount;
         $this->vat = ($this->priceAfterDiscount * $this->vat_percentage) / 100;
