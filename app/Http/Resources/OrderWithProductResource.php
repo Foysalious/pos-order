@@ -2,10 +2,9 @@
 
 namespace App\Http\Resources;
 
-use App\Models\Order;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class OrderResource extends JsonResource
+class OrderWithProductResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -30,7 +29,8 @@ class OrderResource extends JsonResource
             'delivery_mobile'         => $this->delivery_mobile,
             'delivery_address'        => $this->delivery_address,
             'note'                    => $this->note,
-            'voucher_id'              => $this->voucher_id
+            'voucher_id'              => $this->voucher_id,
+            'items'                   => OrderSkuResource::collection($this->items)
         ];
     }
 }

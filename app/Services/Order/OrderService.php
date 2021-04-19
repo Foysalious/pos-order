@@ -38,7 +38,7 @@ class OrderService extends BaseService
 
             $order = $orderDetails;
             $order->items = $orderDetails->items;
-            $order = new OrderResource($orderDetails);
+            $order = new OrderWithProductResource($orderDetails);
             return $this->success('Success', ['order' => $order], 200, true);
     }
 
