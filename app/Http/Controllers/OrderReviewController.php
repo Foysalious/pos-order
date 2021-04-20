@@ -2,11 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\OrderReview;
+use App\Models\Review;
+use App\Services\Order\ReviewService;
 use Illuminate\Http\Request;
 
 class OrderReviewController extends Controller
 {
+    protected $reviewService;
+
+    public function __construct(ReviewService $reviewService)
+    {
+        $this->reviewService = $reviewService;
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -21,20 +29,20 @@ class OrderReviewController extends Controller
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function store(Request $request)
+    public function store(Request $request, $order_id)
     {
-        //
+        return $this->reviewService->create($request, $order_id);
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\OrderReview  $orderReview
+     * @param  \App\Models\Review  $orderReview
      * @return \Illuminate\Http\Response
      */
-    public function show(OrderReview $orderReview)
+    public function show(Review $orderReview)
     {
         //
     }
@@ -43,10 +51,10 @@ class OrderReviewController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\OrderReview  $orderReview
+     * @param  \App\Models\Review  $orderReview
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, OrderReview $orderReview)
+    public function update(Request $request, Review $orderReview)
     {
         //
     }
@@ -54,10 +62,10 @@ class OrderReviewController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\OrderReview  $orderReview
+     * @param  \App\Models\Review  $orderReview
      * @return \Illuminate\Http\Response
      */
-    public function destroy(OrderReview $orderReview)
+    public function destroy(Review $orderReview)
     {
         //
     }
