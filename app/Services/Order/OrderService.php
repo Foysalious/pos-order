@@ -5,6 +5,7 @@ namespace App\Services\Order;
 
 
 use App\Http\Resources\OrderResource;
+use App\Http\Resources\OrderWithProductResource;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Services\BaseService;
@@ -38,7 +39,7 @@ class OrderService extends BaseService
 
             $order = $orderDetails;
             $order->items = $orderDetails->items;
-            $order = new OrderResource($orderDetails);
+            $order = new OrderWithProductResource($orderDetails);
             return $this->success('Success', ['order' => $order], 200, true);
     }
 
