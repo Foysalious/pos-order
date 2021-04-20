@@ -13,14 +13,11 @@ class CreateOrderReviewsTable extends Migration
      */
     public function up()
     {
-        Schema::create('order_reviews', function (Blueprint $table) {
+        Schema::create('reviews', function (Blueprint $table) {
             $table->id();
 
             $table->bigInteger('customer_id')->nullable()->unsigned()->index();
-
-            $table->bigInteger('order_id')->nullable()->unsigned()->index();
-            $table->foreign('order_id')->references('id')->on('orders')->onUpdate('cascade')->onDelete('set null');
-
+            $table->bigInteger('order_sku_id')->nullable()->unsigned()->index();
             $table->string('review_title')->nullable();
             $table->text('review_details')->nullable();
             $table->integer('rating')->default(0);
@@ -42,6 +39,6 @@ class CreateOrderReviewsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('order_reviews');
+        Schema::dropIfExists('reviews');
     }
 }
