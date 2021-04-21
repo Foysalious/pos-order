@@ -2,10 +2,16 @@
 
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
+use App\Interfaces\ReviewImageRepositoryInterface;
+use App\Interfaces\ReviewRepositoryInterface;
+use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Interfaces\PartnerRepositoryInterface;
 use App\Repositories\OrderPaymentRepository;
 use App\Repositories\OrderRepository;
+use App\Repositories\ReviewImageRepository;
+use App\Repositories\ReviewRepository;
+use App\Repositories\OrderSkusRepository;
 use App\Repositories\OrderSkuRepository;
 use App\Repositories\PartnerRepository;
 use Illuminate\Support\ServiceProvider;
@@ -29,6 +35,10 @@ class RepositoryServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        $this->app->singleton(OrderRepositoryInterface::class, OrderRepository::class);
+        $this->app->singleton(OrderSkusRepositoryInterface::class, OrderSkusRepository::class);
+        $this->app->singleton(ReviewRepositoryInterface::class, ReviewRepository::class);
+        $this->app->singleton(ReviewImageRepositoryInterface::class, ReviewImageRepository::class);
         $this->app->singleton(PartnerRepositoryInterface::class,PartnerRepository::class);
         $this->app->singleton(OrderRepositoryInterface::class,OrderRepository::class);
         $this->app->singleton(OrderSkuRepositoryInterface::class,OrderSkuRepository::class);
