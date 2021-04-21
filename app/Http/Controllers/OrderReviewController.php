@@ -31,9 +31,9 @@ class OrderReviewController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function store(Request $request, $order_id)
+    public function store(Request $request, $customer_id, $order_id)
     {
-        return $this->reviewService->create($request, $order_id);
+        return $this->reviewService->create($request, $customer_id, $order_id);
     }
 
     /**

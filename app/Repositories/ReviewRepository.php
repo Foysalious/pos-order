@@ -1,13 +1,20 @@
 <?php
 namespace App\Repositories;
 
+use App\Interfaces\ReviewImageRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;
 use App\Models\Review;
+use App\Services\FileManagers\CdnFileManager;
+use App\Services\FileManagers\FileManager;
 
 class ReviewRepository extends BaseRepository implements ReviewRepositoryInterface
 {
-    public function __construct(Review $model)
+    use CdnFileManager, FileManager;
+    protected $reviewImageRepositoryInterface;
+
+    public function __construct(Review $model, ReviewImageRepositoryInterface $reviewImageRepositoryInterface)
     {
+        $this->reviewImageRepositoryInterface = $reviewImageRepositoryInterface;
         parent::__construct($model);
     }
 
@@ -25,6 +32,18 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         return $singleReviewData;
     }
 
+    public function saveReviewImages($imageList, $review_id)
+    {
+        for($i = 0; $i < count($imageList); $i++)
+        {
+            list($file, $fileName) = [$imageList[$i], $this->uniqueFileName($imageList[$i], '_' . getFileName($imageList[$i]) . '_review_image')];
+            $reviewImageUrl = $this->saveFileToCDN($file, reviewImageFolder(), $fileName);
+            $makeReviewImageData['review_id'] = $review_id;
+            $makeReviewImageData['image_link'] = $reviewImageUrl;
+            return $this->reviewImageRepositoryInterface->create($makeReviewImageData);
+        }
+    }
+
     public function createReview($data)
     {
         $data = str_replace("'", '"', $data);
@@ -34,7 +53,8 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         for ($i = 0; $i < $reviewCount; $i++)
         {
             $singleReviewData = $this->makeSingleReviewData($data, $reviewList[$i]);
-            $this->model->insert($singleReviewData);
+            $review = $this->model->create($singleReviewData);
+            if(isset($reviewList[$i]->images)) $this->saveReviewImages($reviewList[$i]->images, $review->id);
         }
     }
 }

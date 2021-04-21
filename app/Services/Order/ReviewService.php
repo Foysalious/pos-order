@@ -21,17 +21,17 @@ class ReviewService extends BaseService
         $this->reviewCreator = $reviewCreator;
     }
 
-    public function create($request, $order_id)
+    public function create($request, $customer_id, $order_id)
     {
-        $order = $this->orderRepositoryInterface->find($order_id);
+        $order = $this->orderRepositoryInterface->where('customer_id', json_decode($customer_id))->find($order_id);
         if(!$order) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
 
-        $review = $this->reviewCreator->setOrderId($order_id)
+        $this->reviewCreator->setOrderId($order_id)
             ->setCustomerId($request->customer_id)
             ->setPartnerId($request->partner_id)
             ->setReview($request->review)
             ->create();
 
-        return $this->success('Successful', ['review' => $review], 200, true);
+        return $this->success('Successful', null, 200, true);
     }
 }

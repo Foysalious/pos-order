@@ -3,6 +3,7 @@
 
 namespace App\Services\Order;
 
+use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;
 use App\Traits\ModificationFields;
 
@@ -12,9 +13,11 @@ class ReviewCreator
 
     protected $order_id, $customer_id, $partner_id, $rating, $review;
     protected $reviewRepositoryInterface;
+    protected $orderRepositoryInterface;
 
-    public function __construct(ReviewRepositoryInterface $reviewRepositoryInterface)
+    public function __construct(ReviewRepositoryInterface $reviewRepositoryInterface, OrderRepositoryInterface $orderRepositoryInterface)
     {
+        $this->orderRepositoryInterface = $orderRepositoryInterface;
         $this->reviewRepositoryInterface = $reviewRepositoryInterface;
     }
 
