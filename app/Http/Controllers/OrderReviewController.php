@@ -14,17 +14,6 @@ class OrderReviewController extends Controller
     {
         $this->reviewService = $reviewService;
     }
-
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
-
     /**
      * Store a newly created resource in storage.
      *
@@ -34,39 +23,5 @@ class OrderReviewController extends Controller
     public function store(Request $request, $customer_id, $order_id)
     {
         return $this->reviewService->create($request, $customer_id, $order_id);
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Review  $orderReview
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Review $orderReview)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Review  $orderReview
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Review $orderReview)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Review  $orderReview
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Review $orderReview)
-    {
-        //
     }
 }

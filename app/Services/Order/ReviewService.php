@@ -23,11 +23,11 @@ class ReviewService extends BaseService
 
     public function create($request, $customer_id, $order_id)
     {
-        $order = $this->orderRepositoryInterface->where('customer_id', json_decode($customer_id))->find($order_id);
+        $order = $this->orderRepositoryInterface->where('customer_id', $customer_id)->find($order_id);
         if(!$order) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
 
         $this->reviewCreator->setOrderId($order_id)
-            ->setCustomerId($request->customer_id)
+            ->setCustomerId($customer_id)
             ->setPartnerId($request->partner_id)
             ->setReview($request->review)
             ->create();
