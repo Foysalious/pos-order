@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\OrderReviewController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -26,5 +27,5 @@ Route::group(['prefix'=>'v1'], function(){
     Route::group(['prefix' => 'partners/{partner}/orders/{order}'], function () {
         Route::post('update-status', [OrderController::class, 'updateStatus']);
     });
-
+    Route::apiResource('payments', PaymentController::class);
 });
