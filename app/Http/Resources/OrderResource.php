@@ -30,8 +30,7 @@ class OrderResource extends JsonResource
             'delivery_mobile'         => $this->delivery_mobile,
             'delivery_address'        => $this->delivery_address,
             'note'                    => $this->note,
-            'voucher_id'              => $this->voucher_id,
-            'items'                   => OrderSkuResource::collection($this->items)
+            'voucher_id'              => $this->voucher_id
         ];
     }
 }

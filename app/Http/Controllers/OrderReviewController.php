@@ -2,63 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\OrderReview;
+use App\Models\Review;
+use App\Services\Order\ReviewService;
 use Illuminate\Http\Request;
 
 class OrderReviewController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
+    protected $reviewService;
 
+    public function __construct(ReviewService $reviewService)
+    {
+        $this->reviewService = $reviewService;
+    }
     /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function store(Request $request)
+    public function store(Request $request, $customer_id, $order_id)
     {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\OrderReview  $orderReview
-     * @return \Illuminate\Http\Response
-     */
-    public function show(OrderReview $orderReview)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\OrderReview  $orderReview
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, OrderReview $orderReview)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\OrderReview  $orderReview
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(OrderReview $orderReview)
-    {
-        //
+        return $this->reviewService->create($request, $customer_id, $order_id);
     }
 }
