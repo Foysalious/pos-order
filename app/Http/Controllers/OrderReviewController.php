@@ -22,6 +22,7 @@ class OrderReviewController extends Controller
      */
     public function store(Request $request, $customer_id, $order_id)
     {
+        //dd($request->all());
         return $this->reviewService->create($request, $customer_id, $order_id);
     }
 }
