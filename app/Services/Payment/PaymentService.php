@@ -19,7 +19,7 @@ class PaymentService extends BaseService
 
     public function store(PaymentRequest $request)
     {
-        $this->creator->setOrderId($request->order_id)
+        $this->creator->setOrderId($request->pos_order_id)
             ->setAmount($request->amount)
             ->setTransactionType($request->transaction_type)
             ->setMethod($request->method)
