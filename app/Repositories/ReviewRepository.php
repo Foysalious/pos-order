@@ -24,10 +24,10 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         $singleReviewData['customer_id']    = json_decode($data['customer_id']);
         $singleReviewData['partner_id']     = json_decode($data['partner_id']);
         $singleReviewData['product_id']     = $singleData->product_id ?? null;
-        $singleReviewData['order_sku_id']   = $singleData->order_sku_id;
+        $singleReviewData['order_sku_id']   = $singleData->order_sku_id ?? null;
         $singleReviewData['review_title']   = $singleData->review_title ?? null;
         $singleReviewData['review_details'] = $singleData->review_details ?? null;
-        $singleReviewData['rating']         = $singleData->rating;
+        $singleReviewData['rating']         = $singleData->rating ?? 5;
         $singleReviewData['category_id']    = $singleData->category_id ?? null;
         return $singleReviewData;
     }
@@ -46,15 +46,16 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
 
     public function createReview($data)
     {
-        $data = str_replace("'", '"', $data);
-        $reviewList = json_decode($data['review']);
+        //$data = str_replace("'", '"', $data);
+        //dd($data['review'][0]);
+        $reviewList = ($data['review']);
         $reviewCount = count($reviewList);
 
         for ($i = 0; $i < $reviewCount; $i++)
         {
             $singleReviewData = $this->makeSingleReviewData($data, $reviewList[$i]);
             $review = $this->model->create($singleReviewData);
-            if(isset($reviewList[$i]->images)) $this->saveReviewImages($reviewList[$i]->images, $review->id);
+            if(isset($reviewList[$i]["'images'"])) $this->saveReviewImages($reviewList[$i]["'images'"], $review->id);
         }
     }
 }
