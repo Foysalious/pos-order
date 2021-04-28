@@ -2,6 +2,7 @@
 
 return [
     'default' => 'default',
+    'swagger_on_dev' => env('L5_SWAGGER_RUNNING_ON_DEV', false),
     'documentations' => [
         'default' => [
             'api' => [
