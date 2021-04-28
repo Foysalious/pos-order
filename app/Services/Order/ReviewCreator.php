@@ -11,7 +11,7 @@ class ReviewCreator
 {
     use ModificationFields;
 
-    protected $order_id, $customer_id, $partner_id, $rating, $review;
+    protected $order_id, $customer_id, $partner_id, $rating, $review, $review_images;
     protected $reviewRepositoryInterface;
     protected $orderRepositoryInterface;
 
@@ -19,6 +19,16 @@ class ReviewCreator
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
         $this->reviewRepositoryInterface = $reviewRepositoryInterface;
+    }
+
+    /**
+     * @param mixed $review_images
+     * @return ReviewCreator
+     */
+    public function setReviewImages($review_images)
+    {
+        $this->review_images = $review_images;
+        return $this;
     }
 
     /**
@@ -72,6 +82,7 @@ class ReviewCreator
         if(isset($this->customer_id)) $data['customer_id'] = $this->customer_id;
         if(isset($this->partner_id)) $data['partner_id'] = $this->partner_id;
         if(isset($this->review)) $data['review'] = $this->review;
+        if(isset($this->review_images)) $data['review_images'] = $this->review_images;
         return $data + $this->modificationFields(true, false);
     }
 }
