@@ -14,6 +14,11 @@ class OrderReviewController extends Controller
     {
         $this->reviewService = $reviewService;
     }
+
+    public function index(Request $request)
+    {
+        return Review::all();
+    }
     /**
      * Store a newly created resource in storage.
      *
@@ -22,7 +27,6 @@ class OrderReviewController extends Controller
      */
     public function store(Request $request, $customer_id, $order_id)
     {
-        dd("YES");
         return $this->reviewService->create($request, $customer_id, $order_id);
     }
 }
