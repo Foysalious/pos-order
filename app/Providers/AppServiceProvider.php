@@ -25,9 +25,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(UrlGenerator $url)
     {
-        if (config('l5-swagger.swagger_on_dev') == true){
+        /*
+         if (config('l5-swagger.swagger_on_dev') == true){
             $url->forceScheme('https');
         }
+        */
         JsonResource::withoutWrapping();
     }
 }
