@@ -49,13 +49,13 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         $reviewList = $data['review'];
         $reviewList = json_decode(str_replace("'", '"', $reviewList));
         $reviewCount = count($reviewList);
-        $reviewImageList = $data['review_images'];
+        $reviewImageList = $data['review_images'] ?? [];
 
         for ($i = 0; $i < $reviewCount; $i++)
         {
             $singleReviewData = $this->makeSingleReviewData($data, $reviewList[$i]);
             $review = $this->model->create($singleReviewData);
-            if($reviewImageList[$i]) $this->saveReviewImages($reviewImageList[$i], $review->id);
+            if(count($reviewImageList) > 0 && count($reviewImageList[$i]) >0 ) $this->saveReviewImages($reviewImageList[$i], $review->id);
         }
     }
 }
