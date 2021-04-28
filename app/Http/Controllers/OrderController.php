@@ -41,7 +41,6 @@ class OrderController extends Controller
      */
     public function store($partner,Request $request, Creator $creator)
     {
-        dd(1);
         $creator->setPartner($partner)->setData($request->all());
         return $creator->create();
     }
