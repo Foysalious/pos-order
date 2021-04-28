@@ -30,6 +30,7 @@ class ReviewService extends BaseService
             ->setCustomerId($customer_id)
             ->setPartnerId($request->partner_id)
             ->setReview($request->review)
+            ->setReviewImages($request->review_images)
             ->create();
 
         return $this->success('Successful', null, 200, true);

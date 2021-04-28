@@ -46,16 +46,16 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
 
     public function createReview($data)
     {
-        //$data = str_replace("'", '"', $data);
-        //dd($data['review'][0]);
-        $reviewList = ($data['review']);
+        $reviewList = $data['review'];
+        $reviewList = json_decode(str_replace("'", '"', $reviewList));
         $reviewCount = count($reviewList);
+        $reviewImageList = $data['review_images'];
 
         for ($i = 0; $i < $reviewCount; $i++)
         {
             $singleReviewData = $this->makeSingleReviewData($data, $reviewList[$i]);
             $review = $this->model->create($singleReviewData);
-            if(isset($reviewList[$i]["'images'"])) $this->saveReviewImages($reviewList[$i]["'images'"], $review->id);
+            if($reviewImageList[$i]) $this->saveReviewImages($reviewImageList[$i], $review->id);
         }
     }
 }
