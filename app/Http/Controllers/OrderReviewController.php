@@ -14,6 +14,11 @@ class OrderReviewController extends Controller
     {
         $this->reviewService = $reviewService;
     }
+
+    public function index(Request $request)
+    {
+        return Review::all();
+    }
     /**
      * Store a newly created resource in storage.
      *
