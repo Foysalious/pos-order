@@ -8,5 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class ReviewImage extends Model
 {
     use HasFactory;
-    protected $guarded = [];
+    protected $guarded = ['review_id'];
 }
