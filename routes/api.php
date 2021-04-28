@@ -22,5 +22,5 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 Route::group(['prefix'=>'v1'], function(){
     Route::apiResource('partners.orders', OrderController::class);
-    Route::post('customers/{customer}/orders/{order}/review', [OrderReviewController::class, 'store']);
+    Route::apiResource('customers.orders.review', OrderReviewController::class);
 });
