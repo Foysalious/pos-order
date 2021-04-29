@@ -40,8 +40,9 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
             $reviewImageUrl = $this->saveFileToCDN($file, reviewImageFolder(), $fileName);
             $makeReviewImageData['review_id'] = $review_id;
             $makeReviewImageData['image_link'] = $reviewImageUrl;
-            return $this->reviewImageRepositoryInterface->create($makeReviewImageData);
+            $this->reviewImageRepositoryInterface->insert($makeReviewImageData);
         }
+        return true;
     }
 
     public function createReview($data)
