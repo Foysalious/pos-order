@@ -29,6 +29,7 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         $singleReviewData['review_details'] = $singleData->review_details ?? null;
         $singleReviewData['rating']         = $singleData->rating ?? 5;
         $singleReviewData['category_id']    = $singleData->category_id ?? null;
+        $singleReviewData['images']         = $singleData->images ?? [];
         return $singleReviewData;
     }
 
@@ -58,5 +59,10 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
             $review = $this->model->create($singleReviewData);
             if(count($reviewImageList) > 0 && count($reviewImageList[$i]) >0 ) $this->saveReviewImages($reviewImageList[$i], $review->id);
         }
+    }
+
+    public function getReviews($offset, $limit, $product_id)
+    {
+        return $this->model->where('product_id', $product_id)->offset($offset)->limit($limit)->latest()->get();
     }
 }

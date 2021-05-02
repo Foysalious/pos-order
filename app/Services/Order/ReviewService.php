@@ -7,6 +7,7 @@ namespace App\Services\Order;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;
 use App\Services\BaseService;
+use App\Http\Resources\ReviewResource;
 
 class ReviewService extends BaseService
 {
@@ -19,6 +20,14 @@ class ReviewService extends BaseService
         $this->reviewRepositoryInterface = $reviewRepositoryInterface;
         $this->orderRepositoryInterface = $orderRepositoryInterface;
         $this->reviewCreator = $reviewCreator;
+    }
+
+    public function getProductReviews($request, $product_id) :object
+    {
+        list($offset, $limit) = calculatePagination($request);
+        $reviews = ReviewResource::collection($this->reviewRepositoryInterface->getReviews($offset, $limit, $product_id));
+        if(count($reviews) == 0) return $this->error('এই প্রোডাক্ট এর জন্য কোন রিভিউ পাওয়া যায় নি', 404);
+        return $this->success('Successful', ['reviews' => $reviews], 200);
     }
 
     public function create($request, $customer_id, $order_id)

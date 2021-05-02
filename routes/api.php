@@ -27,5 +27,6 @@ Route::group(['prefix'=>'v1'], function(){
         Route::post('update-status', [OrderController::class, 'updateStatus']);
     });
     Route::apiResource('payments', PaymentController::class);
-    Route::apiResource('customers.orders.review', OrderReviewController::class);
+    Route::post('customers/{customer}/orders/{order}/review', [OrderReviewController::class, 'store']);
+    Route::get('products/{product}/reviews', [OrderReviewController::class, 'index']);
 });
