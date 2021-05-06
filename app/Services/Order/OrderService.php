@@ -78,4 +78,11 @@ class OrderService extends BaseService
         $order->delete();
         return $this->success('Successful', null, 200, true);
     }
+
+    public function checkOrderExists($order_id)
+    {
+        $orderDetails = $this->orderRepositoryInterface->find($order_id);
+        if(!$orderDetails) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
+        return $this->success('Success', ['order_id' => $orderDetails->id], 200, true);
+    }
 }
