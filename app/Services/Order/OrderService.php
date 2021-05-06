@@ -65,6 +65,7 @@ class OrderService extends BaseService
             ->setNote($orderUpdateRequest->note)
             ->setVoucherId($orderUpdateRequest->voucher_id)
             ->update();
+
         return $this->success('Successful', null, 200, true);
     }
 
