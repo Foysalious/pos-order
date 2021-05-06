@@ -47,8 +47,8 @@ class ReviewService extends BaseService
         unlink('upload.jpg');
         //dd(reviewImageFolder());
 
-        list($file, $fileName) = [$file, $this->uniqueFileName($file, '_' . getFileName($file) . '_review_image')];
-        $this->saveFileToCDN($file, reviewImageFolder(), $fileName);
+       // list($file, $fileName) = [$file, $this->uniqueFileName($file, '_' . getFileName($file) . '_review_image')];
+      //  $this->saveFileToCDN($file, reviewImageFolder(), $fileName);
         //dd("YES");
 
         $this->reviewCreator->setOrderId($order_id)
