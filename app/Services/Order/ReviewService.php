@@ -21,6 +21,8 @@ class ReviewService extends BaseService
     protected $reviewRepositoryInterface;
     protected $orderRepositoryInterface;
     protected $reviewCreator;
+    private $rating;
+    private $order;
 
     public function __construct(ReviewRepositoryInterface $reviewRepositoryInterface, OrderRepositoryInterface $orderRepositoryInterface, ReviewCreator $reviewCreator)
     {
@@ -29,10 +31,22 @@ class ReviewService extends BaseService
         $this->reviewCreator = $reviewCreator;
     }
 
+    public function setRating($rating)
+    {
+        $this->rating = $rating;
+        return $this;
+    }
+
+    public function setOrder($order)
+    {
+        $this->order = $order;
+        return $this;
+    }
+
     public function getProductReviews($request, $product_id) :object
     {
         list($offset, $limit) = calculatePagination($request);
-        $reviews = ReviewResource::collection($this->reviewRepositoryInterface->getReviews($offset, $limit, $product_id));
+        $reviews = ReviewResource::collection($this->reviewRepositoryInterface->getReviews($offset, $limit, $product_id,$this->rating,$this->order));
         if(count($reviews) == 0) return $this->error('এই প্রোডাক্ট এর জন্য কোন রিভিউ পাওয়া যায় নি', 404);
         return $this->success('Successful', ['reviews' => $reviews], 200);
     }
