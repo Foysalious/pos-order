@@ -61,8 +61,12 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         }
     }
 
-    public function getReviews($offset, $limit, $product_id,$rating,$order)
+    public function getReviews($offset, $limit, $product_id,$request)
     {
-        return $this->model->where('product_id', $product_id)->offset($offset)->limit($limit)->latest()->get();
+        $rating= $request->rating;
+        $orderBy= $request->orderBy;
+        return $this->model->where('product_id', $product_id)->when($rating, function ($query, $rating) {
+            return $query->where('rating', $rating);
+        })->offset($offset)->limit($limit)->latest()->get();
     }
 }
