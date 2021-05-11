@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Repositories;
 
 use App\Interfaces\ReviewImageRepositoryInterface;
@@ -10,6 +11,7 @@ use App\Services\FileManagers\FileManager;
 class ReviewRepository extends BaseRepository implements ReviewRepositoryInterface
 {
     use CdnFileManager, FileManager;
+
     protected $reviewImageRepositoryInterface;
 
     public function __construct(Review $model, ReviewImageRepositoryInterface $reviewImageRepositoryInterface)
@@ -18,25 +20,24 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         parent::__construct($model);
     }
 
-    public function makeSingleReviewData($data, $singleData) :array
+    public function makeSingleReviewData($data, $singleData): array
     {
         $singleReviewData = [];
-        $singleReviewData['customer_id']    = json_decode($data['customer_id']);
-        $singleReviewData['partner_id']     = json_decode($data['partner_id']);
-        $singleReviewData['product_id']     = $singleData->product_id ?? null;
-        $singleReviewData['order_sku_id']   = $singleData->order_sku_id ?? null;
-        $singleReviewData['review_title']   = $singleData->review_title ?? null;
+        $singleReviewData['customer_id'] = json_decode($data['customer_id']);
+        $singleReviewData['partner_id'] = json_decode($data['partner_id']);
+        $singleReviewData['product_id'] = $singleData->product_id ?? null;
+        $singleReviewData['order_sku_id'] = $singleData->order_sku_id ?? null;
+        $singleReviewData['review_title'] = $singleData->review_title ?? null;
         $singleReviewData['review_details'] = $singleData->review_details ?? null;
-        $singleReviewData['rating']         = $singleData->rating ?? 5;
-        $singleReviewData['category_id']    = $singleData->category_id ?? null;
-        $singleReviewData['images']         = $singleData->images ?? [];
+        $singleReviewData['rating'] = $singleData->rating ?? 5;
+        $singleReviewData['category_id'] = $singleData->category_id ?? null;
+        $singleReviewData['images'] = $singleData->images ?? [];
         return $singleReviewData;
     }
 
     public function saveReviewImages($imageList, $review_id)
     {
-        for($i = 0; $i < count($imageList); $i++)
-        {
+        for ($i = 0; $i < count($imageList); $i++) {
             list($file, $fileName) = [$imageList[$i], $this->uniqueFileName($imageList[$i], '_' . getFileName($imageList[$i]) . '_review_image')];
             $reviewImageUrl = $this->saveFileToCDN($file, reviewImageFolder(), $fileName);
             $makeReviewImageData['review_id'] = $review_id;
@@ -53,16 +54,26 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         $reviewCount = count($reviewList);
         $reviewImageList = $data['review_images'] ?? [];
 
-        for ($i = 0; $i < $reviewCount; $i++)
-        {
+        for ($i = 0; $i < $reviewCount; $i++) {
             $singleReviewData = $this->makeSingleReviewData($data, $reviewList[$i]);
             $review = $this->model->create($singleReviewData);
-            if(count($reviewImageList) > 0 && count($reviewImageList[$i]) >0 ) $this->saveReviewImages($reviewImageList[$i], $review->id);
+            if (count($reviewImageList) > 0 && count($reviewImageList[$i]) > 0) $this->saveReviewImages($reviewImageList[$i], $review->id);
         }
     }
 
-    public function getReviews($offset, $limit, $product_id)
+    public function getReviews($offset, $limit, $product_id, $request)
     {
-        return $this->model->where('product_id', $product_id)->offset($offset)->limit($limit)->latest()->get();
+        $rating = $request->rating;
+        $orderBy = $request->order_by;
+
+        $query=$this->model->where('product_id', $product_id);
+        if ($request->has('rating') ) {
+            $query= $query->where('rating', $rating);
+        }
+        if ($request->has('order_by') ) {
+            $query= $query->orderBy('created_at', $orderBy);
+        }
+        return $query->offset($offset)->limit($limit)->get();
+
     }
 }
