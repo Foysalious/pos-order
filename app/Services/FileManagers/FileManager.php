@@ -17,6 +17,15 @@ trait FileManager
         return time() . "_" . $name . "." . ($ext ?: $this->getExtension($file));
     }
 
+    protected function uniqueFileNameFor64base($filename) : string
+    {
+        if(empty($filename)) {
+            $filename = generateRandomFileName(15);
+        }
+        $filename = strtolower(str_replace(' ', '_', $filename));
+        return time() . "_" . $filename;
+    }
+
     private function getExtension($file)
     {
         if ($file instanceof UploadedFile) return $file->getClientOriginalExtension();
