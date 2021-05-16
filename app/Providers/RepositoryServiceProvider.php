@@ -2,6 +2,7 @@
 
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
+use App\Interfaces\PaymentRepositoryInterface;
 use App\Interfaces\ReviewImageRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
@@ -9,6 +10,7 @@ use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Interfaces\PartnerRepositoryInterface;
 use App\Repositories\OrderPaymentRepository;
 use App\Repositories\OrderRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\ReviewImageRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\OrderSkusRepository;
@@ -43,6 +45,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->singleton(OrderRepositoryInterface::class,OrderRepository::class);
         $this->app->singleton(OrderSkuRepositoryInterface::class,OrderSkuRepository::class);
         $this->app->singleton(OrderPaymentRepositoryInterface::class,OrderPaymentRepository::class);
+        $this->app->singleton(PaymentRepositoryInterface::class,PaymentRepository::class);
     }
 
 }
