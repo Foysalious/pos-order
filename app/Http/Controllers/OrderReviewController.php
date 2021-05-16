@@ -17,7 +17,9 @@ class OrderReviewController extends Controller
 
     public function index(Request $request, $product_id)
     {
-        return $this->reviewService->getProductReviews($request, $product_id);
+        $rating = $request->rating;
+        $orderBy = $request->order_by;
+        return $this->reviewService->getProductReviews($request,$rating,$orderBy, $product_id);
     }
     /**
      * Store a newly created resource in storage.
