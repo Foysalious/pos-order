@@ -32,7 +32,7 @@ class ReviewService extends BaseService
     public function getProductReviews($request, $product_id) :object
     {
         list($offset, $limit) = calculatePagination($request);
-        $reviews = ReviewResource::collection($this->reviewRepositoryInterface->getReviews($offset, $limit, $product_id));
+        $reviews = ReviewResource::collection($this->reviewRepositoryInterface->getReviews($offset, $limit, $product_id,$request));
         if(count($reviews) == 0) return $this->error('এই প্রোডাক্ট এর জন্য কোন রিভিউ পাওয়া যায় নি', 404);
         return $this->success('Successful', ['reviews' => $reviews], 200);
     }
@@ -42,9 +42,12 @@ class ReviewService extends BaseService
         $order = $this->orderRepositoryInterface->where('customer_id', $customer_id)->find($order_id);
         if(!$order) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
 
-        file_put_contents('upload.jpg', base64_decode($request[1][0]));
-        $this->saveFileToCDN(('upload.jpg'), reviewImageFolder(), 'upload.jpg');
-        unlink('upload.jpg');
+
+        //dd($request->all());
+//        dd($request->all());
+//        file_put_contents('upload.jpg', base64_decode($request[1][0]));
+//        $this->saveFileToCDN(('upload.jpg'), reviewImageFolder(), 'upload.jpg');
+//        unlink('upload.jpg');
         //dd(reviewImageFolder());
 
        // list($file, $fileName) = [$file, $this->uniqueFileName($file, '_' . getFileName($file) . '_review_image')];
@@ -53,11 +56,11 @@ class ReviewService extends BaseService
 
         $this->reviewCreator->setOrderId($order_id)
             ->setCustomerId($customer_id)
-            ->setPartnerId($request->partner_id)
-            ->setReview($request->review)
+            ->setPartnerId($request->review['partner_id'])
+            ->setReview($request->review['review'])
             ->setReviewImages($request->review_images)
             ->create();
 
-        return $this->success('Successful', null, 200, true);
+        return $this->success('Successful', null, 201, true);
     }
 }

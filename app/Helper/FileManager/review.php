@@ -10,6 +10,6 @@ if( !function_exists('reviewImageFolder')) {
      */
 
     function reviewImageFolder() : string {
-        return 'images/collections/thumbs/';
+        return 'images/pos-order/review/';
     }
 }

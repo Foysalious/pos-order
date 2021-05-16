@@ -194,7 +194,6 @@ class Updater
     {
         $data = [];
         if(isset($this->customer_id)) $data['customer_id'] = $this->customer_id;
-        if(isset($this->status)) $data['status'] = $this->status;
         if(isset($this->sales_channel_id)) $data['sales_channel_id'] = $this->sales_channel_id;
         if(isset($this->emi_month)) $data['emi_month'] = $this->emi_month;
         if(isset($this->interest)) $data['interest'] = $this->interest;
