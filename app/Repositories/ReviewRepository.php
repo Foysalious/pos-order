@@ -95,9 +95,6 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
 
     public function getReviews($offset, $limit, $product_id, $rating,$orderBy)
     {
-
-
-
         $query=$this->model->where('product_id', $product_id);
         if ($rating!=NULL ) {
             $query= $query->where('rating', $rating);
@@ -106,6 +103,5 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
             $query= $query->orderBy('created_at', $orderBy);
         }
         return $query->offset($offset)->limit($limit)->get();
-
     }
 }
