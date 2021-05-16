@@ -1,7 +1,4 @@
-<?php
-
-
-namespace App\Services\Order;
+<?php namespace App\Services\Order;
 
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;

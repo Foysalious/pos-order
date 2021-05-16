@@ -1,5 +1,4 @@
-<?php
-namespace App\Repositories;
+<?php namespace App\Repositories;
 
 use App\Interfaces\ReviewImageRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;

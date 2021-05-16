@@ -1,17 +1,10 @@
-<?php
-
-
-namespace App\Services\Order;
-
+<?php namespace App\Services\Order;
 
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;
 use App\Services\BaseService;
 use App\Services\FileManagers\CdnFileManager;
 use App\Services\FileManagers\FileManager;
-use Illuminate\Support\Str;
-use Illuminate\Http\UploadedFile;
-use Symfony\Component\HttpFoundation\File\File;
 use App\Http\Resources\ReviewResource;
 
 class ReviewService extends BaseService
