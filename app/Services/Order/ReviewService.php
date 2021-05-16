@@ -32,7 +32,7 @@ class ReviewService extends BaseService
     public function getProductReviews($request, $product_id) :object
     {
         list($offset, $limit) = calculatePagination($request);
-        $reviews = ReviewResource::collection($this->reviewRepositoryInterface->getReviews($offset, $limit, $product_id,$request));
+        $reviews = ReviewResource::collection($this->reviewRepositoryInterface->getReviews($offset, $limit, $product_id,$request->rating,$request->review));
         if(count($reviews) == 0) return $this->error('এই প্রোডাক্ট এর জন্য কোন রিভিউ পাওয়া যায় নি', 404);
         return $this->success('Successful', ['reviews' => $reviews], 200);
     }
