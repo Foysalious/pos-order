@@ -1,12 +1,9 @@
-<?php
+<?php namespace App\Http\Controllers;
 
-namespace App\Http\Controllers;
-
-use App\Models\Review;
 use App\Services\Order\ReviewService;
 use Illuminate\Http\Request;
 
-class OrderReviewController extends Controller
+class ReviewController extends Controller
 {
     protected $reviewService;
 

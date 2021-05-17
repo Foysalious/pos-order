@@ -1,5 +1,4 @@
-<?php
-namespace App\Repositories;
+<?php namespace App\Repositories;
 
 use App\Interfaces\ReviewImageRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;
@@ -21,16 +20,17 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
     public function makeSingleReviewData($data, $singleData): array
     {
         $singleReviewData = [];
-        $singleReviewData['customer_id']    = json_decode($data['customer_id']);
-        $singleReviewData['partner_id']     = json_decode($data['partner_id']);
-        $singleReviewData['product_id']     = $singleData->product_id ?? null;
-        $singleReviewData['order_sku_id']   = $singleData->order_sku_id ?? null;
-        $singleReviewData['review_title']   = $singleData->review_title ?? null;
-        $singleReviewData['review_details'] = $singleData->review_details ?? null;
-        $singleReviewData['rating']         = $singleData->rating ?? 5;
-        $singleReviewData['category_id']    = $singleData->category_id ?? null;
-        $singleReviewData['created_by_name'] = $data['created_by_name'];
-        $singleReviewData['created_at'] = $data['created_at'];
+        $singleReviewData['customer_id']        = json_decode($data['customer_id']);
+        $singleReviewData['partner_id']         = json_decode($data['partner_id']);
+        $singleReviewData['product_id']         = $singleData->product_id ?? null;
+        $singleReviewData['order_sku_id']       = $singleData->order_sku_id ?? null;
+        $singleReviewData['review_title']       = $singleData->review_title ?? null;
+        $singleReviewData['review_details']     = $singleData->review_details ?? null;
+        $singleReviewData['rating']             = $singleData->rating ?? 5;
+        $singleReviewData['category_id']        = $singleData->category_id ?? null;
+        $singleReviewData['images']             = $singleData->images ?? [];
+        $singleReviewData['created_by_name']    = $data['created_by_name'];
+        $singleReviewData['created_at']         = $data['created_at'];
         return $singleReviewData;
     }
 

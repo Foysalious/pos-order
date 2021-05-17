@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\OrderReviewController;
+use App\Http\Controllers\ReviewController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OrderController;
@@ -28,6 +28,6 @@ Route::group(['prefix'=>'v1'], function(){
         Route::post('update-status', [OrderController::class, 'updateStatus']);
     });
     Route::apiResource('payments', PaymentController::class);
-    Route::post('customers/{customer}/orders/{order}/review', [OrderReviewController::class, 'store']);
-    Route::get('products/{product}/reviews', [OrderReviewController::class, 'index']);
+    Route::post('customers/{customer}/orders/{order}/review', [ReviewController::class, 'store']);
+    Route::get('products/{product}/reviews', [ReviewController::class, 'index']);
 });
