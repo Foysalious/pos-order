@@ -25,6 +25,11 @@ class Order extends BaseModel
     private $due;
     private $paid;
 
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class, 'customer_id', 'id');
+    }
+
     public function items()
     {
         return $this->hasMany(OrderSku::class);
