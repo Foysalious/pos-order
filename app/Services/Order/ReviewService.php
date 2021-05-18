@@ -37,8 +37,8 @@ class ReviewService extends BaseService
 
         $this->reviewCreator->setOrderId($order_id)
             ->setCustomerId($customer_id)
-            ->setPartnerId($request->review['partner_id'])
-            ->setReview($request->review['review'])
+            ->setPartnerId($request->partner_id)
+            ->setReview($request->review)
             ->setReviewImages($request->review_images)
             ->create();
 
