@@ -79,10 +79,14 @@ class OrderService extends BaseService
         return $this->success('Successful', null, 200, true);
     }
 
-    public function checkOrderExists($order_id)
+    public function getOrderWithChannel($order_id)
     {
         $orderDetails = $this->orderRepositoryInterface->find($order_id);
         if(!$orderDetails) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
-        return $this->success('Success', ['order_id' => $orderDetails->id], 200, true);
+        $order = [
+            'id' => $orderDetails->id,
+            'sales_channel' => $orderDetails->sales_channel_id == 1 ? 'pos' : 'webstore'
+        ];
+        return $this->success('Success', ['order' => $order], 200, true);
     }
 }

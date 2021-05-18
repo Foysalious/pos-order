@@ -87,8 +87,8 @@ class OrderController extends Controller
         return $this->orderService->delete($partner_id, $id);
     }
 
-    public function checkOrderExists($order_id)
+    public function getOrderWithChannel($order_id)
     {
-        return $this->orderService->checkOrderExists($order_id);
+        return $this->orderService->getOrderWithChannel($order_id);
     }
 }

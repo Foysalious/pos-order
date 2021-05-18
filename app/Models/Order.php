@@ -34,6 +34,11 @@ class Order extends BaseModel
         return $this->hasMany(OrderPayment::class);
     }
 
+    public function channel()
+    {
+        return $this->belongsTo(Channel::class);
+    }
+
     public function calculate()
     {
         $this->_calculateThisItems();

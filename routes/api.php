@@ -23,7 +23,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 Route::group(['prefix'=>'v1'], function(){
     Route::apiResource('partners.orders', OrderController::class);
-    Route::get('check-order', [OrderController::class, 'checkOrderExists']);
+    Route::get('order-channel/{order_id}', [OrderController::class, 'getOrderWithChannel']);
     Route::group(['prefix' => 'partners/{partner}/orders/{order}'], function () {
         Route::post('update-status', [OrderController::class, 'updateStatus']);
     });
