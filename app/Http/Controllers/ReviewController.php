@@ -1,12 +1,9 @@
-<?php
+<?php namespace App\Http\Controllers;
 
-namespace App\Http\Controllers;
-
-use App\Models\Review;
 use App\Services\Order\ReviewService;
 use Illuminate\Http\Request;
 
-class OrderReviewController extends Controller
+class ReviewController extends Controller
 {
     protected $reviewService;
 
@@ -17,7 +14,9 @@ class OrderReviewController extends Controller
 
     public function index(Request $request, $product_id)
     {
-        return $this->reviewService->getProductReviews($request, $product_id);
+        $rating = $request->rating;
+        $orderBy = $request->order_by;
+        return $this->reviewService->getProductReviews($request,$rating,$orderBy, $product_id);
     }
     /**
      * Store a newly created resource in storage.

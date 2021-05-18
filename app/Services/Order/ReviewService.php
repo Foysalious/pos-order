@@ -1,17 +1,10 @@
-<?php
-
-
-namespace App\Services\Order;
-
+<?php namespace App\Services\Order;
 
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;
 use App\Services\BaseService;
 use App\Services\FileManagers\CdnFileManager;
 use App\Services\FileManagers\FileManager;
-use Illuminate\Support\Str;
-use Illuminate\Http\UploadedFile;
-use Symfony\Component\HttpFoundation\File\File;
 use App\Http\Resources\ReviewResource;
 
 class ReviewService extends BaseService
@@ -29,10 +22,10 @@ class ReviewService extends BaseService
         $this->reviewCreator = $reviewCreator;
     }
 
-    public function getProductReviews($request, $product_id) :object
+    public function getProductReviews($request,$rating,$orderBy, $product_id) :object
     {
         list($offset, $limit) = calculatePagination($request);
-        $reviews = ReviewResource::collection($this->reviewRepositoryInterface->getReviews($offset, $limit, $product_id,$request));
+        $reviews = ReviewResource::collection($this->reviewRepositoryInterface->getReviews($offset, $limit, $product_id,$rating,$orderBy));
         if(count($reviews) == 0) return $this->error('এই প্রোডাক্ট এর জন্য কোন রিভিউ পাওয়া যায় নি', 404);
         return $this->success('Successful', ['reviews' => $reviews], 200);
     }
@@ -44,8 +37,8 @@ class ReviewService extends BaseService
 
         $this->reviewCreator->setOrderId($order_id)
             ->setCustomerId($customer_id)
-            ->setPartnerId($request->review['partner_id'])
-            ->setReview($request->review['review'])
+            ->setPartnerId($request->partner_id)
+            ->setReview($request->review)
             ->setReviewImages($request->review_images)
             ->create();
 
