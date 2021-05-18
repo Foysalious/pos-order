@@ -24,6 +24,36 @@ class ReviewController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
+    /**
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\JsonResponse
+     *
+     * @OA\Post(
+     *      path="/api/v1/customers/{customer}/orders/{order}/review",
+     *      operationId="creatingreview",
+     *      tags={"REVIEW CREATE API"},
+     *      summary="To create a review of an order",
+     *      description="creating review of an order",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\Schema (ref="{}")
+     *      ),
+     *      @OA\Response(
+     *          response=201,
+     *          description="Successful operation",
+     *          @OA\JsonContent(ref="")
+     *       ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Unauthenticated",
+     *      ),
+     *      @OA\Response(
+     *          response=403,
+     *          description="Forbidden"
+     *      )
+     *     )
+     */
     public function store(Request $request, $customer_id, $order_id)
     {
         return $this->reviewService->create($request, $customer_id, $order_id);

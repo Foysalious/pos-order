@@ -14,19 +14,24 @@ class OrderService extends BaseService
 {
     protected $orderRepositoryInterface;
     protected $orderSkusRepositoryInterface;
-    protected $updater;
+    protected $updater, $orderSearch;
 
-    public function __construct(OrderRepositoryInterface $orderRepositoryInterface, OrderSkusRepositoryInterface $orderSkusRepositoryInterface, Updater $updater)
+    public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
+                                OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
+                                OrderSearch $orderSearch,
+                                Updater $updater)
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->updater = $updater;
+        $this->orderSearch = $orderSearch;
     }
 
     public function getOrderList($partner_id, $request)
     {
         list($offset, $limit) = calculatePagination($request);
-        $getOrderList = $this->orderRepositoryInterface->getOrderListWithOffsetLimitAndPartner($offset, $limit, $partner_id);
+        $orderSearch = $this->orderSearch->setOrderId($request->order_id)->setCustomerName($request->customer_name)->setQueryString($request->q);
+        $getOrderList = $this->orderRepositoryInterface->getOrderListWithOffsetLimitAndPartner($offset, $limit, $partner_id, $orderSearch);
         $orderList = OrderResource::collection($getOrderList);
         if(!$orderList) return $this->error('অর্ডারটি পাওয়া যায় নি ', 404);
         else return $this->success('Success', ['orderList' => $orderList], 200, true);
