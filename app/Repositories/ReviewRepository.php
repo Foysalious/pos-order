@@ -34,27 +34,31 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         return $singleReviewData;
     }
 
-    private function generateImageFrom64base($index, $reviewSingleImage) : string
+    private function generateImageFrom64base($reviewIndex, $reviewSingleImage, $reviewIndexFromImageName) : string
     {
-        $reviewImageIndex = $reviewSingleImage['review_index']; // receiving filename like review_images[0][0]. So, we need array first index to identify which SKU review is processing now
-        if($reviewImageIndex == $index) // if review first index (review is coming as array. review_images first index indicating review index) is equal to our review index then we will save that for that review
+        if($reviewIndexFromImageName == $reviewIndex) // if review first index (review is coming as array. review_images first index indicating review index) is equal to our review index then we will save that for that review
         {
             $randomImageFile = $this->uniqueFileNameFor64base(generateRandomFileName(15)) . '_review_image' . '.png'; // 64 base has no file name. So, we have to create it.
-            file_put_contents($randomImageFile, base64_decode($reviewSingleImage['file'])); // put that image into local storage
+            is_array($reviewSingleImage) ? (file_put_contents($randomImageFile, base64_decode($reviewSingleImage[0]))) : file_put_contents($randomImageFile, base64_decode($reviewSingleImage)); // put that image into local storage
             $reviewImageUrl = $this->saveFileToCDN($randomImageFile, reviewImageFolder(), $randomImageFile);
             unlink($randomImageFile); // remove local image after saving in CDN
             return $reviewImageUrl;
         }
     }
 
-    public function saveReviewImages($reviewIndex, $imageList, $review_id)
+    private function getReviewIndexFromImageName($imageName) : int
     {
-        for($i = 0; $i < count($imageList); $i++)
+        preg_match('#\[(.*?)\]#', $imageName, $match);
+        return (int)$match[1];
+    }
+
+    public function saveReviewImages($reviewIndex, $reviewImageList, $review_id)
+    {
+        foreach ($reviewImageList as $imageName => $imageFile)
         {
-            $reviewIndexFromSingleImage = $imageList[$i]['review_index'];
-            if($reviewIndexFromSingleImage == $reviewIndex)
-            {
-                $reviewImageUrl = $this->generateImageFrom64base($reviewIndex, $imageList[$i]) ?? '';
+            $reviewIndexFromSingleImage = is_numeric($imageName) ? $imageName : $this->getReviewIndexFromImageName($imageName);
+            if($reviewIndexFromSingleImage == $reviewIndex) {
+                $reviewImageUrl = $this->generateImageFrom64base($reviewIndex, $imageFile, $reviewIndexFromSingleImage) ?? '';
                 if($reviewImageUrl != '') {
                     $makeReviewImageData['review_id'] = $review_id;
                     $makeReviewImageData['image_link'] = $reviewImageUrl;
@@ -77,7 +81,7 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         }
     }
 
-       public function getReviews($offset, $limit, $product_id, $rating, $orderBy)
+    public function getReviews($offset, $limit, $product_id, $rating, $orderBy)
     {
         if(!$orderBy)
             $orderBy = 'desc';
