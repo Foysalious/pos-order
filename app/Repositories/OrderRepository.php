@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Repositories;
+<?php namespace App\Repositories;
 
 use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Order;
@@ -26,10 +24,12 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
             return $query->where('partner_wise_order_id', $order_id);
         })->when($sales_channel_id, function ($query) use ($sales_channel_id) {
             return $query->where('sales_channel_id', $sales_channel_id);
-        })->when($query_string, function ($query) use ($query_string){
-            return $query->orWhere('delivery_name', 'LIKE', '%'.$query_string.'%')
-                         ->orWhere('delivery_mobile', 'LIKE', '%'.$query_string.'%')
-                         ->orWhere('delivery_address', 'LIKE', '%'.$query_string.'%');
+        })->when($query_string, function ($query) use ($query_string) {
+            $query->where(function ($whereQuery) use ($query_string) {
+                $whereQuery->where('delivery_name', 'LIKE', '%'.$query_string.'%')
+                    ->orWhere('delivery_mobile', 'LIKE', '%'.$query_string.'%')
+                    ->orWhere('delivery_address', 'LIKE', '%'.$query_string.'%');
+            });
         });
         return $queryOrderList->offset($offset)->limit($limit)->latest()->get();
     }
