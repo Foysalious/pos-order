@@ -45,10 +45,6 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
             unlink($randomImageFile); // remove local image after saving in CDN
             return $reviewImageUrl;
         }
-        else
-        {
-            return '';
-        }
     }
 
     public function saveReviewImages($reviewIndex, $imageList, $review_id)
@@ -56,8 +52,9 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         for($i = 0; $i < count($imageList); $i++)
         {
             $reviewIndexFromSingleImage = $imageList[$i]['review_index'];
-            if($reviewIndexFromSingleImage == $reviewIndex) {
-                $reviewImageUrl = $this->generateImageFrom64base($reviewIndex, $imageList[$i]);
+            if($reviewIndexFromSingleImage == $reviewIndex)
+            {
+                $reviewImageUrl = $this->generateImageFrom64base($reviewIndex, $imageList[$i]) ?? '';
                 if($reviewImageUrl != '') {
                     $makeReviewImageData['review_id'] = $review_id;
                     $makeReviewImageData['image_link'] = $reviewImageUrl;
@@ -70,7 +67,6 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
     public function createReview($data)
     {
         $reviewList = $data['review'];
-        $reviewList = json_decode(str_replace("'", '"', $reviewList));
         $reviewImageList = $data['review_images'] ?? [];
 
         for ($i = 0; $i < count($reviewList); $i++)
