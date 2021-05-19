@@ -2,7 +2,25 @@
 
 class OrderSearch
 {
-    protected $order_id, $customer_name, $query_string;
+    protected $order_id, $customer_name, $query_string, $sales_channel_id;
+
+    /**
+     * @return mixed
+     */
+    public function getSalesChannelId()
+    {
+        return $this->sales_channel_id;
+    }
+
+    /**
+     * @param mixed $sales_channel_id
+     * @return OrderSearch
+     */
+    public function setSalesChannelId($sales_channel_id)
+    {
+        $this->sales_channel_id = $sales_channel_id;
+        return $this;
+    }
 
     /**
      * @return mixed
