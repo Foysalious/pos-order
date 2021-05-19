@@ -30,7 +30,7 @@ class OrderService extends BaseService
     public function getOrderList($partner_id, $request)
     {
         list($offset, $limit) = calculatePagination($request);
-        $orderSearch = $this->orderSearch->setOrderId($request->order_id)->setCustomerName($request->customer_name)->setQueryString($request->q);
+        $orderSearch = $this->orderSearch->setOrderId($request->order_id)->setCustomerName($request->customer_name)->setQueryString($request->q)->setSalesChannel($request->sales_channel);
         $getOrderList = $this->orderRepositoryInterface->getOrderListWithOffsetLimitAndPartner($offset, $limit, $partner_id, $orderSearch);
         $orderList = OrderResource::collection($getOrderList);
         if(!$orderList) return $this->error('অর্ডারটি পাওয়া যায় নি ', 404);
