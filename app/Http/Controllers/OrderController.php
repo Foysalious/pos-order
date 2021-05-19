@@ -28,6 +28,29 @@ class OrderController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
+
+    /**
+     * @OA\Get(
+     *      path="/api/v1/partners/{partner}/orders",
+     *      operationId="getOrders",
+     *      tags={"ORDER LIST API"},
+     *      summary="Api to get all orders",
+     *      description="Return all orders with searching parameters",
+     *      @OA\Response(
+     *          response=200,
+     *          description="Successful operation",
+     *          @OA\JsonContent(ref="")
+     *       ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Unauthenticated",
+     *      ),
+     *      @OA\Response(
+     *          response=403,
+     *          description="Forbidden"
+     *      )
+     *     )
+     */
     public function index($partner_id, Request $request)
     {
         return $this->orderService->getOrderList($partner_id, $request);
