@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Repositories;
+<?php namespace App\Repositories;
 
 use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Order;
@@ -13,7 +11,7 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
         parent::__construct($model);
     }
 
-    public function getOrderListWithOffsetLimitAndPartner($offset, $limit, $partner_id, $orderSearch)
+    public function getOrderListWithPagination($offset, $limit, $partner_id, $orderSearch)
     {
         $order_id = $orderSearch->getOrderId();
         $customer_name = $orderSearch->getCustomerName();

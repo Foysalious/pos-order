@@ -3,5 +3,5 @@
 
 interface OrderRepositoryInterface extends BaseRepositoryInterface
 {
-    public function getOrderListWithOffsetLimitAndPartner($offset, $limit, $partner_id, $orderSearch);
+    public function getOrderListWithPagination($offset, $limit, $partner_id, $orderSearch);
 }
