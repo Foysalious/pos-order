@@ -15,7 +15,7 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
     {
         $order_id = $orderSearch->getOrderId();
         $customer_name = $orderSearch->getCustomerName();
-        $query_string = $orderSearch->getQueryString();
+//        $query_string = $orderSearch->getQueryString();
         $sales_channel_id = $orderSearch->getSalesChannelId();
 
         $queryOrderList = $this->model->where('partner_id', $partner_id)->whereHas('customer', function ($query) use ($customer_name) {

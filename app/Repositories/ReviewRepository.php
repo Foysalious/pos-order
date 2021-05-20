@@ -17,11 +17,12 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         parent::__construct($model);
     }
 
-    public function makeSingleReviewData($data, $singleData): array
+    public function makeSingleReviewData($data, $reviewData): array
     {
+        $singleData = json_decode($reviewData);
         $singleReviewData = [];
-        $singleReviewData['customer_id']        = json_decode($data['customer_id']);
-        $singleReviewData['partner_id']         = json_decode($data['partner_id']);
+        $singleReviewData['customer_id']        = $data['customer_id'];
+        $singleReviewData['partner_id']         = $data['partner_id'];
         $singleReviewData['product_id']         = $singleData->product_id ?? null;
         $singleReviewData['order_sku_id']       = $singleData->order_sku_id ?? null;
         $singleReviewData['review_title']       = $singleData->review_title ?? null;
@@ -52,18 +53,35 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         return (int)$match[1];
     }
 
-    public function saveReviewImages($reviewIndex, $reviewImageList, $review_id)
+    private function insertReviewImages($reviewIndex, $imageFile, $reviewIndexFromSingleImage, $review_id)
+    {
+        $reviewImageUrl = $this->generateImageFrom64base($reviewIndex, $imageFile, $reviewIndexFromSingleImage) ?? '';
+        $makeReviewImageData['review_id'] = $review_id;
+        $makeReviewImageData['image_link'] = $reviewImageUrl;
+        $this->reviewImageRepositoryInterface->insert($makeReviewImageData);
+    }
+
+    private function getReviewImagesFromArray($subImageList, $reviewIndex, $reviewIndexFromSingleImage, $review_id)
+    {
+        for($i = 0 ; $i < count($subImageList); $i++) {
+            if($reviewIndex == $reviewIndexFromSingleImage)
+                $this->insertReviewImages($reviewIndex, $subImageList[$i], $reviewIndexFromSingleImage, $review_id);
+        }
+    }
+
+    public function getReviewImages($reviewIndex, $reviewImageList, $review_id)
     {
         foreach ($reviewImageList as $imageName => $imageFile)
         {
-            $reviewIndexFromSingleImage = is_numeric($imageName) ? $imageName : $this->getReviewIndexFromImageName($imageName);
-            if($reviewIndexFromSingleImage == $reviewIndex) {
-                $reviewImageUrl = $this->generateImageFrom64base($reviewIndex, $imageFile, $reviewIndexFromSingleImage) ?? '';
-                if($reviewImageUrl != '') {
-                    $makeReviewImageData['review_id'] = $review_id;
-                    $makeReviewImageData['image_link'] = $reviewImageUrl;
-                    $this->reviewImageRepositoryInterface->insert($makeReviewImageData);
-                }
+            $reviewIndexFromSingleImage = null;
+            if(is_array($imageFile) && $imageFile[0]) {
+                $reviewIndexFromSingleImage = $imageName;
+                $this->getReviewImagesFromArray($imageFile, $reviewIndex, $reviewIndexFromSingleImage, $review_id);
+            }
+            else if(!is_array($imageFile)){
+                $reviewIndexFromSingleImage = $this->getReviewIndexFromImageName($imageName);
+                if($reviewIndexFromSingleImage == $reviewIndex)
+                $this->insertReviewImages($reviewIndex, $imageFile, $reviewIndexFromSingleImage, $review_id);
             }
         }
     }
@@ -77,7 +95,7 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         {
             $singleReviewData = $this->makeSingleReviewData($data, $reviewList[$i]);
             $review = $this->create($singleReviewData);
-            if(count($reviewImageList) > 0) $this->saveReviewImages($i, $reviewImageList, $review->id);
+            if(count($reviewImageList) > 0) $this->getReviewImages($i, $reviewImageList, $review->id);
         }
     }
 

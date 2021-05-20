@@ -56,6 +56,6 @@ class ReviewController extends Controller
      */
     public function store(Request $request, $customer_id, $order_id)
     {
-        return $this->reviewService->create($request, $customer_id, $order_id);
+        return $this->reviewService->create($request, (int)$customer_id, (int)$order_id);
     }
 }
