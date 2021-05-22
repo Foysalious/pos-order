@@ -12,10 +12,10 @@ use App\Services\Order\StatusChanger;
 use App\Traits\ResponseAPI;
 
 
-
 class OrderController extends Controller
 {
     use ResponseAPI;
+
     protected $orderService;
 
     public function __construct(OrderService $orderService)
@@ -39,13 +39,14 @@ class OrderController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function store($partner,Request $request, Creator $creator)
+    public function store($partner, Request $request, Creator $creator)
     {
         $creator->setPartner($partner)->setData($request->all());
-        return $creator->create();
+        $creator->create();
+
     }
 
-    public function updateStatus($partner,Request $request,StatusChanger $statusChanger)
+    public function updateStatus($partner, Request $request, StatusChanger $statusChanger)
     {
         $order = Order::find($request->order);
         return $statusChanger->setOrder($order)->setStatus($request->status)->changeStatus();
