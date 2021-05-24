@@ -26,7 +26,7 @@ class ReviewService extends BaseService
     {
         list($offset, $limit) = calculatePagination($request);
         $reviews = ReviewResource::collection($this->reviewRepositoryInterface->getReviews($offset, $limit, $product_id,$rating,$orderBy));
-        if(count($reviews) == 0) return $this->error('এই প্রোডাক্ট এর জন্য কোন রিভিউ পাওয়া যায় নি', 404);
+        if(count($reviews) == 0) return $this->error('No Review Found For This Product', 404);
         return $this->success('Successful', ['reviews' => $reviews], 200);
     }
 
