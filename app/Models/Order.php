@@ -3,27 +3,28 @@
 use App\Services\EMI\Calculations;
 use App\Services\Order\Constants\PaymentStatuses;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Services\PaymentLink\Target;
+use App\Services\PaymentLink\Constants\TargetType;
 use function App\Helper\Formatters\formatTakaToDecimal;
 
 class Order extends BaseModel
 {
     use HasFactory;
     protected $guarded = ['id'];
-    private $totalDiscount;
-    private $totalItemDiscount;
-    private $appliedDiscount;
-    private $totalBill;
-    private $originalTotal;
-    private $interest;
-    private $bank_transaction_charge;
-    private $netBill;
-    private $delivery_charge;
-    private $isCalculated;
-    private $totalPrice;
-    private $totalVat;
-    private $paymentStatus;
-    private $due;
-    private $paid;
+    public $totalDiscount;
+    public $totalItemDiscount;
+    public $appliedDiscount;
+    public $totalBill;
+    public $originalTotal;
+    public $interest;
+    public $bank_transaction_charge;
+    public $netBill;
+    public $isCalculated;
+    public $totalPrice;
+    public $totalVat;
+    public $paymentStatus;
+    public $due;
+    public $paid;
 
     public function customer()
     {
@@ -74,6 +75,7 @@ class Order extends BaseModel
         $this->totalVat = formatTakaToDecimal($this->totalVat);
         $this->totalItemDiscount = formatTakaToDecimal($this->totalItemDiscount);
         $this->totalBill = formatTakaToDecimal($this->totalBill);
+        $this->due = formatTakaToDecimal($this->due);
         return $this;
     }
 
@@ -168,4 +170,8 @@ class Order extends BaseModel
         return $this->discountAmount;
     }
 
+    public function getPaymentLinkTarget()
+    {
+        return new Target(TargetType::POS_ORDER, $this->id);
+    }
 }

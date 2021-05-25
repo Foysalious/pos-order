@@ -76,7 +76,18 @@ class OrderController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * * @OA\Get(
+     *      path="/api/v1/partners/{partner}/orders/{order}",
+     *      operationId="getOrderDetail",
+     *      tags={"ORDER LIST API"},
+     *      summary="Get an order details",
+     *      description="Return all orders with searching parameters",
+     *      @OA\Parameter(name="partner", description="partner id", required=true, in="path", @OA\Schema(type="integer")),
+     *      @OA\Parameter(name="order", description="order id", required=true, in="path", @OA\Schema(type="integer")),
+     *      @OA\Response(response=200, description="Successful operation", @OA\JsonContent(ref="")),
+     *      @OA\Response(response=404, description="message: কঅর্ডারটি পাওয়া যায় নি"),
+     *      @OA\Response(response=403, description="Forbidden")
+     *     )
      *
      * @param int $id
      * @return \Illuminate\Http\JsonResponse

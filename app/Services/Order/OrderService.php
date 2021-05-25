@@ -9,6 +9,8 @@ use App\Http\Resources\OrderWithProductResource;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Services\BaseService;
+use App\Services\PaymentLink\Constants\TargetType;
+use App\Services\PaymentLink\Target;
 
 class OrderService extends BaseService
 {
@@ -39,13 +41,15 @@ class OrderService extends BaseService
 
     public function getOrderDetails($partner_id, $order_id)
     {
-            $orderDetails = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
-            if(!$orderDetails) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
-
-            $order = $orderDetails;
-            $order->items = $orderDetails->items;
-            $order = new OrderWithProductResource($orderDetails);
-            return $this->success('Success', ['order' => $order], 200, true);
+            $order = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
+            if(!$order) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
+            $order->calculate();
+            if($order->due > 0){
+                $payment_link_target = $order->getPaymentLinkTarget();
+                //need to get link list here
+            }
+            $resource = new OrderWithProductResource($order);
+            return $this->success('Success', ['order' => $resource], 200, true);
     }
 
     public function update($orderUpdateRequest, $partner_id, $order_id)
