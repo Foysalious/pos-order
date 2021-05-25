@@ -78,11 +78,6 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
                 $reviewIndexFromSingleImage = $imageName;
                 $this->getReviewImagesFromArray($imageFile, $reviewIndex, $reviewIndexFromSingleImage, $review_id);
             }
-            else if(!is_array($imageFile)){
-                $reviewIndexFromSingleImage = $this->getReviewIndexFromImageName($imageName);
-                if($reviewIndexFromSingleImage == $reviewIndex)
-                $this->insertReviewImages($reviewIndex, $imageFile, $reviewIndexFromSingleImage, $review_id);
-            }
         }
     }
 
