@@ -30,7 +30,8 @@ class OrderResource extends JsonResource
             'delivery_mobile'         => $this->delivery_mobile,
             'delivery_address'        => $this->delivery_address,
             'note'                    => $this->note,
-            'voucher_id'              => $this->voucher_id
+            'voucher_id'              => $this->voucher_id,
+            'payment_status'          => $this->closed_and_paid_at
         ];
     }
 }
