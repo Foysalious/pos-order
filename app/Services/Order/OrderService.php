@@ -32,7 +32,7 @@ class OrderService extends BaseService
         $orderFilter = $this->orderFilter->setType($request->type)->setOrderStatus($request->order_status)->setPaymentStatus($request->payment_status);
         $getOrderList = $this->orderRepositoryInterface->getOrderListWithPagination($offset, $limit, $partner_id, $orderSearch, $orderFilter);
         $orderList = OrderResource::collection($getOrderList);
-        if(!$orderList) return $this->error('অর্ডারটি পাওয়া যায় নি ', 404);
+        if(!$orderList) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
         else return $this->success('Success', ['orderList' => $orderList], 200, true);
     }
 
