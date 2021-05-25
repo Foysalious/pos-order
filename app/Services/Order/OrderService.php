@@ -1,8 +1,4 @@
-<?php
-
-
-namespace App\Services\Order;
-
+<?php namespace App\Services\Order;
 
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderWithProductResource;
@@ -14,24 +10,27 @@ class OrderService extends BaseService
 {
     protected $orderRepositoryInterface;
     protected $orderSkusRepositoryInterface;
-    protected $updater, $orderSearch;
+    protected $updater, $orderSearch, $orderFilter;
 
     public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
                                 OrderSearch $orderSearch,
+                                OrderFilter $orderFilter,
                                 Updater $updater)
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->updater = $updater;
         $this->orderSearch = $orderSearch;
+        $this->orderFilter = $orderFilter;
     }
 
     public function getOrderList($partner_id, $request)
     {
         list($offset, $limit) = calculatePagination($request);
         $orderSearch = $this->orderSearch->setOrderId($request->order_id)->setCustomerName($request->customer_name)->setQueryString($request->q)->setSalesChannelId($request->sales_channel_id);
-        $getOrderList = $this->orderRepositoryInterface->getOrderListWithPagination($offset, $limit, $partner_id, $orderSearch);
+        $orderFilter = $this->orderFilter->setType($request->type);
+        $getOrderList = $this->orderRepositoryInterface->getOrderListWithPagination($offset, $limit, $partner_id, $orderSearch, $orderFilter);
         $orderList = OrderResource::collection($getOrderList);
         if(!$orderList) return $this->error('অর্ডারটি পাওয়া যায় নি ', 404);
         else return $this->success('Success', ['orderList' => $orderList], 200, true);
@@ -39,13 +38,13 @@ class OrderService extends BaseService
 
     public function getOrderDetails($partner_id, $order_id)
     {
-            $orderDetails = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
-            if(!$orderDetails) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
+        $orderDetails = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
+        if(!$orderDetails) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
 
-            $order = $orderDetails;
-            $order->items = $orderDetails->items;
-            $order = new OrderWithProductResource($orderDetails);
-            return $this->success('Success', ['order' => $order], 200, true);
+        $order = $orderDetails;
+        $order->items = $orderDetails->items;
+        $order = new OrderWithProductResource($orderDetails);
+        return $this->success('Success', ['order' => $order], 200, true);
     }
 
     public function update($orderUpdateRequest, $partner_id, $order_id)
