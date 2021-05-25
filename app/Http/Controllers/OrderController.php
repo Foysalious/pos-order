@@ -35,15 +35,61 @@ class OrderController extends Controller
      *      operationId="getOrders",
      *      tags={"ORDER LIST API"},
      *      summary="Api to get all orders",
-     *      description="Return all orders with searching parameters",
+     *      description="Return all orders with searching and filtering parameters",
+     *      @OA\Parameter(name="payment_status",description="Payment Status",required=false,in="path", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="order_status",description="Order Status",required=false,in="path", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="customer_name",description="Customer Name",required=false,in="path", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="order_id",description="Order ID",required=false,in="path", @OA\Schema(type="Integer")),
+     *      @OA\Parameter(name="sales_channel_id",description="Sales Channel ID",required=false,in="path", @OA\Schema(type="IntegerInteger")),
+     *      @OA\Parameter(name="type",description="Type",required=false,in="path", @OA\Schema(type="String")),
      *      @OA\Response(
      *          response=200,
      *          description="Successful operation",
-     *          @OA\JsonContent(ref="")
-     *       ),
+     *          @OA\JsonContent(
+     *              type="object", example={
+     *              "message": "Successful",
+     *              "orderList": {{
+     *                  "id": 2000038,
+     *                  "previous_order_id": null,
+     *                  "partner_wise_order_id": 21,
+     *                  "customer_id": 1,
+     *                  "status": "Completed",
+     *                  "sales_channel_id": 1,
+     *                  "emi_month": null,
+     *                  "interest": null,
+     *                  "delivery_charge": "0.00",
+     *                  "bank_transaction_charge": null,
+     *                  "delivery_name": "",
+     *                  "delivery_mobile": "",
+     *                  "delivery_address": "",
+     *                  "note": null,
+     *                  "voucher_id": null,
+     *                  "payment_status": null
+     *               },
+     *               {
+     *                  "id": 2000037,
+     *                  "previous_order_id": null,
+     *                  "partner_wise_order_id": 20,
+     *                  "customer_id": 1,
+     *                  "status": "Completed",
+     *                  "sales_channel_id": 1,
+     *                  "emi_month": null,
+     *                  "interest": null,
+     *                  "delivery_charge": "0.00",
+     *                  "bank_transaction_charge": null,
+     *                  "delivery_name": "",
+     *                  "delivery_mobile": "",
+     *                  "delivery_address": "",
+     *                  "note": null,
+     *                  "voucher_id": null,
+     *                  "payment_status": null
+     *               }
+     *               }
+     *              }
+     *          )),
      *      @OA\Response(
-     *          response=401,
-     *          description="Unauthenticated",
+     *          response=404,
+     *          description="Message: অর্ডারটি পাওয়া যায় নি ",
      *      ),
      *      @OA\Response(
      *          response=403,
