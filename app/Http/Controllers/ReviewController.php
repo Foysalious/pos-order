@@ -35,22 +35,25 @@ class ReviewController extends Controller
      *      tags={"REVIEW CREATE API"},
      *      summary="To create a review of an order",
      *      description="creating review of an order",
+     *      @OA\Parameter(name="customer",description="Customer ID",required=true,in="path", @OA\Schema(type="BigInteger")),
+     *      @OA\Parameter(name="order",description="Order ID",required=true,in="path", @OA\Schema(type="BigInteger")),
      *      @OA\RequestBody(
-     *          required=true,
-     *          @OA\Schema (ref="{}")
+     *          @OA\MediaType(mediaType="multipart/form-data",
+     *              @OA\Schema(
+     *                  @OA\Property(property="review[0]", type="JSON", @OA\Items(type="JSON")),
+     *                  @OA\Property(property="review_images[0][0]", type="file", @OA\Items(type="file")),
+     *                  required={"review[0]", "review_images[0][0]"}
+     *             )
+     *         )
      *      ),
      *      @OA\Response(
      *          response=201,
-     *          description="Successful operation",
-     *          @OA\JsonContent(ref="")
+     *          description="Successful"
      *       ),
      *      @OA\Response(
-     *          response=401,
-     *          description="Unauthenticated",
-     *      ),
-     *      @OA\Response(
-     *          response=403,
-     *          description="Forbidden"
+     *          response=404,
+     *          description="অর্ডারটি পাওয়া যায় নি",
+     *          @OA\JsonContent(ref="")
      *      )
      *     )
      */
