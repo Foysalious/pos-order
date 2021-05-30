@@ -101,8 +101,10 @@ class Creator
 
     private function sendOrderPlaceSmsToCustomer()
     {
+
+
         (new Sms())->msg("Hello From The Other Side")
-            ->to("01833309495")
+            ->to("8801715096710")
             ->shoot();
     }
 
@@ -118,6 +120,7 @@ class Creator
         $order_data['delivery_charge'] = isset($this->data['sales_channel_id']) && $this->data['sales_channel_id'] == SalesChannels::WEBSTORE ? $this->partner->delivery_charge : 0;;
         $order_data['status'] = $this->data['status'] ?? Statuses::PENDING;
         $this->sendOrderPlaceSmsToCustomer();
+
         $this->order = $this->orderRepositoryInterface->create($order_data);
 
 //        $this->createOrderSkus();
