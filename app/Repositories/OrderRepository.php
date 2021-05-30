@@ -2,6 +2,8 @@
 
 use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Order;
+use App\Services\Order\Constants\OrderTypes;
+use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\Constants\Statuses;
 
 class OrderRepository extends BaseRepository implements OrderRepositoryInterface
@@ -36,11 +38,11 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 
     private function getTypeFilterResult($type, $searchQueryResult)
     {
-        return $searchQueryResult->when($type == Statuses::ORDER_FILTER_TYPE['new'], function($query) use ($type){
+        return $searchQueryResult->when($type == OrderTypes::NEW, function($query) use ($type){
             return $query->where('status', Statuses::PENDING);
-        })->when($type == Statuses::ORDER_FILTER_TYPE['running'], function($query) use ($type){
+        })->when($type == OrderTypes::RUNNING, function($query) use ($type){
             return $query->whereIn('status', [Statuses::PROCESSING, Statuses::SHIPPED]);
-        })->when($type == Statuses::ORDER_FILTER_TYPE['completed'], function($query) use ($type){
+        })->when($type == OrderTypes::COMPLETED, function($query) use ($type){
             return $query->whereIn('status', [Statuses::COMPLETED, Statuses::CANCELLED, Statuses::DECLINED]);
         });
     }
@@ -54,9 +56,9 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 
     private function getPaymentStatusFilterResult($paymentStatus, $orderStatusFilterResult)
     {
-        return $orderStatusFilterResult->when($paymentStatus == Statuses::PAYMENT_STATUS['paid'], function($query) use ($paymentStatus){
+        return $orderStatusFilterResult->when($paymentStatus == PaymentStatuses::PAID, function($query) use ($paymentStatus){
             return $query->whereNotNull('closed_and_paid_at');
-        })->when($paymentStatus == Statuses::PAYMENT_STATUS['due'], function($query) use ($paymentStatus){
+        })->when($paymentStatus == PaymentStatuses::DUE, function($query) use ($paymentStatus){
             return $query->whereNull('closed_and_paid_at');
         });
     }
