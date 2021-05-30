@@ -26,14 +26,14 @@ class OrderFilterRequest extends FormRequest
     public function rules()
     {
         return [
-            'customer_name' => 'sometimes',
-            'payment_status' => Rule::in(Statuses::PAYMENT_STATUS),
-            'order_status'  => Rule::in(Statuses::DECLINED, Statuses::CANCELLED, Statuses::COMPLETED, Statuses::SHIPPED, Statuses::PROCESSING, Statuses::PENDING),
-            'order_id'  => 'sometimes',
-            'sales_channel_id' => 'sometimes',
-            'type' => Rule::in(Statuses::ORDER_FILTER_TYPE),
-            'offset' => 'numeric',
-            'limit'  => 'numeric'
+            'customer_name'     => 'sometimes',
+            'payment_status'    => Rule::in(Statuses::PAYMENT_STATUS),
+            'order_status'      => Rule::in(Statuses::DECLINED, Statuses::CANCELLED, Statuses::COMPLETED, Statuses::SHIPPED, Statuses::PROCESSING, Statuses::PENDING),
+            'order_id'          => 'sometimes',
+            'sales_channel_id'  => 'sometimes',
+            'type'              => Rule::in(Statuses::ORDER_FILTER_TYPE),
+            'offset'            => 'numeric',
+            'limit'             => 'numeric'
         ];
     }
 }

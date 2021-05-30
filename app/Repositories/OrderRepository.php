@@ -11,6 +11,14 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
         parent::__construct($model);
     }
 
+    public function getOrderListWithPagination($offset, $limit, $partner_id, $orderSearch, $orderFilter)
+    {
+        $searchQueryOrderList = $this->getSearchingQuery($partner_id, $orderSearch);
+        $filterQueryOrderList = $this->getFilteringQuery($orderFilter, $searchQueryOrderList);
+        $orderList = $filterQueryOrderList ? $filterQueryOrderList : $searchQueryOrderList;
+        return $orderList->offset($offset)->limit($limit)->latest()->get();
+    }
+
     private function getSearchingQuery($partner_id, $orderSearch)
     {
         $order_id = $orderSearch->getOrderId();
@@ -62,13 +70,5 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
         $typeFilterResult = $this->getTypeFilterResult($type, $searchQueryResult);
         $orderStatusFilterResult = $this->getOrderStatusFilterResult($orderStatus, $typeFilterResult);
         return $this->getPaymentStatusFilterResult($paymentStatus, $orderStatusFilterResult);
-    }
-
-    public function getOrderListWithPagination($offset, $limit, $partner_id, $orderSearch, $orderFilter)
-    {
-        $searchQueryOrderList = $this->getSearchingQuery($partner_id, $orderSearch);
-        $filterQueryOrderList = $this->getFilteringQuery($orderFilter, $searchQueryOrderList);
-        $orderList = $filterQueryOrderList ? $filterQueryOrderList : $searchQueryOrderList;
-        return $orderList->offset($offset)->limit($limit)->latest()->get();
     }
 }

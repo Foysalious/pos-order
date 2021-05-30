@@ -28,12 +28,19 @@ class OrderService extends BaseService
     public function getOrderList($partner_id, $request)
     {
         list($offset, $limit) = calculatePagination($request);
-        $orderSearch = $this->orderSearch->setOrderId($request->order_id)->setCustomerName($request->customer_name)->setQueryString($request->q)->setSalesChannelId($request->sales_channel_id);
-        $orderFilter = $this->orderFilter->setType($request->type)->setOrderStatus($request->order_status)->setPaymentStatus($request->payment_status);
-        $getOrderList = $this->orderRepositoryInterface->getOrderListWithPagination($offset, $limit, $partner_id, $orderSearch, $orderFilter);
-        $orderList = OrderResource::collection($getOrderList);
+        $orderSearch = $this->orderSearch->setOrderId($request->order_id)
+            ->setCustomerName($request->customer_name)
+            ->setQueryString($request->q)
+            ->setSalesChannelId($request->sales_channel_id);
+
+        $orderFilter = $this->orderFilter->setType($request->type)
+            ->setOrderStatus($request->order_status)
+            ->setPaymentStatus($request->payment_status);
+
+        $ordersList = $this->orderRepositoryInterface->getOrderListWithPagination($offset, $limit, $partner_id, $orderSearch, $orderFilter);
+        $orderList = OrderResource::collection($ordersList);
         if(!$orderList) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
-        else return $this->success('Success', ['orderList' => $orderList], 200, true);
+        else return $this->success('Success', ['orders' => $orderList], 200, true);
     }
 
     public function getOrderDetails($partner_id, $order_id)

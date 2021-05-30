@@ -42,7 +42,7 @@ class OrderController extends Controller
      *      @OA\Parameter(name="customer_name",description="Customer Name",required=false,in="path", @OA\Schema(type="String")),
      *      @OA\Parameter(name="order_id",description="Order ID",required=false,in="path", @OA\Schema(type="Integer")),
      *      @OA\Parameter(name="sales_channel_id",description="Sales Channel ID",required=false,in="path", @OA\Schema(type="IntegerInteger")),
-     *      @OA\Parameter(name="type",description="Type",required=false,in="path", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="type",description="Type",required=false,in="path", @OA\Schema(type="String", example={"new": "running", "pending": "Processing Shipped", "completed": "Completed Cancelled Declined"})),
      *      @OA\Response(
      *          response=200,
      *          description="Successful operation",
