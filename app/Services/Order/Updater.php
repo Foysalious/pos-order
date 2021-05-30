@@ -1,7 +1,4 @@
-<?php
-
-
-namespace App\Services\Order;
+<?php namespace App\Services\Order;
 
 
 use App\Interfaces\OrderRepositoryInterface;
@@ -187,6 +184,7 @@ class Updater
     {
         //$this->skus ? $this->orderSkusRepositoryInterface->updateOrderSkus($this->partner_id, json_decode($this->skus), $this->order_id) : null;
        // dd($this->makeData());
+        $this->orderLogCreator->setOrder($order)->create();
         return $this->orderRepositoryInterface->update($this->order, $this->makeData());
     }
 
