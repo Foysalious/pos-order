@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\OrderFilterRequest;
 use App\Http\Requests\OrderUpdateRequest;
 use App\Services\Order\OrderService;
 use Illuminate\Http\Request;
@@ -97,7 +98,7 @@ class OrderController extends Controller
      *      )
      *     )
      */
-    public function index($partner_id, Request $request)
+    public function index($partner_id, OrderFilterRequest $request)
     {
         return $this->orderService->getOrderList($partner_id, $request);
     }
