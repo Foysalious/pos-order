@@ -1,7 +1,4 @@
-<?php
-
-
-namespace App\Services\Order\Constants;
+<?php namespace App\Services\Order\Constants;
 
 
 use App\Helper\ConstGetter;

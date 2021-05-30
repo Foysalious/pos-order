@@ -1,7 +1,5 @@
 <?php namespace App\Http\Controllers;
 
-namespace App\Http\Controllers;
-
 use App\Http\Requests\OrderFilterRequest;
 use App\Http\Requests\OrderUpdateRequest;
 use App\Services\Order\OrderService;
