@@ -12,7 +12,4 @@ class Statuses
     const SHIPPED = 'Shipped';
     const COMPLETED = 'Completed';
     const CANCELLED = 'Cancelled';
-
-    const PAYMENT_STATUS = ['paid' => 'paid', 'due' => 'due'];
-    const ORDER_FILTER_TYPE = ['new' => 'new', 'running' => 'running', 'completed' => 'completed'];
 }
