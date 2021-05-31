@@ -11,13 +11,14 @@ class Updater
     protected $partner_id, $order_id, $customer_id, $status, $sales_channel_id, $emi_month, $interest, $delivery_charge;
     protected $bank_transaction_charge, $delivery_name, $delivery_mobile, $delivery_address, $note, $voucher_id;
     protected $skus, $order;
-
+    protected $orderLogCreator;
     protected $orderRepositoryInterface, $orderSkusRepositoryInterface;
 
-    public function __construct(OrderRepositoryInterface $orderRepositoryInterface, OrderSkusRepositoryInterface $orderSkusRepositoryInterface)
+    public function __construct(OrderRepositoryInterface $orderRepositoryInterface, OrderSkusRepositoryInterface $orderSkusRepositoryInterface, OrderLogCreator $orderLogCreator)
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
+        $this->orderLogCreator = $orderLogCreator;
     }
 
     /**
@@ -184,8 +185,10 @@ class Updater
     {
         //$this->skus ? $this->orderSkusRepositoryInterface->updateOrderSkus($this->partner_id, json_decode($this->skus), $this->order_id) : null;
        // dd($this->makeData());
-        $this->orderLogCreator->setOrder($order)->create();
-        return $this->orderRepositoryInterface->update($this->order, $this->makeData());
+        $this->orderRepositoryInterface->update($this->order, $this->makeData());
+        return $this->orderLogCreator->setExistingOrderData($this->order)
+            ->setChangedOrderData($this->makeData())
+            ->create();
     }
 
     public function makeData() : array
