@@ -79,7 +79,7 @@ class Order extends BaseModel
 
     private function _setPaymentStatus()
     {
-        $this->paymentStatus = ($this->due) ? PaymentStatuses::DUE : PaymentStatuses::PAID;
+        $this->paymentStatus = ($this->due) ? "Due" : "Paid";
         return $this;
     }
 

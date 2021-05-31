@@ -99,7 +99,7 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         if(!$orderBy)
             $orderBy = 'desc';
         $query=$this->model->where('product_id', $product_id);
-        if ($rating!=NULL) {
+        if (!empty($rating)) {
             $query= $query->where('rating', $rating);
         }
         return $query->orderBy('created_at', $orderBy)->offset($offset)->limit($limit)->get();
