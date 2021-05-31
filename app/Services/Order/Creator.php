@@ -101,8 +101,6 @@ class Creator
 
     private function sendOrderPlaceSmsToCustomer()
     {
-
-
         (new Sms())->msg("Hello From The Other Side")
             ->to("8801715096710")
             ->shoot();
