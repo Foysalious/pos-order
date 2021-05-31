@@ -70,6 +70,7 @@ class OrderService extends BaseService
         $orderDetails = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
         if(!$orderDetails) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
 
+        dd('updater');
         $this->updater->setPartnerId($partner_id)
             ->setOrderId($order_id)
             ->setOrder($orderDetails)

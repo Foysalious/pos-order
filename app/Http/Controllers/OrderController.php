@@ -3,6 +3,7 @@
 use App\Http\Requests\OrderFilterRequest;
 use App\Http\Requests\OrderUpdateRequest;
 use App\Services\Order\OrderService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Requests\OrderRequest;
 use App\Models\Order;
@@ -25,7 +26,7 @@ class OrderController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
 
     /**
@@ -104,8 +105,8 @@ class OrderController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param Request $request
+     * @return JsonResponse
      */
     public function store($partner, Request $request, Creator $creator)
     {
@@ -136,8 +137,8 @@ class OrderController extends Controller
      *      @OA\Response(response=403, description="Forbidden")
      *     )
      *
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
+     * @param int $order_id
+     * @return JsonResponse
      */
     public function show($partner_id, $order_id)
     {
@@ -146,14 +147,14 @@ class OrderController extends Controller
 
     /**
      * Update the specified resource in storage.
-     * @param $partner_id
+     * @param int $partner_id
      * @param OrderUpdateRequest $request
-     * @param $id
-     * @return \Illuminate\Http\JsonResponse
+     * @param int $order_id
+     * @return JsonResponse
      */
-    public function update(Request $request, $partner_id, $id)
+    public function update(Request $request, int $partner_id, int $order_id)
     {
-        return $this->orderService->update($request, $partner_id, $id);
+        return $this->orderService->update($request, $partner_id, $order_id);
     }
 
     /**
@@ -161,7 +162,7 @@ class OrderController extends Controller
      *
      * @param int $partner_id
      * @param int $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function destroy($partner_id, $id)
     {
