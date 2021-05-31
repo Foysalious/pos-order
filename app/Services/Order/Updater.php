@@ -184,11 +184,10 @@ class Updater
     public function update()
     {
         //$this->skus ? $this->orderSkusRepositoryInterface->updateOrderSkus($this->partner_id, json_decode($this->skus), $this->order_id) : null;
-       // dd($this->makeData());
+        //dd($this->makeData());
+        $this->orderLogCreator->setExistingOrderData($this->order)->setOrderId($this->order_id)->create();
         $this->orderRepositoryInterface->update($this->order, $this->makeData());
-        return $this->orderLogCreator->setExistingOrderData($this->order)
-            ->setChangedOrderData($this->makeData())
-            ->create();
+        $this->orderLogCreator->setChangedOrderData($this->orderRepositoryInterface->find($this->order->id))->setType($this->getTypeOfChangeLog())->create();
     }
 
     public function makeData() : array
@@ -206,5 +205,10 @@ class Updater
         if(isset($this->note)) $data['note'] = $this->note;
         if(isset($this->voucher_id)) $data['voucher_id'] = $this->voucher_id;
         return $data + $this->modificationFields(false, true);
+    }
+
+    private function getTypeOfChangeLog()
+    {
+        return 'products_and_prices';
     }
 }
