@@ -24,7 +24,7 @@ class ReviewResource extends JsonResource
             'rating'                => $this->rating,
             'category_id'           => $this->category_id,
             'partner_id'            => $this->partner_id,
-            'created_at'            =>$this->created_at,
+            'created_at'            =>$this->created_at->format('d-m-Y'),
             'customer_name'         =>$this->customer->name,
             'images'                => $this->images,
 
