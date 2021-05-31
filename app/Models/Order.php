@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\EMI\Calculations;
 use App\Services\Order\Constants\PaymentStatuses;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -173,5 +174,12 @@ class Order extends BaseModel
     public function getPaymentLinkTarget()
     {
         return new Target(TargetType::POS_ORDER, $this->id);
+    }
+
+    public function getVoucher()
+    {
+        return $this->discounts()->where('order_id', $this->id)
+                                ->where('type', DiscountTypes::VOUCHER)
+                                ->get();
     }
 }

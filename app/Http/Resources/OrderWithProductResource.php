@@ -44,6 +44,7 @@ class OrderWithProductResource extends JsonResource
                 'total_bill'        => $this->totalBill,
                 'totalDiscount'     => $this->totalDiscount,
                 'due'               => $this->due,
+                'promo'             => $this->getVoucher()->pluck('amount')->first(),
             ],
             'customer_info'           => $this->customer->only('name','phone','pro_pic'),
             'payment_info'            => $this->payments,
