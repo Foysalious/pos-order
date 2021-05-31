@@ -4,25 +4,33 @@ use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderWithProductResource;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
+use App\Interfaces\PaymentLinkRepositoryInterface;
+use App\Models\Order;
+use App\Models\OrderDiscount;
 use App\Services\BaseService;
+use App\Services\Discount\Constants\DiscountTypes;
 
 class OrderService extends BaseService
 {
     protected $orderRepositoryInterface;
     protected $orderSkusRepositoryInterface;
     protected $updater, $orderSearch, $orderFilter;
+    protected $paymentLinkRepository;
 
     public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
                                 OrderSearch $orderSearch,
                                 OrderFilter $orderFilter,
-                                Updater $updater)
+                                Updater $updater,
+                                PaymentLinkRepositoryInterface $paymentLinkRepository
+    )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->updater = $updater;
         $this->orderSearch = $orderSearch;
         $this->orderFilter = $orderFilter;
+        $this->paymentLinkRepository = $paymentLinkRepository;
     }
 
     public function getOrderList($partner_id, $request)
@@ -45,13 +53,16 @@ class OrderService extends BaseService
 
     public function getOrderDetails($partner_id, $order_id)
     {
-        $orderDetails = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
-        if(!$orderDetails) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
-
-        $order = $orderDetails;
-        $order->items = $orderDetails->items;
-        $order = new OrderWithProductResource($orderDetails);
-        return $this->success('Success', ['order' => $order], 200, true);
+        $order = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
+        if(!$order) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
+        $order->calculate();
+        $resource = new OrderWithProductResource($order);
+        if($order->due > 0){
+            $paymentLink = $this->getOrderPaymentLink($order);
+            if ($paymentLink)
+                $resource = $resource->getOrderDetailsWithPaymentLink($paymentLink);
+        }
+        return $this->success('Success', ['order' => $resource], 200, true);
     }
 
     public function update($orderUpdateRequest, $partner_id, $order_id)
@@ -99,5 +110,14 @@ class OrderService extends BaseService
             'sales_channel' => $orderDetails->sales_channel_id == 1 ? 'pos' : 'webstore'
         ];
         return $this->success('Success', ['order' => $order], 200, true);
+    }
+
+    public function getOrderPaymentLink(Order $order) {
+        $payment_link_target = $order->getPaymentLinkTarget();
+        $payment_link = $this->paymentLinkRepository->getActivePaymentLinkByPosOrder($payment_link_target);
+        if ($payment_link) {
+            return $payment_link;
+        } else
+            return false;
     }
 }
