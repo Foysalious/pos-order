@@ -186,8 +186,9 @@ class Updater
         //$this->skus ? $this->orderSkusRepositoryInterface->updateOrderSkus($this->partner_id, json_decode($this->skus), $this->order_id) : null;
        // dd($this->makeData());
         $this->orderRepositoryInterface->update($this->order, $this->makeData());
-        //dd($this->order);
-        return $this->orderLogCreator->setOrder($this->orderRepositoryInterface->find($this->order->id))->create();
+        return $this->orderLogCreator->setExistingOrderData($this->order)
+            ->setChangedOrderData($this->makeData())
+            ->create();
     }
 
     public function makeData() : array

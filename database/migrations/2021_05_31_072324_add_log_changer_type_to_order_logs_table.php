@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use App\Services\Order\Constants\OrderLogTypes;
 
-class AddTypeToOrderLogsTable extends Migration
+class AddLogChangerTypeToOrderLogsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -15,7 +15,7 @@ class AddTypeToOrderLogsTable extends Migration
     public function up()
     {
         Schema::table('order_logs', function (Blueprint $table) {
-            $table->enum('type', OrderLogTypes::get())->after('order_id')->default(OrderLogTypes::INIT);
+            $table->enum('type', OrderLogTypes::get())->after('order_id')->default(null);
         });
     }
 

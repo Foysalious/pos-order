@@ -1,23 +1,47 @@
 <?php namespace App\Services\Order;
 
 
-class orderLogCreator
+use App\Interfaces\OrderLogRepositoryInterface;
+
+class OrderLogCreator
 {
-    protected $order;
+    protected $existingOrder, $changedOrderData;
+    protected $orderLogRepositoryInterface;
+
+    public function __construct(OrderLogRepositoryInterface $orderLogRepositoryInterface)
+    {
+        $this->orderLogRepositoryInterface = $orderLogRepositoryInterface;
+    }
+
+    /**
+     * @param mixed $changedOrderData
+     * @return orderLogCreator
+     */
+    public function setChangedOrderData($changedOrderData)
+    {
+        $this->changedOrderData = $changedOrderData;
+        return $this;
+    }
 
     /**
      * @param mixed $order
      * @return orderLogCreator
      */
-    public function setOrder($order)
+    public function setExistingOrderData($order)
     {
-        $this->order = $order;
+        $this->existingOrder = $order;
         return $this;
     }
 
     public function create()
     {
-        dd($this->order->items);
-        return 'yes';
+        return $this->orderLogRepositoryInterface->create($this->makeLogData());
+    }
+
+    private function makeLogData()
+    {
+        $data = [];
+        dd($this->existingOrder);
+        return $data;
     }
 }

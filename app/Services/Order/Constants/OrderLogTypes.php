@@ -7,9 +7,8 @@ class OrderLogTypes
 {
     use ConstGetter;
 
-    const SKU = 'sku';
+    const PRODUCTS_AND_PRICES = 'products_and_prices';
     const ORDER_STATUS = 'order_status';
     const CUSTOMER = 'customer';
     const OTHERS = 'others';
-    const INIT = 'init';
 }
