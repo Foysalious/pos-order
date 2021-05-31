@@ -2,8 +2,8 @@
 
 namespace App\Http\Resources;
 
-use App\Services\PaymentLink\Constants\TargetType;
-use App\Services\PaymentLink\Target;
+use App\Services\PaymentLink\PaymentLinkTransformer;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class OrderWithProductResource extends JsonResource
@@ -11,12 +11,17 @@ class OrderWithProductResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @return array
      */
-    public function toArray($request)
+    public function toArray($request): array
     {
-        $data = [
+        return $this->getOrderDetailsWithoutPaymentLink();
+    }
+
+    public function getOrderDetailsWithoutPaymentLink(): array
+    {
+        return [
             'id'                      => $this->id,
             'previous_order_id'       => $this->previous_order_id,
             'partner_wise_order_id'   => $this->partner_wise_order_id,
@@ -40,10 +45,21 @@ class OrderWithProductResource extends JsonResource
                 'totalDiscount'     => $this->totalDiscount,
                 'due'               => $this->due,
             ],
-            'customer_info'           => $this->customer->only('name','phone','image'),
+            'customer_info'           => $this->customer->only('name','phone','pro_pic'),
             'payment_info'            => $this->payments,
         ];
+    }
 
-        return $data;
+    public function getOrderDetailsWithPaymentLink(PaymentLinkTransformer $payment_link): array
+    {
+        $order_data = $this->getOrderDetailsWithoutPaymentLink();
+        $order_data['payment_link'] = [
+            'id' => $payment_link->getLinkID(),
+            'status' => $payment_link->getIsActive() ? 'active' : 'inactive',
+            'link' => $payment_link->getLink(),
+            'amount' => $payment_link->getAmount(),
+            'created_at' => $payment_link->getCreatedAt()->format('d-m-Y h:s A')
+        ];
+        return $order_data;
     }
 }

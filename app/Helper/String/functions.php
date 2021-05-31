@@ -44,3 +44,27 @@ if (!function_exists('generateRandomFileName')) {
         return $key;
     }
 }
+
+if (! function_exists('camel_case')) {
+    /**
+     * Convert a value to camel case.
+     *
+     * @param  string  $value
+     * @return string
+     */
+    function camel_case($value)
+    {
+        return Str::camel($value);
+    }
+}
+
+if (!function_exists('pamelCase')) {
+    /**
+     * @param $string
+     * @return string
+     */
+    function pamelCase($string)
+    {
+        return ucfirst(camel_case($string));
+    }
+}

@@ -3,16 +3,10 @@
 use App\Services\PaymentLink\Target;
 
 
-interface PaymentLinkRepositoryInterface extends BaseRepositoryInterface
+interface PaymentLinkRepositoryInterface
 {
     /**
-     * @param $targets Target[]
+     * @param $target Target
      */
-    public function getPaymentLinksByPosOrders(array $targets);
-
-    public function getPaymentLinksByPosOrder($target);
-
-    public function getActivePaymentLinksByPosOrders(array $targets);
-
-    public function getActivePaymentLinkByPosOrder($target);
+    public function getActivePaymentLinkByPosOrder(Target $target);
 }

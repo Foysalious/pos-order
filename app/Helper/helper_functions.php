@@ -9,7 +9,8 @@ $helper_files = [
     "app/Helper/FileManager/functions.php",
     "app/Helper/FileManager/review.php",
     "app/Helper/Formatters/functions.php",
-    "app/Helper/Pagination/function.php"
+    "app/Helper/Pagination/function.php",
+    "app/Helper/Miscellaneous/functions.php"
 ];
 
 foreach ($helper_files as $file) {

@@ -1,5 +1,6 @@
 <?php namespace App\Services\PaymentLink;
 
+use App\Services\PaymentLink\Constants\TargetType;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use App\Services\PaymentLink\Exceptions\PayableNotFound;
@@ -8,8 +9,8 @@ use Exception;
 class PaymentLinkClient
 {
     /** @var string */
-    private $baseUrl;
-    private $partnerPaymentUrl;
+    private string $baseUrl;
+    private string $partnerPaymentUrl;
     /**
      * @var Client
      */
@@ -17,8 +18,8 @@ class PaymentLinkClient
 
     public function __construct(Client $client)
     {
-        $this->baseUrl = config('sheba.payment_link_url') . '/api/v1/payment-links';
-        $this->partnerPaymentUrl = config('sheba.payment_link_url') . '/api/v1/partner-payment-links';
+        $this->baseUrl = config('pos.payment_link_url') . '/api/v1/payment-links';
+        $this->partnerPaymentUrl = config('pos.payment_link_url') . '/api/v1/partner-payment-links';
         $this->client = $client;
     }
 

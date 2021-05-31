@@ -1,54 +1,31 @@
 <?php namespace App\Repositories;
 
 use App\Interfaces\PaymentLinkRepositoryInterface;
-use App\Models\Payment;
 use App\Services\PaymentLink\PaymentLinkClient;
+use App\Services\PaymentLink\PaymentLinkTransformer;
 use App\Services\PaymentLink\Target;
-use GuzzleHttp\Exception\GuzzleException;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Request;
-use stdClass;
 
-class PaymentLinkRepository extends BaseRepository implements PaymentLinkRepositoryInterface
+class PaymentLinkRepository implements PaymentLinkRepositoryInterface
 {
     private PaymentLinkClient $paymentLinkClient;
-
+    private PaymentLinkTransformer $paymentLinkTransformer;
 
     /**
      * PaymentLinkRepository constructor.
+     * @param PaymentLinkTransformer $paymentLinkTransformer
      * @param PaymentLinkClient $client
-     * @param Model $model
      */
-    public function __construct(PaymentLinkClient $client, Model $model)
+    public function __construct(PaymentLinkTransformer $paymentLinkTransformer, PaymentLinkClient $client)
     {
-        parent::__construct($model);
         $this->paymentLinkClient = $client;
-
-
+        $this->paymentLinkTransformer = $paymentLinkTransformer;
     }
 
     /**
-     * @param $targets Target[]
-     * @return PaymentLinkTransformer[][]
+     * @param Target $target
+     * @return false|mixed
      */
-    public function getPaymentLinksByPosOrders(array $targets)
-    {
-        $links = $this->paymentLinkClient->getPaymentLinksByPosOrders($targets);
-        return $this->formatPaymentLinkTransformers($links);
-    }
-
-    public function getPaymentLinksByPosOrder($target)
-    {
-        return $this->getPaymentLinksByPosOrders([$target]);
-    }
-
-    public function getActivePaymentLinksByPosOrders(array $targets)
-    {
-        $links = $this->paymentLinkClient->getActivePaymentLinksByPosOrders($targets);
-        return $this->formatPaymentLinkTransformers($links);
-    }
-
-    public function getActivePaymentLinkByPosOrder($target)
+    public function getActivePaymentLinkByPosOrder(Target $target): mixed
     {
         $links        = $this->paymentLinkClient->getActivePaymentLinkByPosOrder($target);
         $payment_link = $this->formatPaymentLinkTransformers($links);
@@ -57,5 +34,19 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
             return $payment_link[$key][0];
         }
         return false;
+    }
+
+    /**
+     * @param $links
+     * @return array
+     */
+    private function formatPaymentLinkTransformers($links): array
+    {
+        $result = [];
+        foreach ($links as $link) {
+            $link = $this->paymentLinkTransformer->setResponse(json_decode(json_encode($link)));
+            array_push_on_array($result, $link->getUnresolvedTarget()->toString(), $link);
+        }
+        return $result;
     }
 }
