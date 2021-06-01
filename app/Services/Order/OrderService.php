@@ -1,5 +1,6 @@
 <?php namespace App\Services\Order;
 
+use App\Http\Requests\OrderCreateRequest;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderWithProductResource;
 use App\Interfaces\OrderRepositoryInterface;
@@ -16,13 +17,16 @@ class OrderService extends BaseService
     protected $orderSkusRepositoryInterface;
     protected $updater, $orderSearch, $orderFilter;
     protected $paymentLinkRepository;
+    /** @var Creator */
+    private Creator $creator;
 
     public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
                                 OrderSearch $orderSearch,
                                 OrderFilter $orderFilter,
                                 Updater $updater,
-                                PaymentLinkRepositoryInterface $paymentLinkRepository
+                                PaymentLinkRepositoryInterface $paymentLinkRepository,
+                                Creator $creator
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -31,6 +35,7 @@ class OrderService extends BaseService
         $this->orderSearch = $orderSearch;
         $this->orderFilter = $orderFilter;
         $this->paymentLinkRepository = $paymentLinkRepository;
+        $this->creator = $creator;
     }
 
     public function getOrderList($partner_id, $request)
@@ -49,6 +54,25 @@ class OrderService extends BaseService
         $orderList = OrderResource::collection($ordersList);
         if(!$orderList) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
         else return $this->success('Success', ['orders' => $orderList], 200, true);
+    }
+
+    public function store($partner, OrderCreateRequest $request)
+    {
+        $skus = is_array($request->skus) ?: json_decode($request->skus);
+        $order = $this->creator->setPartner($partner)
+            ->setCustomerId($request->customer_id)
+            ->setDeliveryName($request->delivery_name)
+            ->setDeliveryMobile($request->delivery_mobile)
+            ->setDeliveryAddress($request->delivery_address)
+            ->setCustomerId($request->customer_id)
+            ->setSalesChannelId($request->sales_channel_id)
+            ->setDeliveryCharge($request->delivery_charge)
+            ->setEmiMonth($request->emi_month)
+            ->setSkus($skus)
+            ->setDiscount($request->discount)
+            ->setIsDiscountPercentage($request->is_discount_percentage)
+            ->create();
+        return $this->success('Successful', ['order' => ['id' => $order->id]]);
     }
 
     public function getOrderDetails($partner_id, $order_id)

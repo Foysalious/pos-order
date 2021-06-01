@@ -2,10 +2,10 @@
 
 use App\Helper\ConstGetter;
 
-class SalesChannels
+class SalesChannelIds
 {
     use ConstGetter;
 
-    const POS = '1';
-    const WEBSTORE = '2';
+    const POS = 1;
+    const WEBSTORE = 2;
 }
