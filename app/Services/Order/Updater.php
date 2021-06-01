@@ -1,8 +1,10 @@
 <?php namespace App\Services\Order;
 
-
+use App\Exceptions\OrderException;
+use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
+use App\Services\Order\Constants\OrderLogTypes;
 use App\Traits\ModificationFields;
 
 class Updater
@@ -12,13 +14,18 @@ class Updater
     protected $bank_transaction_charge, $delivery_name, $delivery_mobile, $delivery_address, $note, $voucher_id;
     protected $skus, $order, $existingOrder;
     protected $orderLogCreator;
-    protected $orderRepositoryInterface, $orderSkusRepositoryInterface;
+    protected $orderRepositoryInterface, $orderSkusRepositoryInterface, $orderPaymentRepository;
+    protected string $orderLogType = OrderLogTypes::OTHERS;
 
-    public function __construct(OrderRepositoryInterface $orderRepositoryInterface, OrderSkusRepositoryInterface $orderSkusRepositoryInterface, OrderLogCreator $orderLogCreator)
+    public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
+                                OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
+                                OrderLogCreator $orderLogCreator,
+                                OrderPaymentRepositoryInterface $orderPaymentRepository)
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->orderLogCreator = $orderLogCreator;
+        $this->orderPaymentRepository = $orderPaymentRepository;
     }
 
     /**
@@ -184,18 +191,15 @@ class Updater
     public function update()
     {
         //$this->skus ? $this->orderSkusRepositoryInterface->updateOrderSkus($this->partner_id, json_decode($this->skus), $this->order_id) : null;
-        $previous_order = clone $this->order;
-        $existing_order_skus = clone $this->orderSkusRepositoryInterface->where('order_id', $previous_order->id)->latest()->get();
+        list($previous_order, $existing_order_skus) = $this->setExistingOrderAndSkus();
         $this->orderRepositoryInterface->update($this->order, $this->makeData());
-        $this->setPreviousOrder($previous_order, $existing_order_skus);
-        $this->setNewOrder();
-        $this->orderLogCreator->create();
+        $this->createLog($previous_order, $existing_order_skus);
     }
 
     public function makeData() : array
     {
         $data = [];
-        if(isset($this->customer_id)) $data['customer_id']                          = $this->customer_id;
+        if(isset($this->customer_id)) $data['customer_id']                          = $this->checkCustomerPayment();
         if(isset($this->sales_channel_id)) $data['sales_channel_id']                = $this->sales_channel_id;
         if(isset($this->emi_month)) $data['emi_month']                              = $this->emi_month;
         if(isset($this->interest)) $data['interest']                                = $this->interest;
@@ -209,9 +213,23 @@ class Updater
         return $data + $this->modificationFields(false, true);
     }
 
+    private function setExistingOrderAndSkus() : array
+    {
+        $previous_order = clone $this->order;
+        $existing_order_skus = clone $this->orderSkusRepositoryInterface->where('order_id', $previous_order->id)->latest()->get();
+        return [$previous_order, $existing_order_skus];
+    }
+
+    private function createLog($previous_order, $existing_order_skus)
+    {
+        $this->setPreviousOrder($previous_order, $existing_order_skus);
+        $this->setNewOrder();
+        $this->orderLogCreator->create();
+    }
+
     private function getTypeOfChangeLog() : string
     {
-        return 'products_and_prices';
+        return $this->orderLogType;
     }
 
     private function setPreviousOrder($order, $existing_order_skus)
@@ -228,5 +246,13 @@ class Updater
             ->setChangedOrderData($this->orderRepositoryInterface->find($this->order->id))
             ->setChangedOrderSkus($new_order_skus)
             ->setType($this->getTypeOfChangeLog());
+    }
+
+    private function checkCustomerPayment()
+    {
+        $orderPaymentStatus = $this->orderPaymentRepository->where('order_id', $this->order_id)->get();
+        if(count($orderPaymentStatus) > 0) throw new OrderException(trans('order.update.no_customer_update'));
+        $this->orderLogType = OrderLogTypes::CUSTOMER;
+        return $this->customer_id;
     }
 }
