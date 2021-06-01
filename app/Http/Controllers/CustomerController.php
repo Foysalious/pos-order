@@ -22,12 +22,16 @@ class CustomerController extends Controller
         $this->customerService = $customerService;
     }
 
-    public function store( Request $request, Creator $creator)
+    public function store(Request $request, Creator $creator)
     {
-
+        $request->validate([
+            'name' => 'required',
+            'email' => 'required',
+            'phone' => 'required',
+            'picture' => 'required',
+        ]);
         $creator->setPartner($request->name)->setEmail($request->email)->setPhone($request->phone)->setProfilePicture($request->picture);
-        $creator->create();
-
+        return $creator->create();
     }
 
 }

@@ -2,14 +2,14 @@
 
 use App\Interfaces\CustomerRepositoryInterface;
 use App\Models\Customer;
-
-use App\Services\Order\Constants\SalesChannels;
-use App\Services\Order\Constants\Statuses;
+use App\Services\FileManagers\CdnFileManager;
+use App\Services\FileManagers\FileManager;
 use App\Traits\ResponseAPI;
 
 class Creator
 {
     use ResponseAPI;
+    use CdnFileManager, FileManager;
 
     private $partner;
     private $email;
@@ -49,18 +49,8 @@ class Creator
         return $this;
     }
 
-    private function generateImageFrom64base($reviewIndex, $reviewSingleImage, $reviewIndexFromImageName): string
-    {
-        $randomImageFile = $this->uniqueFileNameFor64base(generateRandomFileName(15)) . '_review_image' . '.png'; // 64 base has no file name. So, we have to create it.
-        is_array($reviewSingleImage) ? (file_put_contents($randomImageFile, base64_decode($reviewSingleImage[0]))) : file_put_contents($randomImageFile, base64_decode($reviewSingleImage)); // put that image into local storage
-        $reviewImageUrl = $this->saveFileToCDN($randomImageFile, reviewImageFolder(), $randomImageFile);
-        unlink($randomImageFile); // remove local image after saving in CDN
-        return $reviewImageUrl;
-    }
-
     public function create()
     {
-
         $customer_data['name'] = $this->partner;
         $customer_data['email'] = $this->email;
         $customer_data['phone'] = $this->phone;
