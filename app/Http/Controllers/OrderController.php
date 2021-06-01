@@ -1,8 +1,10 @@
 <?php namespace App\Http\Controllers;
 
+use App\Http\Requests\OrderCreateRequest;
 use App\Http\Requests\OrderFilterRequest;
 use App\Http\Requests\OrderUpdateRequest;
 use App\Services\Order\OrderService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Requests\OrderRequest;
 use App\Models\Order;
@@ -25,7 +27,7 @@ class OrderController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
 
     /**
@@ -104,15 +106,13 @@ class OrderController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param $partner
+     * @param OrderCreateRequest $request
+     * @return void
      */
-    public function store($partner, Request $request, Creator $creator)
+    public function store($partner, OrderCreateRequest $request)
     {
-
-        $creator->setPartner($partner)->setData($request->all());
-        $creator->create();
-
+        return $this->orderService->store($partner, $request);
     }
 
     public function updateStatus($partner, Request $request, StatusChanger $statusChanger)
@@ -137,7 +137,7 @@ class OrderController extends Controller
      *     )
      *
      * @param int $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function show($partner_id, $order_id)
     {
@@ -149,7 +149,7 @@ class OrderController extends Controller
      * @param $partner_id
      * @param OrderUpdateRequest $request
      * @param $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function update(Request $request, $partner_id, $id)
     {
@@ -161,7 +161,7 @@ class OrderController extends Controller
      *
      * @param int $partner_id
      * @param int $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function destroy($partner_id, $id)
     {
