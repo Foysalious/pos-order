@@ -117,10 +117,10 @@ class Creator
         $order_data['sales_channel_id'] = $this->data['sales_channel_id'] ?? SalesChannels::POS;
         $order_data['delivery_charge'] = isset($this->data['sales_channel_id']) && $this->data['sales_channel_id'] == SalesChannels::WEBSTORE ? $this->partner->delivery_charge : 0;;
         $order_data['status'] = $this->data['status'] ?? Statuses::PENDING;
-        $this->sendOrderPlaceSmsToCustomer();
+
 
         $this->order = $this->orderRepositoryInterface->create($order_data);
-
+        $this->sendOrderPlaceSmsToCustomer();
 //        $this->createOrderSkus();
 //        $this->order->calculate();
 
