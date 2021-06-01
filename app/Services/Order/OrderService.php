@@ -9,6 +9,9 @@ use App\Models\Order;
 use App\Models\OrderDiscount;
 use App\Services\BaseService;
 use App\Services\Discount\Constants\DiscountTypes;
+use App\Services\Order\Refund\AddProductInOrder;
+use App\Services\Order\Refund\OrderUpdateFactory;
+use Illuminate\Support\Facades\App;
 
 class OrderService extends BaseService
 {
@@ -67,10 +70,27 @@ class OrderService extends BaseService
 
     public function update($orderUpdateRequest, $partner_id, $order_id)
     {
-        $orderDetails = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
+        /** @var Order $orderDetails */
+        $orderDetails = $this->orderRepositoryInterface->where('partner_id', $partner_id)->with('items')->find($order_id);
         if(!$orderDetails) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
 
-        dd('updater');
+        /** @var OrderComparator $comparator */
+        $comparator = (App::make(OrderComparator::class))->setOrder($orderDetails)->setNewOrder($orderUpdateRequest)->compare();
+
+        if($comparator->isProductAdded()){
+            $updater = OrderUpdateFactory::getProductAddingUpdater($orderDetails, $orderUpdateRequest->all());
+            $updater->update();
+        }
+        if($comparator->isProductDeleted()){
+            $updater = OrderUpdateFactory::getProductDeletionUpdater($orderDetails, $orderUpdateRequest->all());
+            $updater->update();
+        }
+        if($comparator->isProductUpdated()){
+            $updater = OrderUpdateFactory::getOrderProductUpdater($orderDetails, $orderUpdateRequest->all());
+            $updater->update();
+        }
+
+        die;
         $this->updater->setPartnerId($partner_id)
             ->setOrderId($order_id)
             ->setOrder($orderDetails)
