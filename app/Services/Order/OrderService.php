@@ -45,14 +45,14 @@ class OrderService extends BaseService
 
         $ordersList = $this->orderRepositoryInterface->getOrderListWithPagination($offset, $limit, $partner_id, $orderSearch, $orderFilter);
         $orderList = OrderResource::collection($ordersList);
-        if(!$orderList) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
+        if(!$orderList) return $this->error("You're not authorized to access this order", 403);
         else return $this->success('Success', ['orders' => $orderList], 200, true);
     }
 
     public function getOrderDetails($partner_id, $order_id)
     {
         $order = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
-        if(!$order) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
+        if(!$order) return $this->error("You're not authorized to access this order", 403);
         $order->calculate();
         $resource = new OrderWithProductResource($order);
         if($order->due > 0){
@@ -66,8 +66,7 @@ class OrderService extends BaseService
     public function update($orderUpdateRequest, $partner_id, $order_id)
     {
         $orderDetails = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
-        if(!$orderDetails) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
-
+        if(!$orderDetails) return $this->error("You're not authorized to access this order", 403);
         $this->updater->setPartnerId($partner_id)
             ->setOrderId($order_id)
             ->setOrder($orderDetails)
@@ -91,8 +90,7 @@ class OrderService extends BaseService
     public function delete($partner_id, $order_id)
     {
         $order = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
-        if(!$order) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
-
+        if(!$order) return $this->error("You're not authorized to access this order", 403);
         $OrderSkusIds = $this->orderSkusRepositoryInterface->where('order_id', $order_id)->get(['id']);
         $this->orderSkusRepositoryInterface->whereIn('id', $OrderSkusIds)->delete();
         $order->delete();
@@ -102,7 +100,7 @@ class OrderService extends BaseService
     public function getOrderWithChannel($order_id)
     {
         $orderDetails = $this->orderRepositoryInterface->find($order_id);
-        if(!$orderDetails) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
+        if(!$orderDetails) return $this->error("You're not authorized to access this order", 403);
         $order = [
             'id' => $orderDetails->id,
             'sales_channel' => $orderDetails->sales_channel_id == 1 ? 'pos' : 'webstore'
@@ -113,9 +111,6 @@ class OrderService extends BaseService
     public function getOrderPaymentLink(Order $order) {
         $payment_link_target = $order->getPaymentLinkTarget();
         $payment_link = $this->paymentLinkRepository->getActivePaymentLinkByPosOrder($payment_link_target);
-        if ($payment_link) {
-            return $payment_link;
-        } else
-            return false;
+        return isset($payment_link) ? $payment_link : false;
     }
 }

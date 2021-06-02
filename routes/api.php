@@ -28,9 +28,9 @@ Route::group(['prefix'=>'v1'], function(){
     Route::get('order-channel/{order_id}', [OrderController::class, 'getOrderWithChannel']);
     Route::group(['prefix' => 'partners/{partner}/orders/{order}'], function () {
         Route::post('update-status', [OrderController::class, 'updateStatus']);
+        Route::put('/update-customer', [OrderCustomerController::class, 'update']);
     });
     Route::apiResource('payments', PaymentController::class);
     Route::post('customers/{customer}/orders/{order}/review', [ReviewController::class, 'store']);
     Route::get('products/{product}/reviews', [ReviewController::class, 'index']);
-
 });
