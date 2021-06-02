@@ -4,7 +4,6 @@ use App\Http\Requests\OrderFilterRequest;
 use App\Http\Requests\OrderUpdateRequest;
 use App\Services\Order\OrderService;
 use Illuminate\Http\Request;
-use App\Http\Requests\OrderRequest;
 use App\Models\Order;
 use App\Services\Order\Creator;
 use App\Services\Order\StatusChanger;
