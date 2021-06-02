@@ -30,7 +30,7 @@ class ReviewService extends BaseService
         $reviews = ReviewResource::collection($reviews);
 
 
-        return $this->success('Successful', ['reviews' => $reviews, 'statistics' => $this->reviewStatistics()], 200);
+        return $this->success('Successful', ['reviews' => $reviews, 'rating_statistics' => $this->reviewStatistics()], 200);
     }
 
     public function reviewStatistics()
