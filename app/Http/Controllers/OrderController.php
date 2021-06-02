@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Http\Requests\OrderCreateRequest;
 use App\Http\Requests\OrderFilterRequest;
 use App\Http\Requests\OrderUpdateRequest;
 use App\Services\Order\OrderService;
@@ -105,15 +106,13 @@ class OrderController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @param $partner
+     * @param OrderCreateRequest $request
+     * @return void
      */
-    public function store($partner, Request $request, Creator $creator)
+    public function store($partner, OrderCreateRequest $request)
     {
-
-        $creator->setPartner($partner)->setData($request->all());
-        $creator->create();
-
+        return $this->orderService->store($partner, $request);
     }
 
     public function updateStatus($partner, Request $request, StatusChanger $statusChanger)
@@ -137,7 +136,7 @@ class OrderController extends Controller
      *      @OA\Response(response=403, description="Forbidden")
      *     )
      *
-     * @param int $order_id
+     * @param int $id
      * @return JsonResponse
      */
     public function show($partner_id, $order_id)
@@ -149,7 +148,7 @@ class OrderController extends Controller
      * Update the specified resource in storage.
      * @param int $partner_id
      * @param OrderUpdateRequest $request
-     * @param int $order_id
+     * @param $id
      * @return JsonResponse
      */
     public function update(Request $request, int $partner_id, int $order_id)
