@@ -165,7 +165,7 @@ class OrderService extends BaseService
     {
         if (!$partner instanceof Partner) $partner = Partner::find($partner);
         $paymentLink = $this->paymentLinkCreator->setAmount($payment_link_amount)->setReason("PosOrder ID: $order->id Due payment")
-            ->setUserName($partner->id)->setUserId($partner->id)
+            ->setUserName($partner->name)->setUserId($partner->id)
             ->setUserType('partner')
             ->setTargetId($order->id)
             ->setTargetType('pos_order');
