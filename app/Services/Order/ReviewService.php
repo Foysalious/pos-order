@@ -22,12 +22,27 @@ class ReviewService extends BaseService
         $this->reviewCreator = $reviewCreator;
     }
 
-    public function getProductReviews($request,$rating,$orderBy, $product_id) :object
+    public function getProductReviews($request, $rating, $orderBy, $product_id): object
     {
         list($offset, $limit) = calculatePagination($request);
-        $reviews = ReviewResource::collection($this->reviewRepositoryInterface->getReviews($offset, $limit, $product_id,$rating,$orderBy));
-        if(count($reviews) == 0) return $this->error('No Review Found For This Product', 404);
-        return $this->success('Successful', ['reviews' => $reviews], 200);
+        $reviews = $this->reviewRepositoryInterface->getReviews($offset, $limit, $product_id, $rating, $orderBy);
+        if (count($reviews) == 0) return $this->error('এই প্রোডাক্ট এর জন্য কোন রিভিউ পাওয়া যায় নি', 404);
+        $reviews = ReviewResource::collection($reviews);
+
+
+        return $this->success('Successful', ['reviews' => $reviews, 'statistics' => $this->reviewStatistics()], 200);
+    }
+
+    public function reviewStatistics()
+    {
+        return json_decode(json_encode([
+            "5" => 110,
+            "4" => 82,
+            "3" => 0,
+            "2" => 0,
+            "1" => 0,
+        ]));
+
     }
 
     public function create($request, $customer_id, $order_id)
