@@ -10,15 +10,7 @@ class AddProductInOrder extends ProductOrder
 {
     public function update()
     {
-        $this->addItemsInOrderSku();
-    }
-
-    private function getAddedItems()
-    {
-        $current_products = $this->order->items()->pluck('id');
-        $request_products = $this->skus->pluck('id');
-        $items = $request_products->diff($current_products);
-        return $this->skus->whereIn('id',$items);
+        return $this->addItemsInOrderSku();
     }
 
     private function addItemsInOrderSku()
@@ -27,8 +19,14 @@ class AddProductInOrder extends ProductOrder
         /** @var Creator $creator */
         $creator = App::make(Creator::class);
         $creator->setOrder($this->order)->setSkus($items)->create();
+        return true;
+    }
 
-
-
+    private function getAddedItems()
+    {
+        $current_products = $this->order->items()->pluck('id');
+        $request_products = $this->skus->pluck('id');
+        $items = $request_products->diff($current_products);
+        return $this->skus->whereIn('id',$items);
     }
 }

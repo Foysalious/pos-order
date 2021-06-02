@@ -4,34 +4,40 @@
 namespace App\Services\Order\Refund;
 
 
+use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Models\Order;
+use App\Repositories\OrderSkuRepository;
 use App\Services\Order\Updater;
 use Illuminate\Support\Collection;
 
 abstract class ProductOrder
 {
     /** @var Order */
-    public Order $order;
+    protected Order $order;
 
     /** @var Updater */
-    public Updater $updater;
+    protected Updater $updater;
 
-    public array $data;
+    /** @var OrderSkuRepository  */
+    protected OrderSkuRepository $orderSkuRepository;
 
-    public Collection $skus;
+    protected array $data;
+
+    protected Collection $skus;
 
     /**
      * RefundProduct constructor.
      * @param Updater $updater
      */
-    public function __construct(Updater $updater)
+    public function __construct(Updater $updater, OrderSkuRepositoryInterface $orderSkuRepository)
     {
         $this->updater = $updater;
+        $this->orderSkuRepository = $orderSkuRepository;
     }
 
     /**
      * @param Order $order
-     * @return RefundProduct
+     * @return ProductOrder
      */
     public function setOrder(Order $order)
     {
@@ -41,7 +47,7 @@ abstract class ProductOrder
 
     /**
      * @param array $data
-     * @return RefundProduct
+     * @return ProductOrder
      */
     public function setData(array $data)
     {

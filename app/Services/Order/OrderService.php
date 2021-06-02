@@ -114,7 +114,6 @@ class OrderService extends BaseService
             $updater->update();
         }
 
-        die;
         $this->updater->setPartnerId($partner_id)
             ->setOrderId($order_id)
             ->setOrder($orderDetails)
