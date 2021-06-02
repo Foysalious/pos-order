@@ -253,7 +253,7 @@ class Creator
         $order_data['emi_month'] = $this->emiMonth ?? null;
         $order_data['status'] = $this->salesChannelId == SalesChannelIds::POS ? Statuses::COMPLETED : Statuses::PENDING;
         $order_data['discount'] = $this->discount;
-        $order_data['is_discount_percentage'] = $this->isDiscountPercentage;
+        $order_data['is_discount_percentage'] = $this->isDiscountPercentage ?: 0;
         $order = $this->orderRepositoryInterface->create($order_data);
         $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($order_data);
         if ($this->discountHandler->hasDiscount()) $this->discountHandler->create();
