@@ -2,7 +2,7 @@
 
 use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Order;
-use App\Services\Order\Constants\SalesChannels;
+use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Order\Payment\Creator as PaymentCreator;
 use App\Traits\ResponseAPI;

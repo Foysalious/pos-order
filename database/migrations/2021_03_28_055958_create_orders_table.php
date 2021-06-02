@@ -28,9 +28,9 @@ class CreateOrdersTable extends Migration
             $table->decimal('interest', 11, 2)->nullable();
             $table->decimal('delivery_charge', 11, 2)->nullable();
             $table->decimal('bank_transaction_charge', 11, 2)->nullable();
-            $table->string('delivery_name');
-            $table->string('delivery_mobile');
-            $table->string('delivery_address');
+            $table->string('delivery_name')->nullable();
+            $table->string('delivery_mobile')->nullable();
+            $table->string('delivery_address')->nullable();
             $table->longText('note')->nullable();
             $table->bigInteger('voucher_id')->unsigned()->nullable();
             commonColumns($table);

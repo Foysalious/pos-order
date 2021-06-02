@@ -1,14 +1,17 @@
 <?php namespace App\Http\Controllers;
 
+use App\Http\Requests\OrderCreateRequest;
 use App\Http\Requests\OrderFilterRequest;
 use App\Http\Requests\OrderUpdateRequest;
 use App\Services\Order\OrderService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Requests\OrderRequest;
 use App\Models\Order;
 use App\Services\Order\Creator;
 use App\Services\Order\StatusChanger;
 use App\Traits\ResponseAPI;
+use Illuminate\Validation\ValidationException;
 
 
 class OrderController extends Controller
@@ -25,14 +28,14 @@ class OrderController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
 
     /**
      * @OA\Get(
      *      path="/api/v1/partners/{partner}/orders",
      *      operationId="getOrders",
-     *      tags={"ORDER LIST API"},
+     *      tags={"ORDER API"},
      *      summary="Api to get all orders",
      *      description="Return all orders with searching and filtering parameters",
      *      @OA\Parameter(name="payment_status",description="Payment Status",required=false,in="path", @OA\Schema(type="String")),
@@ -102,17 +105,60 @@ class OrderController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * @OA\Post(
+     *     path="/api/v1/partners/{partner}/orders",
+     *     summary="Place an order",
+     *     tags={"ORDER API"},
+     *     @OA\Parameter(name="partner_id",description="Partner Id",required=true,in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                  example={
+     *                      "customer_id":1,
+     *                      "paid_amount":100,
+     *                      "sales_channel_id":1,
+     *                      "skus": "[{'id':523,'product_name':'Shirt','product_id':1000328,'warranty':null,;warranty_unit':null,'vat_percentage':null,'sku_channel_id':1062,'channel_id':1,'channel_name':'pos','price':100,'unit':'kg','quantity':5,'discount':5,'is_discount_percentage':0,'cap':null,'combination':[{'option_id':799,'option_name':'size','option_value_id':1572,'option_value_name':'l','option_value_details':[{'code':'L','type':'size'}]},{'option_id':800,'option_name':'color','option_value_id':1573,'option_value_name':'green','option_value_details':[{'code':'#000000','type':'color'}]}]}]",
+     *                      "discount":5,
+     *                      "is_discount_percentage":0,
+     *                      "payment_method":"payment_link",
+     *                      "payment_link_amount":10,
+     *                  }
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Successful",
+     *          @OA\JsonContent(
+     *          type="object",
+     *          example={
+     *              "message": "Successful",
+     *              "order": {
+     *                  "id": 2000175
+     *              },
+     *              "payment": {
+     *                  "link": "https://pl.dev-sheba.xyz/@PartnerDevox0c8oey"
+     *              }
+     *          }
+     *       ),
+     *     ),
+     *     @OA\Response(
+     *          response=404,
+     *          description="Message: Customer Not Found ",
+     *     ),
+     *     @OA\Response(
+     *          response=403,
+     *          description="Forbidden"
+     *      )
+     * )
      *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param $partner
+     * @param OrderCreateRequest $request
+     * @return JsonResponse
+     * @throws ValidationException
      */
-    public function store($partner, Request $request, Creator $creator)
+    public function store($partner, OrderCreateRequest $request)
     {
-
-        $creator->setPartner($partner)->setData($request->all());
-        $creator->create();
-
+        return $this->orderService->store($partner, $request);
     }
 
     public function updateStatus($partner, Request $request, StatusChanger $statusChanger)
@@ -126,7 +172,7 @@ class OrderController extends Controller
      * * @OA\Get(
      *      path="/api/v1/partners/{partner}/orders/{order}",
      *      operationId="getOrderDetail",
-     *      tags={"ORDER LIST API"},
+     *      tags={"ORDER API"},
      *      summary="Get an order details",
      *      description="Return all orders with searching parameters",
      *      @OA\Parameter(name="partner", description="partner id", required=true, in="path", @OA\Schema(type="integer")),
@@ -137,7 +183,7 @@ class OrderController extends Controller
      *     )
      *
      * @param int $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function show($partner_id, $order_id)
     {
@@ -149,7 +195,7 @@ class OrderController extends Controller
      * @param $partner_id
      * @param OrderUpdateRequest $request
      * @param $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function update(Request $request, $partner_id, $id)
     {
@@ -161,7 +207,7 @@ class OrderController extends Controller
      *
      * @param int $partner_id
      * @param int $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function destroy($partner_id, $id)
     {
