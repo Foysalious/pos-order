@@ -1,8 +1,5 @@
-<?php
+<?php namespace App\Http\Resources;
 
-namespace App\Http\Resources;
-
-use App\Models\Order;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class OrderResource extends JsonResource
@@ -31,7 +28,7 @@ class OrderResource extends JsonResource
             'note'                    => $this->note,
             'voucher_id'              => $this->voucher_id,
             'payment_status'          => $this->closed_and_paid_at,
-            'order_updated_message'   => "অর্ডার আপডেট করা হয়েছে"
+            'order_updated_message'   => $this->isUpdated()
         ];
     }
 }

@@ -182,4 +182,15 @@ class Order extends BaseModel
                                 ->where('type', DiscountTypes::VOUCHER)
                                 ->get();
     }
+
+    public function logs()
+    {
+        return $this->hasMany(OrderLog::class);
+    }
+
+    public function isUpdated()
+    {
+       $type = $this->logs->where('type', 'products_and_prices')->first();
+       return !empty($type) ? trans('order.update.updated'): '';
+    }
 }
