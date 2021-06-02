@@ -3,8 +3,7 @@
 
 namespace App\Services\Order\Refund;
 
-
-use App\Services\Order\Creator;
+use App\Services\OrderSku\Creator;
 use Illuminate\Support\Facades\App;
 
 class AddProductInOrder extends ProductOrder
@@ -16,7 +15,7 @@ class AddProductInOrder extends ProductOrder
 
     private function getAddedItems()
     {
-        $current_products = $this->order->items()->pluck('sku_id');
+        $current_products = $this->order->items()->pluck('id');
         $request_products = $this->skus->pluck('id');
         $items = $request_products->diff($current_products);
         return $this->skus->whereIn('id',$items);
@@ -24,10 +23,11 @@ class AddProductInOrder extends ProductOrder
 
     private function addItemsInOrderSku()
     {
-        $items = $this->getAddedItems();
+        $items = array_values($this->getAddedItems()->toArray());
         /** @var Creator $creator */
         $creator = App::make(Creator::class);
-        $creator->setPartner($this->order->partner_id);
+        $creator->setOrder($this->order)->setSkus($items)->create();
+
 
 
     }
