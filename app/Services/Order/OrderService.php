@@ -7,9 +7,12 @@ use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Interfaces\PaymentLinkRepositoryInterface;
 use App\Models\Order;
-use App\Models\OrderDiscount;
+use App\Models\Partner;
 use App\Services\BaseService;
-use App\Services\Discount\Constants\DiscountTypes;
+use App\Services\PaymentLink\Creator as PaymentLinkCreator;
+use App\Services\PaymentLink\PaymentLinkTransformer;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 
 class OrderService extends BaseService
 {
@@ -19,6 +22,8 @@ class OrderService extends BaseService
     protected $paymentLinkRepository;
     /** @var Creator */
     private Creator $creator;
+    /** @var PaymentLinkCreator */
+    private PaymentLinkCreator $paymentLinkCreator;
 
     public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
@@ -26,7 +31,8 @@ class OrderService extends BaseService
                                 OrderFilter $orderFilter,
                                 Updater $updater,
                                 PaymentLinkRepositoryInterface $paymentLinkRepository,
-                                Creator $creator
+                                Creator $creator,
+                                PaymentLinkCreator $paymentLinkCreator
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -36,6 +42,7 @@ class OrderService extends BaseService
         $this->orderFilter = $orderFilter;
         $this->paymentLinkRepository = $paymentLinkRepository;
         $this->creator = $creator;
+        $this->paymentLinkCreator = $paymentLinkCreator;
     }
 
     public function getOrderList($partner_id, $request)
@@ -56,6 +63,12 @@ class OrderService extends BaseService
         else return $this->success('Success', ['orders' => $orderList], 200, true);
     }
 
+    /**
+     * @param $partner
+     * @param OrderCreateRequest $request
+     * @return JsonResponse
+     * @throws ValidationException
+     */
     public function store($partner, OrderCreateRequest $request)
     {
         $skus = is_array($request->skus) ?: json_decode($request->skus);
@@ -72,7 +85,9 @@ class OrderService extends BaseService
             ->setDiscount($request->discount)
             ->setIsDiscountPercentage($request->is_discount_percentage)
             ->create();
-        return $this->success('Successful', ['order' => ['id' => $order->id]]);
+        $payment_link_amount = $request->has('payment_link_amount') ? $request->payment_link_amount : $order->net_bill;
+        if ($request->payment_method == 'payment_link') $payment_link = $this->createPaymentLink($payment_link_amount, $partner, $order);
+        return $this->success('Successful', ['order' => ['id' => $order->id], 'payment' => $payment_link ?? null]);
     }
 
     public function getOrderDetails($partner_id, $order_id)
@@ -93,7 +108,6 @@ class OrderService extends BaseService
     {
         $orderDetails = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
         if(!$orderDetails) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
-
         $this->updater->setPartnerId($partner_id)
             ->setOrderId($order_id)
             ->setOrder($orderDetails)
@@ -143,5 +157,20 @@ class OrderService extends BaseService
             return $payment_link;
         } else
             return false;
+    }
+
+    private function createPaymentLink($payment_link_amount, $partner, $order)
+    {
+        if (!$partner instanceof Partner) $partner = Partner::find($partner);
+        $paymentLink = $this->paymentLinkCreator->setAmount($payment_link_amount)->setReason("PosOrder ID: $order->id Due payment")
+            ->setUserName($partner->id)->setUserId($partner->id)
+            ->setUserType('partner')
+            ->setTargetId($order->id)
+            ->setTargetType('pos_order');
+        if ($order->customer_id) $paymentLink->setPayerId($order->customer_id)->setPayerType('pos_customer');
+        $paymentLink = $paymentLink->create();
+        $transformer = new PaymentLinkTransformer();
+        $transformer->setResponse($paymentLink);
+        return ['link' => config('pos.payment_link_web_url') . '/' . $transformer->getLinkIdentifier()];
     }
 }

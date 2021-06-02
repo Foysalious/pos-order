@@ -234,12 +234,8 @@ class Creator
         $order_data['is_discount_percentage'] = $this->isDiscountPercentage;
         $order = $this->orderRepositoryInterface->create($order_data);
         $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($order_data);
-        if ($this->discountHandler->hasDiscount()) {
-            $this->discountHandler->create();
-        }
+        if ($this->discountHandler->hasDiscount()) $this->discountHandler->create();
         $this->orderSkuCreator->setOrder($order)->setSkus($this->skus)->create();
-//        $this->order->calculate();
-//        $this->sendOrderPlaceSmsToCustomer();
         if (isset($this->data['paid_amount']) && $this->data['paid_amount'] > 0) {
             $payment_data['order_id'] = $order->id;
             $payment_data['amount'] = $this->data['paid_amount'];
