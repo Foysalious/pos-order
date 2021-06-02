@@ -5,7 +5,7 @@ use App\Http\Controllers\ReviewController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OrderController;
-
+use App\Http\Controllers\OrderCustomerController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -26,6 +26,7 @@ Route::group(['prefix'=>'v1'], function(){
     Route::get('order-channel/{order_id}', [OrderController::class, 'getOrderWithChannel']);
     Route::group(['prefix' => 'partners/{partner}/orders/{order}'], function () {
         Route::post('update-status', [OrderController::class, 'updateStatus']);
+        Route::put('/update-customer', [OrderCustomerController::class, 'update']);
     });
     Route::apiResource('payments', PaymentController::class);
     Route::post('customers/{customer}/orders/{order}/review', [ReviewController::class, 'store']);

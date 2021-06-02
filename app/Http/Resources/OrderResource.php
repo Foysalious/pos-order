@@ -30,7 +30,8 @@ class OrderResource extends JsonResource
             'delivery_address'        => $this->delivery_address,
             'note'                    => $this->note,
             'voucher_id'              => $this->voucher_id,
-            'payment_status'          => $this->closed_and_paid_at
+            'payment_status'          => $this->closed_and_paid_at,
+            'order_updated_message'   => "অর্ডার আপডেট করা হয়েছে"
         ];
     }
 }

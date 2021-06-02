@@ -15,7 +15,7 @@ class Updater
     protected $skus, $order, $existingOrder;
     protected $orderLogCreator;
     protected $orderRepositoryInterface, $orderSkusRepositoryInterface, $orderPaymentRepository;
-    protected string $orderLogType = OrderLogTypes::OTHERS;
+    protected string $orderLogType;
 
     public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
@@ -26,6 +26,16 @@ class Updater
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->orderLogCreator = $orderLogCreator;
         $this->orderPaymentRepository = $orderPaymentRepository;
+    }
+
+    /**
+     * @param string $orderLogType
+     * @return Updater
+     */
+    public function setOrderLogType(string $orderLogType): Updater
+    {
+        $this->orderLogType = $orderLogType;
+        return $this;
     }
 
     /**
@@ -199,7 +209,7 @@ class Updater
     public function makeData() : array
     {
         $data = [];
-        if(isset($this->customer_id)) $data['customer_id']                          = $this->checkCustomerPayment();
+        if(isset($this->customer_id)) $data['customer_id']                          = $this->customer_id;
         if(isset($this->sales_channel_id)) $data['sales_channel_id']                = $this->sales_channel_id;
         if(isset($this->emi_month)) $data['emi_month']                              = $this->emi_month;
         if(isset($this->interest)) $data['interest']                                = $this->interest;
@@ -246,13 +256,5 @@ class Updater
             ->setChangedOrderData($this->orderRepositoryInterface->find($this->order->id))
             ->setChangedOrderSkus($new_order_skus)
             ->setType($this->getTypeOfChangeLog());
-    }
-
-    private function checkCustomerPayment()
-    {
-        $orderPaymentStatus = $this->orderPaymentRepository->where('order_id', $this->order_id)->get();
-        if(count($orderPaymentStatus) > 0) throw new OrderException(trans('order.update.no_customer_update'));
-        $this->orderLogType = OrderLogTypes::CUSTOMER;
-        return $this->customer_id;
     }
 }
