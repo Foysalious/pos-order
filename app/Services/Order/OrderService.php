@@ -3,6 +3,7 @@
 use App\Http\Requests\OrderCreateRequest;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderWithProductResource;
+use App\Interfaces\OrderLogRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Interfaces\PaymentLinkRepositoryInterface;
@@ -24,6 +25,7 @@ class OrderService extends BaseService
     private Creator $creator;
     /** @var PaymentLinkCreator */
     private PaymentLinkCreator $paymentLinkCreator;
+    public OrderLogRepositoryInterface $orderLogRepository;
 
     public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
@@ -32,7 +34,8 @@ class OrderService extends BaseService
                                 Updater $updater,
                                 PaymentLinkRepositoryInterface $paymentLinkRepository,
                                 Creator $creator,
-                                PaymentLinkCreator $paymentLinkCreator
+                                PaymentLinkCreator $paymentLinkCreator,
+                                OrderLogRepositoryInterface $orderLogRepository,
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -43,6 +46,7 @@ class OrderService extends BaseService
         $this->paymentLinkRepository = $paymentLinkRepository;
         $this->creator = $creator;
         $this->paymentLinkCreator = $paymentLinkCreator;
+        $this->orderLogRepository = $orderLogRepository;
     }
 
     public function getOrderList($partner_id, $request)
