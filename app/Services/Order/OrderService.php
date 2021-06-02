@@ -31,6 +31,13 @@ class OrderService extends BaseService
         $this->paymentLinkRepository = $paymentLinkRepository;
     }
 
+    public function checkOrder($partner_id, $order_id)
+    {
+        $order = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
+        if(!$order) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
+        return $order;
+    }
+
     public function getOrderList($partner_id, $request)
     {
         list($offset, $limit) = calculatePagination($request);
@@ -51,8 +58,7 @@ class OrderService extends BaseService
 
     public function getOrderDetails($partner_id, $order_id)
     {
-        $order = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
-        if(!$order) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
+        $order = $this->checkOrder($partner_id, $order_id);
         $order->calculate();
         $resource = new OrderWithProductResource($order);
         if($order->due > 0){
@@ -65,9 +71,7 @@ class OrderService extends BaseService
 
     public function update($orderUpdateRequest, $partner_id, $order_id)
     {
-        $orderDetails = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
-        if(!$orderDetails) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
-
+        $orderDetails = $this->checkOrder($partner_id, $order_id);
         $this->updater->setPartnerId($partner_id)
             ->setOrderId($order_id)
             ->setOrder($orderDetails)
@@ -90,9 +94,7 @@ class OrderService extends BaseService
 
     public function delete($partner_id, $order_id)
     {
-        $order = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
-        if(!$order) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
-
+        $order = $this->checkOrder($partner_id, $order_id);
         $OrderSkusIds = $this->orderSkusRepositoryInterface->where('order_id', $order_id)->get(['id']);
         $this->orderSkusRepositoryInterface->whereIn('id', $OrderSkusIds)->delete();
         $order->delete();
