@@ -6,6 +6,7 @@ use function App\Helper\Formatters\formatTakaToDecimal;
 class OrderSku extends BaseModel
 {
     use HasFactory;
+    protected $guarded = ['id'];
 
     private $price;
     private $unit_price;

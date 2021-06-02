@@ -49,4 +49,9 @@ class PaymentLinkRepository implements PaymentLinkRepositoryInterface
         }
         return $result;
     }
+
+    public function create(array $attributes)
+    {
+        return $this->paymentLinkClient->storePaymentLink($attributes);
+    }
 }
