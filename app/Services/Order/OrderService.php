@@ -34,9 +34,8 @@ class OrderService extends BaseService
                                 Updater $updater,
                                 PaymentLinkRepositoryInterface $paymentLinkRepository,
                                 Creator $creator,
-                                PaymentLinkCreator $paymentLinkCreator
-                                PaymentLinkRepositoryInterface $paymentLinkRepository,
-                                OrderLogRepositoryInterface $orderLogRepository
+                                PaymentLinkCreator $paymentLinkCreator,
+                                OrderLogRepositoryInterface $orderLogRepository,
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
