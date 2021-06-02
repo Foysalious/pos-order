@@ -84,6 +84,8 @@ class OrderService extends BaseService
             ->setSkus($skus)
             ->setDiscount($request->discount)
             ->setIsDiscountPercentage($request->is_discount_percentage)
+            ->setPaidAmount($request->paid_amount)
+            ->setPaymentMethod($request->payment_method)
             ->create();
         $payment_link_amount = $request->has('payment_link_amount') ? $request->payment_link_amount : $order->net_bill;
         if ($request->payment_method == 'payment_link') $payment_link = $this->createPaymentLink($payment_link_amount, $partner, $order);
