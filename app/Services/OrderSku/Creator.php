@@ -70,9 +70,9 @@ class Creator
             $sku_data['warranty'] = isset($sku->warranty) ? $sku->warranty : ($sku_details[$sku->id]['warranty'] ?: 0);
             $sku_data['warranty_unit'] = isset($sku->warranty_unit) ? $sku->warranty_unit : ($sku_details[$sku->id]['warranty'] ?: WarrantyUnits::DAY);
             $sku_data['vat_percentage'] = isset($sku->vat_percentage) ? $sku->vat_percentage : $sku_details[$sku->id]['vat_percentage'];
-            $sku_data['discount']['discount'] = $sku->discount;
-            $sku_data['discount']['is_discount_percentage'] = $sku->is_discount_percentage;
-            $sku_data['discount']['cap'] = $sku->cap;
+            $sku_data['discount']['discount'] = isset($sku->discount) ? $sku->discount : 0;
+            $sku_data['discount']['is_discount_percentage'] = isset($sku->is_discount_percentage)  ? $sku->is_discount_percentage : null;
+            $sku_data['discount']['cap'] = isset($sku->cap) ? $sku->cap : null;
             $order_sku = $this->orderSkuRepository->create($sku_data);
             $this->discountHandler->setType(DiscountTypes::SKU)->setOrder($this->order)->setSkuData($sku_data)->setOrderSkuId($order_sku->id);
             if ($this->discountHandler->hasDiscount()) {
