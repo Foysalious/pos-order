@@ -40,8 +40,8 @@ class ReviewController extends Controller
      *      @OA\RequestBody(
      *          @OA\MediaType(mediaType="multipart/form-data",
      *              @OA\Schema(
-     *                  @OA\Property(property="review[0]", type="JSON", @OA\Items(type="JSON")),
-     *                  @OA\Property(property="review_images[0][0]", type="file", @OA\Items(type="file")),
+     *                  @OA\Property(property="review[0]", type="JSON"),
+     *                  @OA\Property(property="review_images[0][0]", type="file"),
      *                  required={"review[0]", "review_images[0][0]"}
      *             )
      *         )

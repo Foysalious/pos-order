@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Services\Order\Creator;
 use App\Services\Order\StatusChanger;
 use App\Traits\ResponseAPI;
+use Illuminate\Validation\ValidationException;
 
 
 class OrderController extends Controller
@@ -103,12 +104,12 @@ class OrderController extends Controller
         return $this->orderService->getOrderList($partner_id, $request);
     }
 
+
     /**
-     * Store a newly created resource in storage.
-     *
      * @param $partner
      * @param OrderCreateRequest $request
-     * @return void
+     * @return JsonResponse
+     * @throws ValidationException
      */
     public function store($partner, OrderCreateRequest $request)
     {

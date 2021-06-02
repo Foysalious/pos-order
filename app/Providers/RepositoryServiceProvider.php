@@ -53,7 +53,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->singleton(OrderPaymentRepositoryInterface::class,OrderPaymentRepository::class);
         $this->app->singleton(PaymentRepositoryInterface::class,PaymentRepository::class);
         $this->app->singleton(PaymentLinkRepositoryInterface::class,PaymentLinkRepository::class);
-        $this->app->singleton(OrderLogRepositoryInterface::class,OrderLogRepository::class);
+        $this->app->singleton(OrderLogRepositoryInterface::class, OrderLogRepository::class);
         $this->app->singleton(OrderDiscountRepositoryInterface::class,OrderDiscountRepository::class);
     }
 
