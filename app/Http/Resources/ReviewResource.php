@@ -30,4 +30,6 @@ class ReviewResource extends JsonResource
             'variation'             => $this->variation()
         ];
     }
+
+
 }
