@@ -35,7 +35,7 @@ class OrderService extends BaseService
                                 PaymentLinkRepositoryInterface $paymentLinkRepository,
                                 Creator $creator,
                                 PaymentLinkCreator $paymentLinkCreator,
-                                OrderLogRepositoryInterface $orderLogRepository,
+                                OrderLogRepositoryInterface $orderLogRepository
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
