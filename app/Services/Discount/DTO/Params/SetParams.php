@@ -23,7 +23,7 @@ abstract class SetParams
      */
     public function setOrder(Order $order)
     {
-        $this->order = $order->isCalculated ? $order : $order->calculate();
+        $this->order = $order;
         return $this;
     }
 }
