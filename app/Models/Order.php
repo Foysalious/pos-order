@@ -1,12 +1,9 @@
 <?php namespace App\Models;
 
 use App\Services\Discount\Constants\DiscountTypes;
-use App\Services\EMI\Calculations;
-use App\Services\Order\Constants\PaymentStatuses;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Services\PaymentLink\Target;
 use App\Services\PaymentLink\Constants\TargetType;
-use function App\Helper\Formatters\formatTakaToDecimal;
 
 class Order extends BaseModel
 {
@@ -26,6 +23,7 @@ class Order extends BaseModel
     public $paymentStatus;
     public $due;
     public $paid;
+
 
     public function customer()
     {
@@ -94,7 +92,6 @@ class Order extends BaseModel
         $this->paid = $credit - $debit;
     }
 
-
     private function creditPaymentsCollect()
     {
         return $this->payments->filter(function ($payment) {
@@ -129,48 +126,6 @@ class Order extends BaseModel
         return $this->hasMany(OrderSku::class);
     }
 
-    private function _calculateThisItems()
-    {
-        $this->_initializeTotalsToZero();
-        foreach ($this->orderSkus as $order_sku) {
-            /** @var OrderSku $order_sku */
-            $order_sku = $order_sku->calculate();
-            $this->_updateTotalPriceAndCost($order_sku);
-        }
-        return $this;
-    }
-
-    private function _updateTotalPriceAndCost(OrderSku $orderSku)
-    {
-        $this->totalPrice += $orderSku->getPrice();
-        $this->totalVat += $orderSku->getVat();
-        $this->totalItemDiscount += $orderSku->getDiscountAmount();
-        $this->totalBill += $orderSku->getTotal();
-    }
-
-    private function _initializeTotalsToZero()
-    {
-        $this->totalPrice = 0;
-        $this->totalVat = 0;
-        $this->totalItemDiscount = 0;
-        $this->totalBill = 0;
-    }
-
-    public function getDue()
-    {
-        return $this->due;
-    }
-
-    public function getPaid()
-    {
-        return $this->paid;
-    }
-
-    public function getDiscountAmount()
-    {
-        return $this->discountAmount;
-    }
-
     public function getPaymentLinkTarget()
     {
         return new Target(TargetType::POS_ORDER, $this->id);
@@ -181,5 +136,16 @@ class Order extends BaseModel
         return $this->discounts()->where('order_id', $this->id)
                                 ->where('type', DiscountTypes::VOUCHER)
                                 ->get();
+    }
+
+    public function logs()
+    {
+        return $this->hasMany(OrderLog::class);
+    }
+
+    public function isUpdated() : bool
+    {
+       $type = $this->logs->where('type', 'products_and_prices')->first();
+       return !empty($type) ? true : false;
     }
 }

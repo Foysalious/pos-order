@@ -1,44 +1,61 @@
 <?php namespace App\Services\Order;
 
 use App\Http\Requests\OrderCreateRequest;
+use App\Exceptions\OrderException;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderWithProductResource;
+use App\Interfaces\CustomerRepositoryInterface;
+use App\Interfaces\OrderLogRepositoryInterface;
+use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Interfaces\PaymentLinkRepositoryInterface;
 use App\Models\Order;
-use App\Models\OrderDiscount;
+use App\Models\Partner;
 use App\Services\BaseService;
-use App\Services\Discount\Constants\DiscountTypes;
-use App\Services\Order\Refund\AddProductInOrder;
 use App\Services\Order\Refund\OrderUpdateFactory;
 use Illuminate\Support\Facades\App;
+use App\Services\Order\Constants\OrderLogTypes;
+use App\Services\PaymentLink\Creator as PaymentLinkCreator;
+use App\Services\PaymentLink\PaymentLinkTransformer;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 
 class OrderService extends BaseService
 {
-    protected $orderRepositoryInterface;
+    protected $orderRepository, $orderPaymentRepository, $customerRepository;
     protected $orderSkusRepositoryInterface;
     protected $updater, $orderSearch, $orderFilter;
     protected $paymentLinkRepository;
     /** @var Creator */
     private Creator $creator;
+    /** @var PaymentLinkCreator */
+    private PaymentLinkCreator $paymentLinkCreator;
+    protected $order;
+    public OrderLogRepositoryInterface $orderLogRepository;
 
-    public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
+    public function __construct(OrderRepositoryInterface $orderRepository,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
-                                OrderSearch $orderSearch,
+                                OrderSearch $orderSearch, CustomerRepositoryInterface $customerRepository,
                                 OrderFilter $orderFilter,
-                                Updater $updater,
+                                Updater $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
                                 PaymentLinkRepositoryInterface $paymentLinkRepository,
-                                Creator $creator
+                                Creator $creator,
+                                PaymentLinkCreator $paymentLinkCreator,
+                                OrderLogRepositoryInterface $orderLogRepository
     )
     {
-        $this->orderRepositoryInterface = $orderRepositoryInterface;
+        $this->orderRepository = $orderRepository;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->updater = $updater;
         $this->orderSearch = $orderSearch;
         $this->orderFilter = $orderFilter;
         $this->paymentLinkRepository = $paymentLinkRepository;
         $this->creator = $creator;
+        $this->paymentLinkCreator = $paymentLinkCreator;
+        $this->orderLogRepository = $orderLogRepository;
+        $this->orderPaymentRepository = $orderPaymentRepository;
+        $this->customerRepository = $customerRepository;
     }
 
     public function getOrderList($partner_id, $request)
@@ -53,12 +70,18 @@ class OrderService extends BaseService
             ->setOrderStatus($request->order_status)
             ->setPaymentStatus($request->payment_status);
 
-        $ordersList = $this->orderRepositoryInterface->getOrderListWithPagination($offset, $limit, $partner_id, $orderSearch, $orderFilter);
+        $ordersList = $this->orderRepository->getOrderListWithPagination($offset, $limit, $partner_id, $orderSearch, $orderFilter);
         $orderList = OrderResource::collection($ordersList);
-        if(!$orderList) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
+        if(!$orderList) return $this->error("You're not authorized to access this order", 403);
         else return $this->success('Success', ['orders' => $orderList], 200, true);
     }
 
+    /**
+     * @param $partner
+     * @param OrderCreateRequest $request
+     * @return JsonResponse
+     * @throws ValidationException
+     */
     public function store($partner, OrderCreateRequest $request)
     {
         $skus = is_array($request->skus) ?: json_decode($request->skus);
@@ -74,14 +97,18 @@ class OrderService extends BaseService
             ->setSkus($skus)
             ->setDiscount($request->discount)
             ->setIsDiscountPercentage($request->is_discount_percentage)
+            ->setPaidAmount($request->paid_amount)
+            ->setPaymentMethod($request->payment_method)
             ->create();
-        return $this->success('Successful', ['order' => ['id' => $order->id]]);
+        $payment_link_amount = $request->has('payment_link_amount') ? $request->payment_link_amount : $order->net_bill;
+        if ($request->payment_method == 'payment_link') $payment_link = $this->createPaymentLink($payment_link_amount, $partner, $order);
+        return $this->success('Successful', ['order' => ['id' => $order->id], 'payment' => $payment_link ?? null]);
     }
 
     public function getOrderDetails($partner_id, $order_id)
     {
-        $order = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
-        if(!$order) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
+        $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        if(!$order) return $this->error("You're not authorized to access this order", 403);
         $order->calculate();
         $resource = new OrderWithProductResource($order);
         if($order->due > 0){
@@ -95,8 +122,8 @@ class OrderService extends BaseService
     public function update($orderUpdateRequest, $partner_id, $order_id)
     {
         /** @var Order $orderDetails */
-        $orderDetails = $this->orderRepositoryInterface->where('partner_id', $partner_id)->with('items')->find($order_id);
-        if(!$orderDetails) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
+        $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        if(!$orderDetails) return $this->error("You're not authorized to access this order", 403);
 
         /** @var OrderComparator $comparator */
         $comparator = (App::make(OrderComparator::class))->setOrder($orderDetails)->setNewOrder($orderUpdateRequest)->compare();
@@ -117,7 +144,6 @@ class OrderService extends BaseService
         $this->updater->setPartnerId($partner_id)
             ->setOrderId($order_id)
             ->setOrder($orderDetails)
-            ->setCustomerId($orderUpdateRequest->customer_id)
             ->setSalesChannelId($orderUpdateRequest->sales_channel_id)
             ->setEmiMonth($orderUpdateRequest->emi_month)
             ->setInterest($orderUpdateRequest->interest)
@@ -135,9 +161,8 @@ class OrderService extends BaseService
 
     public function delete($partner_id, $order_id)
     {
-        $order = $this->orderRepositoryInterface->where('partner_id', $partner_id)->find($order_id);
-        if(!$order) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
-
+        $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        if(!$order) return $this->error("You're not authorized to access this order", 403);
         $OrderSkusIds = $this->orderSkusRepositoryInterface->where('order_id', $order_id)->get(['id']);
         $this->orderSkusRepositoryInterface->whereIn('id', $OrderSkusIds)->delete();
         $order->delete();
@@ -146,8 +171,8 @@ class OrderService extends BaseService
 
     public function getOrderWithChannel($order_id)
     {
-        $orderDetails = $this->orderRepositoryInterface->find($order_id);
-        if(!$orderDetails) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
+        $orderDetails = $this->orderRepository->find($order_id);
+        if(!$orderDetails) return $this->error("You're not authorized to access this order", 403);
         $order = [
             'id' => $orderDetails->id,
             'sales_channel' => $orderDetails->sales_channel_id == 1 ? 'pos' : 'webstore'
@@ -158,9 +183,42 @@ class OrderService extends BaseService
     public function getOrderPaymentLink(Order $order) {
         $payment_link_target = $order->getPaymentLinkTarget();
         $payment_link = $this->paymentLinkRepository->getActivePaymentLinkByPosOrder($payment_link_target);
-        if ($payment_link) {
-            return $payment_link;
-        } else
-            return false;
+        return isset($payment_link) ? $payment_link : false;
+    }
+
+    public function updateCustomer($customer_id, $partner_id, $order_id)
+    {
+        $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        if(!$order) return $this->error(trans('order.order_not_found'), 404);
+        if(!$this->customerRepository->find($customer_id)) return $this->error(trans('order.customer_not_found'), 404);
+        if($this->checkCustomerHasPayment($order_id))
+            $this->updater->setOrderId($order_id)
+                ->setOrder($order)
+                ->setCustomerId($customer_id)
+                ->setOrderLogType(OrderLogTypes::CUSTOMER)
+                ->update();
+        return $this->success('Successful', null, 200);
+    }
+
+    private function checkCustomerHasPayment($order_id) : bool
+    {
+        $orderPaymentStatus = $this->orderPaymentRepository->where('order_id', $order_id)->get();
+        if(count($orderPaymentStatus) > 0) throw new OrderException(trans('order.update.no_customer_update'));
+        else return true;
+    }
+
+    private function createPaymentLink($payment_link_amount, $partner, $order)
+    {
+        if (!$partner instanceof Partner) $partner = Partner::find($partner);
+        $paymentLink = $this->paymentLinkCreator->setAmount($payment_link_amount)->setReason("PosOrder ID: $order->id Due payment")
+            ->setUserName($partner->name)->setUserId($partner->id)
+            ->setUserType('partner')
+            ->setTargetId($order->id)
+            ->setTargetType('pos_order');
+        if ($order->customer_id) $paymentLink->setPayerId($order->customer_id)->setPayerType('pos_customer');
+        $paymentLink = $paymentLink->create();
+        $transformer = new PaymentLinkTransformer();
+        $transformer->setResponse($paymentLink);
+        return ['link' => config('pos.payment_link_web_url') . '/' . $transformer->getLinkIdentifier()];
     }
 }

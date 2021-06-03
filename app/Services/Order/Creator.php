@@ -58,6 +58,8 @@ class Creator
     private DiscountHandler $discountHandler;
     private $discount;
     private $isDiscountPercentage;
+    private $paidAmount;
+    private $paymentMethod;
     /**
      * @var OrderSkuCreator
      */
@@ -186,6 +188,26 @@ class Creator
         return $this;
     }
 
+    /**
+     * @param mixed $paidAmount
+     * @return Creator
+     */
+    public function setPaidAmount($paidAmount)
+    {
+        $this->paidAmount = $paidAmount;
+        return $this;
+    }
+
+    /**
+     * @param mixed $paymentMethod
+     * @return Creator
+     */
+    public function setPaymentMethod($paymentMethod)
+    {
+        $this->paymentMethod = $paymentMethod;
+        return $this;
+    }
+
     public function setData(array $data)
     {
         $this->data = $data;
@@ -231,19 +253,15 @@ class Creator
         $order_data['emi_month'] = $this->emiMonth ?? null;
         $order_data['status'] = $this->salesChannelId == SalesChannelIds::POS ? Statuses::COMPLETED : Statuses::PENDING;
         $order_data['discount'] = $this->discount;
-        $order_data['is_discount_percentage'] = $this->isDiscountPercentage;
+        $order_data['is_discount_percentage'] = $this->isDiscountPercentage ?: 0;
         $order = $this->orderRepositoryInterface->create($order_data);
         $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($order_data);
-        if ($this->discountHandler->hasDiscount()) {
-            $this->discountHandler->create();
-        }
+        if ($this->discountHandler->hasDiscount()) $this->discountHandler->create();
         $this->orderSkuCreator->setOrder($order)->setSkus($this->skus)->create();
-//        $this->order->calculate();
-//        $this->sendOrderPlaceSmsToCustomer();
-        if (isset($this->data['paid_amount']) && $this->data['paid_amount'] > 0) {
+        if ($this->paidAmount > 0) {
             $payment_data['order_id'] = $order->id;
-            $payment_data['amount'] = $this->data['paid_amount'];
-            $payment_data['method'] = $this->data['payment_method'] ?: 'cod';
+            $payment_data['amount'] = $this->paidAmount;
+            $payment_data['method'] = $this->paymentMethod ?: 'cod';
             $this->paymentCreator->credit($payment_data);
         }
         return $order;

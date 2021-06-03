@@ -28,7 +28,8 @@ class ReviewResource extends JsonResource
             'customer_name'         =>$this->customer->name,
             'images'                => $this->images,
             'variation'             => $this->variation()
-
         ];
     }
+
+
 }
