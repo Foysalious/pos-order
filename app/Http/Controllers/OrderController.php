@@ -228,7 +228,7 @@ class OrderController extends Controller
      * )
      */
 
-    public function update(Request $request, $partner_id, $order_id)
+    public function update(OrderUpdateRequest $request, $partner_id, $order_id)
     {
         return $this->orderService->update($request, $partner_id, $order_id);
     }

@@ -1,8 +1,4 @@
-<?php
-
-
-namespace App\Services\Order;
-
+<?php namespace App\Services\Order;
 
 use App\Models\Order;
 use Illuminate\Http\Request;

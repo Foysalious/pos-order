@@ -1,8 +1,4 @@
-<?php
-
-
-namespace App\Services\Order\Refund;
-
+<?php namespace App\Services\Order\Refund;
 
 use App\Services\OrderSku\Creator;
 use Illuminate\Support\Collection;
