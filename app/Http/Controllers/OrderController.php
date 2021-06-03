@@ -136,7 +136,8 @@ class OrderController extends Controller
      *      @OA\Response(response=403, description="Forbidden")
      *     )
      *
-     * @param int $id
+     * @param $partner_id
+     * @param $order_id
      * @return JsonResponse
      */
     public function show($partner_id, $order_id)
@@ -145,10 +146,10 @@ class OrderController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
-     * @param int $partner_id
+     *
      * @param OrderUpdateRequest $request
-     * @param $id
+     * @param int $partner_id
+     * @param int $order_id
      * @return JsonResponse
      */
     public function update(Request $request, int $partner_id, int $order_id)

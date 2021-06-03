@@ -44,7 +44,7 @@ class OrderComparator
     public function compare()
     {
         $this->checkForProductAdditionAndDeletion();
-        $this->checkForProductUpdate();
+        $this->checkUpdatesInProduct();
         return $this;
 //        dump('added',$this->productAddedFlag, $this->addedProducts);
 //        dump('deleted',$this->productDeletedFlag, $this->deletedProducts);
@@ -61,8 +61,8 @@ class OrderComparator
             $this->productAddedFlag = FALSE;
             $this->productDeletedFlag = FALSE;
         } else {
-            $this->findAddedProducts($current_products,$request_products);
-            $this->findDeletedProducts($current_products,$request_products);
+            $this->lookForAddedProducts($current_products,$request_products);
+            $this->lookForDeletedProducts($current_products,$request_products);
         }
     }
 
@@ -70,7 +70,7 @@ class OrderComparator
      * @param Collection $current_products
      * @param Collection $request_products
      */
-    private function findAddedProducts($current_products, $request_products)
+    private function lookForAddedProducts($current_products, $request_products)
     {
         if($request_products->diff($current_products)->isNotEmpty()) {
             $this->productAddedFlag = TRUE;
@@ -82,7 +82,7 @@ class OrderComparator
      * @param Collection $current_products
      * @param Collection $request_products
      */
-    private function findDeletedProducts($current_products, $request_products)
+    private function lookForDeletedProducts($current_products, $request_products)
     {
         if ($current_products->diff($request_products)->isNotEmpty()) {
             $this->productDeletedFlag = TRUE;
@@ -90,7 +90,7 @@ class OrderComparator
         }
     }
 
-    private function checkForProductUpdate() {
+    private function checkUpdatesInProduct() {
         $current_products = collect($this->order->items()->get(['id','quantity','unit_price'])->toArray());
         $request_products = collect(json_decode($this->newOrder->skus, true));
         $current_products->each(function ($current_product) use ($request_products){

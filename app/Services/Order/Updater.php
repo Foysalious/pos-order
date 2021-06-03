@@ -10,14 +10,13 @@ class Updater
     use ModificationFields;
     protected $partner_id, $order_id, $customer_id, $status, $sales_channel_id, $emi_month, $interest, $delivery_charge;
     protected $bank_transaction_charge, $delivery_name, $delivery_mobile, $delivery_address, $note, $voucher_id;
-    protected $skus, $order;
+    protected $order;
     protected $orderLogCreator;
-    protected $orderRepositoryInterface, $orderSkusRepositoryInterface;
+    protected $orderRepositoryInterface;
 
     public function __construct(OrderRepositoryInterface $orderRepositoryInterface, OrderSkusRepositoryInterface $orderSkusRepositoryInterface, OrderLogCreator $orderLogCreator)
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
-        $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->orderLogCreator = $orderLogCreator;
     }
 
@@ -31,15 +30,6 @@ class Updater
         return $this;
     }
 
-    /**
-     * @param mixed $updatedSkus
-     * @return Updater
-     */
-    public function setUpdatedSkus($updatedSkus)
-    {
-        $this->skus = $updatedSkus;
-        return $this;
-    }
 
     /**
      * @param mixed $voucher_id
