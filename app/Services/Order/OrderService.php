@@ -107,7 +107,7 @@ class OrderService extends BaseService
     {
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if(!$order) return $this->error("You're not authorized to access this order", 403);
-        $order->calculate();
+
         $resource = new OrderWithProductResource($order);
         if($order->due > 0){
             $paymentLink = $this->getOrderPaymentLink($order);

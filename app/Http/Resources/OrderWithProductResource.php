@@ -2,12 +2,25 @@
 
 namespace App\Http\Resources;
 
+use App\Services\Order\PriceCalculation;
 use App\Services\PaymentLink\PaymentLinkTransformer;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\App;
 
 class OrderWithProductResource extends JsonResource
 {
+    private $order;
+    /**
+     * OrderWithProductResource constructor.
+     */
+    public function __construct($order)
+    {
+        $this->order = $order;
+        parent::__construct($order);
+    }
+
+
     /**
      * Transform the resource into an array.
      *
@@ -37,17 +50,9 @@ class OrderWithProductResource extends JsonResource
             'note'                    => $this->note,
             'voucher_id'              => $this->voucher_id,
             'items'                   => OrderSkuResource::collection($this->items),
-            'price_info'              => [
-                'delivery_charge'   =>  $this->delivery_charge,
-                'total_price'       => $this->totalPrice,
-                'total_vat'         => $this->totalVat,
-                'total_bill'        => $this->totalBill,
-                'totalDiscount'     => $this->totalDiscount,
-                'due'               => $this->due,
-                'promo'             => $this->getVoucher()->pluck('amount')->first(),
-            ],
+            'price_info'              => $this->getOrderPriceRelatedInfo(),
             'customer_info'           => $this->customer->only('name','phone','pro_pic'),
-            'payment_info'            => $this->payments,
+            'payment_info'            => OrderPaymentResource::collection($this->payments),
         ];
     }
 
@@ -62,5 +67,23 @@ class OrderWithProductResource extends JsonResource
             'created_at' => $payment_link->getCreatedAt()->format('d-m-Y h:s A')
         ];
         return $order_data;
+    }
+
+    private function getOrderPriceRelatedInfo()
+    {
+        /** @var PriceCalculation $price_calculator */
+        $price_calculator = (App::make(PriceCalculation::class))->setOrder($this->order);
+
+        return [
+            'delivery_charge'   => $this->delivery_charge,
+            'promo'             => $this->getVoucher()->pluck('amount')->first(),
+            'total_price' => $price_calculator->getTotalPrice(),
+            'total_bill' => $price_calculator->getTotalBill(),
+            'discount_amount' => $price_calculator->getDiscountAmount(),
+            'due_amount' => $price_calculator->getDue(),
+            'paid_amount' => $price_calculator->getPaid(),
+            'total_item_discount' => $price_calculator->getTotalItemDiscount(),
+            'total_vat' => $price_calculator->getTotalVat(),
+        ];
     }
 }
