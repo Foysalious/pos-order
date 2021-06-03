@@ -218,7 +218,12 @@ class Updater
         if(isset($this->delivery_mobile)) $data['delivery_mobile']                  = $this->delivery_mobile;
         if(isset($this->delivery_address)) $data['delivery_address']                = $this->delivery_address;
         if(isset($this->note)) $data['note']                                        = $this->note;
-        if(isset($this->voucher_id)) $data['voucher_id']                            = $this->voucher_id;
+        if(isset($this->voucher_id))
+        {
+            $data['voucher_id'] = $this->voucher_id;
+            $this->setOrderLogType(OrderLogTypes::PRODUCTS_AND_PRICES);
+        }
+
         return $data + $this->modificationFields(false, true);
     }
 
