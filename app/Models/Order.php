@@ -27,11 +27,11 @@ class Order extends BaseModel
     public $due;
     public $paid;
 
+
     public function customer()
     {
         return $this->belongsTo(Customer::class, 'customer_id', 'id');
     }
-
     public function items()
     {
         return $this->hasMany(OrderSku::class);
@@ -93,7 +93,6 @@ class Order extends BaseModel
         $debit = $this->debitPaymentsCollect()->sum('amount');
         $this->paid = $credit - $debit;
     }
-
 
     private function creditPaymentsCollect()
     {
@@ -188,9 +187,9 @@ class Order extends BaseModel
         return $this->hasMany(OrderLog::class);
     }
 
-    public function isUpdated()
+    public function isUpdated() : bool
     {
        $type = $this->logs->where('type', 'products_and_prices')->first();
-       return !empty($type) ? trans('order.update.updated'): '';
+       return !empty($type) ? true : false;
     }
 }

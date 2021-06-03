@@ -1,5 +1,6 @@
 <?php namespace App\Http\Resources;
 
+use App\Models\Order;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class OrderResource extends JsonResource
@@ -12,6 +13,7 @@ class OrderResource extends JsonResource
      */
     public function toArray($request)
     {
+        /** @var Order $this */
         return [
             'id'                      => $this->id,
             'partner_wise_order_id'   => $this->partner_wise_order_id,
@@ -28,7 +30,7 @@ class OrderResource extends JsonResource
             'note'                    => $this->note,
             'voucher_id'              => $this->voucher_id,
             'payment_status'          => $this->closed_and_paid_at,
-            'order_updated_message'   => $this->isUpdated()
+            'order_updated_message'   => $this->isUpdated() ? trans('order.update.updated') : null
         ];
     }
 }
