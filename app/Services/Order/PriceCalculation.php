@@ -37,7 +37,7 @@ class PriceCalculation
         return $this;
     }
 
-    public function calculate()
+    private function calculate()
     {
         $this->_calculateThisItems();
         $this->totalDiscount = $this->totalItemDiscount + $this->discountsAmountWithoutProduct();
