@@ -7,6 +7,7 @@ namespace App\Services\Order\Refund;
 use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Models\Order;
 use App\Repositories\OrderSkuRepository;
+use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Updater;
 use Illuminate\Support\Collection;
 
@@ -25,14 +26,19 @@ abstract class ProductOrder
 
     protected Collection $skus;
 
+    /** @var InventoryServerClient */
+    protected InventoryServerClient $client;
+
+
     /**
      * RefundProduct constructor.
      * @param Updater $updater
      */
-    public function __construct(Updater $updater, OrderSkuRepositoryInterface $orderSkuRepository)
+    public function __construct(Updater $updater, OrderSkuRepositoryInterface $orderSkuRepository, InventoryServerClient $client)
     {
         $this->updater = $updater;
         $this->orderSkuRepository = $orderSkuRepository;
+        $this->client = $client;
     }
 
     /**

@@ -101,7 +101,7 @@ class OrderComparator
                     $this->productUpdatedFlag = true;
                     $this->updatedProducts [] = $updating_product['id'];
                 }
-                if (isset($updating_product['edited_price']) && ($updating_product['edited_price'] != $current_product['unit_price'])){
+                if (isset($updating_product['price']) && ($updating_product['price'] != $current_product['unit_price'])){
                     $this->productUpdatedFlag = true;
                     if (array_search($updating_product['id'],$this->updatedProducts) === FALSE ) {
                         $this->updatedProducts [] = $updating_product['id'];
@@ -109,7 +109,6 @@ class OrderComparator
                 }
             }
         });
-
     }
 
     /**

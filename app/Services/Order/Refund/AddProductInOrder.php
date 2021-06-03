@@ -4,6 +4,7 @@
 namespace App\Services\Order\Refund;
 
 use App\Services\OrderSku\Creator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 
 class AddProductInOrder extends ProductOrder
@@ -15,10 +16,17 @@ class AddProductInOrder extends ProductOrder
 
     private function addItemsInOrderSku()
     {
-        $items = array_values($this->getAddedItems()->toArray());
-        /** @var Creator $creator */
-        $creator = App::make(Creator::class);
-        $creator->setOrder($this->order)->setSkus($items)->create();
+        $all_items = $this->getAddedItems();
+        $null_sku_items = $all_items->where('id','=', null);
+        $sku_items = $all_items->where('id','<>', null)->toArray();
+        if($sku_items) {
+            /** @var Creator $creator */
+            $creator = App::make(Creator::class);
+            $creator->setOrder($this->order)->setSkus($sku_items)->create();
+        } elseif ($null_sku_items) {
+            $this->addNullSkuItems($null_sku_items);
+        }
+
         return true;
     }
 
@@ -29,4 +37,16 @@ class AddProductInOrder extends ProductOrder
         $items = $request_products->diff($current_products);
         return $this->skus->whereIn('id',$items);
     }
+
+    private function addNullSkuItems(Collection $items)
+    {
+        foreach ($items as $item) {
+            $data['sku_id'] = null;
+            $data['quantity'] = $item->quantity;
+            $data['unit_price'] = $item->price;
+            $data['order_id'] = $this->order->id;
+            $this->orderSkuRepository->create($data);
+        }
+    }
+
 }
