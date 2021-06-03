@@ -17,11 +17,15 @@ class UpdateProductInOrder extends ProductOrder
     {
         $updated_products = $this->getUpdatedProducts();
         $skus_details = $this->getUpdatedProductsSkuDetails($updated_products); //only updated product's sku details
+
         foreach ($updated_products as $each) {
             if($each['sku_id'] == null)
                 $this->handleNullOrderSkuItem($each);
-            elseif (array_key_exists('quantity', $each)){
+            elseif (array_key_exists('quantity', $each) && !array_key_exists('price', $each)){
                 $this->handleQuantityUpdateForOrderSku($each, $skus_details->where('id', $each['sku_id'])->first());
+            }
+            elseif (array_key_exists('quantity', $each) && array_key_exists('price', $each)){
+                $this->handleQuantityUpdateForEditedPrice($each);
             }
         }
     }
@@ -66,10 +70,9 @@ class UpdateProductInOrder extends ProductOrder
         return false;
     }
 
-    private function handleQuantityUpdateForOrderSku(array $product, array $sku_details)
+    private function handleQuantityUpdateForOrderSku(array $product, array|null $sku_details)
     {
         $current_sku_price = $sku_details['sku_channel'][0]['price'];
-
         //handle when price same and quantity does not matter
         if($product['previous_unit_price'] == $current_sku_price) { //price is same so we are changing the quantity in order_skus
             $this->updateOrderSkuQuantityForSamePrice($product);
@@ -79,7 +82,7 @@ class UpdateProductInOrder extends ProductOrder
             $this->createOrderSkuForNewPriceQuantity($product);
         }
         //handle when price changed and quantity decreased
-        elseif ($product['previous_unit_price'] != $current_sku_price && $product['quantity_changing_info']['type'] == self::QUANTITY_DECREASED) {
+        elseif ($product['previous_unit_price'] == $current_sku_price && $product['quantity_changing_info']['type'] == self::QUANTITY_DECREASED) {
             $this->updateOrderSkuQuantityForSamePrice($product);
         }
 
@@ -180,6 +183,13 @@ class UpdateProductInOrder extends ProductOrder
         $order_sku->quantity = $product['quantity_changing_info']['value'];
         $order_sku->unit_price = $product['price'];
         $order_sku->save();
+    }
+
+    private function handleQuantityUpdateForEditedPrice(array $product)
+    {
+        if($product['price'] != $product['previous_unit_price'] && $product['quantity_changing_info']['type'] == self::QUANTITY_INCREASED) {
+            $this->createOrderSkuForNewPriceQuantity($product);
+        }
     }
 
 

@@ -23,7 +23,8 @@ class AddProductInOrder extends ProductOrder
             /** @var Creator $creator */
             $creator = App::make(Creator::class);
             $creator->setOrder($this->order)->setSkus($sku_items)->create();
-        } elseif ($null_sku_items) {
+        }
+        if ($null_sku_items) {
             $this->addNullSkuItems($null_sku_items);
         }
 
