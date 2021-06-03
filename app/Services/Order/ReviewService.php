@@ -36,8 +36,8 @@ class ReviewService extends BaseService
     public function reviewStatistics()
     {
         return json_decode(json_encode([
-            "5" => 110,
-            "4" => 82,
+            "5" => 1,
+            "4" => 1,
             "3" => 0,
             "2" => 0,
             "1" => 0,
