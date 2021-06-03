@@ -258,7 +258,7 @@ class Creator
         $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($order_data);
         if ($this->discountHandler->hasDiscount()) $this->discountHandler->create();
         $this->orderSkuCreator->setOrder($order)->setSkus($this->skus)->create();
-        if (isset($this->paidAmount) && $this->paidAmount > 0) {
+        if ($this->paidAmount > 0) {
             $payment_data['order_id'] = $order->id;
             $payment_data['amount'] = $this->paidAmount;
             $payment_data['method'] = $this->paymentMethod ?: 'cod';
