@@ -181,7 +181,8 @@ class OrderController extends Controller
      *      @OA\Response(response=403, description="Forbidden")
      *     )
      *
-     * @param int $id
+     * @param $partner_id
+     * @param $order_id
      * @return JsonResponse
      */
     public function show($partner_id, $order_id)
@@ -190,10 +191,10 @@ class OrderController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
-     * @param $partner_id
+     *
      * @param OrderUpdateRequest $request
-     * @param $id
+     * @param int $partner_id
+     * @param int $order_id
      * @return JsonResponse
      */
 
@@ -226,9 +227,10 @@ class OrderController extends Controller
      *     @OA\Response(response="403", description="You're not authorized to access this order"),
      * )
      */
-    public function update(Request $request, $partner_id, $id)
+
+    public function update(OrderUpdateRequest $request, $partner_id, $order_id)
     {
-        return $this->orderService->update($request, $partner_id, $id);
+        return $this->orderService->update($request, $partner_id, $order_id);
     }
 
     public function getOrderWithChannel($order_id)
