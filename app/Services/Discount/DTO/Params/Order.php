@@ -1,6 +1,8 @@
 <?php namespace App\Services\Discount\DTO\Params;
 
 
+use App\Services\Order\PriceCalculation;
+
 class Order extends SetParams
 {
     private $originalAmount;
@@ -30,8 +32,7 @@ class Order extends SetParams
     {
         return [
             'type' => $this->type,
-//            'amount' => $this->getApplicableAmount(),
-            'amount' => $this->originalAmount,
+            'amount' => $this->getApplicableAmount(),
             'original_amount' => $this->originalAmount,
             'is_percentage' => $this->isPercentage,
         ];
@@ -39,6 +40,8 @@ class Order extends SetParams
 
     private function getApplicableAmount()
     {
-        return $this->isPercentage ? (($this->originalAmount / 100) * $this->order->getTotalBill()) : $this->originalAmount;
+        /** @var $priceCalculation PriceCalculation */
+        $priceCalculation = app(PriceCalculation::class);
+        return $this->isPercentage ? (($this->originalAmount / 100) * $priceCalculation->setOrder($this->order)->getTotalBill()) : $this->originalAmount;
     }
 }
