@@ -1,6 +1,7 @@
 <?php namespace App\Providers;
 
 use App\Interfaces\OrderDiscountRepositoryInterface;
+use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderLogRepositoryInterface;
 use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
@@ -13,6 +14,7 @@ use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Interfaces\PartnerRepositoryInterface;
 use App\Repositories\OrderDiscountRepository;
+use App\Repositories\CustomerRepository;
 use App\Repositories\OrderLogRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\OrderPaymentRepository;
@@ -58,6 +60,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->singleton(OrderLogRepositoryInterface::class, OrderLogRepository::class);
         $this->app->singleton(CustomerRepositoryInterface::class,CustomerRepository::class);
         $this->app->singleton(OrderDiscountRepositoryInterface::class,OrderDiscountRepository::class);
+        $this->app->singleton(CustomerRepositoryInterface::class, CustomerRepository::class);
     }
 
 }

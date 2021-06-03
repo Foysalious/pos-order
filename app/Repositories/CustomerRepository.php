@@ -1,7 +1,8 @@
 <?php namespace App\Repositories;
 
-use App\Models\Customer;
+
 use App\Interfaces\CustomerRepositoryInterface;
+use App\Models\Customer;
 
 class CustomerRepository extends BaseRepository implements CustomerRepositoryInterface
 {

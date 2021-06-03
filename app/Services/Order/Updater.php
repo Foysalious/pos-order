@@ -1,6 +1,5 @@
 <?php namespace App\Services\Order;
 
-use App\Exceptions\OrderException;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
@@ -15,7 +14,7 @@ class Updater
     protected $skus, $order, $existingOrder;
     protected $orderLogCreator;
     protected $orderRepositoryInterface, $orderSkusRepositoryInterface, $orderPaymentRepository;
-    protected string $orderLogType;
+    protected string $orderLogType = OrderLogTypes::OTHERS;
 
     public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
