@@ -110,7 +110,7 @@ class OrderService extends BaseService
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if(!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new OrderWithProductResource($order);
-        return $this->success('Success', ['order' => $resource], 200, true);
+        return $this->success('Successful', ['order' => $resource], 200, true);
     }
 
     public function update($orderUpdateRequest, $partner_id, $order_id)
