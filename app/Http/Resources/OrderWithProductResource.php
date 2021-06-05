@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Repositories\PaymentLinkRepository;
 use App\Services\Order\PriceCalculation;
 use App\Services\PaymentLink\PaymentLinkTransformer;
 use Illuminate\Http\Request;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\App;
 class OrderWithProductResource extends JsonResource
 {
     private $order;
+    private array $orderWithProductResource = [];
     /**
      * OrderWithProductResource constructor.
      */
@@ -29,12 +31,7 @@ class OrderWithProductResource extends JsonResource
      */
     public function toArray($request): array
     {
-        return $this->getOrderDetailsWithoutPaymentLink();
-    }
-
-    public function getOrderDetailsWithoutPaymentLink(): array
-    {
-        return [
+        $this->orderWithProductResource = [
             'id'                      => $this->id,
             'previous_order_id'       => $this->previous_order_id,
             'partner_wise_order_id'   => $this->partner_wise_order_id,
@@ -52,24 +49,15 @@ class OrderWithProductResource extends JsonResource
             'items'                   => OrderSkuResource::collection($this->items),
             'price_info'              => $this->getOrderPriceRelatedInfo(),
             'customer_info'           => $this->customer->only('name','phone','pro_pic'),
-            'payment_info'            => OrderPaymentResource::collection($this->payments),
         ];
+        $this->orderWithProductResource['payment_info'] = $this->getOrderDetailsWithPaymentLink();
+        return $this->orderWithProductResource;
     }
 
-    public function getOrderDetailsWithPaymentLink(PaymentLinkTransformer $payment_link): array
-    {
-        $order_data = $this->getOrderDetailsWithoutPaymentLink();
-        $order_data['payment_link'] = [
-            'id' => $payment_link->getLinkID(),
-            'status' => $payment_link->getIsActive() ? 'active' : 'inactive',
-            'link' => $payment_link->getLink(),
-            'amount' => $payment_link->getAmount(),
-            'created_at' => $payment_link->getCreatedAt()->format('d-m-Y h:s A')
-        ];
-        return $order_data;
-    }
-
-    private function getOrderPriceRelatedInfo()
+    /**
+     * @return array
+     */
+    private function getOrderPriceRelatedInfo() : array
     {
         /** @var PriceCalculation $price_calculator */
         $price_calculator = (App::make(PriceCalculation::class))->setOrder($this->order);
@@ -85,5 +73,30 @@ class OrderWithProductResource extends JsonResource
             'total_item_discount' => $price_calculator->getTotalItemDiscount(),
             'total_vat' => $price_calculator->getTotalVat(),
         ];
+    }
+
+    /**
+     * @return array|null
+     */
+    private function getOrderDetailsWithPaymentLink(): ?array
+    {
+        $payment_info = null;
+        if( isset($this->orderWithProductResource['price_info']['due_amount']) && $this->orderWithProductResource['price_info']['due_amount'] > 0){
+            $payment_link_target = $this->order->getPaymentLinkTarget();
+            /** @var PaymentLinkRepository $paymentLinkRepository */
+            $paymentLinkRepository = App::make(PaymentLinkRepository::class);
+            /** @var PaymentLinkTransformer $payment_link_transformer */
+            $payment_link_transformer = $paymentLinkRepository->getActivePaymentLinkByPosOrder($payment_link_target);
+            if ($payment_link_transformer) {
+                $payment_info = [
+                    'id' => $payment_link_transformer->getLinkID(),
+                    'status' => $payment_link_transformer->getIsActive() ? 'active' : 'inactive',
+                    'link' => $payment_link_transformer->getLink(),
+                    'amount' => $payment_link_transformer->getAmount(),
+                    'created_at' => $payment_link_transformer->getCreatedAt()->format('d-m-Y h:s A')
+                ];
+            }
+        }
+        return $payment_info;
     }
 }

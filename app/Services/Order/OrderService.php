@@ -107,13 +107,7 @@ class OrderService extends BaseService
     {
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if(!$order) return $this->error("You're not authorized to access this order", 403);
-
         $resource = new OrderWithProductResource($order);
-        if($order->due > 0){
-            $paymentLink = $this->getOrderPaymentLink($order);
-            if ($paymentLink)
-                $resource = $resource->getOrderDetailsWithPaymentLink($paymentLink);
-        }
         return $this->success('Success', ['order' => $resource], 200, true);
     }
 
@@ -159,12 +153,6 @@ class OrderService extends BaseService
             'sales_channel' => $orderDetails->sales_channel_id == 1 ? 'pos' : 'webstore'
         ];
         return $this->success('Success', ['order' => $order], 200, true);
-    }
-
-    public function getOrderPaymentLink(Order $order) {
-        $payment_link_target = $order->getPaymentLinkTarget();
-        $payment_link = $this->paymentLinkRepository->getActivePaymentLinkByPosOrder($payment_link_target);
-        return isset($payment_link) ? $payment_link : false;
     }
 
     public function updateCustomer($customer_id, $partner_id, $order_id)
