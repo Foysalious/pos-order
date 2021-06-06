@@ -21,7 +21,7 @@ class CustomerService extends BaseService
         $this->customerRepository = $customerRepository;
     }
 
-    public function update($request, string $customer_id)
+    public function update($request, int $customer_id)
     {
         $customerDetails = $this->customerRepository->find($customer_id);
         if (!$customerDetails) return $this->error('Customer Not Found', 404);

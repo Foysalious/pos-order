@@ -105,7 +105,7 @@ class CustomerController extends Controller
      *       ),
      *     )
      */
-    public function update(Request $request,string $customer_id )
+    public function update(Request $request,int $customer_id )
     {
         $this->customerService->update($request, $customer_id);
         return $this->success('Successful', null, 201, true);
