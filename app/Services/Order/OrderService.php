@@ -13,6 +13,8 @@ use App\Interfaces\PaymentLinkRepositoryInterface;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Services\BaseService;
+use App\Services\Order\Refund\OrderUpdateFactory;
+use Illuminate\Support\Facades\App;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\PaymentLink\Creator as PaymentLinkCreator;
 use App\Services\PaymentLink\PaymentLinkTransformer;
@@ -107,25 +109,36 @@ class OrderService extends BaseService
     {
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if(!$order) return $this->error("You're not authorized to access this order", 403);
-        $order->calculate();
         $resource = new OrderWithProductResource($order);
-        if($order->due > 0){
-            $paymentLink = $this->getOrderPaymentLink($order);
-            if ($paymentLink)
-                $resource = $resource->getOrderDetailsWithPaymentLink($paymentLink);
-        }
-        return $this->success('Success', ['order' => $resource], 200, true);
+        return $this->success('Successful', ['order' => $resource], 200, true);
     }
 
     public function update($orderUpdateRequest, $partner_id, $order_id)
     {
+        /** @var Order $orderDetails */
         $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if(!$orderDetails) return $this->error("You're not authorized to access this order", 403);
+
+        /** @var OrderComparator $comparator */
+        $comparator = (App::make(OrderComparator::class))->setOrder($orderDetails)->setNewOrder($orderUpdateRequest)->compare();
+
+        if($comparator->isProductAdded()){
+            $updater = OrderUpdateFactory::getProductAddingUpdater($orderDetails, $orderUpdateRequest->all());
+            $updater->update();
+        }
+        if($comparator->isProductDeleted()){
+            $updater = OrderUpdateFactory::getProductDeletionUpdater($orderDetails, $orderUpdateRequest->all());
+            $updater->update();
+        }
+        if($comparator->isProductUpdated()){
+            $updater = OrderUpdateFactory::getOrderProductUpdater($orderDetails, $orderUpdateRequest->all());
+            $updater->update();
+        }
+
         $this->updater->setPartnerId($partner_id)
             ->setOrderId($order_id)
             ->setOrder($orderDetails)
             ->setSalesChannelId($orderUpdateRequest->sales_channel_id)
-            ->setUpdatedSkus($orderUpdateRequest->skus)
             ->setEmiMonth($orderUpdateRequest->emi_month)
             ->setInterest($orderUpdateRequest->interest)
             ->setDeliveryCharge($orderUpdateRequest->delivery_charge)
@@ -159,12 +172,6 @@ class OrderService extends BaseService
             'sales_channel' => $orderDetails->sales_channel_id == 1 ? 'pos' : 'webstore'
         ];
         return $this->success('Success', ['order' => $order], 200, true);
-    }
-
-    public function getOrderPaymentLink(Order $order) {
-        $payment_link_target = $order->getPaymentLinkTarget();
-        $payment_link = $this->paymentLinkRepository->getActivePaymentLinkByPosOrder($payment_link_target);
-        return isset($payment_link) ? $payment_link : false;
     }
 
     public function updateCustomer($customer_id, $partner_id, $order_id)

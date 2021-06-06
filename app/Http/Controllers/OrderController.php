@@ -48,46 +48,8 @@ class OrderController extends Controller
      *          response=200,
      *          description="Successful operation",
      *          @OA\JsonContent(
-     *              type="object", example={
-     *              "message": "Successful",
-     *              "orderList": {{
-     *                  "id": 2000038,
-     *                  "previous_order_id": null,
-     *                  "partner_wise_order_id": 21,
-     *                  "customer_id": 1,
-     *                  "status": "Completed",
-     *                  "sales_channel_id": 1,
-     *                  "emi_month": null,
-     *                  "interest": null,
-     *                  "delivery_charge": "0.00",
-     *                  "bank_transaction_charge": null,
-     *                  "delivery_name": "",
-     *                  "delivery_mobile": "",
-     *                  "delivery_address": "",
-     *                  "note": null,
-     *                  "voucher_id": null,
-     *                  "payment_status": null
-     *               },
-     *               {
-     *                  "id": 2000037,
-     *                  "previous_order_id": null,
-     *                  "partner_wise_order_id": 20,
-     *                  "customer_id": 1,
-     *                  "status": "Completed",
-     *                  "sales_channel_id": 1,
-     *                  "emi_month": null,
-     *                  "interest": null,
-     *                  "delivery_charge": "0.00",
-     *                  "bank_transaction_charge": null,
-     *                  "delivery_name": "",
-     *                  "delivery_mobile": "",
-     *                  "delivery_address": "",
-     *                  "note": null,
-     *                  "voucher_id": null,
-     *                  "payment_status": null
-     *               }
-     *               }
-     *              }
+     *              type="object",
+     *              example={"message": "Successful", "orderList": {{ "id": 2000038, "previous_order_id": null, "partner_wise_order_id": 21, "customer_id": 1, "status": "Completed", "sales_channel_id": 1, "emi_month": null, "interest": null, "delivery_charge": "0.00", "bank_transaction_charge": null, "delivery_name": "", "delivery_mobile": "", "delivery_address": "", "note": null, "voucher_id": null, "payment_status": null }, { "id": 2000037, "previous_order_id": null, "partner_wise_order_id": 20, "customer_id": 1, "status": "Completed", "sales_channel_id": 1, "emi_month": null, "interest": null, "delivery_charge": "0.00", "bank_transaction_charge": null, "delivery_name": "", "delivery_mobile": "", "delivery_address": "", "note": null, "voucher_id": null, "payment_status": null }} }
      *          )),
      *      @OA\Response(
      *          response=404,
@@ -176,12 +138,18 @@ class OrderController extends Controller
      *      description="Return all orders with searching parameters",
      *      @OA\Parameter(name="partner", description="partner id", required=true, in="path", @OA\Schema(type="integer")),
      *      @OA\Parameter(name="order", description="order id", required=true, in="path", @OA\Schema(type="integer")),
-     *      @OA\Response(response=200, description="Successful operation", @OA\JsonContent(ref="")),
-     *      @OA\Response(response=404, description="message: কঅর্ডারটি পাওয়া যায় নি"),
-     *      @OA\Response(response=403, description="Forbidden")
-     *     )
+     *      @OA\Response(response=200, description="Successful operation",
+     *          @OA\JsonContent(
+     *          type="object",
+     *          example={"message":"Successful","order":{"id":2000017,"previous_order_id":null,"partner_wise_order_id":8,"customer_id":1,"status":"Completed","sales_channel_id":1,"emi_month":null,"interest":null,"bank_transaction_charge":null,"delivery_name":"","delivery_mobile":"","delivery_address":"","note":null,"voucher_id":null,"items":{{"id":148,"name":"","sku_id":521,"details":null,"quantity":"1.00","unit_price":"100.00","unit":null,"vat_percentage":null,"warranty":0,"warranty_unit":"day","note":null},{"id":149,"name":"","sku_id":819,"details":null,"quantity":"1.00","unit_price":"80.00","unit":null,"vat_percentage":null,"warranty":0,"warranty_unit":"day","note":null},{"id":150,"name":"","sku_id":null,"details":null,"quantity":"2.00","unit_price":"50.00","unit":null,"vat_percentage":null,"warranty":0,"warranty_unit":"day","note":null}},"price_info":{"delivery_charge":"30.00","promo":"50.00","total_price":"280.00","total_bill":"280.00","discount_amount":null,"due_amount":"160.00","paid_amount":100,"total_item_discount":"0.00","total_vat":"0.00"},"customer_info":{"name":"Foysal","phone":"01855570816","pro_pic":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebadev\/images\/pos\/categories\/thumbs\/1621499030_phpvv7lc4_category_thumb.png"},"payment_info":null}}
+     *          ),
+     *     ),
+     *      @OA\Response(response=404, description="message: অর্ডারটি পাওয়া যায় নি"),
+     *      @OA\Response(response=403, description="You're not authorized to access this order")
+     *  )
      *
-     * @param int $id
+     * @param $partner_id
+     * @param $order_id
      * @return JsonResponse
      */
     public function show($partner_id, $order_id)
@@ -190,10 +158,10 @@ class OrderController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
-     * @param $partner_id
+     *
      * @param OrderUpdateRequest $request
-     * @param $id
+     * @param int $partner_id
+     * @param int $order_id
      * @return JsonResponse
      */
 
@@ -226,9 +194,10 @@ class OrderController extends Controller
      *     @OA\Response(response="403", description="You're not authorized to access this order"),
      * )
      */
-    public function update(Request $request, $partner_id, $id)
+
+    public function update(OrderUpdateRequest $request, $partner_id, $order_id)
     {
-        return $this->orderService->update($request, $partner_id, $id);
+        return $this->orderService->update($request, $partner_id, $order_id);
     }
 
     public function getOrderWithChannel($order_id)

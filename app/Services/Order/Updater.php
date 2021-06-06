@@ -22,7 +22,6 @@ class Updater
                                 OrderPaymentRepositoryInterface $orderPaymentRepository)
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
-        $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->orderLogCreator = $orderLogCreator;
         $this->orderPaymentRepository = $orderPaymentRepository;
     }
@@ -47,15 +46,6 @@ class Updater
         return $this;
     }
 
-    /**
-     * @param mixed $updatedSkus
-     * @return Updater
-     */
-    public function setUpdatedSkus($updatedSkus)
-    {
-        $this->skus = $updatedSkus;
-        return $this;
-    }
 
     /**
      * @param mixed $voucher_id
