@@ -26,6 +26,7 @@ class Updater
         $this->orderRepositoryInterface = $orderRepositoryInterface;
         $this->orderLogCreator = $orderLogCreator;
         $this->orderPaymentRepository = $orderPaymentRepository;
+        $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
     }
 
     /**
@@ -266,20 +267,27 @@ class Updater
 
     private function calculateOrderChangesAndUpdateSkus()
     {
+        if ($this->skus === null) {
+            return;
+        }
         /** @var OrderComparator $comparator */
         $comparator = (App::make(OrderComparator::class))->setOrder($this->order)->setOrderNewSkus($this->skus)->compare();
 
         if($comparator->isProductAdded()){
             $updater = OrderUpdateFactory::getProductAddingUpdater($this->order, $this->skus);
-            $updater->update();
+            $updatedFlag = $updater->update();
         }
         if($comparator->isProductDeleted()){
             $updater = OrderUpdateFactory::getProductDeletionUpdater($this->order, $this->skus);
-            $updater->update();
+            $updatedFlag = $updater->update();
         }
         if($comparator->isProductUpdated()){
             $updater = OrderUpdateFactory::getOrderProductUpdater($this->order, $this->skus);
-            $updater->update();
+            $updatedFlag = $updater->update();
+        }
+
+        if (isset($updatedFlag)) {
+            $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
         }
     }
 }
