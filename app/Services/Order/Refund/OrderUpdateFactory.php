@@ -5,17 +5,17 @@ use App\Models\Order;
 class OrderUpdateFactory
 {
 
-    public static function getProductAddingUpdater(Order $order, array $data)
+    public static function getProductAddingUpdater(Order $order, $data)
     {
         return (app(AddProductInOrder::class))->setOrder($order)->setData($data);
     }
 
-    public static function getProductDeletionUpdater(Order $order, array $data)
+    public static function getProductDeletionUpdater(Order $order, $data)
     {
         return (app(DeleteProductFromOrder::class))->setOrder($order)->setData($data);
     }
 
-    public static function getOrderProductUpdater(Order $order, array $data)
+    public static function getOrderProductUpdater(Order $order, $data)
     {
         return (app(UpdateProductInOrder::class))->setOrder($order)->setData($data);
     }
