@@ -4,7 +4,9 @@ use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Services\Order\Constants\OrderLogTypes;
+use App\Services\Order\Refund\OrderUpdateFactory;
 use App\Traits\ModificationFields;
+use Illuminate\Support\Facades\App;
 
 class Updater
 {
@@ -46,6 +48,15 @@ class Updater
         return $this;
     }
 
+    /**
+     * @param mixed $updatedSkus
+     * @return Updater
+     */
+    public function setUpdatedSkus($updatedSkus)
+    {
+        $this->skus = $updatedSkus;
+        return $this;
+    }
 
     /**
      * @param mixed $voucher_id
@@ -191,6 +202,7 @@ class Updater
     {
         //$this->skus ? $this->orderSkusRepositoryInterface->updateOrderSkus($this->partner_id, json_decode($this->skus), $this->order_id) : null;
         list($previous_order, $existing_order_skus) = $this->setExistingOrderAndSkus();
+        $this->calculateOrderChangesAndUpdateSkus();
         $this->orderRepositoryInterface->update($this->order, $this->makeData());
         $this->createLog($previous_order, $existing_order_skus);
     }
@@ -250,5 +262,24 @@ class Updater
             ->setChangedOrderData($this->orderRepositoryInterface->find($this->order->id))
             ->setChangedOrderSkus($new_order_skus)
             ->setType($this->getTypeOfChangeLog());
+    }
+
+    private function calculateOrderChangesAndUpdateSkus()
+    {
+        /** @var OrderComparator $comparator */
+        $comparator = (App::make(OrderComparator::class))->setOrder($this->order)->setOrderNewSkus($this->skus)->compare();
+
+        if($comparator->isProductAdded()){
+            $updater = OrderUpdateFactory::getProductAddingUpdater($this->order, $this->skus);
+            $updater->update();
+        }
+        if($comparator->isProductDeleted()){
+            $updater = OrderUpdateFactory::getProductDeletionUpdater($this->order, $this->skus);
+            $updater->update();
+        }
+        if($comparator->isProductUpdated()){
+            $updater = OrderUpdateFactory::getOrderProductUpdater($this->order, $this->skus);
+            $updater->update();
+        }
     }
 }

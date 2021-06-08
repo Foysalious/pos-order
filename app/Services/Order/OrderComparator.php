@@ -15,7 +15,7 @@ class OrderComparator
     private array $updatedProducts = [];
 
     public Order $order;
-    public Request $newOrder;
+    public $skus;
 
     /**
      * @param Order $order
@@ -31,9 +31,9 @@ class OrderComparator
      * @param Request $newOrder
      * @return OrderComparator
      */
-    public function setNewOrder(Request $newOrder)
+    public function setOrderNewSkus($skus)
     {
-        $this->newOrder = $newOrder;
+        $this->skus = $skus;
         return $this;
     }
 
@@ -51,7 +51,7 @@ class OrderComparator
     private function checkForProductAdditionAndDeletion()
     {
         $current_products = $this->order->items()->pluck('id');
-        $request_products = collect(json_decode($this->newOrder->skus, true))->pluck('id');
+        $request_products = collect(json_decode($this->skus, true))->pluck('id');
 
         if ($current_products->diff($request_products)->isEmpty() && $request_products->diff($current_products)->isEmpty()) {
             $this->productAddedFlag = FALSE;
@@ -88,7 +88,7 @@ class OrderComparator
 
     private function checkUpdatesInProduct() {
         $current_products = collect($this->order->items()->get(['id','quantity','unit_price'])->toArray());
-        $request_products = collect(json_decode($this->newOrder->skus, true));
+        $request_products = collect(json_decode($this->skus, true));
         $current_products->each(function ($current_product) use ($request_products){
             if ($request_products->contains('id',$current_product['id'])) {
                 $updating_product = $request_products->where('id', $current_product['id'])->first();

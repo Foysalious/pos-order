@@ -18,7 +18,7 @@ abstract class ProductOrder
     /** @var OrderSkuRepository  */
     protected OrderSkuRepository $orderSkuRepository;
 
-    protected array $data;
+    protected $data;
 
     protected Collection $skus;
 
@@ -48,10 +48,9 @@ abstract class ProductOrder
     }
 
     /**
-     * @param array $data
      * @return ProductOrder
      */
-    public function setData(array $data)
+    public function setData($data)
     {
         $this->data = $data;
         $this->skus = $this->setSkus();
@@ -61,7 +60,7 @@ abstract class ProductOrder
 
     public function setSkus(): Collection
     {
-        return collect(json_decode($this->data['skus']));
+        return collect(json_decode($this->data));
     }
 
     public abstract function update();
