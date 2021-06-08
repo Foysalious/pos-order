@@ -129,7 +129,7 @@ class OrderService extends BaseService
             ->setOrderId($order_id)
             ->setOrder($orderDetails)
             ->setSalesChannelId($orderUpdateRequest->sales_channel_id)
-            ->setUpdatedSkus($orderUpdateRequest->skus)
+            ->setUpdatedSkus($orderUpdateRequest->skus ?? null)
             ->setEmiMonth($orderUpdateRequest->emi_month)
             ->setInterest($orderUpdateRequest->interest)
             ->setDeliveryCharge($orderUpdateRequest->delivery_charge)
