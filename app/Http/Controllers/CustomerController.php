@@ -2,17 +2,20 @@
 
 use App\Http\Requests\CustomerRequest;
 use App\Http\Requests\OrderUpdateRequest;
+use App\Services\Customer\CustomerCreateDto;
 use App\Services\Customer\CustomerService;
 use App\Traits\ResponseAPI;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Models\Customer;
 use App\Services\Customer\Creator;
-
+use Spatie\DataTransferObject\Exceptions\UnknownProperties;
 
 
 class CustomerController extends Controller
 {
     use ResponseAPI;
+
     /**
      * @var CustomerService
      */
@@ -25,13 +28,13 @@ class CustomerController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param \Illuminate\Http\Request $request
+     * @return JsonResponse
      */
     /**
      * @param Request $request
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      *
      * @OA\Post(
      *      path="/api/v1/customer",
@@ -63,24 +66,31 @@ class CustomerController extends Controller
      *        )
      *       ),
      *     )
+     * @throws UnknownProperties
      */
 
 
-    public function store(Creator $creator, CustomerRequest $request)
+    public function store(CustomerRequest $request): JsonResponse
     {
-        $creator->setPartner($request->name)->setEmail($request->email)->setPhone($request->phone)->setProfilePicture($request->picture);
-        return $creator->create();
+        $customer = new CustomerCreateDto([
+            'id' => $request->id,
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'pro_pic' => $request->picture,
+        ]);
+        return $this->customerService->create($customer);
     }
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param \Illuminate\Http\Request $request
+     * @return JsonResponse
      */
     /**
      * @param Request $request
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      *
      * @OA\Post(
      *      path="/api/v1/customer/{customer_id}",
@@ -105,7 +115,7 @@ class CustomerController extends Controller
      *       ),
      *     )
      */
-    public function update(Request $request,int $customer_id )
+    public function update(Request $request, string $customer_id)
     {
         $this->customerService->update($request, $customer_id);
         return $this->success('Successful', null, 201, true);
