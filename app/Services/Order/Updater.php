@@ -241,11 +241,10 @@ class Updater
     public function update()
     {
         //$this->skus ? $this->orderSkusRepositoryInterface->updateOrderSkus($this->partner_id, json_decode($this->skus), $this->order_id) : null;
-        $this->updateOrderPayments();
-        return;
         list($previous_order, $existing_order_skus) = $this->setExistingOrderAndSkus();
         $this->calculateOrderChangesAndUpdateSkus();
         $this->orderRepositoryInterface->update($this->order, $this->makeData());
+        $this->updateOrderPayments();
         $this->createLog($previous_order, $existing_order_skus);
     }
 

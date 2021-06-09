@@ -150,9 +150,8 @@ class OrderService extends BaseService
             ->setVoucherId($orderUpdateRequest->voucher_id)
             ->setPaidAmount($orderUpdateRequest->paid_amount ?? null)
             ->setPaymentMethod($orderUpdateRequest->payment_method ?? null)
-            ->setPaymentLinkAmount($orderUpdateRequest->payment_link_amount ?? null);
-
-        $this->updater->update();
+            ->setPaymentLinkAmount($orderUpdateRequest->payment_link_amount ?? null)
+            ->update();
 
         if ($this->updater->isRequestedForPaymentLinkCreation()) {
             $this->disablePreviousPaymentLinkIfExist($orderDetails);
@@ -232,8 +231,7 @@ class OrderService extends BaseService
         if ($payment_link) {
             $this->paymentLinkUpdater->setPaymentLinkId($payment_link->getLinkID());
             $this->paymentLinkUpdater->setStatus('deactivate');
-            $status_changed = $this->paymentLinkUpdater->editStatus();
+            $this->paymentLinkUpdater->editStatus();
         }
-
     }
 }
