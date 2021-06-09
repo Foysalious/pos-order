@@ -2,6 +2,7 @@
 
 use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
+use App\Http\Requests\OrderUpdateRequest;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderWithProductResource;
 use App\Interfaces\CustomerRepositoryInterface;
@@ -13,10 +14,9 @@ use App\Interfaces\PaymentLinkRepositoryInterface;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Services\BaseService;
-use App\Services\Order\Refund\OrderUpdateFactory;
-use Illuminate\Support\Facades\App;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\PaymentLink\Creator as PaymentLinkCreator;
+use App\Services\PaymentLink\Updater as PaymentLinkUpdater;
 use App\Services\PaymentLink\PaymentLinkTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
@@ -27,6 +27,7 @@ class OrderService extends BaseService
     protected $orderSkusRepositoryInterface;
     protected $updater, $orderSearch, $orderFilter;
     protected $paymentLinkRepository;
+    protected $paymentLinkUpdater;
     /** @var Creator */
     private Creator $creator;
     /** @var PaymentLinkCreator */
@@ -42,6 +43,7 @@ class OrderService extends BaseService
                                 PaymentLinkRepositoryInterface $paymentLinkRepository,
                                 Creator $creator,
                                 PaymentLinkCreator $paymentLinkCreator,
+                                PaymentLinkUpdater $paymentLinkUpdater,
                                 OrderLogRepositoryInterface $orderLogRepository
     )
     {
@@ -56,6 +58,7 @@ class OrderService extends BaseService
         $this->orderLogRepository = $orderLogRepository;
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->customerRepository = $customerRepository;
+        $this->paymentLinkUpdater = $paymentLinkUpdater;
     }
 
     public function getOrderList($partner_id, $request)
@@ -113,7 +116,13 @@ class OrderService extends BaseService
         return $this->success('Successful', ['order' => $resource], 200, true);
     }
 
-    public function update($orderUpdateRequest, $partner_id, $order_id)
+    /**
+     * @param OrderUpdateRequest $orderUpdateRequest
+     * @param $partner_id
+     * @param $order_id
+     * @return JsonResponse
+     */
+    public function update(OrderUpdateRequest $orderUpdateRequest, $partner_id, $order_id)
     {
         /** @var Order $orderDetails */
         $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
@@ -133,8 +142,16 @@ class OrderService extends BaseService
             ->setDeliveryAddress($orderUpdateRequest->delivery_address)
             ->setNote($orderUpdateRequest->note)
             ->setVoucherId($orderUpdateRequest->voucher_id)
+            ->setPaidAmount($orderUpdateRequest->paid_amount ?? null)
+            ->setPaymentMethod($orderUpdateRequest->payment_method ?? null)
+            ->setPaymentLinkAmount($orderUpdateRequest->payment_link_amount ?? null)
             ->update();
 
+        if ($this->updater->isRequestedForPaymentLinkCreation()) {
+            $this->disablePreviousPaymentLinkIfExist($orderDetails);
+            $payment_link = $this->createPaymentLink($orderUpdateRequest->payment_link_amount, $partner_id, $orderDetails);
+            return $this->success('Successful', ['order' => ['id' => $orderDetails->id], 'payment' => $payment_link ?? null]);
+        }
         return $this->success('Successful', null, 200, true);
     }
 
@@ -193,5 +210,16 @@ class OrderService extends BaseService
         $transformer = new PaymentLinkTransformer();
         $transformer->setResponse($paymentLink);
         return ['link' => config('pos.payment_link_web_url') . '/' . $transformer->getLinkIdentifier()];
+    }
+
+    private function disablePreviousPaymentLinkIfExist(Order $order)
+    {
+        /** @var PaymentLinkTransformer $payment_link */
+        $payment_link = $this->getOrderPaymentLink($order);
+        if ($payment_link) {
+            $this->paymentLinkUpdater->setPaymentLinkId($payment_link->getLinkID());
+            $this->paymentLinkUpdater->setStatus('deactivate');
+            $this->paymentLinkUpdater->editStatus();
+        }
     }
 }

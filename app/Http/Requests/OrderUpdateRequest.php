@@ -22,7 +22,7 @@ class OrderUpdateRequest extends FormRequest
     public function rules()
     {
         return [
-            'skus' => 'required|string',
+            'skus' => 'sometimes|string',
             'sales_channel_id' => 'sometimes|string',
             'interest' => 'sometimes|string',
             'delivery_charge' => 'sometimes|string',
@@ -38,6 +38,7 @@ class OrderUpdateRequest extends FormRequest
             'payment_method' => 'sometimes|required|string|in:' . implode(',', config('pos.payment_method')),
             'amount_without_charge' => 'sometimes|required_if:payment_method,emi|numeric|min:' . config('emi.manager.minimum_emi_amount'),
             'payment_link_amount' => 'sometimes|numeric',
+            'paid_amount' => 'sometimes|numeric',
 
         ];
     }

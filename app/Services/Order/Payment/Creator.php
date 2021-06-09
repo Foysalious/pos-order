@@ -2,9 +2,11 @@
 
 
 use App\Interfaces\OrderPaymentRepositoryInterface;
+use App\Traits\ModificationFields;
 
 class Creator
 {
+    use ModificationFields;
     /**
      * @var OrderPaymentRepositoryInterface
      */
@@ -29,7 +31,7 @@ class Creator
 
     private function create(array $data)
     {
-        $this->orderPaymentRepository->insert($data);
+        $this->orderPaymentRepository->insert($this->withCreateModificationField($data));
     }
 
 }

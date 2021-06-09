@@ -4,9 +4,12 @@ use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Services\Order\Constants\OrderLogTypes;
+use App\Services\Order\Constants\PaymentMethods;
+use App\Services\Order\Constants\TransactionType;
 use App\Services\Order\Refund\OrderUpdateFactory;
 use App\Traits\ModificationFields;
 use Illuminate\Support\Facades\App;
+use App\Services\Order\Payment\Creator as OrderPayemntCreator;
 
 class Updater
 {
@@ -15,18 +18,24 @@ class Updater
     protected $bank_transaction_charge, $delivery_name, $delivery_mobile, $delivery_address, $note, $voucher_id;
     protected $skus, $order, $existingOrder;
     protected $orderLogCreator;
-    protected $orderRepositoryInterface, $orderSkusRepositoryInterface, $orderPaymentRepository;
+    protected $orderRepositoryInterface, $orderSkusRepositoryInterface, $orderPaymentCreator, $orderPaymentRepository;
+    protected $paymentMethod;
+    protected $paidAmount;
+    protected $paymentLinkAmount;
     protected string $orderLogType = OrderLogTypes::OTHERS;
 
     public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
                                 OrderLogCreator $orderLogCreator,
-                                OrderPaymentRepositoryInterface $orderPaymentRepository)
+                                OrderPayemntCreator $orderPaymentCreator,
+                                OrderPaymentRepositoryInterface $orderPaymentRepository
+    )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
         $this->orderLogCreator = $orderLogCreator;
-        $this->orderPaymentRepository = $orderPaymentRepository;
+        $this->orderPaymentCreator = $orderPaymentCreator;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
+        $this->orderPaymentRepository = $orderPaymentRepository;
     }
 
     /**
@@ -199,12 +208,43 @@ class Updater
         return $this;
     }
 
+    /**
+     * @param mixed $paymentMethod
+     * @return Updater
+     */
+    public function setPaymentMethod($paymentMethod)
+    {
+        $this->paymentMethod = $paymentMethod;
+        return $this;
+    }
+
+    /**
+     * @param mixed $paidAmount
+     * @return Updater
+     */
+    public function setPaidAmount($paidAmount)
+    {
+        $this->paidAmount = $paidAmount;
+        return $this;
+    }
+
+    /**
+     * @param mixed $paymentLinkAmount
+     * @return Updater
+     */
+    public function setPaymentLinkAmount($paymentLinkAmount)
+    {
+        $this->paymentLinkAmount = $paymentLinkAmount;
+        return $this;
+    }
+
     public function update()
     {
         //$this->skus ? $this->orderSkusRepositoryInterface->updateOrderSkus($this->partner_id, json_decode($this->skus), $this->order_id) : null;
         list($previous_order, $existing_order_skus) = $this->setExistingOrderAndSkus();
         $this->calculateOrderChangesAndUpdateSkus();
         $this->orderRepositoryInterface->update($this->order, $this->makeData());
+        $this->updateOrderPayments();
         $this->createLog($previous_order, $existing_order_skus);
     }
 
@@ -275,19 +315,46 @@ class Updater
 
         if($comparator->isProductAdded()){
             $updater = OrderUpdateFactory::getProductAddingUpdater($this->order, $this->skus);
-            $updatedFlag = $updater->update();
+            $updated_flag = $updater->update();
         }
         if($comparator->isProductDeleted()){
             $updater = OrderUpdateFactory::getProductDeletionUpdater($this->order, $this->skus);
-            $updatedFlag = $updater->update();
+            $updated_flag = $updater->update();
         }
         if($comparator->isProductUpdated()){
             $updater = OrderUpdateFactory::getOrderProductUpdater($this->order, $this->skus);
-            $updatedFlag = $updater->update();
+            $updated_flag = $updater->update();
         }
 
-        if (isset($updatedFlag)) {
+        if (isset($updated_flag)) {
             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
         }
     }
+
+    public function isRequestedForPaymentLinkCreation()
+    {
+       return ($this->paymentMethod == PaymentMethods::PAYMENT_LINK && isset($this->paymentLinkAmount));
+    }
+
+    private function updateOrderPayments()
+    {
+        if(isset($this->paymentMethod) && $this->paymentMethod == PaymentMethods::CASH_ON_DELIVERY && isset($this->paidAmount)) {
+            $payment_data['order_id'] = $this->order->id;
+            $payment_data['amount'] = $this->paidAmount;
+            $payment_data['method'] = PaymentMethods::CASH_ON_DELIVERY;
+            $this->orderPaymentCreator->credit($payment_data);
+        } elseif(isset($this->paymentMethod) && $this->paymentMethod == PaymentMethods::PAYMENT_LINK && isset($this->paymentLinkAmount)) {
+            $order_payment_link = $this->orderPaymentRepository->where('order_id', $this->order->id)->where('method', PaymentMethods::PAYMENT_LINK)->first();
+            if ($order_payment_link) {
+                $order_payment_link->amount = $this->paymentLinkAmount;
+                $order_payment_link->save();
+            } else {
+                $payment_data['order_id'] = $this->order->id;
+                $payment_data['amount'] = $this->paymentLinkAmount;
+                $payment_data['method'] = PaymentMethods::PAYMENT_LINK;
+                $this->orderPaymentCreator->credit($payment_data);
+            }
+        }
+    }
+
 }
