@@ -6,7 +6,10 @@ use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\TransactionType;
+use App\Services\Order\Refund\AddProductInOrder;
+use App\Services\Order\Refund\DeleteProductFromOrder;
 use App\Services\Order\Refund\OrderUpdateFactory;
+use App\Services\Order\Refund\UpdateProductInOrder;
 use App\Traits\ModificationFields;
 use Illuminate\Support\Facades\App;
 use App\Services\Order\Payment\Creator as OrderPayemntCreator;
@@ -62,7 +65,7 @@ class Updater
      * @param mixed $updatedSkus
      * @return Updater
      */
-    public function setUpdatedSkus($updatedSkus)
+    public function setSkus($updatedSkus)
     {
         $this->skus = $updatedSkus;
         return $this;
@@ -311,17 +314,21 @@ class Updater
             return;
         }
         /** @var OrderComparator $comparator */
-        $comparator = (App::make(OrderComparator::class))->setOrder($this->order)->setOrderNewSkus($this->skus)->compare();
+        $comparator = App::make(OrderComparator::class);
+        $comparator->setOrder($this->order)->setOrderNewSkus($this->skus)->compare();
 
         if($comparator->isProductAdded()){
+            /** @var AddProductInOrder $updater */
             $updater = OrderUpdateFactory::getProductAddingUpdater($this->order, $this->skus);
             $updated_flag = $updater->update();
         }
         if($comparator->isProductDeleted()){
+            /** @var DeleteProductFromOrder $updater */
             $updater = OrderUpdateFactory::getProductDeletionUpdater($this->order, $this->skus);
             $updated_flag = $updater->update();
         }
         if($comparator->isProductUpdated()){
+            /** @var UpdateProductInOrder $updater */
             $updater = OrderUpdateFactory::getOrderProductUpdater($this->order, $this->skus);
             $updated_flag = $updater->update();
         }
