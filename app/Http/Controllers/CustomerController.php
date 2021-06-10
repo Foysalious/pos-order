@@ -77,27 +77,33 @@ class CustomerController extends Controller
         return $this->customerService->create($customer);
     }
     /**
-     * Store Customer.
+     * Update Customer.
      *
      * @param \Illuminate\Http\Request $request
-     * @return JsonResponse
-     */
-    /**
      * @param Request $request
      *
      * @return JsonResponse
+     * @return JsonResponse
      *
      * @OA\Post(
-     *      path="/api/v1/customer/{customer_id}",
+     *      path="/api/v1/customers/{customer_id}",
      *      operationId="updatingcustomer",
      *      tags={"Customer API"},
      *      summary="To update a Customer ",
-     *      description="updating customer",
-     *      @OA\Parameter(name="customer_id",description="Customer id",required=false,in="path", @OA\Schema(type="Integer")),
-     *      @OA\Parameter(name="name",description="Customer Name",required=false,in="query", @OA\Schema(type="String")),
-     *      @OA\Parameter(name="email",description="Customer email",required=false,in="query", @OA\Schema(type="String")),
-     *      @OA\Parameter(name="phone",description="Customer phone",required=false,in="query", @OA\Schema(type="String")),
-     *      @OA\Parameter(name="picture",description="Customer picture",required=false,in="query", @OA\Schema(type="String")),
+     *      description="update customer",
+     *     @OA\Parameter(name="customer_id", description="customer id", required=true, in="path", @OA\Schema(type="string")),
+     *     @OA\RequestBody(
+     *     @OA\MediaType(mediaType="multipart/form-data",
+     *      @OA\Schema(
+     *       @OA\Property(property="name", type="string"),
+     *       @OA\Property(property="email", type="string"),
+     *       @OA\Property(property="id", type="string"),
+     *       @OA\Property(property="phone", type="string"),
+     *       @OA\Property(property="pro_pic", type="string"),
+     *
+     *          )
+     * )
+     * ),
      *      @OA\Response(
      *          response=201,
      *          description="Successful",
@@ -105,7 +111,7 @@ class CustomerController extends Controller
      *          type="object",
      *          example={
      *          "message": "Successful",
-     *          }
+     *              }
      *        )
      *       ),
      *     )
@@ -114,7 +120,7 @@ class CustomerController extends Controller
     public function update(Request $request, string $customer_id)
     {
         $customer = new CustomerUpdateDto([
-            'customer_id' => $request->id,
+            'id' => $request->id,
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,

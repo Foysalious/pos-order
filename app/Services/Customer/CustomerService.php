@@ -3,29 +3,41 @@
 use App\Interfaces\CustomerRepositoryInterface;
 use App\Services\BaseService;
 use Illuminate\Http\JsonResponse;
+use App\Traits\ModificationFields;
 
 class CustomerService extends BaseService
 {
-
-    private $customer;
-
+    use ModificationFields;
     public function __construct(private CustomerRepositoryInterface $customerRepository, private Updater $updater)
     {
 
     }
 
-    public function update(string $customer_id,CustomerUpdateDto $updateDto): JsonResponse
+
+    public function update(string $customer_id, CustomerUpdateDto $updateDto): JsonResponse
     {
+
         $customerDetails = $this->customerRepository->find($customer_id);
         if (!$customerDetails) return $this->error('Customer Not Found', 404);
-        //$this->updater->setPartner($request->name)->setEmail($request->email)->setPhone($request->phone)->setProfilePicture($request->picture)->setCustomer($customerDetails)->setCustomerId($customerDetails->id)->update();
-        $this->customerRepository->update($customerDetails,$updateDto->toArray());
+        $this->customerRepository->update($customerDetails, $this->makeData($updateDto));
         return $this->success();
+    }
+
+    public function makeData($updateDto)
+    {
+        $data = [];
+
+        if(isset($updateDto->name))$data['name'] = $updateDto->name;
+        if(isset($updateDto->email))$data['email'] = $updateDto->email;
+        if(isset($updateDto->phone))$data['phone'] = $updateDto->phone;
+        if(isset($updateDto->pro_pic))$data['pro_pic'] = $updateDto->pro_pic;
+        if(isset($updateDto->id))$data['id'] = $updateDto->id;
+
+        return $data ;
     }
 
     public function create(CustomerCreateDto $createDto): JsonResponse
     {
-
         $this->customerRepository->create($createDto->toArray());
         return $this->success();
     }
