@@ -1,16 +1,13 @@
 <?php namespace App\Http\Controllers;
 
 use App\Http\Requests\CustomerRequest;
-use App\Http\Requests\OrderUpdateRequest;
 use App\Services\Customer\CustomerCreateDto;
 use App\Services\Customer\CustomerService;
+use App\Services\Customer\CustomerUpdateDto;
 use App\Traits\ResponseAPI;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Models\Customer;
-use App\Services\Customer\Creator;
 use Spatie\DataTransferObject\Exceptions\UnknownProperties;
-
 
 class CustomerController extends Controller
 {
@@ -25,27 +22,34 @@ class CustomerController extends Controller
     {
         $this->customerService = $customerService;
     }
+
     /**
-     * Store a newly created resource in storage.
+     * Store Customer.
      *
      * @param \Illuminate\Http\Request $request
-     * @return JsonResponse
-     */
-    /**
      * @param Request $request
      *
      * @return JsonResponse
+     * @return JsonResponse
      *
      * @OA\Post(
-     *      path="/api/v1/customer",
+     *      path="/api/v1/customers",
      *      operationId="creatingcustomer",
      *      tags={"Customer API"},
      *      summary="To create a Customer ",
      *      description="creating customer",
-     *      @OA\Parameter(name="name",description="Customer Name",required=false,in="query", @OA\Schema(type="String")),
-     *      @OA\Parameter(name="email",description="Customer email",required=false,in="query", @OA\Schema(type="String")),
-     *      @OA\Parameter(name="phone",description="Customer phone",required=false,in="query", @OA\Schema(type="String")),
-     *      @OA\Parameter(name="picture",description="Customer picture",required=false,in="query", @OA\Schema(type="String")),
+     *     @OA\RequestBody(
+     *     @OA\MediaType(mediaType="multipart/form-data",
+     *      @OA\Schema(
+     *       @OA\Property(property="name", type="string"),
+     *       @OA\Property(property="email", type="string"),
+     *       @OA\Property(property="id", type="string"),
+     *       @OA\Property(property="phone", type="string"),
+     *       @OA\Property(property="pro_pic", type="string"),
+     *
+     *          )
+     * )
+     * ),
      *      @OA\Response(
      *          response=201,
      *          description="Successful",
@@ -53,16 +57,7 @@ class CustomerController extends Controller
      *          type="object",
      *          example={
      *          "message": "Successful",
-     *                    "order": {
-     *                   "name": "string",
-     *                   "email": "email",
-     *                   "phone": 01888888888,
-     *                   "pro_pic": "image.png",
-     *                   "updated_at": "Date",
-     *                   "created_at": "Date",
-     *                   "id": 2,
      *              }
-     *          }
      *        )
      *       ),
      *     )
@@ -77,12 +72,12 @@ class CustomerController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
-            'pro_pic' => $request->picture,
+            'pro_pic' => $request->pro_pic,
         ]);
         return $this->customerService->create($customer);
     }
     /**
-     * Store a newly created resource in storage.
+     * Store Customer.
      *
      * @param \Illuminate\Http\Request $request
      * @return JsonResponse
@@ -114,11 +109,18 @@ class CustomerController extends Controller
      *        )
      *       ),
      *     )
+     * @throws UnknownProperties
      */
     public function update(Request $request, string $customer_id)
     {
-        $this->customerService->update($request, $customer_id);
-        return $this->success('Successful', null, 201, true);
+        $customer = new CustomerUpdateDto([
+            'customer_id' => $request->id,
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'pro_pic' => $request->pro_pic,
+        ]);
+        return $this->customerService->update($customer_id, $customer);
     }
 
 }
