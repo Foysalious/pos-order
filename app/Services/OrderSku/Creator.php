@@ -4,7 +4,9 @@ use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\Inventory\InventoryServerClient;
+use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\WarrantyUnits;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Creator
 {
@@ -60,6 +62,12 @@ class Creator
         });
         $sku_details = collect($this->getSkuDetails($sku_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
         foreach ($skus as $sku) {
+
+            if ($sku->id != null && !isset($sku_details[$sku->id]))
+                throw new NotFoundHttpException("Product #" . $sku->id . " Doesn't Exists.");
+
+            $this->checkStockAvailability($sku,$sku_details);
+
             $sku_data['order_id'] = $this->order->id;
             $sku_data['name'] = isset($sku->product_name) ? $sku->product_name : $sku_details[$sku->id]['product_name'];
             $sku_data['sku_id'] = $sku->id ?: null;
@@ -88,5 +96,12 @@ class Creator
         return $response['skus'];
     }
 
+    private function checkStockAvailability($sku, $sku_details)
+    {
+        if($sku->id == null || ($this->order->sales_channel_id == SalesChannelIds::POS))
+            return;
+        elseif ($sku_details[$sku->id]['stock'] < $sku->quantity)
+            throw new NotFoundHttpException("Product #" . $sku->id . " Not Enough Stock");
+    }
 
 }
