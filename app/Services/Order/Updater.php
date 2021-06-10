@@ -36,6 +36,7 @@ class Updater
         $this->orderPaymentCreator = $orderPaymentCreator;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->orderPaymentRepository = $orderPaymentRepository;
+        $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
     }
 
     /**
@@ -273,6 +274,7 @@ class Updater
     private function setExistingOrderAndSkus() : array
     {
         $previous_order = clone $this->order;
+        dd($this->orderSkusRepositoryInterface->where('order_id', $previous_order->id)->get());
         $existing_order_skus = clone $this->orderSkusRepositoryInterface->where('order_id', $previous_order->id)->latest()->get();
         return [$previous_order, $existing_order_skus];
     }
