@@ -104,4 +104,9 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         return $query->orderBy('created_at', $orderBy)->offset($offset)->limit($limit)->get();
 
     }
+
+    public function getCustomerReviews($customer_id, $offset, $limit)
+    {
+        return $this->model->where('customer_id', $customer_id)->offset($offset)->limit($limit)->get();
+    }
 }
