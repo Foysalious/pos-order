@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Http\Requests\CustomerOrderRequest;
 use App\Http\Requests\OrderCreateRequest;
 use App\Http\Requests\OrderCustomerRequest;
 use App\Http\Requests\OrderFilterRequest;
@@ -64,6 +65,11 @@ class OrderController extends Controller
     public function index($partner_id, OrderFilterRequest $request)
     {
         return $this->orderService->getOrderList($partner_id, $request);
+    }
+
+    public function getCustomerOrderList($customer_id,CustomerOrderRequest $request)
+    {
+        return $this->orderService->getCustomerOrderList($customer_id,$request);
     }
 
     /**
