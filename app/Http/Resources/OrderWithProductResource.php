@@ -35,22 +35,17 @@ class OrderWithProductResource extends JsonResource
             'id'                      => $this->id,
             'previous_order_id'       => $this->previous_order_id,
             'partner_wise_order_id'   => $this->partner_wise_order_id,
-            'customer_id'             => $this->customer_id,
             'status'                  => $this->status,
             'sales_channel_id'        => $this->sales_channel_id,
-            'emi_month'               => $this->emi_month,
-            'interest'                => $this->interest,
-            'bank_transaction_charge' => $this->bank_transaction_charge,
             'delivery_name'           => $this->delivery_name,
             'delivery_mobile'         => $this->delivery_mobile,
             'delivery_address'        => $this->delivery_address,
             'note'                    => $this->note,
-            'voucher_id'              => $this->voucher_id,
             'items'                   => OrderSkuResource::collection($this->items),
-            'price_info'              => $this->getOrderPriceRelatedInfo(),
-            'customer_info'           => $this->customer->only('name','phone','pro_pic'),
+            'price'                   => $this->getOrderPriceRelatedInfo(),
+            'customer'                => $this->customer->only('name','phone','pro_pic'),
         ];
-        $this->orderWithProductResource['payment_info'] = $this->getOrderDetailsWithPaymentLink();
+        $this->orderWithProductResource['payments'] = $this->getOrderDetailsWithPaymentLink();
         return $this->orderWithProductResource;
     }
 
