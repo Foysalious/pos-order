@@ -12,7 +12,7 @@ use App\Services\Order\Refund\OrderUpdateFactory;
 use App\Services\Order\Refund\UpdateProductInOrder;
 use App\Traits\ModificationFields;
 use Illuminate\Support\Facades\App;
-use App\Services\Order\Payment\Creator as OrderPayemntCreator;
+use App\Services\Order\Payment\Creator as OrderPaymentCreator;
 
 class Updater
 {
@@ -30,7 +30,7 @@ class Updater
     public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
                                 OrderLogCreator $orderLogCreator,
-                                OrderPayemntCreator $orderPaymentCreator,
+                                OrderPaymentCreator $orderPaymentCreator,
                                 OrderPaymentRepositoryInterface $orderPaymentRepository
     )
     {

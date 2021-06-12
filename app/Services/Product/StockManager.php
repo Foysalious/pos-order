@@ -63,6 +63,7 @@ class StockManager
             'quantity' => $quantity
         ];
         $response = $this->client->put($this->uri,$data);
+        return $response['stock_updated'] ?? false;
     }
 
     /**
@@ -79,5 +80,6 @@ class StockManager
             'quantity' => $quantity
         ];
         $response = $this->client->put($this->uri,$data);
+        return $response['stock_updated'] ?? false;
     }
 }

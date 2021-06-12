@@ -66,12 +66,8 @@ class Creator
             return !is_null($value);
         });
         $sku_details = collect($this->getSkuDetails($sku_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
+        $this->checkProductAndStockAvailability($skus,$sku_details);
         foreach ($skus as $sku) {
-
-            if ($sku->id != null && !isset($sku_details[$sku->id]))
-                throw new NotFoundHttpException("Product #" . $sku->id . " Doesn't Exists.");
-
-            $this->checkStockAvailability($sku,$sku_details);
 
             $sku_data['order_id'] = $this->order->id;
             $sku_data['name'] = isset($sku->product_name) ? $sku->product_name : $sku_details[$sku->id]['product_name'];
@@ -105,10 +101,15 @@ class Creator
         return $response['skus'];
     }
 
-    private function checkStockAvailability($sku, $sku_details)
+    private function checkProductAndStockAvailability($skus, $sku_details)
     {
-        if($sku->id == null || ($this->order->sales_channel_id == SalesChannelIds::POS)) return;
-        if ($sku_details[$sku->id]['stock'] < $sku->quantity) throw new NotFoundHttpException("Product #" . $sku->id . " Not Enough Stock");
+        foreach ($skus as $sku) {
+            if ($sku->id != null && !isset($sku_details[$sku->id]))
+                throw new NotFoundHttpException("Product #" . $sku->id . " Doesn't Exists.");
+            if($sku->id == null || ($this->order->sales_channel_id == SalesChannelIds::POS))
+                continue;
+            if ($sku_details[$sku->id]['stock'] < $sku->quantity)
+                throw new NotFoundHttpException("Product #" . $sku->id . " Not Enough Stock");
+        }
     }
-
 }
