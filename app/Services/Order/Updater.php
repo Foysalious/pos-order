@@ -260,7 +260,7 @@ class Updater
     public function update()
     {
         list($previous_order, $existing_order_skus) = $this->setExistingOrderAndSkus();
-        $this->calculateOrderChangesAndUpdateSkus();
+        //$this->calculateOrderChangesAndUpdateSkus();
         $this->orderRepositoryInterface->update($this->order, $this->makeData());
         $this->updateOrderPayments();
         $this->updateDiscount();
@@ -384,7 +384,7 @@ class Updater
     private function updateDiscount()
     {
         $discountData = json_decode($this->discount);
-        $originalAmount = $discountData['original_amount'];
+        $originalAmount = $discountData->original_amount;
         $hasDiscount = $this->validateDiscountData($originalAmount);
         if($hasDiscount) $this->orderDiscountRepository->where('order_id', $this->order_id)->update($this->makeOrderDiscountData($discountData));
     }
@@ -399,22 +399,22 @@ class Updater
     {
         $data = [];
         $data['order_id']            = $this->order_id;
-        $data['original_amount']     = $discountData['original_amount'];
-        $data['is_percentage']       = $discountData['is_percentage'];
-        $data['cap']                 = $discountData['cap'];
-        $data['discount_details']    = $discountData['discount_details'];
-        $data['discount_id']         = $discountData['discount_id'];
-        $data['item_id']             = $discountData['item_id'];
-        if($discountData['is_percentage'])
+        $data['original_amount']     = $discountData->original_amount;
+        $data['is_percentage']       = $discountData->is_percentage;
+        $data['cap']                 = $discountData->cap;
+        $data['discount_details']    = $discountData->discount_details;
+        $data['discount_id']         = $discountData->discount_id;
+        $data['item_id']             = $discountData->item_id;
+        if($discountData->is_percentage)
         {
             /** @var PriceCalculation $orderPriceCalculation */
             $orderPriceCalculation = app(PriceCalculation::class);
             $orderTotalBill = $orderPriceCalculation->setOrder($this->order)->getTotalBill();
-            $data['amount'] = $discountData['is_percentage'] ? ($orderTotalBill * $discountData['is_percentage'])/100.00 : $discountData['amount'];
+            $data['amount'] = ($orderTotalBill * $discountData->is_percentage)/100.00;
         }
         else
         {
-            $data['amount'] = $discountData['original_amount'];
+            $data['amount'] = $discountData->original_amount;
         }
         return $data;
     }

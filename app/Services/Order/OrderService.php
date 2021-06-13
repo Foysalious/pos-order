@@ -99,7 +99,6 @@ class OrderService extends BaseService
             ->setEmiMonth($request->emi_month)
             ->setSkus($skus)
             ->setDiscount($request->discount)
-            ->setIsDiscountPercentage($request->is_discount_percentage)
             ->setPaidAmount($request->paid_amount)
             ->setPaymentMethod($request->payment_method)
             ->create();
@@ -151,7 +150,8 @@ class OrderService extends BaseService
             $payment_link = $this->createPaymentLink($orderUpdateRequest->payment_link_amount, $partner_id, $orderDetails);
             return $this->success('Successful', ['order' => ['id' => $orderDetails->id], 'payment' => $payment_link ?? null]);
         }
-        return $this->success('Successful', null, 200);
+        $orderDetailsAfterUpdate = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        return $this->success('Successful', ['order' => $orderDetailsAfterUpdate], 200);
     }
 
     public function delete($partner_id, $order_id)
@@ -161,7 +161,7 @@ class OrderService extends BaseService
         $OrderSkusIds = $this->orderSkusRepositoryInterface->where('order_id', $order_id)->get(['id']);
         $this->orderSkusRepositoryInterface->whereIn('id', $OrderSkusIds)->delete();
         $order->delete();
-        return $this->success('Successful', null, 200, true);
+        return $this->success('Successful', null, 200);
     }
 
     public function getOrderWithChannel($order_id)
@@ -172,7 +172,7 @@ class OrderService extends BaseService
             'id' => $orderDetails->id,
             'sales_channel' => $orderDetails->sales_channel_id == 1 ? 'pos' : 'webstore'
         ];
-        return $this->success('Success', ['order' => $order], 200, true);
+        return $this->success('Success', ['order' => $order], 200);
     }
 
     public function updateCustomer($customer_id, $partner_id, $order_id)
