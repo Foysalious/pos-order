@@ -77,7 +77,7 @@ class OrderService extends BaseService
         $ordersList = $this->orderRepository->getOrderListWithPagination($offset, $limit, $partner_id, $orderSearch, $orderFilter);
         $orderList = OrderResource::collection($ordersList);
         if(!$orderList) return $this->error("You're not authorized to access this order", 403);
-        else return $this->success('Success', ['orders' => $orderList], 200, true);
+        else return $this->success('Success', ['orders' => $orderList], 200);
     }
 
     public function getCustomerOrderList($customer_id,$request)
@@ -109,7 +109,6 @@ class OrderService extends BaseService
             ->setEmiMonth($request->emi_month)
             ->setSkus($skus)
             ->setDiscount($request->discount)
-            ->setIsDiscountPercentage($request->is_discount_percentage)
             ->setPaidAmount($request->paid_amount)
             ->setPaymentMethod($request->payment_method)
             ->create();
@@ -123,7 +122,7 @@ class OrderService extends BaseService
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if(!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new OrderWithProductResource($order);
-        return $this->success('Successful', ['order' => $resource], 200, true);
+        return $this->success('Successful', ['order' => $resource], 200);
     }
 
     /**
@@ -134,10 +133,8 @@ class OrderService extends BaseService
      */
     public function update(OrderUpdateRequest $orderUpdateRequest, $partner_id, $order_id)
     {
-        /** @var Order $orderDetails */
         $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if(!$orderDetails) return $this->error("You're not authorized to access this order", 403);
-
         $this->updater->setPartnerId($partner_id)
             ->setOrderId($order_id)
             ->setOrder($orderDetails)
@@ -155,6 +152,7 @@ class OrderService extends BaseService
             ->setPaidAmount($orderUpdateRequest->paid_amount ?? null)
             ->setPaymentMethod($orderUpdateRequest->payment_method ?? null)
             ->setPaymentLinkAmount($orderUpdateRequest->payment_link_amount ?? null)
+            ->setDiscount($orderUpdateRequest->discount)
             ->update();
 
         if ($this->updater->isRequestedForPaymentLinkCreation()) {
@@ -162,7 +160,8 @@ class OrderService extends BaseService
             $payment_link = $this->createPaymentLink($orderUpdateRequest->payment_link_amount, $partner_id, $orderDetails);
             return $this->success('Successful', ['order' => ['id' => $orderDetails->id], 'payment' => $payment_link ?? null]);
         }
-        return $this->success('Successful', null, 200, true);
+        $orderDetailsAfterUpdate = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        return $this->success('Successful', ['order' => $orderDetailsAfterUpdate], 200);
     }
 
     public function delete($partner_id, $order_id)
@@ -172,7 +171,7 @@ class OrderService extends BaseService
         $OrderSkusIds = $this->orderSkusRepositoryInterface->where('order_id', $order_id)->get(['id']);
         $this->orderSkusRepositoryInterface->whereIn('id', $OrderSkusIds)->delete();
         $order->delete();
-        return $this->success('Successful', null, 200, true);
+        return $this->success('Successful', null, 200);
     }
 
     public function getOrderWithChannel($order_id)
@@ -183,7 +182,7 @@ class OrderService extends BaseService
             'id' => $orderDetails->id,
             'sales_channel' => $orderDetails->sales_channel_id == 1 ? 'pos' : 'webstore'
         ];
-        return $this->success('Success', ['order' => $order], 200, true);
+        return $this->success('Success', ['order' => $order], 200);
     }
 
     public function updateCustomer($customer_id, $partner_id, $order_id)

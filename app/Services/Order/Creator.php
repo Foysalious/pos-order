@@ -242,18 +242,18 @@ class Creator
      */
     public function create()
     {
-        $order_data['partner_id'] = $this->partner->id;
-        $order_data['partner_wise_order_id'] = $this->resolvePartnerWiseOrderId($this->partner);
-        $order_data['customer_id'] = $this->resolveCustomerId();
-        $order_data['delivery_name'] = $this->resolveDeliveryName();
-        $order_data['delivery_mobile'] = $this->resolveDeliveryMobile();
-        $order_data['delivery_address'] = $this->resolveDeliveryAddress();
-        $order_data['sales_channel_id'] = $this->salesChannelId ?: SalesChannelIds::POS;
-        $order_data['delivery_charge'] = $this->deliveryCharge ?: 0;
-        $order_data['emi_month'] = $this->emiMonth ?? null;
-        $order_data['status'] = $this->salesChannelId == SalesChannelIds::POS ? Statuses::COMPLETED : Statuses::PENDING;
-        $order_data['discount'] = $this->discount;
-        $order_data['is_discount_percentage'] = $this->isDiscountPercentage ?: 0;
+        $order_data['partner_id']               = $this->partner->id;
+        $order_data['partner_wise_order_id']    = $this->resolvePartnerWiseOrderId($this->partner);
+        $order_data['customer_id']              = $this->resolveCustomerId();
+        $order_data['delivery_name']            = $this->resolveDeliveryName();
+        $order_data['delivery_mobile']          = $this->resolveDeliveryMobile();
+        $order_data['delivery_address']         = $this->resolveDeliveryAddress();
+        $order_data['sales_channel_id']         = $this->salesChannelId ?: SalesChannelIds::POS;
+        $order_data['delivery_charge']          = $this->deliveryCharge ?: 0;
+        $order_data['emi_month']                = $this->emiMonth ?? null;
+        $order_data['status']                   = $this->salesChannelId == SalesChannelIds::POS ? Statuses::COMPLETED : Statuses::PENDING;
+        $order_data['discount']                 = json_decode($this->discount)->original_amount;
+        $order_data['is_discount_percentage']   = json_decode($this->discount)->is_percentage ?: 0;
         $order = $this->orderRepositoryInterface->create($order_data);
         $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($order_data);
         if ($this->discountHandler->hasDiscount()) $this->discountHandler->create();

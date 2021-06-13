@@ -1,5 +1,6 @@
 <?php namespace App\Services\Order;
 
+use App\Interfaces\OrderDiscountRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
@@ -18,10 +19,12 @@ class Updater
 {
     use ModificationFields;
     protected $partner_id, $order_id, $customer_id, $status, $sales_channel_id, $emi_month, $interest, $delivery_charge;
-    protected $bank_transaction_charge, $delivery_name, $delivery_mobile, $delivery_address, $note, $voucher_id;
+    protected $bank_transaction_charge, $delivery_name, $delivery_mobile, $delivery_address, $note, $voucher_id, $discount;
     protected $skus, $order, $existingOrder;
     protected $orderLogCreator;
-    protected $orderRepositoryInterface, $orderSkusRepositoryInterface, $orderPaymentCreator, $orderPaymentRepository;
+    protected $orderRepositoryInterface, $orderSkusRepositoryInterface, $orderPaymentRepository;
+    protected $orderDiscountRepository;
+    protected $orderPaymentCreator;
     protected $paymentMethod;
     protected $paidAmount;
     protected $paymentLinkAmount;
@@ -29,17 +32,59 @@ class Updater
 
     public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
-                                OrderLogCreator $orderLogCreator,
+                                OrderLogCreator $orderLogCreator, OrderDiscountRepositoryInterface $orderDiscountRepository,
                                 OrderPaymentCreator $orderPaymentCreator,
                                 OrderPaymentRepositoryInterface $orderPaymentRepository
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
+        $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->orderLogCreator = $orderLogCreator;
         $this->orderPaymentCreator = $orderPaymentCreator;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
+        $this->orderDiscountRepository = $orderDiscountRepository;
+    }
+
+    /**
+     * @param mixed $paymentLinkAmount
+     * @return Updater
+     */
+    public function setPaymentLinkAmount($paymentLinkAmount) : Updater
+    {
+        $this->paymentLinkAmount = $paymentLinkAmount;
+        return $this;
+    }
+
+    /**
+     * @param mixed $paymentMethod
+     * @return Updater
+     */
+    public function setPaymentMethod($paymentMethod)
+    {
+        $this->paymentMethod = $paymentMethod;
+        return $this;
+    }
+
+    /**
+     * @param mixed $paidAmount
+     * @return Updater
+     */
+    public function setPaidAmount($paidAmount)
+    {
+        $this->paidAmount = $paidAmount;
+        return $this;
+    }
+
+    /**
+     * @param mixed $discount
+     * @return Updater
+     */
+    public function setDiscount($discount)
+    {
+        $this->discount = $discount;
+        return $this;
     }
 
     /**
@@ -212,43 +257,13 @@ class Updater
         return $this;
     }
 
-    /**
-     * @param mixed $paymentMethod
-     * @return Updater
-     */
-    public function setPaymentMethod($paymentMethod)
-    {
-        $this->paymentMethod = $paymentMethod;
-        return $this;
-    }
-
-    /**
-     * @param mixed $paidAmount
-     * @return Updater
-     */
-    public function setPaidAmount($paidAmount)
-    {
-        $this->paidAmount = $paidAmount;
-        return $this;
-    }
-
-    /**
-     * @param mixed $paymentLinkAmount
-     * @return Updater
-     */
-    public function setPaymentLinkAmount($paymentLinkAmount)
-    {
-        $this->paymentLinkAmount = $paymentLinkAmount;
-        return $this;
-    }
-
     public function update()
     {
-        //$this->skus ? $this->orderSkusRepositoryInterface->updateOrderSkus($this->partner_id, json_decode($this->skus), $this->order_id) : null;
         list($previous_order, $existing_order_skus) = $this->setExistingOrderAndSkus();
-        $this->calculateOrderChangesAndUpdateSkus();
+        //$this->calculateOrderChangesAndUpdateSkus();
         $this->orderRepositoryInterface->update($this->order, $this->makeData());
         $this->updateOrderPayments();
+        $this->updateDiscount();
         $this->createLog($previous_order, $existing_order_skus);
     }
 
@@ -277,7 +292,6 @@ class Updater
     private function setExistingOrderAndSkus() : array
     {
         $previous_order = clone $this->order;
-        dd($this->orderSkusRepositoryInterface->where('order_id', $previous_order->id)->get());
         $existing_order_skus = clone $this->orderSkusRepositoryInterface->where('order_id', $previous_order->id)->latest()->get();
         return [$previous_order, $existing_order_skus];
     }
@@ -366,4 +380,42 @@ class Updater
         }
     }
 
+
+    private function updateDiscount()
+    {
+        $discountData = json_decode($this->discount);
+        $originalAmount = $discountData->original_amount;
+        $hasDiscount = $this->validateDiscountData($originalAmount);
+        if($hasDiscount) $this->orderDiscountRepository->where('order_id', $this->order_id)->update($this->makeOrderDiscountData($discountData));
+    }
+
+    private function validateDiscountData($originalAmount) : bool
+    {
+        if($originalAmount > 0) return true;
+        return false;
+    }
+
+    private function makeOrderDiscountData($discountData) : array
+    {
+        $data = [];
+        $data['order_id']            = $this->order_id;
+        $data['original_amount']     = $discountData->original_amount;
+        $data['is_percentage']       = $discountData->is_percentage;
+        $data['cap']                 = $discountData->cap;
+        $data['discount_details']    = $discountData->discount_details;
+        $data['discount_id']         = $discountData->discount_id;
+        $data['item_id']             = $discountData->item_id;
+        if($discountData->is_percentage)
+        {
+            /** @var PriceCalculation $orderPriceCalculation */
+            $orderPriceCalculation = app(PriceCalculation::class);
+            $orderTotalBill = $orderPriceCalculation->setOrder($this->order)->getTotalBill();
+            $data['amount'] = ($orderTotalBill * $discountData->is_percentage)/100.00;
+        }
+        else
+        {
+            $data['amount'] = $discountData->original_amount;
+        }
+        return $data;
+    }
 }
