@@ -24,7 +24,7 @@ class Updater
     protected $orderLogCreator;
     protected $orderRepositoryInterface, $orderSkusRepositoryInterface, $orderPaymentRepository;
     protected $orderDiscountRepository;
-    protected $orderRepositoryInterface, $orderSkusRepositoryInterface, $orderPaymentCreator, $orderPaymentRepository;
+    protected $orderPaymentCreator;
     protected $paymentMethod;
     protected $paidAmount;
     protected $paymentLinkAmount;
@@ -33,8 +33,6 @@ class Updater
     public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
                                 OrderLogCreator $orderLogCreator, OrderDiscountRepositoryInterface $orderDiscountRepository,
-                                OrderPaymentRepositoryInterface $orderPaymentRepository)
-                                OrderLogCreator $orderLogCreator,
                                 OrderPaymentCreator $orderPaymentCreator,
                                 OrderPaymentRepositoryInterface $orderPaymentRepository
     )
@@ -47,6 +45,36 @@ class Updater
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->orderDiscountRepository = $orderDiscountRepository;
+    }
+
+    /**
+     * @param mixed $paymentLinkAmount
+     * @return Updater
+     */
+    public function setPaymentLinkAmount($paymentLinkAmount) : Updater
+    {
+        $this->paymentLinkAmount = $paymentLinkAmount;
+        return $this;
+    }
+
+    /**
+     * @param mixed $paymentMethod
+     * @return Updater
+     */
+    public function setPaymentMethod($paymentMethod)
+    {
+        $this->paymentMethod = $paymentMethod;
+        return $this;
+    }
+
+    /**
+     * @param mixed $paidAmount
+     * @return Updater
+     */
+    public function setPaidAmount($paidAmount)
+    {
+        $this->paidAmount = $paidAmount;
+        return $this;
     }
 
     /**
@@ -231,7 +259,6 @@ class Updater
 
     public function update()
     {
-        //$this->skus ? $this->orderSkusRepositoryInterface->updateOrderSkus($this->partner_id, json_decode($this->skus), $this->order_id) : null;
         list($previous_order, $existing_order_skus) = $this->setExistingOrderAndSkus();
         $this->calculateOrderChangesAndUpdateSkus();
         $this->orderRepositoryInterface->update($this->order, $this->makeData());
@@ -380,8 +407,14 @@ class Updater
         $data['item_id']             = $discountData['item_id'];
         if($discountData['is_percentage'])
         {
-
-            $data['amount'] = $discountData['is_percentage'] ? $discountData['original_amount'] : $discountData['amount'];
+            /** @var PriceCalculation $orderPriceCalculation */
+            $orderPriceCalculation = app(PriceCalculation::class);
+            $orderTotalBill = $orderPriceCalculation->setOrder($this->order)->getTotalBill();
+            $data['amount'] = $discountData['is_percentage'] ? ($orderTotalBill * $discountData['is_percentage'])/100.00 : $discountData['amount'];
+        }
+        else
+        {
+            $data['amount'] = $discountData['original_amount'];
         }
         return $data;
     }

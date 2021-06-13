@@ -113,7 +113,7 @@ class OrderService extends BaseService
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if(!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new OrderWithProductResource($order);
-        return $this->success('Successful', ['order' => $resource], 200, true);
+        return $this->success('Successful', ['order' => $resource], 200);
     }
 
     /**
@@ -143,6 +143,7 @@ class OrderService extends BaseService
             ->setPaidAmount($orderUpdateRequest->paid_amount ?? null)
             ->setPaymentMethod($orderUpdateRequest->payment_method ?? null)
             ->setPaymentLinkAmount($orderUpdateRequest->payment_link_amount ?? null)
+            ->setDiscount($orderUpdateRequest->discount)
             ->update();
 
         if ($this->updater->isRequestedForPaymentLinkCreation()) {
@@ -150,7 +151,7 @@ class OrderService extends BaseService
             $payment_link = $this->createPaymentLink($orderUpdateRequest->payment_link_amount, $partner_id, $orderDetails);
             return $this->success('Successful', ['order' => ['id' => $orderDetails->id], 'payment' => $payment_link ?? null]);
         }
-        return $this->success('Successful', null, 200, true);
+        return $this->success('Successful', null, 200);
     }
 
     public function delete($partner_id, $order_id)

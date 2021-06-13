@@ -31,7 +31,7 @@ class OrderUpdateRequest extends FormRequest
             'note' => 'sometimes|string',
             'delivery_mobile' => 'sometimes|string',
             'voucher_id' => 'sometimes|string',
-            'discount' => 'sometimes|numeric',
+            'discount' => 'sometimes|JSON',
             'is_percentage' => 'sometimes|numeric',
             'previous_order_id' => 'sometimes|numeric',
             'emi_month' => 'required_if:payment_method,emi|numeric',
