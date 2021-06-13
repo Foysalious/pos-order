@@ -8,6 +8,7 @@ use App\Traits\ModificationFields;
 class CustomerService extends BaseService
 {
     use ModificationFields;
+
     public function __construct(private CustomerRepositoryInterface $customerRepository, private Updater $updater)
     {
 
@@ -27,13 +28,12 @@ class CustomerService extends BaseService
     {
         $data = [];
 
-        if(isset($updateDto->name))$data['name'] = $updateDto->name;
-        if(isset($updateDto->email))$data['email'] = $updateDto->email;
-        if(isset($updateDto->phone))$data['phone'] = $updateDto->phone;
-        if(isset($updateDto->pro_pic))$data['pro_pic'] = $updateDto->pro_pic;
-        if(isset($updateDto->id))$data['id'] = $updateDto->id;
+        if (isset($updateDto->name)) $data['name'] = $updateDto->name;
+        if (isset($updateDto->email)) $data['email'] = $updateDto->email;
+        if (isset($updateDto->mobile)) $data['mobile'] = $updateDto->mobile;
+        if (isset($updateDto->pro_pic)) $data['pro_pic'] = $updateDto->pro_pic;
 
-        return $data ;
+        return $data;
     }
 
     public function create(CustomerCreateDto $createDto): JsonResponse

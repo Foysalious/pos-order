@@ -10,6 +10,7 @@ class CustomerCreateDto extends DataTransferObject
     public string $id;
     public string $name;
     public string $email;
-    public string $phone;
+    public string $mobile;
+    public string $partner_id;
     public string $pro_pic;
 }

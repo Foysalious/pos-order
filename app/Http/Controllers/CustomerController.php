@@ -44,7 +44,7 @@ class CustomerController extends Controller
      *       @OA\Property(property="name", type="string"),
      *       @OA\Property(property="email", type="string"),
      *       @OA\Property(property="id", type="string"),
-     *       @OA\Property(property="phone", type="string"),
+     *       @OA\Property(property="mobile", type="string"),
      *       @OA\Property(property="pro_pic", type="string"),
      *
      *          )
@@ -71,11 +71,13 @@ class CustomerController extends Controller
             'id' => $request->id,
             'name' => $request->name,
             'email' => $request->email,
-            'phone' => $request->phone,
+            'partner_id' => $request->partner_id,
+            'mobile' => $request->mobile,
             'pro_pic' => $request->pro_pic,
         ]);
         return $this->customerService->create($customer);
     }
+
     /**
      * Update Customer.
      *
@@ -97,8 +99,7 @@ class CustomerController extends Controller
      *      @OA\Schema(
      *       @OA\Property(property="name", type="string"),
      *       @OA\Property(property="email", type="string"),
-     *       @OA\Property(property="id", type="string"),
-     *       @OA\Property(property="phone", type="string"),
+     *       @OA\Property(property="mobile", type="string"),
      *       @OA\Property(property="pro_pic", type="string"),
      *
      *          )
@@ -120,10 +121,9 @@ class CustomerController extends Controller
     public function update(Request $request, string $customer_id)
     {
         $customer = new CustomerUpdateDto([
-            'id' => $request->id,
             'name' => $request->name,
             'email' => $request->email,
-            'phone' => $request->phone,
+            'mobile' => $request->mobile,
             'pro_pic' => $request->pro_pic,
         ]);
         return $this->customerService->update($customer_id, $customer);

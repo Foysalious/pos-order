@@ -228,7 +228,7 @@ class PaymentLinkTransformer
                         'payer' => [
                             'id'     => $details['id'],
                             'name'   => $details['name'],
-                            'mobile' => $details['phone']
+                            'mobile' => $details['mobile']
                         ]
                     ];
                 }

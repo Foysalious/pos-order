@@ -48,7 +48,7 @@ class OrderWithProductResource extends JsonResource
             'voucher_id'              => $this->voucher_id,
             'items'                   => OrderSkuResource::collection($this->items),
             'price_info'              => $this->getOrderPriceRelatedInfo(),
-            'customer_info'           => $this->customer->only('name','phone','pro_pic'),
+            'customer_info'           => $this->customer->only('name','mobile','pro_pic'),
         ];
         $this->orderWithProductResource['payment_info'] = $this->getOrderDetailsWithPaymentLink();
         return $this->orderWithProductResource;
