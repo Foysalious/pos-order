@@ -87,9 +87,7 @@ class OrderService extends BaseService
             ->setPaidAmount($request->paid_amount)
             ->setPaymentMethod($request->payment_method)
             ->create();
-        $payment_link_amount = $request->has('payment_link_amount') ? $request->payment_link_amount : $order->net_bill;
-        if ($request->payment_method == 'payment_link') $payment_link = $this->createPaymentLink($payment_link_amount, $partner, $order);
-        return $this->success('Successful', ['order' => ['id' => $order->id], 'payment' => $payment_link ?? null]);
+        return $this->success('Successful', ['order' => ['id' => $order->id]]);
     }
 
     public function getOrderDetails($partner_id, $order_id)
@@ -159,20 +157,5 @@ class OrderService extends BaseService
             return $payment_link;
         } else
             return false;
-    }
-
-    private function createPaymentLink($payment_link_amount, $partner, $order)
-    {
-        if (!$partner instanceof Partner) $partner = Partner::find($partner);
-        $paymentLink = $this->paymentLinkCreator->setAmount($payment_link_amount)->setReason("PosOrder ID: $order->id Due payment")
-            ->setUserName($partner->name)->setUserId($partner->id)
-            ->setUserType('partner')
-            ->setTargetId($order->id)
-            ->setTargetType('pos_order');
-        if ($order->customer_id) $paymentLink->setPayerId($order->customer_id)->setPayerType('pos_customer');
-        $paymentLink = $paymentLink->create();
-        $transformer = new PaymentLinkTransformer();
-        $transformer->setResponse($paymentLink);
-        return ['link' => config('pos.payment_link_web_url') . '/' . $transformer->getLinkIdentifier()];
     }
 }
