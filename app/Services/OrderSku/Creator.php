@@ -6,6 +6,7 @@ use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\WarrantyUnits;
+use App\Services\Product\StockManager;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Creator
@@ -19,17 +20,21 @@ class Creator
     /** @var InventoryServerClient */
     private InventoryServerClient $client;
 
+    /** @var StockManager $stockManager */
+    private StockManager $stockManager;
+
     /**
      * Creator constructor.
      * @param OrderSkuRepositoryInterface $orderSkuRepository
      * @param DiscountHandler $discountHandler
      * @param InventoryServerClient $client
      */
-    public function __construct(OrderSkuRepositoryInterface $orderSkuRepository, DiscountHandler $discountHandler, InventoryServerClient $client)
+    public function __construct(OrderSkuRepositoryInterface $orderSkuRepository, DiscountHandler $discountHandler, InventoryServerClient $client, StockManager $stockManager)
     {
         $this->orderSkuRepository = $orderSkuRepository;
         $this->discountHandler = $discountHandler;
         $this->client = $client;
+        $this->stockManager = $stockManager;
     }
 
 
@@ -61,12 +66,8 @@ class Creator
             return !is_null($value);
         });
         $sku_details = collect($this->getSkuDetails($sku_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
+        $this->checkProductAndStockAvailability($skus,$sku_details);
         foreach ($skus as $sku) {
-
-            if ($sku->id != null && !isset($sku_details[$sku->id]))
-                throw new NotFoundHttpException("Product #" . $sku->id . " Doesn't Exists.");
-
-            $this->checkStockAvailability($sku,$sku_details);
 
             $sku_data['order_id'] = $this->order->id;
             $sku_data['name'] = isset($sku->product_name) ? $sku->product_name : $sku_details[$sku->id]['product_name'];
@@ -86,6 +87,10 @@ class Creator
             if ($this->discountHandler->hasDiscount()) {
                 $this->discountHandler->create();
             }
+            if(isset($sku_details[$sku->id])) {
+                $is_stock_maintainable = $this->stockManager->setSku($sku_details[$sku->id])->setOrder($this->order)->isStockMaintainable();
+                if ($is_stock_maintainable) $this->stockManager->decrease($sku->quantity);
+            }
         }
     }
 
@@ -96,12 +101,15 @@ class Creator
         return $response['skus'];
     }
 
-    private function checkStockAvailability($sku, $sku_details)
+    private function checkProductAndStockAvailability($skus, $sku_details)
     {
-        if($sku->id == null || ($this->order->sales_channel_id == SalesChannelIds::POS))
-            return;
-        elseif ($sku_details[$sku->id]['stock'] < $sku->quantity)
-            throw new NotFoundHttpException("Product #" . $sku->id . " Not Enough Stock");
+        foreach ($skus as $sku) {
+            if ($sku->id != null && !isset($sku_details[$sku->id]))
+                throw new NotFoundHttpException("Product #" . $sku->id . " Doesn't Exists.");
+            if($sku->id == null || ($this->order->sales_channel_id == SalesChannelIds::POS))
+                continue;
+            if ($sku_details[$sku->id]['stock'] < $sku->quantity)
+                throw new NotFoundHttpException("Product #" . $sku->id . " Not Enough Stock");
+        }
     }
-
 }
