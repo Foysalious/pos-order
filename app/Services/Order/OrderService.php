@@ -57,7 +57,7 @@ class OrderService extends BaseService
         $ordersList = $this->orderRepository->getOrderListWithPagination($offset, $limit, $partner_id, $orderSearch, $orderFilter);
         $orderList = OrderResource::collection($ordersList);
         if(!$orderList) return $this->error("You're not authorized to access this order", 403);
-        else return $this->success('Success', ['orders' => $orderList], 200, true);
+        else return $this->success('Success', ['orders' => $orderList], 200);
     }
 
     public function getOrderDetails($partner_id, $order_id)
