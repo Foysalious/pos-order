@@ -1,12 +1,9 @@
 <?php namespace App\Models;
 
 use App\Services\Discount\Constants\DiscountTypes;
-use App\Services\EMI\Calculations;
-use App\Services\Order\Constants\PaymentStatuses;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Services\PaymentLink\Target;
 use App\Services\PaymentLink\Constants\TargetType;
-use function App\Helper\Formatters\formatTakaToDecimal;
 
 class Order extends BaseModel
 {
@@ -32,6 +29,7 @@ class Order extends BaseModel
     {
         return $this->belongsTo(Customer::class, 'customer_id', 'id');
     }
+
     public function items()
     {
         return $this->hasMany(OrderSku::class);
@@ -126,48 +124,6 @@ class Order extends BaseModel
     public function orderSkus()
     {
         return $this->hasMany(OrderSku::class);
-    }
-
-    private function _calculateThisItems()
-    {
-        $this->_initializeTotalsToZero();
-        foreach ($this->orderSkus as $order_sku) {
-            /** @var OrderSku $order_sku */
-            $order_sku = $order_sku->calculate();
-            $this->_updateTotalPriceAndCost($order_sku);
-        }
-        return $this;
-    }
-
-    private function _updateTotalPriceAndCost(OrderSku $orderSku)
-    {
-        $this->totalPrice += $orderSku->getPrice();
-        $this->totalVat += $orderSku->getVat();
-        $this->totalItemDiscount += $orderSku->getDiscountAmount();
-        $this->totalBill += $orderSku->getTotal();
-    }
-
-    private function _initializeTotalsToZero()
-    {
-        $this->totalPrice = 0;
-        $this->totalVat = 0;
-        $this->totalItemDiscount = 0;
-        $this->totalBill = 0;
-    }
-
-    public function getDue()
-    {
-        return $this->due;
-    }
-
-    public function getPaid()
-    {
-        return $this->paid;
-    }
-
-    public function getDiscountAmount()
-    {
-        return $this->discountAmount;
     }
 
     public function getPaymentLinkTarget()

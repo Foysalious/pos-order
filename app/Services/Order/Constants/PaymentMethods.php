@@ -2,10 +2,9 @@
 
 use App\Helper\ConstGetter;
 
-class SalesChannels
+class PaymentMethods
 {
     use ConstGetter;
-
-    const POS = '1';
-    const WEBSTORE = '2';
+    const PAYMENT_LINK = 'payment_link';
+    const CASH_ON_DELIVERY = 'cod';
 }

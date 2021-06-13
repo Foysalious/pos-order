@@ -29,14 +29,13 @@ trait ResponseAPI
      * Send any success response
      *
      * @param string $message
-     * @param array|object $data
+     * @param array $data
      * @param integer $statusCode
-     * @param bool $isSuccess
      * @return JsonResponse
      */
-    public function success($message, $data, $statusCode = 200, $isSuccess = true)
+    public function success(string $message = "Successful", array $data = [], int $statusCode = 200): JsonResponse
     {
-        return $this->coreResponse($message, $statusCode, $isSuccess, $data);
+        return $this->coreResponse($message, $statusCode, true, $data);
     }
 
     /**

@@ -1,14 +1,17 @@
 <?php namespace App\Http\Controllers;
 
+use App\Http\Requests\OrderCreateRequest;
 use App\Http\Requests\OrderCustomerRequest;
 use App\Http\Requests\OrderFilterRequest;
 use App\Http\Requests\OrderUpdateRequest;
 use App\Services\Order\OrderService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Services\Order\Creator;
 use App\Services\Order\StatusChanger;
 use App\Traits\ResponseAPI;
+use Illuminate\Validation\ValidationException;
 
 
 class OrderController extends Controller
@@ -25,7 +28,7 @@ class OrderController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
 
     /**
@@ -45,46 +48,8 @@ class OrderController extends Controller
      *          response=200,
      *          description="Successful operation",
      *          @OA\JsonContent(
-     *              type="object", example={
-     *              "message": "Successful",
-     *              "orderList": {{
-     *                  "id": 2000038,
-     *                  "previous_order_id": null,
-     *                  "partner_wise_order_id": 21,
-     *                  "customer_id": 1,
-     *                  "status": "Completed",
-     *                  "sales_channel_id": 1,
-     *                  "emi_month": null,
-     *                  "interest": null,
-     *                  "delivery_charge": "0.00",
-     *                  "bank_transaction_charge": null,
-     *                  "delivery_name": "",
-     *                  "delivery_mobile": "",
-     *                  "delivery_address": "",
-     *                  "note": null,
-     *                  "voucher_id": null,
-     *                  "payment_status": null
-     *               },
-     *               {
-     *                  "id": 2000037,
-     *                  "previous_order_id": null,
-     *                  "partner_wise_order_id": 20,
-     *                  "customer_id": 1,
-     *                  "status": "Completed",
-     *                  "sales_channel_id": 1,
-     *                  "emi_month": null,
-     *                  "interest": null,
-     *                  "delivery_charge": "0.00",
-     *                  "bank_transaction_charge": null,
-     *                  "delivery_name": "",
-     *                  "delivery_mobile": "",
-     *                  "delivery_address": "",
-     *                  "note": null,
-     *                  "voucher_id": null,
-     *                  "payment_status": null
-     *               }
-     *               }
-     *              }
+     *              type="object",
+     *              example={"message": "Successful", "orderList": {{ "id": 2000038, "previous_order_id": null, "partner_wise_order_id": 21, "customer_id": 1, "status": "Completed", "sales_channel_id": 1, "emi_month": null, "interest": null, "delivery_charge": "0.00", "bank_transaction_charge": null, "delivery_name": "", "delivery_mobile": "", "delivery_address": "", "note": null, "voucher_id": null, "payment_status": null }, { "id": 2000037, "previous_order_id": null, "partner_wise_order_id": 20, "customer_id": 1, "status": "Completed", "sales_channel_id": 1, "emi_month": null, "interest": null, "delivery_charge": "0.00", "bank_transaction_charge": null, "delivery_name": "", "delivery_mobile": "", "delivery_address": "", "note": null, "voucher_id": null, "payment_status": null }} }
      *          )),
      *      @OA\Response(
      *          response=404,
@@ -102,15 +67,60 @@ class OrderController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * @OA\Post(
+     *     path="/api/v1/partners/{partner}/orders",
+     *     summary="Place an order",
+     *     tags={"ORDER API"},
+     *     @OA\Parameter(name="partner_id",description="Partner Id",required=true,in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                  example={
+     *                      "customer_id":1,
+     *                      "paid_amount":100,
+     *                      "sales_channel_id":1,
+     *                      "skus": "[{'id':523,'product_name':'Shirt','product_id':1000328,'warranty':null,;warranty_unit':null,'vat_percentage':null,'sku_channel_id':1062,'channel_id':1,'channel_name':'pos','price':100,'unit':'kg','quantity':5,'discount':5,'is_discount_percentage':0,'cap':null,'combination':[{'option_id':799,'option_name':'size','option_value_id':1572,'option_value_name':'l','option_value_details':[{'code':'L','type':'size'}]},{'option_id':800,'option_name':'color','option_value_id':1573,'option_value_name':'green','option_value_details':[{'code':'#000000','type':'color'}]}]}]",
+     *                      "discount":5,
+     *                      "is_discount_percentage":0,
+     *                      "payment_method":"payment_link",
+     *                      "payment_link_amount":10,
+     *                  }
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Successful",
+     *          @OA\JsonContent(
+     *          type="object",
+     *          example={
+     *              "message": "Successful",
+     *              "order": {
+     *                  "id": 2000175
+     *              },
+     *              "payment": {
+     *                  "link": "https://pl.dev-sheba.xyz/@PartnerDevox0c8oey"
+     *              }
+     *          }
+     *       ),
+     *     ),
+     *     @OA\Response(
+     *          response=404,
+     *          description="Message: Customer Not Found ",
+     *     ),
+     *     @OA\Response(
+     *          response=403,
+     *          description="Forbidden"
+     *      )
+     * )
      *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param $partner
+     * @param OrderCreateRequest $request
+     * @return JsonResponse
+     * @throws ValidationException
      */
-    public function store($partner, Request $request, Creator $creator)
+    public function store($partner, OrderCreateRequest $request)
     {
-        $creator->setPartner($partner)->setData($request->all());
-        $creator->create();
+        return $this->orderService->store($partner, $request);
     }
 
     public function updateStatus($partner, Request $request, StatusChanger $statusChanger)
@@ -128,13 +138,19 @@ class OrderController extends Controller
      *      description="Return all orders with searching parameters",
      *      @OA\Parameter(name="partner", description="partner id", required=true, in="path", @OA\Schema(type="integer")),
      *      @OA\Parameter(name="order", description="order id", required=true, in="path", @OA\Schema(type="integer")),
-     *      @OA\Response(response=200, description="Successful operation", @OA\JsonContent(ref="")),
-     *      @OA\Response(response=404, description="message: কঅর্ডারটি পাওয়া যায় নি"),
-     *      @OA\Response(response=403, description="Forbidden")
-     *     )
+     *      @OA\Response(response=200, description="Successful operation",
+     *          @OA\JsonContent(
+     *          type="object",
+     *          example={"message":"Successful","order":{"id":2000017,"previous_order_id":null,"partner_wise_order_id":8,"customer_id":1,"status":"Completed","sales_channel_id":1,"emi_month":null,"interest":null,"bank_transaction_charge":null,"delivery_name":"","delivery_mobile":"","delivery_address":"","note":null,"voucher_id":null,"items":{{"id":148,"name":"","sku_id":521,"details":null,"quantity":"1.00","unit_price":"100.00","unit":null,"vat_percentage":null,"warranty":0,"warranty_unit":"day","note":null},{"id":149,"name":"","sku_id":819,"details":null,"quantity":"1.00","unit_price":"80.00","unit":null,"vat_percentage":null,"warranty":0,"warranty_unit":"day","note":null},{"id":150,"name":"","sku_id":null,"details":null,"quantity":"2.00","unit_price":"50.00","unit":null,"vat_percentage":null,"warranty":0,"warranty_unit":"day","note":null}},"price_info":{"delivery_charge":"30.00","promo":"50.00","total_price":"280.00","total_bill":"280.00","discount_amount":null,"due_amount":"160.00","paid_amount":100,"total_item_discount":"0.00","total_vat":"0.00"},"customer_info":{"name":"Foysal","phone":"01855570816","pro_pic":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebadev\/images\/pos\/categories\/thumbs\/1621499030_phpvv7lc4_category_thumb.png"},"payment_info":null}}
+     *          ),
+     *     ),
+     *      @OA\Response(response=404, description="message: অর্ডারটি পাওয়া যায় নি"),
+     *      @OA\Response(response=403, description="You're not authorized to access this order")
+     *  )
      *
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
+     * @param $partner_id
+     * @param $order_id
+     * @return JsonResponse
      */
     public function show($partner_id, $order_id)
     {
@@ -142,11 +158,11 @@ class OrderController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
-     * @param $partner_id
+     *
      * @param OrderUpdateRequest $request
-     * @param $id
-     * @return \Illuminate\Http\JsonResponse
+     * @param int $partner_id
+     * @param int $order_id
+     * @return JsonResponse
      */
 
     /**
@@ -178,9 +194,10 @@ class OrderController extends Controller
      *     @OA\Response(response="403", description="You're not authorized to access this order"),
      * )
      */
-    public function update(Request $request, $partner_id, $id)
+
+    public function update(OrderUpdateRequest $request, $partner_id, $order_id)
     {
-        return $this->orderService->update($request, $partner_id, $id);
+        return $this->orderService->update($request, $partner_id, $order_id);
     }
 
     public function getOrderWithChannel($order_id)
@@ -217,7 +234,7 @@ class OrderController extends Controller
      *
      * @param int $partner_id
      * @param int $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
 
     /**
