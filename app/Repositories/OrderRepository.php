@@ -21,6 +21,11 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
         return $orderList->offset($offset)->limit($limit)->latest()->get();
     }
 
+    public function getCustomerOrderList($customer_id,$offset, $limit)
+    {
+        return $this->model->where('customer_id', $customer_id)->offset($offset)->limit($limit)->get();
+    }
+
     private function getSearchingQuery($partner_id, $orderSearch)
     {
         $order_id = $orderSearch->getOrderId();
@@ -28,7 +33,7 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
         $sales_channel_id = $orderSearch->getSalesChannelId();
 
         return $this->model->where('partner_id', $partner_id)->whereHas('customer', function ($query) use ($customer_name) {
-            $query->where('name', 'like', '%'. $customer_name .'%');
+            $query->where('name', 'like', '%' . $customer_name . '%');
         })->when($order_id, function ($query) use ($order_id) {
             return $query->where('partner_wise_order_id', $order_id);
         })->when($sales_channel_id, function ($query) use ($sales_channel_id) {
@@ -38,27 +43,27 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 
     private function getTypeFilterResult($type, $searchQueryResult)
     {
-        return $searchQueryResult->when($type == OrderTypes::NEW, function($query) use ($type){
+        return $searchQueryResult->when($type == OrderTypes::NEW, function ($query) use ($type) {
             return $query->where('status', Statuses::PENDING);
-        })->when($type == OrderTypes::RUNNING, function($query) use ($type){
+        })->when($type == OrderTypes::RUNNING, function ($query) use ($type) {
             return $query->whereIn('status', [Statuses::PROCESSING, Statuses::SHIPPED]);
-        })->when($type == OrderTypes::COMPLETED, function($query) use ($type){
+        })->when($type == OrderTypes::COMPLETED, function ($query) use ($type) {
             return $query->whereIn('status', [Statuses::COMPLETED, Statuses::CANCELLED, Statuses::DECLINED]);
         });
     }
 
     private function getOrderStatusFilterResult($orderStatus, $typeFilterResult)
     {
-        return $typeFilterResult->when($orderStatus, function($query) use ($orderStatus){
+        return $typeFilterResult->when($orderStatus, function ($query) use ($orderStatus) {
             return $query->where('status', $orderStatus);
         });
     }
 
     private function getPaymentStatusFilterResult($paymentStatus, $orderStatusFilterResult)
     {
-        return $orderStatusFilterResult->when($paymentStatus == PaymentStatuses::PAID, function($query) use ($paymentStatus){
+        return $orderStatusFilterResult->when($paymentStatus == PaymentStatuses::PAID, function ($query) use ($paymentStatus) {
             return $query->whereNotNull('closed_and_paid_at');
-        })->when($paymentStatus == PaymentStatuses::DUE, function($query) use ($paymentStatus){
+        })->when($paymentStatus == PaymentStatuses::DUE, function ($query) use ($paymentStatus) {
             return $query->whereNull('closed_and_paid_at');
         });
     }

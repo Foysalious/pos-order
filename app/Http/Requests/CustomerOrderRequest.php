@@ -1,10 +1,9 @@
 <?php namespace App\Http\Requests;
 
-
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
-class CustomerRequest extends FormRequest
+
+class CustomerOrderRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,12 +23,8 @@ class CustomerRequest extends FormRequest
     public function rules()
     {
         return [
-            'id' => 'required',
-            'name' => 'required',
-            'partner_id' => 'required',
-            'email' => 'required',
-            'mobile' => 'required',
-            'pro_pic' => 'sometimes',
+            'offset' => 'numeric',
+            'limit' => 'numeric'
         ];
     }
 }

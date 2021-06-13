@@ -2,6 +2,7 @@
 
 use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
+use App\Http\Resources\CustomerOrderResource;
 use App\Http\Requests\OrderUpdateRequest;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderWithProductResource;
@@ -77,6 +78,15 @@ class OrderService extends BaseService
         $orderList = OrderResource::collection($ordersList);
         if(!$orderList) return $this->error("You're not authorized to access this order", 403);
         else return $this->success('Success', ['orders' => $orderList], 200, true);
+    }
+
+    public function getCustomerOrderList($customer_id,$request)
+    {
+        list($offset, $limit) = calculatePagination($request);
+        $orderList = $this->orderRepository->getCustomerOrderList($customer_id,$offset, $limit);
+        if (count($orderList) == 0) return $this->error("You don't have any order", 403);
+        $orderList = CustomerOrderResource::collection($orderList);
+        return $this->success('Successful', ['orders' => $orderList], 200);
     }
 
     /**

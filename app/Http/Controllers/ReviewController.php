@@ -16,12 +16,17 @@ class ReviewController extends Controller
     {
         $rating = $request->rating;
         $orderBy = $request->order_by;
-        return $this->reviewService->getProductReviews($request,$rating,$orderBy, $product_id);
+        return $this->reviewService->getProductReviews($request, $rating, $orderBy, $product_id);
+    }
+
+    public function getCustomerReviewList($customer_id,Request $request)
+    {
+       return $this->reviewService->getCustomerReviews($customer_id,$request);
     }
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     /**
