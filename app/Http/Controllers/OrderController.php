@@ -186,7 +186,8 @@ class OrderController extends Controller
      *                  @OA\Property(property="delivery_mobile", type="number"),
      *                  @OA\Property(property="delivery_address", type="string"),
      *                  @OA\Property(property="note", type="string"),
-     *                  @OA\Property(property="voucher_id", type="integer")
+     *                  @OA\Property(property="voucher_id", type="integer"),
+     *                  @OA\Property(property="discount", type="json")
      *             )
      *         )
      *      ),

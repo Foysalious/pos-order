@@ -387,6 +387,7 @@ class Updater
         $originalAmount = $discountData->original_amount;
         $hasDiscount = $this->validateDiscountData($originalAmount);
         if($hasDiscount) $this->orderDiscountRepository->where('order_id', $this->order_id)->update($this->makeOrderDiscountData($discountData));
+        $this->setOrderLogType(OrderLogTypes::PRODUCTS_AND_PRICES);
     }
 
     private function validateDiscountData($originalAmount) : bool
