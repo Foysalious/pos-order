@@ -87,8 +87,7 @@ class OrderController extends Controller
      *                      "paid_amount":100,
      *                      "sales_channel_id":1,
      *                      "skus": "[{'id':523,'product_name':'Shirt','product_id':1000328,'warranty':null,;warranty_unit':null,'vat_percentage':null,'sku_channel_id':1062,'channel_id':1,'channel_name':'pos','price':100,'unit':'kg','quantity':5,'discount':5,'is_discount_percentage':0,'cap':null,'combination':[{'option_id':799,'option_name':'size','option_value_id':1572,'option_value_name':'l','option_value_details':[{'code':'L','type':'size'}]},{'option_id':800,'option_name':'color','option_value_id':1573,'option_value_name':'green','option_value_details':[{'code':'#000000','type':'color'}]}]}]",
-     *                      "discount":5,
-     *                      "is_discount_percentage":0,
+     *                      "discount": "{'original_amount':10,'is_percentage':1,'cap':70,'discount_details':'Order discount details','discount_id':null,'item_id':null'}",
      *                      "payment_method":"payment_link",
      *                      "payment_link_amount":10,
      *                  }
