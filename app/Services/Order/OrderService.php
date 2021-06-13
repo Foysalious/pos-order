@@ -92,6 +92,7 @@ class OrderService extends BaseService
             ->setDeliveryAddress($orderUpdateRequest->delivery_address)
             ->setNote($orderUpdateRequest->note)
             ->setVoucherId($orderUpdateRequest->voucher_id)
+            ->setDiscount($orderUpdateRequest->discount)
             ->update();
 
         return $this->success('Successful', null, 200, true);

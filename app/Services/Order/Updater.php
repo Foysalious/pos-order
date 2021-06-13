@@ -1,5 +1,6 @@
 <?php namespace App\Services\Order;
 
+use App\Interfaces\OrderDiscountRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
@@ -10,15 +11,16 @@ class Updater
 {
     use ModificationFields;
     protected $partner_id, $order_id, $customer_id, $status, $sales_channel_id, $emi_month, $interest, $delivery_charge;
-    protected $bank_transaction_charge, $delivery_name, $delivery_mobile, $delivery_address, $note, $voucher_id;
+    protected $bank_transaction_charge, $delivery_name, $delivery_mobile, $delivery_address, $note, $voucher_id, $discount;
     protected $skus, $order, $existingOrder;
     protected $orderLogCreator;
     protected $orderRepositoryInterface, $orderSkusRepositoryInterface, $orderPaymentRepository;
+    protected $orderDiscountRepository;
     protected string $orderLogType = OrderLogTypes::OTHERS;
 
     public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
-                                OrderLogCreator $orderLogCreator,
+                                OrderLogCreator $orderLogCreator, OrderDiscountRepositoryInterface $orderDiscountRepository,
                                 OrderPaymentRepositoryInterface $orderPaymentRepository)
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -26,6 +28,17 @@ class Updater
         $this->orderLogCreator = $orderLogCreator;
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
+        $this->orderDiscountRepository = $orderDiscountRepository;
+    }
+
+    /**
+     * @param mixed $discount
+     * @return Updater
+     */
+    public function setDiscount($discount)
+    {
+        $this->discount = $discount;
+        return $this;
     }
 
     /**
@@ -200,9 +213,9 @@ class Updater
 
     public function update()
     {
-        //$this->skus ? $this->orderSkusRepositoryInterface->updateOrderSkus($this->partner_id, json_decode($this->skus), $this->order_id) : null;
         list($previous_order, $existing_order_skus) = $this->setExistingOrderAndSkus();
         $this->orderRepositoryInterface->update($this->order, $this->makeData());
+        $this->updateDiscount();
         $this->createLog($previous_order, $existing_order_skus);
     }
 
@@ -231,7 +244,6 @@ class Updater
     private function setExistingOrderAndSkus() : array
     {
         $previous_order = clone $this->order;
-        dd($this->orderSkusRepositoryInterface->where('order_id', $previous_order->id)->get());
         $existing_order_skus = clone $this->orderSkusRepositoryInterface->where('order_id', $previous_order->id)->latest()->get();
         return [$previous_order, $existing_order_skus];
     }
@@ -262,5 +274,37 @@ class Updater
             ->setChangedOrderData($this->orderRepositoryInterface->find($this->order->id))
             ->setChangedOrderSkus($new_order_skus)
             ->setType($this->getTypeOfChangeLog());
+    }
+
+    private function updateDiscount()
+    {
+        $discountData = json_decode($this->discount);
+        $originalAmount = $discountData['original_amount'];
+        $hasDiscount = $this->validateDiscountData($originalAmount);
+        if($hasDiscount) $this->orderDiscountRepository->where('order_id', $this->order_id)->update($this->makeOrderDiscountData($discountData));
+    }
+
+    private function validateDiscountData($originalAmount) : bool
+    {
+        if($originalAmount > 0) return true;
+        return false;
+    }
+
+    private function makeOrderDiscountData($discountData) : array
+    {
+        $data = [];
+        $data['order_id']            = $this->order_id;
+        $data['original_amount']     = $discountData['original_amount'];
+        $data['is_percentage']       = $discountData['is_percentage'];
+        $data['cap']                 = $discountData['cap'];
+        $data['discount_details']    = $discountData['discount_details'];
+        $data['discount_id']         = $discountData['discount_id'];
+        $data['item_id']             = $discountData['item_id'];
+        if($discountData['is_percentage'])
+        {
+
+            $data['amount'] = $discountData['is_percentage'] ? $discountData['original_amount'] : $discountData['amount'];
+        }
+        return $data;
     }
 }
