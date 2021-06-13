@@ -18,6 +18,7 @@ class DeleteProductFromOrder extends ProductOrder
         $deleted = $this->order->orderSkus()->whereIn('id', $deleted_skus_ids)->delete();
         if($deleted) $this->stockRefillForDeletedItems($order_skus_details);
         $this->calculateAndRefundForDeletedProducts($deleted_skus_ids,$order_skus_details);
+        return $deleted ?? false;
     }
 
     private function getDeletedItems()

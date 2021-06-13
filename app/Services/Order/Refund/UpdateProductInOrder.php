@@ -33,7 +33,7 @@ class UpdateProductInOrder extends ProductOrder
         }
         $this->updateStockForProductsChanges($updated_products,$skus_details);
         $this->calculateAndRefundForUpdatedOrder();
-        dd('here after all');
+        return true;
     }
 
     private function getUpdatedProducts()
