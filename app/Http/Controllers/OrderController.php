@@ -181,7 +181,7 @@ class OrderController extends Controller
      *     @OA\RequestBody(
      *          @OA\MediaType(mediaType="application/json",
      *              @OA\Schema(
-     *                  @OA\Property(property="sales_channel_id", type="integer"),
+     *                  @OA\Property(property="sales_channel_id", type="integer", example=1),
      *                  @OA\Property(property="skus", type="string"),
      *                  @OA\Property(property="emi_month", type="string"),
      *                  @OA\Property(property="interest", type="integer"),
@@ -192,7 +192,7 @@ class OrderController extends Controller
      *                  @OA\Property(property="delivery_address", type="string"),
      *                  @OA\Property(property="note", type="string"),
      *                  @OA\Property(property="voucher_id", type="integer"),
-     *                  @OA\Property(property="discount", type="json")
+     *                  @OA\Property(property="discount", type="json", example={"order_id":2000119,"type":"order","original_amount":10,"is_percentage":1,"cap":70,"discount_details":"Order discount details","discount_id":null,"item_id":null})
      *             )
      *         )
      *      ),
