@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateCustomersTable extends Migration
+class AlterTableCustomersChangeCustomerId extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,8 @@ class CreateCustomersTable extends Migration
      */
     public function up()
     {
-        Schema::create('customers', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->index();
-            $table->string('email')->unique()->index();
-            $table->timestamps();
+        Schema::table('customers', function (Blueprint $table) {
+            $table->string('id')->change();
         });
     }
 
@@ -28,6 +25,8 @@ class CreateCustomersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('customers');
+        Schema::table('customers', function (Blueprint $table) {
+            //
+        });
     }
 }

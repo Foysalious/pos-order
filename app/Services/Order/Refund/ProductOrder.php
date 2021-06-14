@@ -5,6 +5,8 @@ use App\Models\Order;
 use App\Repositories\OrderSkuRepository;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Updater;
+use App\Services\Order\Payment\Creator as OrderPaymentCreator;
+use App\Services\Product\StockManager;
 use Illuminate\Support\Collection;
 
 abstract class ProductOrder
@@ -18,6 +20,9 @@ abstract class ProductOrder
     /** @var OrderSkuRepository  */
     protected OrderSkuRepository $orderSkuRepository;
 
+    /** @var OrderPaymentCreator  */
+    protected OrderPaymentCreator $orderPaymentCreator;
+
     protected $data;
 
     protected Collection $skus;
@@ -25,16 +30,21 @@ abstract class ProductOrder
     /** @var InventoryServerClient */
     protected InventoryServerClient $client;
 
+    /** @var StockManager $stockManager */
+    protected StockManager $stockManager;
+
 
     /**
      * RefundProduct constructor.
      * @param Updater $updater
      */
-    public function __construct(Updater $updater, OrderSkuRepositoryInterface $orderSkuRepository, InventoryServerClient $client)
+    public function __construct(Updater $updater, OrderSkuRepositoryInterface $orderSkuRepository, InventoryServerClient $client, StockManager $stockManager, OrderPaymentCreator $orderPaymentCreator)
     {
         $this->updater = $updater;
         $this->orderSkuRepository = $orderSkuRepository;
         $this->client = $client;
+        $this->stockManager = $stockManager;
+        $this->orderPaymentCreator = $orderPaymentCreator;
     }
 
     /**
@@ -61,6 +71,13 @@ abstract class ProductOrder
     public function setSkus(): Collection
     {
         return collect(json_decode($this->data));
+    }
+
+    protected function getSkuDetails($sku_ids, $sales_channel_id)
+    {
+        $url = 'api/v1/partners/' . $this->order->partner_id . '/skus?skus=' . json_encode($sku_ids) . '&channel_id='.$sales_channel_id;
+        $response = $this->client->get($url);
+        return $response['skus'];
     }
 
     public abstract function update();

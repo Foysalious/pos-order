@@ -1,22 +1,29 @@
 <?php namespace App\Services\Order\Refund;
 
+use App\Services\Order\Constants\PaymentMethods;
+use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\OrderSku\Creator;
+use App\Services\Transaction\Constants\TransactionTypes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class UpdateProductInOrder extends ProductOrder
 {
     const QUANTITY_INCREASED = 'increment';
     const QUANTITY_DECREASED = 'decrement';
 
+    private array $refunded_products = [];
+
     public function update()
     {
         $updated_products = $this->getUpdatedProducts();
         $skus_details = $this->getUpdatedProductsSkuDetails($updated_products); //only updated product's sku details
+        $this->checkStockAvailability($updated_products, $skus_details);
 
         foreach ($updated_products as $each) {
             if($each['sku_id'] == null)
-                $this->handleNullOrderSkuItem($each);
+                $this->handleNullSkuItemInOrder($each);
             elseif (array_key_exists('quantity', $each) && !array_key_exists('price', $each)){
                 $this->handleQuantityUpdateForOrderSku($each, $skus_details->where('id', $each['sku_id'])->first());
             }
@@ -24,6 +31,9 @@ class UpdateProductInOrder extends ProductOrder
                 $this->handleQuantityUpdateForEditedPrice($each);
             }
         }
+        $this->updateStockForProductsChanges($updated_products,$skus_details);
+        $this->calculateAndRefundForUpdatedOrder();
+        return true;
     }
 
     private function getUpdatedProducts()
@@ -77,19 +87,10 @@ class UpdateProductInOrder extends ProductOrder
         elseif ($product['previous_unit_price'] != $current_sku_price && $product['quantity_changing_info']['type'] == self::QUANTITY_INCREASED) {
             $this->createOrderSkuForNewPriceQuantity($product);
         }
-        //handle when price changed and quantity decreased
+        //handle when price same and quantity decreased
         elseif ($product['previous_unit_price'] == $current_sku_price && $product['quantity_changing_info']['type'] == self::QUANTITY_DECREASED) {
             $this->updateOrderSkuQuantityForSamePrice($product);
         }
-
-
-    }
-
-    private function getSkuDetails($sku_ids, $sales_channel_id)
-    {
-        $url = 'api/v1/partners/' . $this->order->partner_id . '/skus?skus=' . json_encode($sku_ids) . '&channel_id='.$sales_channel_id;
-        $response = $this->client->get($url);
-        return $response['skus'];
     }
 
     private function getUpdatedProductsSkuDetails(array $updated_products): Collection|bool
@@ -138,10 +139,14 @@ class UpdateProductInOrder extends ProductOrder
     {
         $order_sku = $this->order->orderSkus()->where('id', $product['id'])->first();
         $order_sku->quantity = $product['quantity'];
-        $order_sku->save();
+        $updated = $order_sku->save();
+
+        if ($updated && (isset($product['quantity_changing_info']) && $product['quantity_changing_info']['type'] == self::QUANTITY_DECREASED)) {
+            $this->refunded_products[] = $product;
+        }
     }
 
-    private function handleNullOrderSkuItem(array $product)
+    private function handleNullSkuItemInOrder(array $product)
     {
         //price not set or if set than if equal to previous price then update the quantity only
         if( !isset($product['price']) || (isset($product['price']) && $product['price'] == $product['previous_unit_price']) ){
@@ -178,7 +183,11 @@ class UpdateProductInOrder extends ProductOrder
         $order_sku = $this->order->orderSkus()->where('id', $product['id'])->first();
         $order_sku->quantity = $product['quantity_changing_info']['value'];
         $order_sku->unit_price = $product['price'];
-        $order_sku->save();
+        $updated = $order_sku->save();
+
+        if ($updated && (isset($product['quantity_changing_info']) && $product['quantity_changing_info']['type'] == self::QUANTITY_DECREASED)) {
+            $this->refunded_products[] = $product;
+        }
     }
 
     private function handleQuantityUpdateForEditedPrice(array $product)
@@ -187,6 +196,50 @@ class UpdateProductInOrder extends ProductOrder
             $this->createOrderSkuForNewPriceQuantity($product);
         }
     }
+
+    private function checkStockAvailability(array $updated_products, bool|Collection $skus_details)
+    {
+        if (!$skus_details || $this->order->sales_channel_id == SalesChannelIds::POS) return; // null sku_id products have no $sku_details OR  POS is not required to check stock
+        foreach ($updated_products as $product) {
+            if ($product['sku_id'] == null) continue;
+            $product_detail = $skus_details->where('id', $product['sku_id'])->first();
+            if (isset($product['quantity_changing_info']) && $product['quantity_changing_info']['type'] == self::QUANTITY_INCREASED) {
+                if ($product['quantity_changing_info']['value'] > $product_detail['stock']) throw new NotFoundHttpException("Product #" . $product['sku_id'] . " Not Enough Stock");
+            }
+        }
+    }
+
+    private function updateStockForProductsChanges(array $updated_products, bool|Collection $skus_details)
+    {
+        if (!$skus_details) return;
+        foreach ($updated_products as $product) {
+            if ($product['sku_id'] == null) continue;
+            $product_detail = $skus_details->where('id', $product['sku_id'])->first();
+            $this->stockManager->setOrder($this->order)->setSku($product_detail);
+            if (isset($product['quantity_changing_info']) && $product['quantity_changing_info']['type'] == self::QUANTITY_INCREASED) {
+                if ($this->stockManager->isStockMaintainable()) $this->stockManager->decrease($product['quantity_changing_info']['value']);
+            }
+            if (isset($product['quantity_changing_info']) && $product['quantity_changing_info']['type'] == self::QUANTITY_DECREASED) {
+                $this->stockManager->increase($product['quantity_changing_info']['value']);
+            }
+        }
+    }
+
+    private function calculateAndRefundForUpdatedOrder()
+    {
+        if(count($this->refunded_products) == 0) return;
+        $total_refund = 0;
+        foreach ($this->refunded_products as $product) {
+            if($product['quantity_changing_info']['type'] == self::QUANTITY_DECREASED) {
+                $total_refund = $total_refund + ($product['previous_unit_price'] * $product['quantity_changing_info']['value']);
+            }
+        }
+        $payment_data['order_id'] = $this->order->id;
+        $payment_data['amount'] = $total_refund;
+        $payment_data['method'] = PaymentMethods::CASH_ON_DELIVERY;
+        $this->orderPaymentCreator->debit($payment_data);
+    }
+
 
 
 }
