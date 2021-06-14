@@ -331,10 +331,6 @@ class Updater
         }
     }
 
-    public function isRequestedForPaymentLinkCreation()
-    {
-       return ($this->paymentMethod == PaymentMethods::PAYMENT_LINK && isset($this->paymentLinkAmount));
-    }
 
     private function updateOrderPayments()
     {
