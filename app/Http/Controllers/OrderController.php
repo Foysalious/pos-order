@@ -67,9 +67,9 @@ class OrderController extends Controller
         return $this->orderService->getOrderList($partner_id, $request);
     }
 
-    public function getCustomerOrderList($customer_id,CustomerOrderRequest $request)
+    public function getCustomerOrderList(string $customer_id, Request $request)
     {
-        return $this->orderService->getCustomerOrderList($customer_id,$request);
+        return $this->orderService->getCustomerOrderList($customer_id, $request);
     }
 
     /**

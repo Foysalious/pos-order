@@ -35,6 +35,10 @@ class OrderService extends BaseService
     private PaymentLinkCreator $paymentLinkCreator;
     protected $order;
     public OrderLogRepositoryInterface $orderLogRepository;
+    /**
+     * @var PriceCalculation
+     */
+    private PriceCalculation $priceCalculation;
 
     public function __construct(OrderRepositoryInterface $orderRepository,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
@@ -45,7 +49,7 @@ class OrderService extends BaseService
                                 Creator $creator,
                                 PaymentLinkCreator $paymentLinkCreator,
                                 PaymentLinkUpdater $paymentLinkUpdater,
-                                OrderLogRepositoryInterface $orderLogRepository
+                                OrderLogRepositoryInterface $orderLogRepository,
     )
     {
         $this->orderRepository = $orderRepository;
@@ -76,14 +80,16 @@ class OrderService extends BaseService
 
         $ordersList = $this->orderRepository->getOrderListWithPagination($offset, $limit, $partner_id, $orderSearch, $orderFilter);
         $orderList = OrderResource::collection($ordersList);
-        if(!$orderList) return $this->error("You're not authorized to access this order", 403);
+        if (!$orderList) return $this->error("You're not authorized to access this order", 403);
         else return $this->success('Success', ['orders' => $orderList], 200);
     }
 
-    public function getCustomerOrderList($customer_id,$request)
+    public function getCustomerOrderList(string $customer_id, $request)
     {
+        $orderBy = $request->orderBy;
+        $order = $request->order;
         list($offset, $limit) = calculatePagination($request);
-        $orderList = $this->orderRepository->getCustomerOrderList($customer_id,$offset, $limit);
+        $orderList = $this->orderRepository->getCustomerOrderList($customer_id, $offset, $limit, $orderBy, $order);
         if (count($orderList) == 0) return $this->error("You don't have any order", 403);
         $orderList = CustomerOrderResource::collection($orderList);
         return $this->success('Successful', ['orders' => $orderList], 200);
@@ -120,7 +126,7 @@ class OrderService extends BaseService
     public function getOrderDetails($partner_id, $order_id)
     {
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
-        if(!$order) return $this->error("You're not authorized to access this order", 403);
+        if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new OrderWithProductResource($order);
         return $this->success('Successful', ['order' => $resource], 200);
     }
@@ -134,7 +140,7 @@ class OrderService extends BaseService
     public function update(OrderUpdateRequest $orderUpdateRequest, $partner_id, $order_id)
     {
         $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
-        if(!$orderDetails) return $this->error("You're not authorized to access this order", 403);
+        if (!$orderDetails) return $this->error("You're not authorized to access this order", 403);
         $this->updater->setPartnerId($partner_id)
             ->setOrderId($order_id)
             ->setOrder($orderDetails)
@@ -167,7 +173,7 @@ class OrderService extends BaseService
     public function delete($partner_id, $order_id)
     {
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
-        if(!$order) return $this->error("You're not authorized to access this order", 403);
+        if (!$order) return $this->error("You're not authorized to access this order", 403);
         $OrderSkusIds = $this->orderSkusRepositoryInterface->where('order_id', $order_id)->get(['id']);
         $this->orderSkusRepositoryInterface->whereIn('id', $OrderSkusIds)->delete();
         $order->delete();
@@ -177,7 +183,7 @@ class OrderService extends BaseService
     public function getOrderWithChannel($order_id)
     {
         $orderDetails = $this->orderRepository->find($order_id);
-        if(!$orderDetails) return $this->error("You're not authorized to access this order", 403);
+        if (!$orderDetails) return $this->error("You're not authorized to access this order", 403);
         $order = [
             'id' => $orderDetails->id,
             'sales_channel' => $orderDetails->sales_channel_id == 1 ? 'pos' : 'webstore'
@@ -188,9 +194,9 @@ class OrderService extends BaseService
     public function updateCustomer($customer_id, $partner_id, $order_id)
     {
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
-        if(!$order) return $this->error(trans('order.order_not_found'), 404);
-        if(!$this->customerRepository->find($customer_id)) return $this->error(trans('order.customer_not_found'), 404);
-        if($this->checkCustomerHasPayment($order_id))
+        if (!$order) return $this->error(trans('order.order_not_found'), 404);
+        if (!$this->customerRepository->find($customer_id)) return $this->error(trans('order.customer_not_found'), 404);
+        if ($this->checkCustomerHasPayment($order_id))
             $this->updater->setOrderId($order_id)
                 ->setOrder($order)
                 ->setCustomerId($customer_id)
@@ -199,10 +205,10 @@ class OrderService extends BaseService
         return $this->success('Successful', null, 200);
     }
 
-    private function checkCustomerHasPayment($order_id) : bool
+    private function checkCustomerHasPayment($order_id): bool
     {
         $orderPaymentStatus = $this->orderPaymentRepository->where('order_id', $order_id)->get();
-        if(count($orderPaymentStatus) > 0) throw new OrderException(trans('order.update.no_customer_update'));
+        if (count($orderPaymentStatus) > 0) throw new OrderException(trans('order.update.no_customer_update'));
         else return true;
     }
 
