@@ -192,7 +192,7 @@ class OrderController extends Controller
      *                  @OA\Property(property="delivery_address", type="string"),
      *                  @OA\Property(property="note", type="string"),
      *                  @OA\Property(property="voucher_id", type="integer"),
-     *                  @OA\Property(property="discount", type="json", example={"order_id":2000119,"type":"order","original_amount":10,"is_percentage":1,"cap":70,"discount_details":"Order discount details","discount_id":null,"item_id":null})
+     *                  @OA\Property(property="discount", type="json", example={"type":"order","original_amount":10,"is_percentage":1,"cap":70,"discount_details":"Order discount details","discount_id":null,"item_id":null})
      *             )
      *         )
      *      ),
