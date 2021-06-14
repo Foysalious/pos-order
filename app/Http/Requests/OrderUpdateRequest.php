@@ -25,7 +25,7 @@ class OrderUpdateRequest extends FormRequest
             'skus' => 'sometimes|string',
             'sales_channel_id' => 'sometimes|string',
             'interest' => 'sometimes|string',
-            'delivery_charge' => 'sometimes|string',
+            'delivery_charge' => 'sometimes|numeric',
             'delivery_name' => 'sometimes|string',
             'delivery_address' => 'sometimes|string',
             'note' => 'sometimes|string',

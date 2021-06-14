@@ -274,7 +274,11 @@ class Updater
         if(isset($this->sales_channel_id)) $data['sales_channel_id']                = $this->sales_channel_id;
         if(isset($this->emi_month)) $data['emi_month']                              = $this->emi_month;
         if(isset($this->interest)) $data['interest']                                = $this->interest;
-        if(isset($this->delivery_charge)) $data['delivery_charge']                  = $this->delivery_charge;
+        if(isset($this->delivery_charge))
+        {
+            $data['delivery_charge'] = $this->delivery_charge;
+            $this->setOrderLogType(OrderLogTypes::PRODUCTS_AND_PRICES);
+        }
         if(isset($this->bank_transaction_charge)) $data['bank_transaction_charge']  = $this->bank_transaction_charge;
         if(isset($this->delivery_name)) $data['delivery_name']                      = $this->delivery_name;
         if(isset($this->delivery_mobile)) $data['delivery_mobile']                  = $this->delivery_mobile;
