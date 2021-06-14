@@ -5,6 +5,7 @@ use App\Interfaces\ReviewRepositoryInterface;
 use App\Models\Review;
 use App\Services\FileManagers\CdnFileManager;
 use App\Services\FileManagers\FileManager;
+use Illuminate\Support\Facades\DB;
 
 class ReviewRepository extends BaseRepository implements ReviewRepositoryInterface
 {
@@ -94,15 +95,19 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         }
     }
 
-    public function getReviews($offset, $limit, $product_id, $rating, $orderBy)
+    public function getReviews(int $offset, int $limit, int $product_id, int $rating, string $orderBy)
     {
         if(!$orderBy)
             $orderBy = 'desc';
-        $query=$this->model->where('product_id', $product_id);
+        $query = $this->model->where('product_id', $product_id);
         if (!empty($rating)) {
-            $query= $query->where('rating', $rating);
+            $query = $query->where('rating', $rating);
         }
         return $query->orderBy('created_at', $orderBy)->offset($offset)->limit($limit)->get();
+    }
 
+    public function getRatingStatistics($productId)
+    {
+        return  $this->model->where('product_id', $productId)->groupBy('rating')->select('rating', DB::raw('count(*) as count'))->pluck('count','rating')->all();
     }
 }

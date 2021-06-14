@@ -12,11 +12,11 @@ class ReviewController extends Controller
         $this->reviewService = $reviewService;
     }
 
-    public function index(Request $request, $product_id)
+    public function index(Request $request, int $product_id): object
     {
         $rating = $request->rating;
         $orderBy = $request->order_by;
-        return $this->reviewService->getProductReviews($request,$rating,$orderBy, $product_id);
+        return $this->reviewService->getProductReviews($request, $rating, $orderBy, $product_id);
     }
     /**
      * Store a newly created resource in storage.

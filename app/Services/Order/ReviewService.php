@@ -22,27 +22,32 @@ class ReviewService extends BaseService
         $this->reviewCreator = $reviewCreator;
     }
 
-    public function getProductReviews($request, $rating, $orderBy, $product_id): object
+    /**
+     * @param $request
+     * @param int $rating
+     * @param string $orderBy
+     * @param int $product_id
+     * @return object
+     */
+    public function getProductReviews($request, int $rating, string $orderBy, int $product_id): object
     {
         list($offset, $limit) = calculatePagination($request);
         $reviews = $this->reviewRepositoryInterface->getReviews($offset, $limit, $product_id, $rating, $orderBy);
         if (count($reviews) == 0) return $this->error('এই প্রোডাক্ট এর জন্য কোন রিভিউ পাওয়া যায় নি', 404);
         $reviews = ReviewResource::collection($reviews);
-
-
-        return $this->success('Successful', ['reviews' => $reviews, 'rating_statistics' => $this->reviewStatistics()], 200);
+        return $this->success('Successful', ['reviews' => $reviews, 'rating_statistics' => $this->ratingStatistics($product_id)], 200);
     }
 
-    public function reviewStatistics()
+    /**
+     * @param $productId
+     * @return mixed
+     */
+    public function ratingStatistics($productId): mixed
     {
-        return json_decode(json_encode([
-            "5" => 1,
-            "4" => 1,
-            "3" => 0,
-            "2" => 0,
-            "1" => 0,
-        ]));
-
+        $stat = $this->reviewRepositoryInterface->getRatingStatistics($productId);
+        for($i=1 ; $i<=5 ; $i++)
+            if(!isset($stat[$i])) $stat[$i] = 0;
+        return json_decode(json_encode($stat));
     }
 
     public function create($request, $customer_id, $order_id)
