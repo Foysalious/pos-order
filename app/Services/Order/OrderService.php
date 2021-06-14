@@ -112,9 +112,7 @@ class OrderService extends BaseService
             ->setPaidAmount($request->paid_amount)
             ->setPaymentMethod($request->payment_method)
             ->create();
-        $payment_link_amount = $request->has('payment_link_amount') ? $request->payment_link_amount : $order->net_bill;
-        if ($request->payment_method == 'payment_link') $payment_link = $this->createPaymentLink($payment_link_amount, $partner, $order);
-        return $this->success('Successful', ['order' => ['id' => $order->id], 'payment' => $payment_link ?? null]);
+        return $this->success('Successful',null, 200, true);
     }
 
     public function getOrderDetails($partner_id, $order_id)
@@ -155,13 +153,7 @@ class OrderService extends BaseService
             ->setDiscount($orderUpdateRequest->discount)
             ->update();
 
-        if ($this->updater->isRequestedForPaymentLinkCreation()) {
-            $this->disablePreviousPaymentLinkIfExist($orderDetails);
-            $payment_link = $this->createPaymentLink($orderUpdateRequest->payment_link_amount, $partner_id, $orderDetails);
-            return $this->success('Successful', ['order' => ['id' => $orderDetails->id], 'payment' => $payment_link ?? null]);
-        }
-        $orderDetailsAfterUpdate = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
-        return $this->success('Successful', ['order' => $orderDetailsAfterUpdate], 200);
+        return $this->success('Successful', null, 200, true);
     }
 
     public function delete($partner_id, $order_id)
@@ -206,29 +198,4 @@ class OrderService extends BaseService
         else return true;
     }
 
-    private function createPaymentLink($payment_link_amount, $partner, $order)
-    {
-        if (!$partner instanceof Partner) $partner = Partner::find($partner);
-        $paymentLink = $this->paymentLinkCreator->setAmount($payment_link_amount)->setReason("PosOrder ID: $order->id Due payment")
-            ->setUserName($partner->name)->setUserId($partner->id)
-            ->setUserType('partner')
-            ->setTargetId($order->id)
-            ->setTargetType('pos_order');
-        if ($order->customer_id) $paymentLink->setPayerId($order->customer_id)->setPayerType('pos_customer');
-        $paymentLink = $paymentLink->create();
-        $transformer = new PaymentLinkTransformer();
-        $transformer->setResponse($paymentLink);
-        return ['link' => config('pos.payment_link_web_url') . '/' . $transformer->getLinkIdentifier()];
-    }
-
-    private function disablePreviousPaymentLinkIfExist(Order $order)
-    {
-        /** @var PaymentLinkTransformer $payment_link */
-        $payment_link = $this->getOrderPaymentLink($order);
-        if ($payment_link) {
-            $this->paymentLinkUpdater->setPaymentLinkId($payment_link->getLinkID());
-            $this->paymentLinkUpdater->setStatus('deactivate');
-            $this->paymentLinkUpdater->editStatus();
-        }
-    }
 }
