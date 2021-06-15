@@ -260,6 +260,29 @@ class OrderController extends Controller
         return $this->orderService->delete($partner_id, $id);
     }
 
+    /**
+     * * @OA\Get(
+     *      path="/api/v1/partners/{partner}/orders/{order}/delivery-info",
+     *      operationId="getOrderDeliveryDetail",
+     *      tags={"ORDER API"},
+     *      summary="Get an order delivery details",
+     *      description="Return orders delivery details",
+     *      @OA\Parameter(name="partner", description="partner id", required=true, in="path", @OA\Schema(type="integer")),
+     *      @OA\Parameter(name="order", description="order id", required=true, in="path", @OA\Schema(type="integer")),
+     *      @OA\Response(response=200, description="Successful operation",
+     *          @OA\JsonContent(
+     *          type="object",
+     *          example={"message":"Successful","order":{"id":2000001,"delivery_name":"Arnab Rahman","delivery_address":"Mohakhali","delivery_mobile":"01818181818","delivery_vendor_name":"paperfly","delivery_request_id":"ORD-1620719460-0027","delivery_thana":"Hajiganj","delivery_district":"Chandpur","payment_method":"cod","due":0}}
+     *          ),
+     *     ),
+     *      @OA\Response(response=404, description="message: অর্ডারটি পাওয়া যায় নি"),
+     *      @OA\Response(response=403, description="You're not authorized to access this order")
+     *  )
+     *
+     * @param $partner_id
+     * @param $order_id
+     * @return JsonResponse
+     */
     public function getDeliveryInfo($partner_id, $order_id)
     {
         return $this->orderService->getDeliveryInfo($partner_id, $order_id);
