@@ -30,6 +30,15 @@ Route::group(['prefix'=>'v1'], function(){
         Route::get('/{customer_id}/reviews', [ReviewController::class, 'getCustomerReviewList']);
     });
     Route::apiResource('partners.orders', OrderController::class);
+    Route::group(['prefix' => 'partners'], function () {
+        Route::group(['prefix' => '{partner}'], function () {
+            Route::group(['prefix' => 'orders'], function () {
+                Route::group(['prefix' => '{order}'], function () {
+                    Route::get('delivery-info', [OrderController::class, 'getDeliveryInfo']);
+                });
+            });
+        });
+    });
     Route::get('order-channel/{order_id}', [OrderController::class, 'getOrderWithChannel']);
     Route::group(['prefix' => 'partners/{partner}/orders/{order}'], function () {
         Route::post('update-status', [OrderController::class, 'updateStatus']);

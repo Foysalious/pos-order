@@ -28,7 +28,7 @@ class StatusChanger
 
     public function setOrder(Order $order)
     {
-        $this->order = $order->calculate();
+        $this->order = $order;
         return $this;
     }
 

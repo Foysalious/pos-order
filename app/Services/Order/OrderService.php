@@ -4,6 +4,7 @@ use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
 use App\Http\Resources\CustomerOrderResource;
 use App\Http\Requests\OrderUpdateRequest;
+use App\Http\Resources\DeliveryResource;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderWithProductResource;
 use App\Interfaces\CustomerRepositoryInterface;
@@ -197,6 +198,15 @@ class OrderService extends BaseService
                 ->setOrderLogType(OrderLogTypes::CUSTOMER)
                 ->update();
         return $this->success('Successful', null, 200);
+    }
+
+    public function getDeliveryInfo($partner_id, $order_id)
+    {
+        $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        if(!$order) return $this->error("You're not authorized to access this order", 403);
+        $resource = new DeliveryResource($order);
+        return $this->success('Successful', ['order' => $resource], 200);
+
     }
 
     private function checkCustomerHasPayment($order_id) : bool

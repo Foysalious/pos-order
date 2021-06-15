@@ -259,4 +259,9 @@ class OrderController extends Controller
     {
         return $this->orderService->delete($partner_id, $id);
     }
+
+    public function getDeliveryInfo($partner_id, $order_id)
+    {
+        return $this->orderService->getDeliveryInfo($partner_id, $order_id);
+    }
 }

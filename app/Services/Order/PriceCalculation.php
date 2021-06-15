@@ -78,7 +78,7 @@ class PriceCalculation
 
     public function getDue()
     {
-        return $this->due;
+        return (double) $this->due;
     }
 
     public function getPaid()
