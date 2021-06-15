@@ -34,10 +34,11 @@ class ReviewService extends BaseService
         return $this->success('Successful', ['reviews' => $reviews, 'rating_statistics' => $this->reviewStatistics()], 200);
     }
 
-    public function getCustomerReviews($customer_id,$request)
+    public function getCustomerReviews(string $customer_id, $request)
     {
+        $order = $request->order;
         list($offset, $limit) = calculatePagination($request);
-        $reviews= $this->reviewRepositoryInterface->getCustomerReviews($customer_id,$offset, $limit);
+        $reviews = $this->reviewRepositoryInterface->getCustomerReviews($customer_id, $offset, $limit, $order);
         if (count($reviews) == 0) return $this->error('You have not placed any reviews yet', 404);
         $reviews = CustomerReviewResource::collection($reviews);
         return $this->success('Successful', ['reviews' => $reviews], 200);
