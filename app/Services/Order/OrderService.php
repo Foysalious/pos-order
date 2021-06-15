@@ -1,5 +1,6 @@
 <?php namespace App\Services\Order;
 
+use App\Events\OrderCreated;
 use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
 use App\Http\Resources\CustomerOrderResource;
@@ -13,12 +14,10 @@ use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Interfaces\PaymentLinkRepositoryInterface;
 use App\Models\Order;
-use App\Models\Partner;
 use App\Services\BaseService;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\PaymentLink\Creator as PaymentLinkCreator;
 use App\Services\PaymentLink\Updater as PaymentLinkUpdater;
-use App\Services\PaymentLink\PaymentLinkTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 
@@ -97,6 +96,10 @@ class OrderService extends BaseService
      */
     public function store($partner, OrderCreateRequest $request)
     {
+        /** @var Order $order */
+        $order = $this->orderRepository->where('partner_id', $partner)->find(2000017);
+        event(new OrderCreated($order));
+        dd('here in order creation');
         $skus = is_array($request->skus) ?: json_decode($request->skus);
         $order = $this->creator->setPartner($partner)
             ->setCustomerId($request->customer_id)

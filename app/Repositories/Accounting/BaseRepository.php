@@ -64,16 +64,6 @@ class BaseRepository
         return json_encode($attachments);
     }
 
-    /**
-     * @param $files
-     */
-    private function deleteFromCDN($files)
-    {
-        foreach ($files as $file) {
-            $filename = substr($file, strlen(env('S3_URL')));
-            (new FileRepository())->deleteFileFromCDN($filename);
-        }
-    }
 
     private function getPartner($request)
     {
