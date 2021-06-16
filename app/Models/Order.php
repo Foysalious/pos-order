@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use App\Services\Discount\Constants\DiscountTypes;
+use App\Services\Transaction\Constants\TransactionTypes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Services\PaymentLink\Target;
 use App\Services\PaymentLink\Constants\TargetType;
@@ -141,6 +142,12 @@ class Order extends BaseModel
     public function logs()
     {
         return $this->hasMany(OrderLog::class);
+    }
+
+    public function paymentMethod()
+    {
+        $lastPayment = $this->payments()->where('transaction_type', TransactionTypes::CREDIT)->orderBy('id', 'desc')->select('id', 'method')->first();
+        return $lastPayment ? $lastPayment->method : 'cod';
     }
 
     public function isUpdated() : bool
