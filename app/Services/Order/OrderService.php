@@ -7,10 +7,8 @@ use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Interfaces\PaymentLinkRepositoryInterface;
 use App\Models\Order;
-use App\Models\Partner;
 use App\Services\BaseService;
 use App\Services\PaymentLink\Creator as PaymentLinkCreator;
-use App\Services\PaymentLink\PaymentLinkTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 
@@ -22,8 +20,6 @@ class OrderService extends BaseService
     protected $paymentLinkRepository;
     /** @var Creator */
     private Creator $creator;
-    /** @var PaymentLinkCreator */
-    private PaymentLinkCreator $paymentLinkCreator;
 
     public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
