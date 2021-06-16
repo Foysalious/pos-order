@@ -42,8 +42,6 @@ class ReviewService extends BaseService
         if (count($reviews) == 0) return $this->error('You have not placed any reviews yet', 404);
         $reviews = CustomerReviewResource::collection($reviews);
         return $this->success('Successful', ['reviews' => $reviews], 200);
-
-
     }
 
     public function reviewStatistics()
