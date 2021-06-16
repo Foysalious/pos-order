@@ -1,6 +1,5 @@
 <?php namespace App\Services\Order;
 
-use App\Events\OrderCreated;
 use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
 use App\Http\Resources\CustomerOrderResource;
@@ -16,7 +15,6 @@ use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Interfaces\PaymentLinkRepositoryInterface;
 use App\Services\BaseService;
 use App\Services\Order\Constants\OrderLogTypes;
-use App\Services\PaymentLink\Creator as PaymentLinkCreator;
 use App\Services\PaymentLink\Updater as PaymentLinkUpdater;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
@@ -30,14 +28,8 @@ class OrderService extends BaseService
     protected $paymentLinkUpdater;
     /** @var Creator */
     private Creator $creator;
-    /** @var PaymentLinkCreator */
-    private PaymentLinkCreator $paymentLinkCreator;
     protected $order;
     public OrderLogRepositoryInterface $orderLogRepository;
-    /**
-     * @var PriceCalculation
-     */
-    private PriceCalculation $priceCalculation;
 
     public function __construct(OrderRepositoryInterface $orderRepository,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
@@ -46,7 +38,6 @@ class OrderService extends BaseService
                                 Updater $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
                                 PaymentLinkRepositoryInterface $paymentLinkRepository,
                                 Creator $creator,
-                                PaymentLinkCreator $paymentLinkCreator,
                                 PaymentLinkUpdater $paymentLinkUpdater,
                                 OrderLogRepositoryInterface $orderLogRepository
     )
@@ -58,7 +49,6 @@ class OrderService extends BaseService
         $this->orderFilter = $orderFilter;
         $this->paymentLinkRepository = $paymentLinkRepository;
         $this->creator = $creator;
-        $this->paymentLinkCreator = $paymentLinkCreator;
         $this->orderLogRepository = $orderLogRepository;
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->customerRepository = $customerRepository;
@@ -102,7 +92,6 @@ class OrderService extends BaseService
      */
     public function store($partner, OrderCreateRequest $request)
     {
-
         $skus = is_array($request->skus) ?: json_decode($request->skus);
         $order = $this->creator->setPartner($partner)
             ->setCustomerId($request->customer_id)
@@ -212,5 +201,4 @@ class OrderService extends BaseService
         if (count($orderPaymentStatus) > 0) throw new OrderException(trans('order.update.no_customer_update'));
         else return true;
     }
-
 }
