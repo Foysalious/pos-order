@@ -21,9 +21,13 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
         return $orderList->offset($offset)->limit($limit)->latest()->get();
     }
 
-    public function getCustomerOrderList($customer_id,$offset, $limit)
+    public function getCustomerOrderList($customer_id, $offset, $limit, $orderBy, $order)
     {
-        return $this->model->where('customer_id', $customer_id)->offset($offset)->limit($limit)->get();
+        $query = $this->model->where('customer_id', $customer_id);
+        if ($orderBy && $order) {
+            return $query->orderBy($orderBy, $order)->offset($offset)->limit($limit)->get();
+        }
+        return $query->offset($offset)->limit($limit)->get();
     }
 
     private function getSearchingQuery($partner_id, $orderSearch)

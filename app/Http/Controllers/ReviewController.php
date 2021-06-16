@@ -19,9 +19,9 @@ class ReviewController extends Controller
         return $this->reviewService->getProductReviews($request, $rating, $orderBy, $product_id);
     }
 
-    public function getCustomerReviewList($customer_id,Request $request)
+    public function getCustomerReviewList(string $customer_id, Request $request)
     {
-       return $this->reviewService->getCustomerReviews($customer_id,$request);
+        return $this->reviewService->getCustomerReviews($customer_id, $request);
     }
     /**
      * Store a newly created resource in storage.

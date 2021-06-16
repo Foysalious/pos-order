@@ -66,10 +66,40 @@ class OrderController extends Controller
     {
         return $this->orderService->getOrderList($partner_id, $request);
     }
+    /**
+     * Display a listing of the resource.
+     *
+     * @return JsonResponse
+     */
 
-    public function getCustomerOrderList($customer_id,CustomerOrderRequest $request)
+    /**
+     * @OA\Get(
+     *      path="/api/v1/customers/{customer_id}/orders",
+     *      operationId="getReviewsofCustomer",
+     *      tags={"Customer API"},
+     *      summary="Api to get all customer specific orders",
+     *      description="Return all Customer specific orders",
+     *      @OA\Parameter(name="customer_id",description="Customer Id",required=false,in="path", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="orderBy",description="created_at",required=false,in="query", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="order",description="asc or desc",required=false,in="query", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="limit",description="limit",required=false,in="query", @OA\Schema(type="Integer")),
+     *      @OA\Parameter(name="offset",description="offset",required=false,in="query", @OA\Schema(type="Integer")),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Successful operation",
+     *          @OA\JsonContent(
+     *              type="object",
+     *             example={"message": "Successful","orders": {{"id": 2000001,"status": "Cancelled","date": "20,Apr,2021","price": "0.00"}}}
+     *          )),
+     *      @OA\Response(
+     *          response=404,
+     *          description="Message: অর্ডারটি পাওয়া যায় নি ",
+     *      )
+     *     )
+     */
+    public function getCustomerOrderList(string $customer_id, Request $request)
     {
-        return $this->orderService->getCustomerOrderList($customer_id,$request);
+        return $this->orderService->getCustomerOrderList($customer_id, $request);
     }
 
     /**

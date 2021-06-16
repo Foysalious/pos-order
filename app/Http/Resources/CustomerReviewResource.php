@@ -19,6 +19,8 @@ class CustomerReviewResource extends JsonResource
             'order_sku_id'          => $this->order_sku_id,
             'review_title'          => $this->review_title,
             'review_details'        => $this->review_details,
+            'images'                => $this->images,
+            'variation'             => $this->variation()
         ];
     }
 

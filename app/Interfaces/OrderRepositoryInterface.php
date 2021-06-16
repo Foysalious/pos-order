@@ -4,5 +4,6 @@
 interface OrderRepositoryInterface extends BaseRepositoryInterface
 {
     public function getOrderListWithPagination($offset, $limit, $partner_id, $orderSearch, $orderFilter);
-    public function getCustomerOrderList($customer_id,$offset, $limit);
+
+    public function getCustomerOrderList(string $customer_id, int $offset, int $limit, string $orderBy, string $order);
 }
