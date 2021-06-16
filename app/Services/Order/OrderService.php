@@ -13,13 +13,10 @@ use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Interfaces\PaymentLinkRepositoryInterface;
-use App\Models\Order;
-use App\Models\Partner;
 use App\Services\BaseService;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\PaymentLink\Creator as PaymentLinkCreator;
 use App\Services\PaymentLink\Updater as PaymentLinkUpdater;
-use App\Services\PaymentLink\PaymentLinkTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 
@@ -50,7 +47,7 @@ class OrderService extends BaseService
                                 Creator $creator,
                                 PaymentLinkCreator $paymentLinkCreator,
                                 PaymentLinkUpdater $paymentLinkUpdater,
-                                OrderLogRepositoryInterface $orderLogRepository,
+                                OrderLogRepositoryInterface $orderLogRepository
     )
     {
         $this->orderRepository = $orderRepository;
@@ -119,7 +116,7 @@ class OrderService extends BaseService
             ->setPaidAmount($request->paid_amount)
             ->setPaymentMethod($request->payment_method)
             ->create();
-        return $this->success('Successful',null, 200, true);
+        return $this->success('Successful', ['order' => ['id' => $order->id]]);
     }
 
     public function getOrderDetails($partner_id, $order_id)
@@ -160,7 +157,7 @@ class OrderService extends BaseService
             ->setDiscount($orderUpdateRequest->discount)
             ->update();
 
-        return $this->success('Successful', null, 200, true);
+        return $this->success('Successful', null, 200);
     }
 
     public function delete($partner_id, $order_id)

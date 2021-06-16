@@ -7,21 +7,15 @@ use function App\Helper\Formatters\formatTakaToDecimal;
 class PriceCalculation
 {
     private Order $order;
-    private $totalPrice;
-    private $totalVat;
-    private $totalItemDiscount;
-    private $totalBill;
-    private $paid;
-    private $due;
-    private $discountAmount;
-    /**
-     * @var int|mixed
-     */
-    private $totalDiscount;
-    /**
-     * @var int|mixed
-     */
-    private $appliedDiscount;
+    private float $totalPrice;
+    private float $totalVat;
+    private float $totalItemDiscount;
+    private float $totalBill;
+    private float $paid;
+    private float $due;
+    private float $discountAmount;
+    private float $totalDiscount;
+    private float $appliedDiscount;
     private float $originalTotal;
     private float $netBill;
     private bool $isCalculated;
@@ -39,17 +33,17 @@ class PriceCalculation
 
     private function calculate()
     {
-        $this->_calculateThisItems();
+        $this->calculateThisItems();
         $this->totalDiscount = $this->totalItemDiscount + $this->discountsAmountWithoutProduct();
         $this->appliedDiscount = ($this->discountsAmountWithoutProduct() > $this->totalBill) ? $this->totalBill : $this->discountsAmountWithoutProduct();
         $this->originalTotal = round($this->totalBill - $this->appliedDiscount, 2);
         $this->netBill = $this->originalTotal + round((double)$this->order->interest, 2) + (double)round($this->order->bank_transaction_charge, 2);
         $this->netBill += round($this->order->delivery_charge, 2);
-        $this->_calculatePaidAmount();
+        $this->calculatePaidAmount();
         $this->paid = round($this->paid ?: 0, 2);
         $this->due = ($this->netBill - $this->paid) > 0 ? ($this->netBill - $this->paid) : 0;
         $this->isCalculated = true;
-        $this->_formatAllToTaka();
+        $this->formatAllToTaka();
     }
 
     /**
@@ -99,7 +93,7 @@ class PriceCalculation
         return $this->discountAmount;
     }
 
-    private function _initializeTotalsToZero()
+    private function initializeTotalsToZero()
     {
         $this->totalPrice = 0;
         $this->totalVat = 0;
@@ -107,18 +101,18 @@ class PriceCalculation
         $this->totalBill = 0;
     }
 
-    private function _calculateThisItems()
+    private function calculateThisItems()
     {
-        $this->_initializeTotalsToZero();
+        $this->initializeTotalsToZero();
         foreach ($this->order->orderSkus as $order_sku) {
             /** @var OrderSku $order_sku */
             $order_sku = $order_sku->calculate();
-            $this->_updateTotalPriceAndCost($order_sku);
+            $this->updateTotalPriceAndCost($order_sku);
         }
         return $this;
     }
 
-    private function _updateTotalPriceAndCost(OrderSku $orderSku)
+    private function updateTotalPriceAndCost(OrderSku $orderSku)
     {
         $this->totalPrice += $orderSku->getPrice();
         $this->totalVat += $orderSku->getVat();
@@ -150,14 +144,14 @@ class PriceCalculation
         });
     }
 
-    private function _calculatePaidAmount()
+    private function calculatePaidAmount()
     {
         $credit = $this->creditPaymentsCollect()->sum('amount');
         $debit = $this->debitPaymentsCollect()->sum('amount');
         $this->paid = $credit - $debit;
     }
 
-    private function _formatAllToTaka()
+    private function formatAllToTaka()
     {
         $this->totalPrice = formatTakaToDecimal($this->totalPrice);
         $this->totalVat = formatTakaToDecimal($this->totalVat);
