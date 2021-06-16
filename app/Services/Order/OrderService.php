@@ -1,5 +1,6 @@
 <?php namespace App\Services\Order;
 
+use App\Events\OrderCreated;
 use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
 use App\Http\Resources\CustomerOrderResource;
@@ -101,6 +102,7 @@ class OrderService extends BaseService
      */
     public function store($partner, OrderCreateRequest $request)
     {
+
         $skus = is_array($request->skus) ?: json_decode($request->skus);
         $order = $this->creator->setPartner($partner)
             ->setCustomerId($request->customer_id)
