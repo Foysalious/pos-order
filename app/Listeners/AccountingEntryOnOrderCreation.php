@@ -1,17 +1,17 @@
 <?php namespace App\Listeners;
 
 use App\Events\OrderCreated;
-use App\Services\Accounting\Creator;
+use App\Services\Accounting\CreateEntry;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
 class AccountingEntryOnOrderCreation
 {
-    protected Creator $creator;
+    protected CreateEntry $createEntry;
 
-    public function __construct(Creator $creator)
+    public function __construct(CreateEntry $createEntry)
     {
-        $this->creator = $creator;
+        $this->createEntry = $createEntry;
     }
 
     /**
@@ -22,6 +22,6 @@ class AccountingEntryOnOrderCreation
      */
     public function handle(OrderCreated $event)
     {
-        $this->creator->setOrder($event->getOrder())->create();
+        $this->createEntry->setOrder($event->getOrder())->create();
     }
 }
