@@ -109,7 +109,7 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
     {
         $query = $this->model->where('customer_id', $customer_id);
         if ($order) {
-            return $query->orderBy('id', $order)->offset($offset)->limit($limit)->get();
+            $query= $query->orderBy('id', $order);
         }
         return $query->offset($offset)->limit($limit)->get();
     }

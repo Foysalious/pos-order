@@ -21,6 +21,11 @@ class ReviewController extends Controller
 
     public function getCustomerReviewList(string $customer_id, Request $request)
     {
+        $request->validate([
+            'order' => 'sometimes|in:asc,desc',
+            'limit' => 'sometimes|digits:1',
+            'offset' => 'sometimes|digits:1'
+        ]);
         return $this->reviewService->getCustomerReviews($customer_id, $request);
     }
     /**
