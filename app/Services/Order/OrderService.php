@@ -1,6 +1,7 @@
 <?php namespace App\Services\Order;
 
 use App\Events\OrderCreated;
+use App\Events\OrderUpdated;
 use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
 use App\Http\Resources\CustomerOrderResource;
@@ -96,7 +97,6 @@ class OrderService extends BaseService
      */
     public function store($partner, OrderCreateRequest $request)
     {
-
         $skus = is_array($request->skus) ?: json_decode($request->skus);
         $order = $this->creator->setPartner($partner)
             ->setCustomerId($request->customer_id)
@@ -112,6 +112,7 @@ class OrderService extends BaseService
             ->setPaidAmount($request->paid_amount)
             ->setPaymentMethod($request->payment_method)
             ->create();
+        if ($order) event(new OrderCreated($order));
         return $this->success('Successful',null, 200, true);
     }
 
@@ -131,6 +132,10 @@ class OrderService extends BaseService
      */
     public function update(OrderUpdateRequest $orderUpdateRequest, $partner_id, $order_id)
     {
+//        /** @var Order $order */
+//        $order = $this->orderRepository->where('partner_id', $partner_id)->find(2000017);
+//        event(new OrderUpdated($order));
+//        dd('here in order updation');
         $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if(!$orderDetails) return $this->error("You're not authorized to access this order", 403);
         $this->updater->setPartnerId($partner_id)
@@ -153,7 +158,7 @@ class OrderService extends BaseService
             ->setDiscount($orderUpdateRequest->discount)
             ->update();
 
-        return $this->success('Successful', null, 200, true);
+        return $this->success('Successful', null, 200);
     }
 
     public function delete($partner_id, $order_id)
