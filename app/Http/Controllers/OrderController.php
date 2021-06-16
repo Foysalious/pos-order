@@ -279,11 +279,11 @@ class OrderController extends Controller
      *      @OA\Response(response=403, description="You're not authorized to access this order")
      *  )
      *
-     * @param $partner_id
-     * @param $order_id
+     * @param int $partner_id
+     * @param int $order_id
      * @return JsonResponse
      */
-    public function getDeliveryInfo($partner_id, $order_id)
+    public function getDeliveryInfo(int $partner_id, int $order_id): JsonResponse
     {
         return $this->orderService->getDeliveryInfo($partner_id, $order_id);
     }

@@ -200,7 +200,7 @@ class OrderService extends BaseService
         return $this->success('Successful', null, 200);
     }
 
-    public function getDeliveryInfo($partner_id, $order_id)
+    public function getDeliveryInfo(int $partner_id, int $order_id): JsonResponse
     {
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if(!$order) return $this->error("You're not authorized to access this order", 403);
