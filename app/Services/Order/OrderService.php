@@ -1,5 +1,7 @@
 <?php namespace App\Services\Order;
 
+use App\Events\OrderCreated;
+use App\Events\OrderUpdated;
 use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
 use App\Http\Resources\CustomerOrderResource;
@@ -107,6 +109,9 @@ class OrderService extends BaseService
             ->setPaidAmount($request->paid_amount)
             ->setPaymentMethod($request->payment_method)
             ->create();
+        
+        if ($order) event(new OrderCreated($order));
+
         return $this->success('Successful', ['order' => ['id' => $order->id]]);
     }
 
@@ -126,6 +131,10 @@ class OrderService extends BaseService
      */
     public function update(OrderUpdateRequest $orderUpdateRequest, $partner_id, $order_id)
     {
+//        /** @var Order $order */
+//        $order = $this->orderRepository->where('partner_id', $partner_id)->find(2000017);
+//        event(new OrderUpdated($order));
+//        dd('here in order updation');
         $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if (!$orderDetails) return $this->error("You're not authorized to access this order", 403);
         $this->updater->setPartnerId($partner_id)

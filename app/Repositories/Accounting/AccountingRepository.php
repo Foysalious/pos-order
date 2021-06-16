@@ -23,28 +23,4 @@ class AccountingRepository extends BaseRepository
         }
     }
 
-
-    /**
-     * @param $request
-     * @param $type
-     * @param $entry_id
-     * @return mixed
-     * @throws AccountingEntryServerError
-     */
-    public function updateEntry($request, $type, $entry_id)
-    {
-        /*
-        $this->getCustomer($request);
-        $partner = $this->getPartner($request);
-        $this->setModifier($partner);
-        $data = $this->createEntryData($request, $type, $request->source_id);
-        $url = "api/entries/".$entry_id;
-        try {
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
-        } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-        }
-        */
-    }
-
 }
