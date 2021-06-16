@@ -31,9 +31,9 @@ class AccountingRepository extends BaseRepository
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    /*
     public function updateEntry($request, $type, $entry_id)
     {
+        /*
         $this->getCustomer($request);
         $partner = $this->getPartner($request);
         $this->setModifier($partner);
@@ -44,6 +44,7 @@ class AccountingRepository extends BaseRepository
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
+        */
     }
-    */
+
 }

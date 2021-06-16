@@ -61,7 +61,7 @@ class Creator
             'debit_account_key'  => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ? Accounts::SHEBA_ACCOUNT : Cash::CASH,
             'source_id'          => $this->order->id,
             'note'               => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ?  SalesChannel::WEBSTORE : SalesChannel::POS,
-            'source_type' => EntryTypes::POS,
+            'source_type'        => EntryTypes::POS,
             'amount'             => (double)$order_price_details->getTotalBill(),
             'amount_cleared'     => (double) $order_price_details->getTotalBill(),
             'total_discount'     => (double) $order_price_details->getDiscountAmount(),

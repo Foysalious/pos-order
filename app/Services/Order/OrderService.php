@@ -96,10 +96,7 @@ class OrderService extends BaseService
      */
     public function store($partner, OrderCreateRequest $request)
     {
-        /** @var Order $order */
-        $order = $this->orderRepository->where('partner_id', $partner)->find(2000017);
-        event(new OrderCreated($order));
-        dd('here in order creation');
+
         $skus = is_array($request->skus) ?: json_decode($request->skus);
         $order = $this->creator->setPartner($partner)
             ->setCustomerId($request->customer_id)

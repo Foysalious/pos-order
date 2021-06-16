@@ -74,18 +74,6 @@ class AccountingEntryClient
      */
     public function call($method, $uri, $data = null, $multipart = false)
     {
-//        try {
-//            return json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data, $multipart))->getBody()->getContents(), true);
-//        } catch (GuzzleException $e) {
-//            dd($e);
-//            $res = $e->getResponse();
-//            $http_code = $res->getStatusCode();
-//            $message = $res->getBody()->getContents();
-//            dd($http_code);
-//            if ($http_code > 399 && $http_code < 500) throw new AccountingEntryServerError($message, $http_code);
-//            throw new AccountingEntryServerError($e->getMessage(), $http_code);
-//        }
-//        dd($res);
         try {
             if (!$this->userType || !$this->userId ) {
                 throw new AccountingEntryServerError('Set user type and user id', 0);
