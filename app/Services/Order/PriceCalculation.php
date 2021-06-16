@@ -2,6 +2,7 @@
 
 use App\Models\Order;
 use App\Models\OrderSku;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use function App\Helper\Formatters\formatTakaToDecimal;
 
 class PriceCalculation
@@ -13,12 +14,10 @@ class PriceCalculation
     private float $totalBill;
     private float $paid;
     private float $due;
-    private float $discountAmount;
     private float $totalDiscount;
     private float $appliedDiscount;
     private float $originalTotal;
     private float $netBill;
-    private bool $isCalculated;
 
     /**
      * @param Order $order
@@ -42,40 +41,53 @@ class PriceCalculation
         $this->calculatePaidAmount();
         $this->paid = round($this->paid ?: 0, 2);
         $this->due = ($this->netBill - $this->paid) > 0 ? ($this->netBill - $this->paid) : 0;
-        $this->isCalculated = true;
         $this->formatAllToTaka();
     }
 
     /**
-     * @return float|int
+     * @return float
      */
-    public function getTotalPrice()
+    public function getTotalPrice(): float
     {
         return $this->totalPrice;
     }
 
     /**
-     * @return float|int|number
+     * @return float|int
      */
-    public function getTotalBill()
+    public function getNetBill(): float|int
+    {
+        return $this->netBill;
+    }
+
+    /**
+     * @return float
+     */
+    public function getTotalBill(): float
     {
         return $this->totalBill;
     }
 
     /**
-     * @return number
+     * @return float
      */
-    public function getTotalVat()
+    public function getTotalVat(): float
     {
         return $this->totalVat;
     }
 
-    public function getDue()
+    /**
+     * @return float
+     */
+    public function getDue(): float
     {
         return (double) $this->due;
     }
 
-    public function getPaid()
+    /**
+     * @return float
+     */
+    public function getPaid(): float
     {
         return $this->paid;
     }
@@ -83,14 +95,17 @@ class PriceCalculation
     /**
      * @return float|int
      */
-    public function getTotalItemDiscount()
+    public function getTotalItemDiscount(): float|int
     {
         return $this->totalItemDiscount;
     }
 
-    public function getDiscountAmount()
+    /**
+     * @return float
+     */
+    public function getTotalDiscount(): float
     {
-        return $this->discountAmount;
+        return $this->totalDiscount;
     }
 
     private function initializeTotalsToZero()
@@ -101,7 +116,7 @@ class PriceCalculation
         $this->totalBill = 0;
     }
 
-    private function calculateThisItems()
+    private function calculateThisItems(): void
     {
         $this->initializeTotalsToZero();
         foreach ($this->order->orderSkus as $order_sku) {
@@ -109,7 +124,6 @@ class PriceCalculation
             $order_sku = $order_sku->calculate();
             $this->updateTotalPriceAndCost($order_sku);
         }
-        return $this;
     }
 
     private function updateTotalPriceAndCost(OrderSku $orderSku)
@@ -125,7 +139,10 @@ class PriceCalculation
         return $this->discountsWithoutProduct()->sum('amount');
     }
 
-    public function discountsWithoutProduct()
+    /**
+     * @return HasMany
+     */
+    public function discountsWithoutProduct(): HasMany
     {
         return $this->order->discounts()->whereNull('item_id');
     }
@@ -151,14 +168,13 @@ class PriceCalculation
         $this->paid = $credit - $debit;
     }
 
-    private function formatAllToTaka()
+    private function formatAllToTaka(): void
     {
         $this->totalPrice = formatTakaToDecimal($this->totalPrice);
         $this->totalVat = formatTakaToDecimal($this->totalVat);
         $this->totalItemDiscount = formatTakaToDecimal($this->totalItemDiscount);
         $this->totalBill = formatTakaToDecimal($this->totalBill);
         $this->due = formatTakaToDecimal($this->due);
-        return $this;
     }
 
 }
