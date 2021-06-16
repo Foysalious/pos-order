@@ -84,7 +84,7 @@ class Creator
 
     public function create()
     {
-        $this->paymentRepositoryInterface->create($this->makeCreateData());
+        return $this->paymentRepositoryInterface->create($this->makeCreateData());
     }
 
     private function makeCreateData()
