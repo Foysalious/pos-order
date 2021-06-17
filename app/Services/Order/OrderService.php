@@ -132,10 +132,6 @@ class OrderService extends BaseService
      */
     public function update(OrderUpdateRequest $orderUpdateRequest, $partner_id, $order_id)
     {
-//        /** @var Order $order */
-//        $order = $this->orderRepository->where('partner_id', $partner_id)->find(2000017);
-//        event(new OrderUpdated($order));
-//        dd('here in order updation');
         $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if(!$orderDetails) return $this->error("You're not authorized to access this order", 403);
         $this->updater->setPartnerId($partner_id)

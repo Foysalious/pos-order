@@ -5,6 +5,7 @@ use Illuminate\Support\Collection;
 
 class DeleteProductFromOrder extends ProductOrder
 {
+    private float $refunded_amount = 0;
 
     public function update()
     {
@@ -18,7 +19,11 @@ class DeleteProductFromOrder extends ProductOrder
         $deleted = $this->order->orderSkus()->whereIn('id', $deleted_skus_ids)->delete();
         if($deleted) $this->stockRefillForDeletedItems($order_skus_details);
         $this->calculateAndRefundForDeletedProducts($deleted_skus_ids,$order_skus_details);
-        return $deleted ?? false;
+
+        return [
+            'refunded_amount' => $this->refunded_amount,
+            'refunded_products' => $order_skus_details->map->only(['id','order_id','sku_id','quantity','unit_price'])->all(),
+        ];
     }
 
     private function getDeletedItems()
@@ -29,7 +34,7 @@ class DeleteProductFromOrder extends ProductOrder
     }
 
     /**
-     * @param Collection $order_skus_details
+     * @param Collection $skus
      */
     private function stockRefillForDeletedItems(Collection $skus)
     {
@@ -53,5 +58,6 @@ class DeleteProductFromOrder extends ProductOrder
         $payment_data['amount'] = $total_refund;
         $payment_data['method'] = PaymentMethods::CASH_ON_DELIVERY;
         $this->orderPaymentCreator->debit($payment_data);
+        $this->refunded_amount = $total_refund;
     }
 }
