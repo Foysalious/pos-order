@@ -79,11 +79,11 @@ class OrderService extends BaseService
 
     public function getCustomerOrderList(string $customer_id, $request)
     {
-        $orderBy = $request->orderBy;
+        $orderBy = $request->filter;
         $order = $request->order;
         list($offset, $limit) = calculatePagination($request);
         $orderList = $this->orderRepository->getCustomerOrderList($customer_id, $offset, $limit, $orderBy, $order);
-        if (count($orderList) == 0) return $this->error("You don't have any order", 403);
+        if (count($orderList) == 0) return $this->error("You don't have any order", 404);
         $orderList = CustomerOrderResource::collection($orderList);
         return $this->success('Successful', ['orders' => $orderList], 200);
     }
@@ -133,10 +133,6 @@ class OrderService extends BaseService
      */
     public function update(OrderUpdateRequest $orderUpdateRequest, $partner_id, $order_id)
     {
-//        /** @var Order $order */
-//        $order = $this->orderRepository->where('partner_id', $partner_id)->find(2000017);
-//        event(new OrderUpdated($order));
-//        dd('here in order updation');
         $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if (!$orderDetails) return $this->error("You're not authorized to access this order", 403);
         $this->updater->setPartnerId($partner_id)

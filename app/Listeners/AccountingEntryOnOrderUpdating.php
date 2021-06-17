@@ -12,7 +12,7 @@ class AccountingEntryOnOrderUpdating
 
     /**
      * AccountingEntryOnOrderUpdating constructor.
-     * @param UpdateEntry $updater
+     * @param UpdateEntry $updateEntry
      */
     public function __construct(UpdateEntry $updateEntry)
     {
@@ -28,6 +28,9 @@ class AccountingEntryOnOrderUpdating
      */
     public function handle(OrderUpdated $event)
     {
-        $this->updateEntry->setOrder($event->getOrder())->update();
+        $this->updateEntry
+            ->setOrder($event->getOrder())
+            ->setOrderProductChangeData($event->getOrderProductChangedData())
+            ->update();
     }
 }

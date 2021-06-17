@@ -80,7 +80,7 @@ class OrderController extends Controller
      *      summary="Api to get all customer specific orders",
      *      description="Return all Customer specific orders",
      *      @OA\Parameter(name="customer_id",description="Customer Id",required=false,in="path", @OA\Schema(type="String")),
-     *      @OA\Parameter(name="orderBy",description="created_at",required=false,in="query", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="filter",description="created_at",required=false,in="query", @OA\Schema(type="String")),
      *      @OA\Parameter(name="order",description="asc or desc",required=false,in="query", @OA\Schema(type="String")),
      *      @OA\Parameter(name="limit",description="limit",required=false,in="query", @OA\Schema(type="Integer")),
      *      @OA\Parameter(name="offset",description="offset",required=false,in="query", @OA\Schema(type="Integer")),
@@ -99,6 +99,13 @@ class OrderController extends Controller
      */
     public function getCustomerOrderList(string $customer_id, Request $request)
     {
+
+        $request->validate([
+            'filter' => 'sometimes|in:created_at',
+            'order' => 'sometimes|in:asc,desc',
+            'limit' => 'sometimes|digits_between:1,4',
+            'offset' => 'sometimes|digits_between:1,4,'
+        ]);
         return $this->orderService->getCustomerOrderList($customer_id, $request);
     }
 
