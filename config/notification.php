@@ -2,7 +2,8 @@
 
 return [
     'api_url' => env('SHEBA_SERVICES_URL'),
-    'sheba_services_vendor_id' => env('SHEBA_SERVICES_VENDOR_ID', '60126e8e0f3ce3603c3f97b2'),
+    'sheba_services_vendor_id' => env('SHEBA_SERVICES_VENDOR_ID', '60cb5b0f6fe71675a8564683'),
+    'sheba_push_notifications_account_id' => env('SHEBA_PUSH_NOTIFICATIONS_ACCOUNT_ID', '60cb5b37deda99001d7b7fd4'),
     'send_push_notifications' => env('SHEBA_SEND_PUSH_NOTIFICATIONS', true),
     'push_notification_topic_name' => [
         'customer' => env('CUSTOMER_TOPIC_NAME', 'customer_'),
