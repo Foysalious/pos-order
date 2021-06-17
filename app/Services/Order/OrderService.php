@@ -15,8 +15,10 @@ use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Interfaces\PaymentLinkRepositoryInterface;
+use App\Jobs\Order\OrderPlacePushNotification;
 use App\Services\BaseService;
 use App\Services\Order\Constants\OrderLogTypes;
+use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\PaymentLink\Updater as PaymentLinkUpdater;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
@@ -109,9 +111,9 @@ class OrderService extends BaseService
             ->setPaidAmount($request->paid_amount)
             ->setPaymentMethod($request->payment_method)
             ->create();
-        
-        if ($order) event(new OrderCreated($order));
 
+        if ($order) event(new OrderCreated($order));
+        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
         return $this->success('Successful', ['order' => ['id' => $order->id]]);
     }
 
