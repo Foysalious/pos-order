@@ -22,6 +22,7 @@ use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\PaymentLink\Updater as PaymentLinkUpdater;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
+use Sheba\Sms\Sms;
 
 class OrderService extends BaseService
 {
@@ -88,6 +89,13 @@ class OrderService extends BaseService
         return $this->success('Successful', ['orders' => $orderList], 200);
     }
 
+    private function sendOrderPlaceSmsToCustomer()
+    {
+        (new Sms())->msg("Hello From The Other Side")
+            ->to("+8801833309495")
+            ->shoot();
+    }
+
     /**
      * @param $partner
      * @param OrderCreateRequest $request
@@ -111,6 +119,7 @@ class OrderService extends BaseService
             ->setPaidAmount($request->paid_amount)
             ->setPaymentMethod($request->payment_method)
             ->create();
+        $this->sendOrderPlaceSmsToCustomer();
 
         if ($order) event(new OrderCreated($order));
         if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
@@ -196,13 +205,13 @@ class OrderService extends BaseService
     public function getDeliveryInfo(int $partner_id, int $order_id): JsonResponse
     {
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
-        if(!$order) return $this->error("You're not authorized to access this order", 403);
+        if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new DeliveryResource($order);
         return $this->success('Successful', ['order' => $resource], 200);
 
     }
 
-    private function checkCustomerHasPayment($order_id) : bool
+    private function checkCustomerHasPayment($order_id): bool
     {
         $orderPaymentStatus = $this->orderPaymentRepository->where('order_id', $order_id)->get();
         if (count($orderPaymentStatus) > 0) throw new OrderException(trans('order.update.no_customer_update'));
