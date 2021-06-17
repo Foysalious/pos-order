@@ -25,6 +25,11 @@ class OrderSku extends BaseModel
         return $this->belongsTo(Order::class);
     }
 
+    public function review()
+    {
+        return $this->hasOne(Review::class,'order_sku_id');
+    }
+
     public function calculate()
     {
         $this->price = ($this['unit_price'] * $this['quantity']);
@@ -71,4 +76,5 @@ class OrderSku extends BaseModel
     {
         return $this->hasOne(OrderDiscount::class, 'item_id');
     }
+
 }

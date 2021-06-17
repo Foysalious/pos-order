@@ -3,5 +3,5 @@
 
 interface OrderSkuRepositoryInterface extends BaseRepositoryInterface
 {
-
+public function getNotRatedOrderSkuListOfCustomer($customerId);
 }
