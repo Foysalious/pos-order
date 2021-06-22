@@ -92,7 +92,7 @@ class OrderService extends BaseService
      * @return JsonResponse
      * @throws ValidationException
      */
-    public function store($partner, OrderCreateRequest $request)
+    public function store($partner, OrderCreateRequest $request, $header)
     {
         $skus = is_array($request->skus) ?: json_decode($request->skus);
         $order = $this->creator->setPartner($partner)
@@ -108,8 +108,10 @@ class OrderService extends BaseService
             ->setDiscount($request->discount)
             ->setPaidAmount($request->paid_amount)
             ->setPaymentMethod($request->payment_method)
+            ->setVoucherId($request->voucher_id)
+            ->setHeader($header)
             ->create();
-        
+
         if ($order) event(new OrderCreated($order));
 
         return $this->success('Successful', ['order' => ['id' => $order->id]]);

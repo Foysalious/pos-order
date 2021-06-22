@@ -54,12 +54,14 @@ class Creator
     private ?int $emiMonth;
     private ?int $salesChannelId;
     private ?float $deliveryCharge;
+    private ?int $voucher_id;
     /** @var DiscountHandler */
     private DiscountHandler $discountHandler;
     private $discount;
     private $isDiscountPercentage;
     private $paidAmount;
     private $paymentMethod;
+    private $header;
     /**
      * @var OrderSkuCreator
      */
@@ -78,6 +80,16 @@ class Creator
         $this->client = $client;
         $this->discountHandler = $discountHandler;
         $this->orderSkuCreator = $orderSkuCreator;
+    }
+
+    /**
+     * @param mixed $header
+     * @return Creator
+     */
+    public function setHeader($header)
+    {
+        $this->header = $header;
+        return $this;
     }
 
     public function setPartner($partner): Creator
@@ -208,6 +220,16 @@ class Creator
         return $this;
     }
 
+    /**
+     * @param int $voucher_id
+     * @return Creator
+     */
+    public function setVoucherId(?int $voucher_id): Creator
+    {
+        $this->voucher_id = $voucher_id;
+        return $this;
+    }
+
     public function setData(array $data)
     {
         $this->data = $data;
@@ -252,9 +274,11 @@ class Creator
         $order_data['delivery_charge']          = $this->deliveryCharge ?: 0;
         $order_data['emi_month']                = $this->emiMonth ?? null;
         $order_data['status']                   = $this->salesChannelId == SalesChannelIds::POS ? Statuses::COMPLETED : Statuses::PENDING;
-        $order_data['discount']                 = json_decode($this->discount)->original_amount;
-        $order_data['is_discount_percentage']   = json_decode($this->discount)->is_percentage ?: 0;
+        $order_data['discount']                 = json_decode($this->discount)->original_amount ?? 0;
+        $order_data['is_discount_percentage']   = json_decode($this->discount)->is_percentage ?? 0;
+        $order_data['voucher_id']               = $this->voucher_id;
         $order = $this->orderRepositoryInterface->create($order_data);
+        if (isset($this->voucher_id)) $this->voucherDiscountCalculate($order);
         $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($order_data);
         if ($this->discountHandler->hasDiscount()) $this->discountHandler->create();
         $this->orderSkuCreator->setOrder($order)->setSkus($this->skus)->create();
@@ -304,5 +328,11 @@ class Creator
         if ($this->deliveryAddress) return $this->deliveryAddress;
         if ($this->customer) return $this->customer->address;
         return null;
+    }
+
+    private function voucherDiscountCalculate($order)
+    {
+        $voucherDetails = $this->orderRepositoryInterface->getVoucherInformation($this->voucher_id, $this->header);
+        $this->discountHandler->setOrder($order)->setType(DiscountTypes::VOUCHER)->setData($voucherDetails)->create();
     }
 }

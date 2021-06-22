@@ -161,7 +161,8 @@ class OrderController extends Controller
      */
     public function store($partner, OrderCreateRequest $request)
     {
-        return $this->orderService->store($partner, $request);
+        $header = $request->header('Authorization');
+        return $this->orderService->store($partner, $request, $header);
     }
 
     public function updateStatus($partner, Request $request, StatusChanger $statusChanger)

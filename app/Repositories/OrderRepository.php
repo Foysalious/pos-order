@@ -2,14 +2,18 @@
 
 use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Order;
+use App\Services\APIServerClient\ApiServerClient;
 use App\Services\Order\Constants\OrderTypes;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\Constants\Statuses;
 
 class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 {
-    public function __construct(Order $model)
+    protected ApiServerClient $client;
+
+    public function __construct(Order $model, ApiServerClient $client)
     {
+        $this->client = $client;
         parent::__construct($model);
     }
 
@@ -81,5 +85,10 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
         $typeFilterResult = $this->getTypeFilterResult($type, $searchQueryResult);
         $orderStatusFilterResult = $this->getOrderStatusFilterResult($orderStatus, $typeFilterResult);
         return $this->getPaymentStatusFilterResult($paymentStatus, $orderStatusFilterResult);
+    }
+
+    public function getVoucherInformation($voucher_id, $header)
+    {
+        return $this->client->setBaseUrl()->setHeader($header)->get('pos/v1/voucher-details/'. $voucher_id);
     }
 }

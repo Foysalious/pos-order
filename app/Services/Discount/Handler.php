@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Discount\DTO\Params\Order as OrderParam;
 use App\Services\Discount\DTO\Params\Sku as SkuParam;
+use App\Services\Discount\DTO\Params\Voucher as VoucherParams;
 use Illuminate\Validation\ValidationException;
 
 class Handler
@@ -106,7 +107,14 @@ class Handler
                 ->setOriginalAmount($this->skuData['discount']['discount'])
                 ->setIsPercentage($this->skuData['discount']['is_discount_percentage'])
                 ->setOrderSkuId($this->orderSkuId);
+        } else if($this->type == DiscountTypes::VOUCHER) {
+            $order_discount = new VoucherParams();
+            $order_discount->setOrder($this->order)
+                ->setType($this->type)
+                ->setTotalAmount($this->data['voucher']['amount'])
+                ->setIsPercentage($this->data['voucher']['is_amount_percentage']);
         }
+
         return $order_discount->getData();
     }
 }
