@@ -124,7 +124,7 @@ class Order extends BaseModel
 
     public function orderSkus()
     {
-        return $this->hasMany(OrderSku::class);
+        return $this->hasMany(OrderSku::class, 'order_id', 'id');
     }
 
     public function getPaymentLinkTarget()

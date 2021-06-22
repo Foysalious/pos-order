@@ -5,6 +5,7 @@ use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Interfaces\PartnerRepositoryInterface;
 use App\Models\Customer;
 use App\Models\Order;
+use App\Models\OrderSku;
 use App\Models\Partner;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Inventory\InventoryServerClient;
@@ -264,24 +265,12 @@ class Creator
      */
     public function create()
     {
-        $order_data['partner_id']               = $this->partner->id;
-        $order_data['partner_wise_order_id']    = $this->resolvePartnerWiseOrderId($this->partner);
-        $order_data['customer_id']              = $this->resolveCustomerId();
-        $order_data['delivery_name']            = $this->resolveDeliveryName();
-        $order_data['delivery_mobile']          = $this->resolveDeliveryMobile();
-        $order_data['delivery_address']         = $this->resolveDeliveryAddress();
-        $order_data['sales_channel_id']         = $this->salesChannelId ?: SalesChannelIds::POS;
-        $order_data['delivery_charge']          = $this->deliveryCharge ?: 0;
-        $order_data['emi_month']                = $this->emiMonth ?? null;
-        $order_data['status']                   = $this->salesChannelId == SalesChannelIds::POS ? Statuses::COMPLETED : Statuses::PENDING;
-        $order_data['discount']                 = json_decode($this->discount)->original_amount ?? 0;
-        $order_data['is_discount_percentage']   = json_decode($this->discount)->is_percentage ?? 0;
-        $order_data['voucher_id']               = $this->voucher_id;
+        $order_data = $this->makeOrderData();
         $order = $this->orderRepositoryInterface->create($order_data);
-        if (isset($this->voucher_id)) $this->voucherDiscountCalculate($order);
+        $this->orderSkuCreator->setOrder($order)->setSkus($this->skus)->create();
         $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($order_data);
         if ($this->discountHandler->hasDiscount()) $this->discountHandler->create();
-        $this->orderSkuCreator->setOrder($order)->setSkus($this->skus)->create();
+        if (isset($this->voucher_id)) $this->voucherDiscountCalculate($order);
         if ($this->paidAmount > 0) {
             $payment_data['order_id'] = $order->id;
             $payment_data['amount'] = $this->paidAmount;
@@ -334,5 +323,24 @@ class Creator
     {
         $voucherDetails = $this->orderRepositoryInterface->getVoucherInformation($this->voucher_id, $this->header);
         $this->discountHandler->setOrder($order)->setType(DiscountTypes::VOUCHER)->setData($voucherDetails)->create();
+    }
+
+    private function makeOrderData()
+    {
+        $order_data = [];
+        $order_data['partner_id']               = $this->partner->id;
+        $order_data['partner_wise_order_id']    = $this->resolvePartnerWiseOrderId($this->partner);
+        $order_data['customer_id']              = $this->resolveCustomerId();
+        $order_data['delivery_name']            = $this->resolveDeliveryName();
+        $order_data['delivery_mobile']          = $this->resolveDeliveryMobile();
+        $order_data['delivery_address']         = $this->resolveDeliveryAddress();
+        $order_data['sales_channel_id']         = $this->salesChannelId ?: SalesChannelIds::POS;
+        $order_data['delivery_charge']          = $this->deliveryCharge ?: 0;
+        $order_data['emi_month']                = $this->emiMonth ?? null;
+        $order_data['status']                   = $this->salesChannelId == SalesChannelIds::POS ? Statuses::COMPLETED : Statuses::PENDING;
+        $order_data['discount']                 = json_decode($this->discount)->original_amount ?? 0;
+        $order_data['is_discount_percentage']   = json_decode($this->discount)->is_percentage ?? 0;
+        $order_data['voucher_id']               = $this->voucher_id;
+        return $order_data;
     }
 }

@@ -43,7 +43,7 @@ class CreateEntry extends BaseEntry
             'source_type'        => EntryTypes::POS,
             'amount'             => (double)$order_price_details->getTotalBill(),
             'amount_cleared'     => (double) $order_price_details->getPaid(),
-            'total_discount'     => (double) $order_price_details->getDiscountAmount(),
+            'total_discount'     => (double) $order_price_details->getTotalDiscount(),
             'total_vat'          => (double) $order_price_details->getTotalVat(),
             'entry_at' => $this->order->created_at->format('Y-m-d H:i:s'),
             'inventory_products' => $this->getOrderedItemsData(),

@@ -95,26 +95,44 @@ class Handler
     {
         $order_discount = null;
         if ($this->type == DiscountTypes::ORDER) {
-            $order_discount = new OrderParam();
-            $order_discount->setOrder($this->order)
-                ->setType($this->type)
-                ->setOriginalAmount($this->data['discount'])
-                ->setIsPercentage($this->data['is_discount_percentage']);
+            $order_discount = $this->getOrderDiscount();
         } else if ($this->type == DiscountTypes::SKU) {
-            $order_discount = new SkuParam();
-            $order_discount->setType($this->type)
-                ->setAmount($this->skuData['discount']['discount'] * $this->skuData['quantity'])
-                ->setOriginalAmount($this->skuData['discount']['discount'])
-                ->setIsPercentage($this->skuData['discount']['is_discount_percentage'])
-                ->setOrderSkuId($this->orderSkuId);
+            $order_discount = $this->getSkuDiscount();
         } else if($this->type == DiscountTypes::VOUCHER) {
-            $order_discount = new VoucherParams();
-            $order_discount->setOrder($this->order)
-                ->setType($this->type)
-                ->setTotalAmount($this->data['voucher']['amount'])
-                ->setIsPercentage($this->data['voucher']['is_amount_percentage']);
+            $order_discount = $this->getVoucherDiscount();
         }
 
         return $order_discount->getData();
+    }
+
+    private function getOrderDiscount()
+    {
+        $order_discount = new OrderParam();
+        $order_discount->setOrder($this->order)
+            ->setType($this->type)
+            ->setOriginalAmount($this->data['discount'])
+            ->setIsPercentage($this->data['is_discount_percentage']);
+        return $order_discount;
+    }
+
+    private function getSkuDiscount()
+    {
+        $order_discount = new SkuParam();
+        $order_discount->setType($this->type)
+            ->setAmount($this->skuData['discount']['discount'] * $this->skuData['quantity'])
+            ->setOriginalAmount($this->skuData['discount']['discount'])
+            ->setIsPercentage($this->skuData['discount']['is_discount_percentage'])
+            ->setOrderSkuId($this->orderSkuId);
+        return $order_discount;
+    }
+
+    private function getVoucherDiscount()
+    {
+        $order_discount = new VoucherParams();
+        $order_discount->setOrder($this->order)
+            ->setType($this->type)
+            ->setTotalAmount($this->data['voucher']['amount'])
+            ->setIsPercentage($this->data['voucher']['is_amount_percentage']);
+        return $order_discount;
     }
 }
