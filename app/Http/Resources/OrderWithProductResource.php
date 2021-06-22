@@ -62,7 +62,7 @@ class OrderWithProductResource extends JsonResource
             'promo'             => $this->getVoucher()->pluck('amount')->first(),
             'total_price' => $price_calculator->getTotalPrice(),
             'total_bill' => $price_calculator->getTotalBill(),
-            'discount_amount' => $price_calculator->getDiscountAmount(),
+            'discount_amount' => $price_calculator->getTotalDiscount(),
             'due_amount' => $price_calculator->getDue(),
             'paid_amount' => $price_calculator->getPaid(),
             'total_item_discount' => $price_calculator->getTotalItemDiscount(),
