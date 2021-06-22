@@ -79,7 +79,7 @@ class StockManager
             'operation' => self::STOCK_DECREMENT,
             'quantity' => $quantity
         ];
-        $response = $this->client->put($this->uri,$data);
+        $response = $this->client->setBaseUrl()->put($this->uri,$data);
         return $response['stock_updated'] ?? false;
     }
 }
