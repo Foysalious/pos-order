@@ -1,5 +1,6 @@
 <?php namespace App\Services\Order;
 
+use App\Events\OrderUpdated;
 use App\Interfaces\OrderDiscountRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
@@ -28,6 +29,7 @@ class Updater
     protected $paymentMethod;
     protected $paidAmount;
     protected $paymentLinkAmount;
+    protected $orderProductChangeData;
     protected string $orderLogType = OrderLogTypes::OTHERS;
 
     public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
@@ -260,11 +262,12 @@ class Updater
     public function update()
     {
         list($previous_order, $existing_order_skus) = $this->setExistingOrderAndSkus();
-        //$this->calculateOrderChangesAndUpdateSkus();
+        $this->calculateOrderChangesAndUpdateSkus();
         $this->orderRepositoryInterface->update($this->order, $this->makeData());
         $this->updateOrderPayments();
         $this->updateDiscount();
         $this->createLog($previous_order, $existing_order_skus);
+        event(new OrderUpdated($this->order, $this->orderProductChangeData));
     }
 
     public function makeData() : array
@@ -341,16 +344,19 @@ class Updater
             /** @var AddProductInOrder $updater */
             $updater = OrderUpdateFactory::getProductAddingUpdater($this->order, $this->skus);
             $updated_flag = $updater->update();
+            $this->orderProductChangeData['new'] = $updated_flag;
         }
         if($comparator->isProductDeleted()){
             /** @var DeleteProductFromOrder $updater */
             $updater = OrderUpdateFactory::getProductDeletionUpdater($this->order, $this->skus);
             $updated_flag = $updater->update();
+            $this->orderProductChangeData['deleted'] = $updated_flag;
         }
         if($comparator->isProductUpdated()){
             /** @var UpdateProductInOrder $updater */
             $updater = OrderUpdateFactory::getOrderProductUpdater($this->order, $this->skus);
             $updated_flag = $updater->update();
+            $this->orderProductChangeData['refund_exchanged'] = $updated_flag;
         }
 
         if (isset($updated_flag)) {

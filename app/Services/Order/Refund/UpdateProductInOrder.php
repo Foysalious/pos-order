@@ -14,6 +14,8 @@ class UpdateProductInOrder extends ProductOrder
     const QUANTITY_DECREASED = 'decrement';
 
     private array $refunded_products = [];
+    private array $added_products = [];
+    private float $refunded_amount = 0;
 
     public function update()
     {
@@ -33,7 +35,11 @@ class UpdateProductInOrder extends ProductOrder
         }
         $this->updateStockForProductsChanges($updated_products,$skus_details);
         $this->calculateAndRefundForUpdatedOrder();
-        return true;
+        return [
+            'refunded_amount' => $this->refunded_amount,
+            'added_products' =>  $this->added_products,
+            'refunded_products' => $this->refunded_products
+        ];
     }
 
     private function getUpdatedProducts()
@@ -133,6 +139,7 @@ class UpdateProductInOrder extends ProductOrder
         /** @var Creator $creator */
         $creator = App::make(Creator::class);
         $creator->setOrder($this->order)->setSkus([$new_sku])->create();
+        $this->added_products[] = $product;
     }
 
     private function updateOrderSkuQuantityForSamePrice(array $product)
@@ -140,9 +147,11 @@ class UpdateProductInOrder extends ProductOrder
         $order_sku = $this->order->orderSkus()->where('id', $product['id'])->first();
         $order_sku->quantity = $product['quantity'];
         $updated = $order_sku->save();
-
+        $updated = true;
         if ($updated && (isset($product['quantity_changing_info']) && $product['quantity_changing_info']['type'] == self::QUANTITY_DECREASED)) {
             $this->refunded_products[] = $product;
+        } else {
+            $this->added_products[] = $product;
         }
     }
 
@@ -176,6 +185,7 @@ class UpdateProductInOrder extends ProductOrder
         $order_sku->unit_price = $product['price'];
         $new_sku = $order_sku->toArray();
         $this->orderSkuRepository->create($new_sku);
+        $this->added_products[] = $product;
     }
 
     private function updateOrderSkuPriceAndQuantity(array $product)
@@ -187,6 +197,8 @@ class UpdateProductInOrder extends ProductOrder
 
         if ($updated && (isset($product['quantity_changing_info']) && $product['quantity_changing_info']['type'] == self::QUANTITY_DECREASED)) {
             $this->refunded_products[] = $product;
+        } else {
+            $this->added_products[] = $product;
         }
     }
 
@@ -238,6 +250,7 @@ class UpdateProductInOrder extends ProductOrder
         $payment_data['amount'] = $total_refund;
         $payment_data['method'] = PaymentMethods::CASH_ON_DELIVERY;
         $this->orderPaymentCreator->debit($payment_data);
+        $this->refunded_amount = $total_refund;
     }
 
 

@@ -23,8 +23,8 @@ class ReviewController extends Controller
     {
         $request->validate([
             'order' => 'sometimes|in:asc,desc',
-            'limit' => 'sometimes|digits:1',
-            'offset' => 'sometimes|digits:1'
+            'limit' => 'sometimes|digits_between:1,4',
+            'offset' => 'sometimes|digits_between:1,4,'
         ]);
         return $this->reviewService->getCustomerReviews($customer_id, $request);
     }

@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\App;
 
 class AddProductInOrder extends ProductOrder
 {
+    private $added_products = [];
+
     public function update()
     {
         return $this->addItemsInOrderSku();
@@ -20,12 +22,13 @@ class AddProductInOrder extends ProductOrder
             /** @var Creator $creator */
             $creator = App::make(Creator::class);
             $creator->setOrder($this->order)->setSkus($sku_items)->create();
+            $this->added_products = json_decode(json_encode(array_values($sku_items)),true);
         }
         if ($null_sku_items) {
             $this->addNullSkuItems($null_sku_items);
         }
 
-        return true;
+        return $this->added_products;
     }
 
     private function getAddedItems()
@@ -44,6 +47,7 @@ class AddProductInOrder extends ProductOrder
             $data['unit_price'] = $item->price;
             $data['order_id'] = $this->order->id;
             $this->orderSkuRepository->create($data);
+            $this->added_products [] = $data;
         }
     }
 

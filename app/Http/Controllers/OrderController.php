@@ -99,11 +99,12 @@ class OrderController extends Controller
      */
     public function getCustomerOrderList(string $customer_id, Request $request)
     {
+
         $request->validate([
             'filter' => 'sometimes|in:created_at',
             'order' => 'sometimes|in:asc,desc',
-            'limit' => 'sometimes|digits:1',
-            'offset' => 'sometimes|digits:1'
+            'limit' => 'sometimes|digits_between:1,4',
+            'offset' => 'sometimes|digits_between:1,4,'
         ]);
         return $this->orderService->getCustomerOrderList($customer_id, $request);
     }
