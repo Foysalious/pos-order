@@ -252,8 +252,8 @@ class Creator
         $order_data['delivery_charge']          = $this->deliveryCharge ?: 0;
         $order_data['emi_month']                = $this->emiMonth ?? null;
         $order_data['status']                   = $this->salesChannelId == SalesChannelIds::POS ? Statuses::COMPLETED : Statuses::PENDING;
-        $order_data['discount']                 = json_decode($this->discount)->original_amount;
-        $order_data['is_discount_percentage']   = json_decode($this->discount)->is_percentage ?: 0;
+        $order_data['discount']                 = json_decode($this->discount)->original_amount ?? 0;
+        $order_data['is_discount_percentage']   = json_decode($this->discount)->is_percentage ?? 0;
         $order = $this->orderRepositoryInterface->create($order_data);
         $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($order_data);
         if ($this->discountHandler->hasDiscount()) $this->discountHandler->create();
