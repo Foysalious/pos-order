@@ -89,12 +89,6 @@ class OrderService extends BaseService
         return $this->success('Successful', ['orders' => $orderList], 200);
     }
 
-    private function sendOrderPlaceSmsToCustomer()
-    {
-        (new Sms())->msg("Hello From The Other Side")
-            ->to("+8801833309495")
-            ->shoot();
-    }
 
     /**
      * @param $partner
@@ -119,7 +113,7 @@ class OrderService extends BaseService
             ->setPaidAmount($request->paid_amount)
             ->setPaymentMethod($request->payment_method)
             ->create();
-        $this->sendOrderPlaceSmsToCustomer();
+
 
         if ($order) event(new OrderCreated($order));
         if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
