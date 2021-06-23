@@ -5,8 +5,10 @@ namespace App\Http\Resources;
 use App\Repositories\PaymentLinkRepository;
 use App\Services\Order\PriceCalculation;
 use App\Services\PaymentLink\PaymentLinkTransformer;
+use App\Services\Transaction\Constants\TransactionTypes;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 
 class OrderWithProductResource extends JsonResource
@@ -44,8 +46,9 @@ class OrderWithProductResource extends JsonResource
             'items'                   => OrderSkuResource::collection($this->items),
             'price'                   => $this->getOrderPriceRelatedInfo(),
             'customer'                => $this->customer->only('name','phone','pro_pic'),
+            'payments'                => $this->getPayments()
         ];
-        $this->orderWithProductResource['payments'] = $this->getOrderDetailsWithPaymentLink();
+        $this->orderWithProductResource['payment_link'] = $this->getOrderDetailsWithPaymentLink();
         return $this->orderWithProductResource;
     }
 
@@ -75,7 +78,7 @@ class OrderWithProductResource extends JsonResource
      */
     private function getOrderDetailsWithPaymentLink(): ?array
     {
-        $payment_info = null;
+        $payment_link = [];
         if( isset($this->orderWithProductResource['price_info']['due_amount']) && $this->orderWithProductResource['price_info']['due_amount'] > 0){
             $payment_link_target = $this->order->getPaymentLinkTarget();
             /** @var PaymentLinkRepository $paymentLinkRepository */
@@ -83,7 +86,7 @@ class OrderWithProductResource extends JsonResource
             /** @var PaymentLinkTransformer $payment_link_transformer */
             $payment_link_transformer = $paymentLinkRepository->getActivePaymentLinkByPosOrder($payment_link_target);
             if ($payment_link_transformer) {
-                $payment_info = [
+                $payment_link = [
                     'id' => $payment_link_transformer->getLinkID(),
                     'status' => $payment_link_transformer->getIsActive() ? 'active' : 'inactive',
                     'link' => $payment_link_transformer->getLink(),
@@ -92,6 +95,19 @@ class OrderWithProductResource extends JsonResource
                 ];
             }
         }
-        return $payment_info;
+        return $payment_link;
+    }
+
+    private function getPayments()
+    {
+        /** @var Collection $payments */
+        $payments = $this->payments->where('transaction_type', TransactionTypes::CREDIT)->sortByDesc('created_at');
+        $filtered_data = $payments->map(function ($each){
+            return [
+                'amount'     => $each->amount,
+                'method'     => $each->method,
+            ];
+        });
+        return $filtered_data;
     }
 }
