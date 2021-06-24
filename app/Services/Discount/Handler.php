@@ -2,6 +2,7 @@
 
 
 use App\Interfaces\OrderDiscountRepositoryInterface;
+use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Order;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Discount\DTO\Params\Order as OrderParam;
@@ -19,10 +20,14 @@ class Handler
     private $order;
     private $skuData;
     private $orderSkuId;
+    private ?int $voucher_id;
+    private $header;
+    private OrderRepositoryInterface $orderRepository;
 
-    public function __construct(OrderDiscountRepositoryInterface $orderDiscountRepo)
+    public function __construct(OrderDiscountRepositoryInterface $orderDiscountRepo, OrderRepositoryInterface $orderRepository)
     {
         $this->orderDiscountRepo = $orderDiscountRepo;
+        $this->orderRepository = $orderRepository;
     }
 
     /**
@@ -73,6 +78,26 @@ class Handler
         return $this;
     }
 
+    /**
+     * @param int|null $voucher_id
+     * @return Handler
+     */
+    public function setVoucherId(?int $voucher_id): Handler
+    {
+        $this->voucher_id = $voucher_id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $header
+     * @return Handler
+     */
+    public function setHeader($header)
+    {
+        $this->header = $header;
+        return $this;
+    }
+
     public function hasDiscount()
     {
         if ($this->type == DiscountTypes::ORDER) {
@@ -86,9 +111,9 @@ class Handler
     public function create()
     {
         $discount_data = $this->getData();
-        if (empty($discount_data)) return;
+        if (empty($discount_data)) return false;
         $discount_data['order_id'] = $this->order->id;
-        $this->orderDiscountRepo->create($discount_data);
+        return $this->orderDiscountRepo->create($discount_data);
     }
 
     public function getData()
@@ -103,6 +128,12 @@ class Handler
         }
 
         return $order_discount->getData();
+    }
+
+    public function voucherDiscountCalculate($order)
+    {
+        $voucherDetails = $this->orderRepository->getVoucherInformation($this->voucher_id, $this->header);
+        return $this->setOrder($order)->setType(DiscountTypes::VOUCHER)->setData($voucherDetails)->create();
     }
 
     private function getOrderDiscount()
