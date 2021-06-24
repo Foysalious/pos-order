@@ -96,7 +96,7 @@ class OrderService extends BaseService
      * @return JsonResponse
      * @throws ValidationException
      */
-    public function store($partner, OrderCreateRequest $request, $header = null)
+    public function store($partner, OrderCreateRequest $request)
     {
         $skus = is_array($request->skus) ?: json_decode($request->skus);
         $order = $this->creator->setPartner($partner)
@@ -113,7 +113,7 @@ class OrderService extends BaseService
             ->setPaidAmount($request->paid_amount)
             ->setPaymentMethod($request->payment_method)
             ->setVoucherId($request->voucher_id)
-            ->setHeader($header)
+            ->setHeader($request->header('Authorization'))
             ->create();
 
         if ($order) event(new OrderCreated($order));
@@ -157,9 +157,10 @@ class OrderService extends BaseService
             ->setPaymentMethod($orderUpdateRequest->payment_method ?? null)
             ->setPaymentLinkAmount($orderUpdateRequest->payment_link_amount ?? null)
             ->setDiscount($orderUpdateRequest->discount)
+            ->setHeader($orderUpdateRequest->header('Authorization'))
             ->update();
-
-        return $this->success('Successful', null, 200);
+        $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        return $this->success('Successful', ['order' => $orderDetails], 200);
     }
 
     public function delete($partner_id, $order_id)
