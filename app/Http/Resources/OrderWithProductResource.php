@@ -35,6 +35,7 @@ class OrderWithProductResource extends JsonResource
     {
         $this->orderWithProductResource = [
             'id'                      => $this->id,
+            'created_at'              => $this->created_at,
             'previous_order_id'       => $this->previous_order_id,
             'partner_wise_order_id'   => $this->partner_wise_order_id,
             'status'                  => $this->status,
@@ -46,7 +47,7 @@ class OrderWithProductResource extends JsonResource
             'items'                   => OrderSkuResource::collection($this->items),
             'price'                   => $this->getOrderPriceRelatedInfo(),
             'customer'                => $this->customer->only('name','phone','pro_pic'),
-            'payments'                => $this->getPayments()
+            'payments'                => $this->getPayments(),
         ];
         $this->orderWithProductResource['payment_link'] = $this->getOrderDetailsWithPaymentLink();
         return $this->orderWithProductResource;
@@ -106,6 +107,7 @@ class OrderWithProductResource extends JsonResource
             return [
                 'amount'     => $each->amount,
                 'method'     => $each->method,
+                'created_at' => $each->created_at,
             ];
         });
         return $filtered_data;
