@@ -35,7 +35,7 @@ class OrderController extends Controller
 
     /**
      * * @OA\Get(
-     *      path="/api/v1/partners/{partner}/orders/{order}",
+     *      path="/api/v1/webstore/partners/{partner}/orders/{order}",
      *      operationId="getOrderDetail",
      *      tags={"ORDER API"},
      *      summary="Get an order details",
