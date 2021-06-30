@@ -9,6 +9,7 @@ use App\Http\Requests\OrderUpdateRequest;
 use App\Http\Resources\DeliveryResource;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderWithProductResource;
+use App\Http\Resources\Webstore\CustomerOrderDetailsResource;
 use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderLogRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
@@ -129,6 +130,15 @@ class OrderService extends BaseService
         return $this->success('Successful', ['order' => $resource], 200);
     }
 
+    public function getWebStoreDeliveryInfo(int $partner_id, int $order_id): JsonResponse
+    {
+        $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        if (!$order) return $this->error("You're not authorized to access this order", 403);
+        $resource = new CustomerOrderDetailsResource($order);
+        return $this->success('Successful', ['order' => $resource], 200);
+
+    }
+
     /**
      * @param OrderUpdateRequest $orderUpdateRequest
      * @param $partner_id
@@ -206,6 +216,7 @@ class OrderService extends BaseService
         return $this->success('Successful', ['order' => $resource], 200);
 
     }
+
 
     private function checkCustomerHasPayment($order_id): bool
     {

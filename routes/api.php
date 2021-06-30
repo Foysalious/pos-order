@@ -30,6 +30,9 @@ Route::group(['prefix'=>'v1'], function(){
             Route::get('/{customer_id}/orders', [OrderController::class, 'getCustomerOrderList']);
             Route::get('/{customer_id}/reviews', [ReviewController::class, 'getCustomerReviewList']);
         });
+        Route::group(['prefix' => 'webstore'], function () {
+            Route::get('partners/{partner_id}/orders/{order_id}', [\App\Http\Controllers\Webstore\OrderController::class, 'show']);
+        });
         Route::apiResource('partners.orders', OrderController::class);
         Route::group(['prefix' => 'partners'], function () {
             Route::group(['prefix' => '{partner}'], function () {
