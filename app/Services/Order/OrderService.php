@@ -99,7 +99,7 @@ class OrderService extends BaseService
      */
     public function store($partner, OrderCreateRequest $request)
     {
-        $skus = is_array($request->skus) ?: json_decode($request->skus);
+        $skus = is_array($request->skus) ? $request->skus : json_decode($request->skus);
         $order = $this->creator->setPartner($partner)
             ->setCustomerId($request->customer_id)
             ->setDeliveryName($request->delivery_name)
