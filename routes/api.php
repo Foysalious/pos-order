@@ -27,6 +27,7 @@ Route::group(['prefix'=>'v1'], function(){
         Route::group(['prefix' => 'customers'], function () {
             Route::post('', [CustomerController::class, 'store']);
             Route::post('/{customer_id}', [CustomerController::class, 'update']);
+            Route::get('/{customer_id}/not-rated-order-sku-list', [CustomerController::class, 'notRatedOrderSkuList']);
             Route::get('/{customer_id}/orders', [OrderController::class, 'getCustomerOrderList']);
             Route::get('/{customer_id}/reviews', [ReviewController::class, 'getCustomerReviewList']);
         });

@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Exceptions\ProductNotFoundException;
 use App\Http\Requests\CustomerRequest;
 use App\Services\Customer\CustomerCreateDto;
 use App\Services\Customer\CustomerService;
@@ -127,6 +128,86 @@ class CustomerController extends Controller
             'pro_pic' => $request->pro_pic,
         ]);
         return $this->customerService->update($customer_id, $customer);
+    }
+
+    /**
+     *
+     * * @OA\Get(
+     *      path="/api/v1/customers/{customer_id}/not-rated-order-sku-list",
+     *      operationId="getNotRatedOrderSKUList",
+     *      tags={"Partners Products Which is not Rated"},
+     *      summary="Get Products List for POS by Partner",
+     *      description="",
+     *      @OA\Parameter(name="customer_id", description="customer_id", required=true, in="path", @OA\Schema(type="integer")),
+     *      @OA\Parameter(name="offset", description="pagination offset", required=false, in="query", @OA\Schema(type="integer")),
+     *      @OA\Parameter(name="limit", description="pagination limit", required=false, in="query", @OA\Schema(type="integer")),
+     *      @OA\Response(response=200, description="Successful operation",
+     *          @OA\JsonContent(
+     *          type="object",
+     *          example={
+     *                "message": "Successful",
+     *     "not_rated_skus": {
+     *           {
+     *   "id": 163,
+     *           "name": "Shirt",
+     *          "order_id": 2000001,
+     *         "details": {
+     *        "id": 908,
+     *         "name": "l-green-cotton",
+     *        "unit": "kg",
+     *         "price": 100,
+     *         "quantity": 5,
+     *        "channel_id": 1,
+     *         "product_id": 1000328,
+     *         "combination": {
+     *          {
+     *          "option_id": 799,
+     *          "option_name": "size",
+     *          "option_value_id": 1572,
+     *          "option_value_name": "l",
+     *          "option_value_details": {
+     *          {
+     *          "code": "L",
+     *          "type": "size"
+     *          }
+     *          }
+     *          },
+     *          {
+     *          "option_id": 800,
+     *         "option_name": "color",
+     *           "option_value_id": 1573,
+     *           "option_value_name": "green",
+     *           "option_value_details": {
+     *          {
+     *           "code": "#000000",
+     *           "type": "color"
+     *           }
+     *           }
+     *           }
+     *           },
+     *           "channel_name": "pos",
+     *           "product_name": "Shirt",
+     *           "warranty_unit": null,
+     *           "sku_channel_id": 1062,
+     *           "vat_percentage": null
+     *           }
+     *           }
+     *           }
+     *           },
+     *       ),
+     *      ),
+     *      @OA\Response(response=404, description="message: স্টকে কোন পণ্য নেই! প্রয়োজনীয় তথ্য দিয়ে স্টকে পণ্য যোগ করুন।"),
+     *      @OA\Response(response=403, description="Forbidden")
+     *     )
+     * @param $partner
+     * @param Request $request
+     * @return JsonResponse
+     *
+     */
+
+    public function notRatedOrderSkuList(Request $request, int $customer_id)
+    {
+        return $this->customerService->getNotRatedOrderSkuList($customer_id, $request);
     }
 
 }
