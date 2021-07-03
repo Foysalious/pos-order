@@ -45,9 +45,10 @@ class CustomerService extends BaseService
         return $this->success();
     }
 
-    public function getNotRatedOrderSkuList($customerId)
+    public function getNotRatedOrderSkuList(int $customerId,$request)
     {
-        $not_rated_skus = $this->orderSkuRepositoryInterface->getNotRatedOrderSkuListOfCustomer($customerId);
+        list($offset, $limit) = calculatePagination($request);
+        $not_rated_skus = $this->orderSkuRepositoryInterface->getNotRatedOrderSkuListOfCustomer($customerId,$offset, $limit);
         $not_rated_skus = NotRatedSkuResource::collection($not_rated_skus);
         return $this->success('Successful', ['not_rated_skus' => $not_rated_skus], 200);
     }

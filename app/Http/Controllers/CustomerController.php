@@ -129,9 +129,9 @@ class CustomerController extends Controller
         return $this->customerService->update($customer_id, $customer);
     }
 
-    public function notRatedOrderSkuList(Request $request, $customer_id)
+    public function notRatedOrderSkuList(Request $request,int $customer_id)
     {
-       return $this->customerService->getNotRatedOrderSkuList($customer_id);
+        return $this->customerService->getNotRatedOrderSkuList($customer_id,$request);
     }
 
 }
