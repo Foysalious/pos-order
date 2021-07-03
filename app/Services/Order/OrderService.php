@@ -9,6 +9,7 @@ use App\Http\Requests\OrderUpdateRequest;
 use App\Http\Resources\DeliveryResource;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderWithProductResource;
+use App\Http\Resources\Webstore\CustomerOrderDetailsResource;
 use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderLogRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
@@ -96,9 +97,9 @@ class OrderService extends BaseService
      * @return JsonResponse
      * @throws ValidationException
      */
-    public function store($partner, OrderCreateRequest $request, $header = null)
+    public function store($partner, OrderCreateRequest $request)
     {
-        $skus = is_array($request->skus) ?: json_decode($request->skus);
+        $skus = is_array($request->skus) ? $request->skus : json_decode($request->skus);
         $order = $this->creator->setPartner($partner)
             ->setCustomerId($request->customer_id)
             ->setDeliveryName($request->delivery_name)
@@ -113,10 +114,10 @@ class OrderService extends BaseService
             ->setPaidAmount($request->paid_amount)
             ->setPaymentMethod($request->payment_method)
             ->setVoucherId($request->voucher_id)
-            ->setHeader($header)
+            ->setHeader($request->header('Authorization'))
             ->create();
 
-        if ($order) event(new OrderCreated($order));
+//        if ($order) event(new OrderCreated($order));
         if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
         return $this->success('Successful', ['order' => ['id' => $order->id]]);
     }
@@ -127,6 +128,15 @@ class OrderService extends BaseService
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new OrderWithProductResource($order);
         return $this->success('Successful', ['order' => $resource], 200);
+    }
+
+    public function getWebStoreDeliveryInfo(int $partner_id, int $order_id): JsonResponse
+    {
+        $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        if (!$order) return $this->error("You're not authorized to access this order", 403);
+        $resource = new CustomerOrderDetailsResource($order);
+        return $this->success('Successful', ['order' => $resource], 200);
+
     }
 
     /**
@@ -157,9 +167,10 @@ class OrderService extends BaseService
             ->setPaymentMethod($orderUpdateRequest->payment_method ?? null)
             ->setPaymentLinkAmount($orderUpdateRequest->payment_link_amount ?? null)
             ->setDiscount($orderUpdateRequest->discount)
+            ->setHeader($orderUpdateRequest->header('Authorization'))
             ->update();
-
-        return $this->success('Successful', null, 200);
+        $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        return $this->success('Successful', ['order' => $orderDetails], 200);
     }
 
     public function delete($partner_id, $order_id)
@@ -205,6 +216,7 @@ class OrderService extends BaseService
         return $this->success('Successful', ['order' => $resource], 200);
 
     }
+
 
     private function checkCustomerHasPayment($order_id): bool
     {

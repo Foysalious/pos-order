@@ -270,7 +270,7 @@ class Creator
         $this->orderSkuCreator->setOrder($order)->setSkus($this->skus)->create();
         $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($order_data);
         if ($this->discountHandler->hasDiscount()) $this->discountHandler->create();
-        if (isset($this->voucher_id)) $this->voucherDiscountCalculate($order);
+        if (isset($this->voucher_id)) $this->discountHandler->setVoucherId($this->voucher_id)->setHeader($this->header)->voucherDiscountCalculate($order);
         if ($this->paidAmount > 0) {
             $payment_data['order_id'] = $order->id;
             $payment_data['amount'] = $this->paidAmount;
@@ -317,12 +317,6 @@ class Creator
         if ($this->deliveryAddress) return $this->deliveryAddress;
         if ($this->customer) return $this->customer->address;
         return null;
-    }
-
-    private function voucherDiscountCalculate($order)
-    {
-        $voucherDetails = $this->orderRepositoryInterface->getVoucherInformation($this->voucher_id, $this->header);
-        $this->discountHandler->setOrder($order)->setType(DiscountTypes::VOUCHER)->setData($voucherDetails)->create();
     }
 
     private function makeOrderData()

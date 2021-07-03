@@ -5,20 +5,8 @@ use App\Services\Order\PriceCalculation;
 
 class Voucher extends SetParams
 {
-    private $totalAmount;
-    private $isPercentage;
-    protected $type;
-    protected $order;
-
-    /**
-     * @param mixed $order
-     * @return Voucher
-     */
-    public function setOrder($order)
-    {
-        $this->order = $order;
-        return $this;
-    }
+    private float $totalAmount;
+    private int $isPercentage;
 
     /**
      * @param mixed $totalAmount
@@ -40,17 +28,7 @@ class Voucher extends SetParams
         return $this;
     }
 
-    /**
-     * @param mixed $type
-     * @return Voucher
-     */
-    public function setType($type)
-    {
-        $this->type = $type;
-        return $this;
-    }
-
-    public function getData()
+    public function getData() : array
     {
         return [
             'type' => $this->type,
@@ -60,7 +38,7 @@ class Voucher extends SetParams
         ];
     }
 
-    private function getApplicableAmount()
+    private function getApplicableAmount() : float
     {
         /** @var $priceCalculation PriceCalculation */
         $priceCalculation = app(PriceCalculation::class);

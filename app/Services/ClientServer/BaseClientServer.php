@@ -9,7 +9,7 @@ abstract class BaseClientServer implements BaseClientServerInterface
 {
     protected Client $client;
     protected string $baseUrl;
-    protected $header;
+    protected string $header;
 
     public function __construct(Client $client)
     {
@@ -52,7 +52,7 @@ abstract class BaseClientServer implements BaseClientServerInterface
         $options['headers'] = [
             'Accept' => 'application/json'
         ];
-        if ($this->header)  $options['headers'] += ['Authorization' => $this->header];
+        if (isset($this->header))  $options['headers'] += ['Authorization' => $this->header];
         if (!$data) return $options;
         if ($multipart) {
             $options['multipart'] = $data;

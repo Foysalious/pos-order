@@ -5,6 +5,7 @@ use App\Interfaces\OrderDiscountRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
+use App\Services\Discount\Handler;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\TransactionType;
@@ -19,7 +20,7 @@ use App\Services\Order\Payment\Creator as OrderPaymentCreator;
 class Updater
 {
     use ModificationFields;
-    protected $partner_id, $order_id, $customer_id, $status, $sales_channel_id, $emi_month, $interest, $delivery_charge;
+    protected $partner_id, $order_id, $customer_id, $status, $sales_channel_id, $emi_month, $interest, $delivery_charge, $header;
     protected $bank_transaction_charge, $delivery_name, $delivery_mobile, $delivery_address, $note, $voucher_id, $discount;
     protected $skus, $order, $existingOrder;
     protected $orderLogCreator;
@@ -36,7 +37,8 @@ class Updater
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
                                 OrderLogCreator $orderLogCreator, OrderDiscountRepositoryInterface $orderDiscountRepository,
                                 OrderPaymentCreator $orderPaymentCreator,
-                                OrderPaymentRepositoryInterface $orderPaymentRepository
+                                OrderPaymentRepositoryInterface $orderPaymentRepository,
+                                protected Handler $discountHandler
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -76,6 +78,16 @@ class Updater
     public function setPaidAmount($paidAmount)
     {
         $this->paidAmount = $paidAmount;
+        return $this;
+    }
+
+    /**
+     * @param mixed $header
+     * @return Creator
+     */
+    public function setHeader($header) : Updater
+    {
+        $this->header = $header;
         return $this;
     }
 
@@ -264,10 +276,11 @@ class Updater
         list($previous_order, $existing_order_skus) = $this->setExistingOrderAndSkus();
         $this->calculateOrderChangesAndUpdateSkus();
         $this->orderRepositoryInterface->update($this->order, $this->makeData());
+        if(isset($this->voucher_id)) $this->updateVoucherDiscount();
         $this->updateOrderPayments();
-        $this->updateDiscount();
+        if(isset($this->discount)) $this->updateDiscount();
         $this->createLog($previous_order, $existing_order_skus);
-        event(new OrderUpdated($this->order, $this->orderProductChangeData));
+        //event(new OrderUpdated($this->order, $this->orderProductChangeData));
     }
 
     public function makeData() : array
@@ -424,5 +437,17 @@ class Updater
             $data['amount'] = $discountData->original_amount;
         }
         return $data;
+    }
+
+    private function updateVoucherDiscount()
+    {
+        if(!isset($this->voucher_id)) return false;
+        if(isset($this->voucher_id) && is_null($this->voucher_id)) {
+            return $this->orderDiscountRepository->where('order_id', $this->order_id)->where('type', 'voucher')->delete();
+        }
+        else {
+            $this->orderDiscountRepository->where('order_id', $this->order_id)->where('type', 'voucher')->delete();
+            return $this->discountHandler->setVoucherId($this->voucher_id)->setHeader($this->header)->voucherDiscountCalculate($this->order);
+        }
     }
 }

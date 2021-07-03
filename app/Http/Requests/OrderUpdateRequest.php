@@ -39,7 +39,6 @@ class OrderUpdateRequest extends FormRequest
             'amount_without_charge' => 'sometimes|required_if:payment_method,emi|numeric|min:' . config('emi.manager.minimum_emi_amount'),
             'payment_link_amount' => 'sometimes|numeric',
             'paid_amount' => 'sometimes|numeric',
-
         ];
     }
 }
