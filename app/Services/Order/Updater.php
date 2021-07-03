@@ -8,7 +8,6 @@ use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Services\Discount\Handler;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
-use App\Services\Order\Constants\TransactionType;
 use App\Services\Order\Refund\AddProductInOrder;
 use App\Services\Order\Refund\DeleteProductFromOrder;
 use App\Services\Order\Refund\OrderUpdateFactory;

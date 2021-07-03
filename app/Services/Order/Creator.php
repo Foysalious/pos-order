@@ -19,7 +19,6 @@ use App\Traits\ResponseAPI;
 
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
-use Sheba\Sms\Sms;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Creator
