@@ -1,5 +1,6 @@
 <?php namespace App\Services\Customer;
 
+use App\Exceptions\CategoryNotFoundException;
 use App\Http\Resources\Webstore\Customer\NotRatedSkuResource;
 use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderSkuRepositoryInterface;
@@ -7,6 +8,7 @@ use App\Interfaces\ReviewRepositoryInterface;
 use App\Services\BaseService;
 use Illuminate\Http\JsonResponse;
 use App\Traits\ModificationFields;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class CustomerService extends BaseService
 {
@@ -49,8 +51,10 @@ class CustomerService extends BaseService
     {
         list($offset, $limit) = calculatePagination($request);
         $not_rated_skus = $this->orderSkuRepositoryInterface->getNotRatedOrderSkuListOfCustomer($customerId,$offset, $limit);
+        if ($not_rated_skus->isEmpty())
+            throw new NotFoundHttpException("No SKUS Found");
         $not_rated_skus = NotRatedSkuResource::collection($not_rated_skus);
-        return $this->success('Successful', ['not_rated_skus' => $not_rated_skus], 200);
+        return $this->success('Successful', ['skus' => $not_rated_skus], 200);
     }
 }
 
