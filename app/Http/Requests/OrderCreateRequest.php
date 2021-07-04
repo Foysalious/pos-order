@@ -22,15 +22,17 @@ class OrderCreateRequest extends FormRequest
     public function rules()
     {
         return [
-            'customer_id' => 'sometimes|required|numeric',
-            'delivery_name' => 'sometimes|required',
-            'delivery_mobile' => 'sometimes|required',
-            'delivery_address' => 'sometimes|required',
-            'sales_channel_id' => 'sometimes|required|numeric',
-            'delivery_charge' => 'sometimes|required',
-            'paid_amount' => 'sometimes|required|numeric',
-            'payment_method' => 'sometimes|required|string|in:' . implode(',', config('pos.payment_method')),
-            'emi_month' => 'required_if:payment_method,emi|numeric',
+            'customer_id'       => 'sometimes|required|numeric',
+            'delivery_name'     => 'sometimes|required',
+            'delivery_mobile'   => 'sometimes|required',
+            'delivery_address'  => 'sometimes|required',
+            'sales_channel_id'  => 'sometimes|required|numeric',
+            'delivery_charge'   => 'sometimes|required',
+            'paid_amount'       => 'sometimes|required|numeric',
+            'payment_method'    => 'sometimes|required|string|in:' . implode(',', config('pos.payment_method')),
+            'emi_month'         => 'required_if:payment_method,emi|numeric',
+            'discount'          => 'sometimes|JSON',
+            'voucher_id'        => 'sometimes|numeric'
         ];
     }
 }

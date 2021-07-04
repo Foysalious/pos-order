@@ -1,28 +1,22 @@
 <?php namespace App\Models;
 
+use App\Services\OrderSku\OrderSkuTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use function App\Helper\Formatters\formatTakaToDecimal;
 
 class OrderSku extends BaseModel
 {
-    use HasFactory;
+    use HasFactory, OrderSkuTrait;
     protected $guarded = ['id'];
-
-    private $price;
-    private $unit_price;
-    private $quantity;
-    private $discountAmount;
-    private $discount;
-    private $priceAfterDiscount;
-    private $vat_percentage;
-    private $priceWithVat;
-    private $total;
-    private $vat;
-    private $isCalculated;
 
     public function order()
     {
         return $this->belongsTo(Order::class);
+    }
+
+    public function review()
+    {
+        return $this->hasOne(Review::class,'order_sku_id');
     }
 
     public function calculate()
@@ -71,4 +65,5 @@ class OrderSku extends BaseModel
     {
         return $this->hasOne(OrderDiscount::class, 'item_id');
     }
+
 }

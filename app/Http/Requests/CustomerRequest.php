@@ -24,10 +24,12 @@ class CustomerRequest extends FormRequest
     public function rules()
     {
         return [
+            'id' => 'required',
             'name' => 'required',
+            'partner_id' => 'required',
             'email' => 'required',
-            'phone' => 'required',
-            'picture' => 'sometimes',
+            'mobile' => 'required',
+            'pro_pic' => 'sometimes',
         ];
     }
 }

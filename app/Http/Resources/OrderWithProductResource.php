@@ -20,8 +20,8 @@ class OrderWithProductResource extends JsonResource
      */
     public function __construct($order)
     {
-        $this->order = $order;
         parent::__construct($order);
+        $this->order = $order;
     }
 
 
@@ -66,7 +66,7 @@ class OrderWithProductResource extends JsonResource
             'promo'             => $this->getVoucher()->pluck('amount')->first(),
             'total_price' => $price_calculator->getTotalPrice(),
             'total_bill' => $price_calculator->getTotalBill(),
-            'discount_amount' => $price_calculator->getDiscountAmount(),
+            'discount_amount' => $price_calculator->getTotalDiscount(),
             'due_amount' => $price_calculator->getDue(),
             'paid_amount' => $price_calculator->getPaid(),
             'total_item_discount' => $price_calculator->getTotalItemDiscount(),
@@ -103,14 +103,13 @@ class OrderWithProductResource extends JsonResource
     {
         /** @var Collection $payments */
         $payments = $this->payments->where('transaction_type', TransactionTypes::CREDIT)->sortByDesc('created_at');
-        $filtered_data = $payments->map(function ($each){
+        return $payments->map(function ($each){
             return [
                 'amount'     => $each->amount,
                 'method'     => $each->method,
                 'created_at' => $each->created_at,
             ];
         });
-        return $filtered_data;
     }
 
     private function getOrderCustomer()

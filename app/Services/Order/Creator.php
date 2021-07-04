@@ -5,6 +5,7 @@ use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Interfaces\PartnerRepositoryInterface;
 use App\Models\Customer;
 use App\Models\Order;
+use App\Models\OrderSku;
 use App\Models\Partner;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Inventory\InventoryServerClient;
@@ -18,7 +19,6 @@ use App\Traits\ResponseAPI;
 
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
-use Sheba\Sms\Sms;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Creator
@@ -54,12 +54,14 @@ class Creator
     private ?int $emiMonth;
     private ?int $salesChannelId;
     private ?float $deliveryCharge;
+    private ?int $voucher_id;
     /** @var DiscountHandler */
     private DiscountHandler $discountHandler;
     private $discount;
     private $isDiscountPercentage;
     private $paidAmount;
     private $paymentMethod;
+    private $header;
     /**
      * @var OrderSkuCreator
      */
@@ -78,6 +80,16 @@ class Creator
         $this->client = $client;
         $this->discountHandler = $discountHandler;
         $this->orderSkuCreator = $orderSkuCreator;
+    }
+
+    /**
+     * @param mixed $header
+     * @return Creator
+     */
+    public function setHeader($header)
+    {
+        $this->header = $header;
+        return $this;
     }
 
     public function setPartner($partner): Creator
@@ -208,6 +220,16 @@ class Creator
         return $this;
     }
 
+    /**
+     * @param int $voucher_id
+     * @return Creator
+     */
+    public function setVoucherId(?int $voucher_id): Creator
+    {
+        $this->voucher_id = $voucher_id;
+        return $this;
+    }
+
     public function setData(array $data)
     {
         $this->data = $data;
@@ -242,22 +264,12 @@ class Creator
      */
     public function create()
     {
-        $order_data['partner_id'] = $this->partner->id;
-        $order_data['partner_wise_order_id'] = $this->resolvePartnerWiseOrderId($this->partner);
-        $order_data['customer_id'] = $this->resolveCustomerId();
-        $order_data['delivery_name'] = $this->resolveDeliveryName();
-        $order_data['delivery_mobile'] = $this->resolveDeliveryMobile();
-        $order_data['delivery_address'] = $this->resolveDeliveryAddress();
-        $order_data['sales_channel_id'] = $this->salesChannelId ?: SalesChannelIds::POS;
-        $order_data['delivery_charge'] = $this->deliveryCharge ?: 0;
-        $order_data['emi_month'] = $this->emiMonth ?? null;
-        $order_data['status'] = $this->salesChannelId == SalesChannelIds::POS ? Statuses::COMPLETED : Statuses::PENDING;
-        $order_data['discount'] = $this->discount;
-        $order_data['is_discount_percentage'] = $this->isDiscountPercentage ?: 0;
+        $order_data = $this->makeOrderData();
         $order = $this->orderRepositoryInterface->create($order_data);
+        $this->orderSkuCreator->setOrder($order)->setSkus($this->skus)->create();
         $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($order_data);
         if ($this->discountHandler->hasDiscount()) $this->discountHandler->create();
-        $this->orderSkuCreator->setOrder($order)->setSkus($this->skus)->create();
+        if (isset($this->voucher_id)) $this->discountHandler->setVoucherId($this->voucher_id)->setHeader($this->header)->voucherDiscountCalculate($order);
         if ($this->paidAmount > 0) {
             $payment_data['order_id'] = $order->id;
             $payment_data['amount'] = $this->paidAmount;
@@ -304,5 +316,24 @@ class Creator
         if ($this->deliveryAddress) return $this->deliveryAddress;
         if ($this->customer) return $this->customer->address;
         return null;
+    }
+
+    private function makeOrderData()
+    {
+        $order_data = [];
+        $order_data['partner_id']               = $this->partner->id;
+        $order_data['partner_wise_order_id']    = $this->resolvePartnerWiseOrderId($this->partner);
+        $order_data['customer_id']              = $this->resolveCustomerId();
+        $order_data['delivery_name']            = $this->resolveDeliveryName();
+        $order_data['delivery_mobile']          = $this->resolveDeliveryMobile();
+        $order_data['delivery_address']         = $this->resolveDeliveryAddress();
+        $order_data['sales_channel_id']         = $this->salesChannelId ?: SalesChannelIds::POS;
+        $order_data['delivery_charge']          = $this->deliveryCharge ?: 0;
+        $order_data['emi_month']                = $this->emiMonth ?? null;
+        $order_data['status']                   = $this->salesChannelId == SalesChannelIds::POS ? Statuses::COMPLETED : Statuses::PENDING;
+        $order_data['discount']                 = json_decode($this->discount)->original_amount ?? 0;
+        $order_data['is_discount_percentage']   = json_decode($this->discount)->is_percentage ?? 0;
+        $order_data['voucher_id']               = $this->voucher_id;
+        return $order_data;
     }
 }

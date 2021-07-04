@@ -5,9 +5,9 @@ use App\Models\Order;
 
 abstract class SetParams
 {
-    protected $type;
+    protected string $type;
     /** @var Order $order */
-    protected $order;
+    protected Order $order;
 
     public abstract function getData();
 

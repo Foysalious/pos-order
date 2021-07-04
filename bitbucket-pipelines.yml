@@ -1,0 +1,22 @@
+# This is an example Starter pipeline configuration
+# Use a skeleton to build, test and deploy using manual and parallel steps
+# -----
+# You can specify a custom docker image from Docker Hub as your build environment.
+image: atlassian/default-image:2
+
+pipelines:
+  default:
+    - parallel:
+      - step:
+          name: 'Build and Test'
+          script:
+            - echo "Hello world"
+  branches:   
+      development:
+        - step:
+            name: 'Build and Test'
+            image: sonarsource/sonar-scanner-cli
+            script:
+              - export SONAR_LOGIN=$SONARQUBE_API_TOKEN
+              - export SONAR_PROJECT_BASE_DIR=.
+              - /opt/sonar-scanner/bin/sonar-scanner -Dsonar.login=$SONARQUBE_API_TOKEN

@@ -5,16 +5,18 @@
     "keywords": ["framework", "laravel"],
     "license": "MIT",
     "require": {
-        "php": "8.0.2",
+        "php": "^8.0",
         "ext-json": "*",
         "darkaonline/l5-swagger": "^8.0",
+        "doctrine/dbal": "^3.1",
         "fideloper/proxy": "^4.4",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",
         "laravel/framework": "^8.12",
         "laravel/tinker": "^2.5",
         "league/flysystem-aws-s3-v3": "^1.0",
-        "sheba/sms": "dev-master"
+        "predis/predis": "^1.1",
+        "spatie/data-transfer-object": "^3.3"
     },
     "require-dev": {
         "facade/ignition": "^2.5",
@@ -62,11 +64,6 @@
         "preferred-install": "dist",
         "sort-packages": true
     },
-    "repositories": [
-        {
-            "type": "git",
-            "url": "https://bitbucket.org/startern/sheba_sms.git"
-        }],
     "minimum-stability": "dev",
     "prefer-stable": true
 }

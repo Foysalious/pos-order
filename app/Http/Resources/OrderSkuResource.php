@@ -18,7 +18,7 @@ class OrderSkuResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'sku_id' => $this->sku_id,
-            'details' => $this->details,
+            'details' => json_decode($this->details),
             'quantity' => $this->quantity,
             'unit_price' => $this->unit_price,
             'unit' => $this->unit,

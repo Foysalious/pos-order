@@ -1,5 +1,6 @@
 <?php namespace App\Services\Order;
 
+use App\Http\Resources\CustomerReviewResource;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;
 use App\Services\BaseService;
@@ -33,6 +34,16 @@ class ReviewService extends BaseService
         return $this->success('Successful', ['reviews' => $reviews, 'rating_statistics' => $this->reviewStatistics()], 200);
     }
 
+    public function getCustomerReviews(string $customer_id, $request)
+    {
+        $order = $request->order;
+        list($offset, $limit) = calculatePagination($request);
+        $reviews = $this->reviewRepositoryInterface->getCustomerReviews($customer_id, $offset, $limit, $order);
+        if (count($reviews) == 0) return $this->error('You have not placed any reviews yet', 404);
+        $reviews = CustomerReviewResource::collection($reviews);
+        return $this->success('Successful', ['reviews' => $reviews], 200);
+    }
+
     public function reviewStatistics()
     {
         return json_decode(json_encode([
@@ -48,7 +59,7 @@ class ReviewService extends BaseService
     public function create($request, $customer_id, $order_id)
     {
         $order = $this->orderRepositoryInterface->where('customer_id', $customer_id)->find($order_id);
-        if(is_null($order)) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
+        if (is_null($order)) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
 
         $this->reviewCreator->setOrderId($order_id)
             ->setCustomerId($customer_id)

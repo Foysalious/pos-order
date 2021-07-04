@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Http\Requests\CustomerOrderRequest;
 use App\Http\Requests\OrderCreateRequest;
 use App\Http\Requests\OrderCustomerRequest;
 use App\Http\Requests\OrderFilterRequest;
@@ -65,6 +66,48 @@ class OrderController extends Controller
     {
         return $this->orderService->getOrderList($partner_id, $request);
     }
+    /**
+     * Display a listing of the resource.
+     *
+     * @return JsonResponse
+     */
+
+    /**
+     * @OA\Get(
+     *      path="/api/v1/customers/{customer_id}/orders",
+     *      operationId="getReviewsofCustomer",
+     *      tags={"Customer API"},
+     *      summary="Api to get all customer specific orders",
+     *      description="Return all Customer specific orders",
+     *      @OA\Parameter(name="customer_id",description="Customer Id",required=false,in="path", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="filter",description="created_at",required=false,in="query", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="order",description="asc or desc",required=false,in="query", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="limit",description="limit",required=false,in="query", @OA\Schema(type="Integer")),
+     *      @OA\Parameter(name="offset",description="offset",required=false,in="query", @OA\Schema(type="Integer")),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Successful operation",
+     *          @OA\JsonContent(
+     *              type="object",
+     *             example={"message": "Successful","orders": {{"id": 2000001,"status": "Cancelled","date": "20,Apr,2021","price": "0.00"}}}
+     *          )),
+     *      @OA\Response(
+     *          response=404,
+     *          description="Message: অর্ডারটি পাওয়া যায় নি ",
+     *      )
+     *     )
+     */
+    public function getCustomerOrderList(string $customer_id, Request $request)
+    {
+
+        $request->validate([
+            'filter' => 'sometimes|in:created_at',
+            'order' => 'sometimes|in:asc,desc',
+            'limit' => 'sometimes|digits_between:1,4',
+            'offset' => 'sometimes|digits_between:1,4,'
+        ]);
+        return $this->orderService->getCustomerOrderList($customer_id, $request);
+    }
 
     /**
      * @OA\Post(
@@ -81,8 +124,7 @@ class OrderController extends Controller
      *                      "paid_amount":100,
      *                      "sales_channel_id":1,
      *                      "skus": "[{'id':523,'product_name':'Shirt','product_id':1000328,'warranty':null,;warranty_unit':null,'vat_percentage':null,'sku_channel_id':1062,'channel_id':1,'channel_name':'pos','price':100,'unit':'kg','quantity':5,'discount':5,'is_discount_percentage':0,'cap':null,'combination':[{'option_id':799,'option_name':'size','option_value_id':1572,'option_value_name':'l','option_value_details':[{'code':'L','type':'size'}]},{'option_id':800,'option_name':'color','option_value_id':1573,'option_value_name':'green','option_value_details':[{'code':'#000000','type':'color'}]}]}]",
-     *                      "discount":5,
-     *                      "is_discount_percentage":0,
+     *                      "discount": "{'original_amount':10,'is_percentage':1,'cap':70,'discount_details':'Order discount details','discount_id':null,'item_id':null'}",
      *                      "payment_method":"payment_link",
      *                      "payment_link_amount":10,
      *                  }
@@ -141,14 +183,15 @@ class OrderController extends Controller
      *      @OA\Response(response=200, description="Successful operation",
      *          @OA\JsonContent(
      *          type="object",
-     *          example={"message":"Successful","order":{"id":2000017,"previous_order_id":null,"partner_wise_order_id":8,"customer_id":1,"status":"Completed","sales_channel_id":1,"emi_month":null,"interest":null,"bank_transaction_charge":null,"delivery_name":"","delivery_mobile":"","delivery_address":"","note":null,"voucher_id":null,"items":{{"id":148,"name":"","sku_id":521,"details":null,"quantity":"1.00","unit_price":"100.00","unit":null,"vat_percentage":null,"warranty":0,"warranty_unit":"day","note":null},{"id":149,"name":"","sku_id":819,"details":null,"quantity":"1.00","unit_price":"80.00","unit":null,"vat_percentage":null,"warranty":0,"warranty_unit":"day","note":null},{"id":150,"name":"","sku_id":null,"details":null,"quantity":"2.00","unit_price":"50.00","unit":null,"vat_percentage":null,"warranty":0,"warranty_unit":"day","note":null}},"price_info":{"delivery_charge":"30.00","promo":"50.00","total_price":"280.00","total_bill":"280.00","discount_amount":null,"due_amount":"160.00","paid_amount":100,"total_item_discount":"0.00","total_vat":"0.00"},"customer_info":{"name":"Foysal","phone":"01855570816","pro_pic":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebadev\/images\/pos\/categories\/thumbs\/1621499030_phpvv7lc4_category_thumb.png"},"payment_info":null}}
+     *          example={"message":"Successful","order":{"id":2000017,"previous_order_id":null,"partner_wise_order_id":8,"customer_id":1,"status":"Completed","sales_channel_id":1,"emi_month":null,"interest":null,"bank_transaction_charge":null,"delivery_name":"","delivery_mobile":"","delivery_address":"","note":null,"voucher_id":null,"items":{{"id":148,"name":"","sku_id":521,"details":null,"quantity":"1.00","unit_price":"100.00","unit":null,"vat_percentage":null,"warranty":0,"warranty_unit":"day","note":null},{"id":149,"name":"","sku_id":819,"details":null,"quantity":"1.00","unit_price":"80.00","unit":null,"vat_percentage":null,"warranty":0,"warranty_unit":"day","note":null},{"id":150,"name":"","sku_id":null,"details":null,"quantity":"2.00","unit_price":"50.00","unit":null,"vat_percentage":null,"warranty":0,"warranty_unit":"day","note":null}},"price_info":{"delivery_charge":"30.00","promo":"50.00","total_price":"280.00","total_bill":"280.00","discount_amount":null,"due_amount":"160.00","paid_amount":100,"total_item_discount":"0.00","total_vat":"0.00"},"customer_info":{"name":"Foysal","mobile":"01855570816","pro_pic":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebadev\/images\/pos\/categories\/thumbs\/1621499030_phpvv7lc4_category_thumb.png"},"payment_info":null}}
      *          ),
      *     ),
      *      @OA\Response(response=404, description="message: অর্ডারটি পাওয়া যায় নি"),
      *      @OA\Response(response=403, description="You're not authorized to access this order")
      *  )
      *
-     * @param int $id
+     * @param $partner_id
+     * @param $order_id
      * @return JsonResponse
      */
     public function show($partner_id, $order_id)
@@ -157,10 +200,10 @@ class OrderController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
-     * @param $partner_id
+     *
      * @param OrderUpdateRequest $request
-     * @param $id
+     * @param int $partner_id
+     * @param int $order_id
      * @return JsonResponse
      */
 
@@ -175,7 +218,7 @@ class OrderController extends Controller
      *     @OA\RequestBody(
      *          @OA\MediaType(mediaType="application/json",
      *              @OA\Schema(
-     *                  @OA\Property(property="sales_channel_id", type="integer"),
+     *                  @OA\Property(property="sales_channel_id", type="integer", example=1),
      *                  @OA\Property(property="skus", type="string"),
      *                  @OA\Property(property="emi_month", type="string"),
      *                  @OA\Property(property="interest", type="integer"),
@@ -185,7 +228,8 @@ class OrderController extends Controller
      *                  @OA\Property(property="delivery_mobile", type="number"),
      *                  @OA\Property(property="delivery_address", type="string"),
      *                  @OA\Property(property="note", type="string"),
-     *                  @OA\Property(property="voucher_id", type="integer")
+     *                  @OA\Property(property="voucher_id", type="integer"),
+     *                  @OA\Property(property="discount", type="json", example={"type":"order","original_amount":10,"is_percentage":1,"cap":70,"discount_details":"Order discount details","discount_id":null,"item_id":null})
      *             )
      *         )
      *      ),
@@ -193,9 +237,10 @@ class OrderController extends Controller
      *     @OA\Response(response="403", description="You're not authorized to access this order"),
      * )
      */
-    public function update(Request $request, $partner_id, $id)
+
+    public function update(OrderUpdateRequest $request, $partner_id, $order_id)
     {
-        return $this->orderService->update($request, $partner_id, $id);
+        return $this->orderService->update($request, $partner_id, $order_id);
     }
 
     public function getOrderWithChannel($order_id)
@@ -250,5 +295,33 @@ class OrderController extends Controller
     public function destroy($partner_id, $id)
     {
         return $this->orderService->delete($partner_id, $id);
+    }
+
+    /**
+     * * @OA\Get(
+     *      path="/api/v1/partners/{partner}/orders/{order}/delivery-info",
+     *      operationId="getOrderDeliveryDetail",
+     *      tags={"ORDER API"},
+     *      summary="Get an order delivery details",
+     *      description="Return orders delivery details",
+     *      @OA\Parameter(name="partner", description="partner id", required=true, in="path", @OA\Schema(type="integer")),
+     *      @OA\Parameter(name="order", description="order id", required=true, in="path", @OA\Schema(type="integer")),
+     *      @OA\Response(response=200, description="Successful operation",
+     *          @OA\JsonContent(
+     *          type="object",
+     *          example={"message":"Successful","order":{"id":2000001,"delivery_name":"Arnab Rahman","delivery_address":"Mohakhali","delivery_mobile":"01818181818","delivery_vendor_name":"paperfly","delivery_request_id":"ORD-1620719460-0027","delivery_thana":"Hajiganj","delivery_district":"Chandpur","payment_method":"cod","due":0}}
+     *          ),
+     *     ),
+     *      @OA\Response(response=404, description="message: অর্ডারটি পাওয়া যায় নি"),
+     *      @OA\Response(response=403, description="You're not authorized to access this order")
+     *  )
+     *
+     * @param int $partner_id
+     * @param int $order_id
+     * @return JsonResponse
+     */
+    public function getDeliveryInfo(int $partner_id, int $order_id): JsonResponse
+    {
+        return $this->orderService->getDeliveryInfo($partner_id, $order_id);
     }
 }

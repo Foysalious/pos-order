@@ -2,14 +2,18 @@
 
 use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Order;
+use App\Services\APIServerClient\ApiServerClient;
 use App\Services\Order\Constants\OrderTypes;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\Constants\Statuses;
 
 class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 {
-    public function __construct(Order $model)
+    protected ApiServerClient $client;
+
+    public function __construct(Order $model, ApiServerClient $client)
     {
+        $this->client = $client;
         parent::__construct($model);
     }
 
@@ -21,6 +25,13 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
         return $orderList->offset($offset)->limit($limit)->latest()->get();
     }
 
+    public function getCustomerOrderList($customer_id, $offset, $limit, $orderBy, $order)
+    {
+        $query = $this->model->where('customer_id', $customer_id);
+        if ($orderBy && $order) $query = $query->orderBy($orderBy, $order);
+        return $query->offset($offset)->limit($limit)->get();
+    }
+
     private function getSearchingQuery($partner_id, $orderSearch)
     {
         $order_id = $orderSearch->getOrderId();
@@ -28,7 +39,7 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
         $sales_channel_id = $orderSearch->getSalesChannelId();
 
         return $this->model->where('partner_id', $partner_id)->whereHas('customer', function ($query) use ($customer_name) {
-            $query->where('name', 'like', '%'. $customer_name .'%');
+            $query->where('name', 'like', '%' . $customer_name . '%');
         })->when($order_id, function ($query) use ($order_id) {
             return $query->where('partner_wise_order_id', $order_id);
         })->when($sales_channel_id, function ($query) use ($sales_channel_id) {
@@ -38,27 +49,27 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 
     private function getTypeFilterResult($type, $searchQueryResult)
     {
-        return $searchQueryResult->when($type == OrderTypes::NEW, function($query) use ($type){
+        return $searchQueryResult->when($type == OrderTypes::NEW, function ($query) use ($type) {
             return $query->where('status', Statuses::PENDING);
-        })->when($type == OrderTypes::RUNNING, function($query) use ($type){
+        })->when($type == OrderTypes::RUNNING, function ($query) use ($type) {
             return $query->whereIn('status', [Statuses::PROCESSING, Statuses::SHIPPED]);
-        })->when($type == OrderTypes::COMPLETED, function($query) use ($type){
+        })->when($type == OrderTypes::COMPLETED, function ($query) use ($type) {
             return $query->whereIn('status', [Statuses::COMPLETED, Statuses::CANCELLED, Statuses::DECLINED]);
         });
     }
 
     private function getOrderStatusFilterResult($orderStatus, $typeFilterResult)
     {
-        return $typeFilterResult->when($orderStatus, function($query) use ($orderStatus){
+        return $typeFilterResult->when($orderStatus, function ($query) use ($orderStatus) {
             return $query->where('status', $orderStatus);
         });
     }
 
     private function getPaymentStatusFilterResult($paymentStatus, $orderStatusFilterResult)
     {
-        return $orderStatusFilterResult->when($paymentStatus == PaymentStatuses::PAID, function($query) use ($paymentStatus){
+        return $orderStatusFilterResult->when($paymentStatus == PaymentStatuses::PAID, function ($query) use ($paymentStatus) {
             return $query->whereNotNull('closed_and_paid_at');
-        })->when($paymentStatus == PaymentStatuses::DUE, function($query) use ($paymentStatus){
+        })->when($paymentStatus == PaymentStatuses::DUE, function ($query) use ($paymentStatus) {
             return $query->whereNull('closed_and_paid_at');
         });
     }
@@ -72,5 +83,10 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
         $typeFilterResult = $this->getTypeFilterResult($type, $searchQueryResult);
         $orderStatusFilterResult = $this->getOrderStatusFilterResult($orderStatus, $typeFilterResult);
         return $this->getPaymentStatusFilterResult($paymentStatus, $orderStatusFilterResult);
+    }
+
+    public function getVoucherInformation($voucher_id, $header)
+    {
+        return $this->client->setBaseUrl()->setHeader($header)->get('pos/v1/voucher-details/'. $voucher_id);
     }
 }
