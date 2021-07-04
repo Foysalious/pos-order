@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
+use function PHPUnit\Framework\isEmpty;
 
 class OrderWithProductResource extends JsonResource
 {
@@ -46,7 +47,7 @@ class OrderWithProductResource extends JsonResource
             'note'                    => $this->note,
             'items'                   => OrderSkuResource::collection($this->items),
             'price'                   => $this->getOrderPriceRelatedInfo(),
-            'customer'                => $this->customer->only('name','phone','pro_pic'),
+            'customer'                => $this->getOrderCustomer(),
             'payments'                => $this->getPayments(),
         ];
         $this->orderWithProductResource['payment_link'] = $this->getOrderDetailsWithPaymentLink();
@@ -110,5 +111,14 @@ class OrderWithProductResource extends JsonResource
                 'created_at' => $each->created_at,
             ];
         });
+    }
+
+    private function getOrderCustomer()
+    {
+        if(isEmpty($this->customer)) {
+            return null;
+        } else {
+            return $this->customer->only('name','phone','pro_pic');
+        }
     }
 }
