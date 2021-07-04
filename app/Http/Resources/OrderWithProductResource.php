@@ -10,7 +10,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
-use function PHPUnit\Framework\isEmpty;
 
 class OrderWithProductResource extends JsonResource
 {
@@ -116,7 +115,7 @@ class OrderWithProductResource extends JsonResource
 
     private function getOrderCustomer()
     {
-        if(isEmpty($this->customer)) {
+        if(empty($this->customer)) {
             return null;
         } else {
             return $this->customer->only('name','phone','pro_pic');
