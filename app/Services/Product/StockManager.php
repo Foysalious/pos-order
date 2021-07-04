@@ -1,6 +1,7 @@
 <?php namespace App\Services\Product;
 
 use App\Models\Order;
+use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\SalesChannelIds;
 
@@ -38,6 +39,7 @@ class StockManager
 
     /**
      * @param Order $order
+     * @return $this
      */
     public function setOrder(Order $order)
     {
@@ -52,7 +54,9 @@ class StockManager
     }
 
     /**
-     * @param $quantity |double
+     * @param $quantity
+     * @return false|mixed
+     * @throws BaseClientServerError
      */
     public function increase($quantity)
     {
@@ -62,12 +66,14 @@ class StockManager
             'operation' => self::STOCK_INCREMENT,
             'quantity' => $quantity
         ];
-        $response = $this->client->put($this->uri,$data);
+        $response = $this->client->setBaseUrl()->put($this->uri,$data);
         return $response['stock_updated'] ?? false;
     }
 
     /**
-     * @param $quantity |double
+     * @param $quantity
+     * @return false|mixed
+     * @throws BaseClientServerError
      */
     public function decrease($quantity)
     {
