@@ -20,8 +20,8 @@ class OrderWithProductResource extends JsonResource
      */
     public function __construct($order)
     {
-        $this->order = $order;
         parent::__construct($order);
+        $this->order = $order;
     }
 
 
@@ -103,13 +103,12 @@ class OrderWithProductResource extends JsonResource
     {
         /** @var Collection $payments */
         $payments = $this->payments->where('transaction_type', TransactionTypes::CREDIT)->sortByDesc('created_at');
-        $filtered_data = $payments->map(function ($each){
+        return $payments->map(function ($each){
             return [
                 'amount'     => $each->amount,
                 'method'     => $each->method,
                 'created_at' => $each->created_at,
             ];
         });
-        return $filtered_data;
     }
 }

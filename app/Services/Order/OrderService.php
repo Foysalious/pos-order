@@ -11,41 +11,30 @@ use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderWithProductResource;
 use App\Http\Resources\Webstore\CustomerOrderDetailsResource;
 use App\Interfaces\CustomerRepositoryInterface;
-use App\Interfaces\OrderLogRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
-use App\Interfaces\PaymentLinkRepositoryInterface;
 use App\Jobs\Order\OrderPlacePushNotification;
 use App\Services\BaseService;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\SalesChannelIds;
-use App\Services\PaymentLink\Updater as PaymentLinkUpdater;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
-use Sheba\Sms\Sms;
 
 class OrderService extends BaseService
 {
     protected $orderRepository, $orderPaymentRepository, $customerRepository;
     protected $orderSkusRepositoryInterface;
     protected $updater, $orderSearch, $orderFilter;
-    protected $paymentLinkRepository;
-    protected $paymentLinkUpdater;
     /** @var Creator */
-    private Creator $creator;
-    protected $order;
-    public OrderLogRepositoryInterface $orderLogRepository;
+    protected Creator $creator;
 
     public function __construct(OrderRepositoryInterface $orderRepository,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
                                 OrderSearch $orderSearch, CustomerRepositoryInterface $customerRepository,
                                 OrderFilter $orderFilter,
                                 Updater $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
-                                PaymentLinkRepositoryInterface $paymentLinkRepository,
                                 Creator $creator,
-                                PaymentLinkUpdater $paymentLinkUpdater,
-                                OrderLogRepositoryInterface $orderLogRepository
     )
     {
         $this->orderRepository = $orderRepository;
@@ -53,12 +42,9 @@ class OrderService extends BaseService
         $this->updater = $updater;
         $this->orderSearch = $orderSearch;
         $this->orderFilter = $orderFilter;
-        $this->paymentLinkRepository = $paymentLinkRepository;
         $this->creator = $creator;
-        $this->orderLogRepository = $orderLogRepository;
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->customerRepository = $customerRepository;
-        $this->paymentLinkUpdater = $paymentLinkUpdater;
     }
 
     public function getOrderList($partner_id, $request)
