@@ -17,11 +17,18 @@ class IpWhitelistMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
+        if ($this->runningUnitTests()) return $next($request);
         $redis = Redis::connection();
         if ((config('app.env') == 'local') || ($redis->exists(config('sheba.whitelisted_ip_redis_key_name')) &&
                 in_array(getIp(), json_decode($redis->get(config('sheba.whitelisted_ip_redis_key_name')))))) {
             return $next($request);
         }
         throw new AuthorizationException;
+    }
+
+    private function runningUnitTests(): bool
+    {
+        $app = app();
+        return $app->runningInConsole() && $app->runningUnitTests();
     }
 }
