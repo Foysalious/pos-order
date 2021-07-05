@@ -49,7 +49,7 @@ class OrderController extends Controller
      */
     public function show($partner_id, $order_id)
     {
-        return $this->orderService->getWebStoreDeliveryInfo($partner_id, $order_id);
+        return $this->orderService->getWebStoreOrderDetails($partner_id, $order_id);
     }
 
 
