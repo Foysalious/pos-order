@@ -18,8 +18,8 @@ class IpWhitelistMiddleware
     public function handle(Request $request, Closure $next)
     {
         $redis = Redis::connection();
-        if ($redis->exists(config('sheba.whitelisted_ip_redis_key_name')) &&
-            in_array(getIp(), json_decode($redis->get(config('sheba.whitelisted_ip_redis_key_name'))))) {
+        if ((config('app.env') == 'local') || ($redis->exists(config('sheba.whitelisted_ip_redis_key_name')) &&
+                in_array(getIp(), json_decode($redis->get(config('sheba.whitelisted_ip_redis_key_name')))))) {
             return $next($request);
         }
         throw new AuthorizationException;
