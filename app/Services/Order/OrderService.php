@@ -155,8 +155,8 @@ class OrderService extends BaseService
             ->setDiscount($orderUpdateRequest->discount)
             ->setHeader($orderUpdateRequest->header('Authorization'))
             ->update();
-        $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
-        return $this->success('Successful', ['order' => $orderDetails], 200);
+
+        return $this->success('Successful', [], 200);
     }
 
     public function delete($partner_id, $order_id)

@@ -50,7 +50,7 @@ class StockManager
 
     public function isStockMaintainable()
     {
-        return !($this->sku['stock'] == 0);
+        return !is_null($this->sku['stock']);
     }
 
     /**
@@ -66,8 +66,7 @@ class StockManager
             'operation' => self::STOCK_INCREMENT,
             'quantity' => $quantity
         ];
-        $response = $this->client->setBaseUrl()->put($this->uri,$data);
-        return $response['stock_updated'] ?? false;
+        $this->client->setBaseUrl()->put($this->uri,$data);
     }
 
     /**
@@ -77,15 +76,12 @@ class StockManager
      */
     public function decrease($quantity)
     {
-        if (($this->sku['stock'] - $quantity < 0) && $this->order->sales_channel_id == SalesChannelIds::POS )
-            $quantity = $this->sku['stock'];
         $data = [
             'id' => $this->sku['id'],
             'product_id' => $this->sku['product_id'],
             'operation' => self::STOCK_DECREMENT,
             'quantity' => $quantity
         ];
-        $response = $this->client->setBaseUrl()->put($this->uri,$data);
-        return $response['stock_updated'] ?? false;
+        $this->client->setBaseUrl()->put($this->uri,$data);
     }
 }
