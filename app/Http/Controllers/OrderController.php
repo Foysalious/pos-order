@@ -114,7 +114,7 @@ class OrderController extends Controller
      *     path="/api/v1/partners/{partner}/orders",
      *     summary="Place an order",
      *     tags={"ORDER API"},
-     *     @OA\Parameter(name="partner_id",description="Partner Id",required=true,in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="partner", description="partner id", required=true, in="path", @OA\Schema(type="integer"))
      *     @OA\RequestBody(
      *         @OA\MediaType(
      *             mediaType="application/json",
