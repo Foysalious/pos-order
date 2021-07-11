@@ -107,7 +107,7 @@ class OrderLogCreator
         $data['order_id']                   = $order->id;
         $data['partner_wise_order_id']      = $order->partner_wise_order_id;
         $data['partner_id']                 = $order->partner_id;
-        $data['customer_id']                = $order->customer_id;
+        $data['customer_id']                = $order->customer();
         $data['status']                     = $order->status;
         $data['sales_channel_id']           = $order->sales_channel_id;
         $data['emi_month']                  = isset($order->emi_month) ? $order->emi_month : "";
@@ -120,6 +120,7 @@ class OrderLogCreator
         $data['note']                       = isset($order->note) ? $order->note : "";
         $data['voucher_id']                 = isset($order->voucher_id) ? $order->voucher_id : "";
         $data['products']                   = isset($skus) ? $skus : [];
+        dd($data);
         return json_encode($data);
     }
 }
