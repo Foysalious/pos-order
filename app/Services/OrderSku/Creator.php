@@ -70,18 +70,18 @@ class Creator
         foreach ($skus as $sku) {
 
             $sku_data['order_id'] = $this->order->id;
-            $sku_data['name'] = isset($sku->product_name) ? $sku->product_name : $sku_details[$sku->id]['product_name'];
+            $sku_data['name'] = $sku->product_name ?? $sku_details[$sku->id]['product_name'];
             $sku_data['sku_id'] = $sku->id ?: null;
             $sku_data['details'] = json_encode($sku);
             $sku_data['quantity'] = $sku->quantity;
-            $sku_data['unit_price'] = isset($sku->price) ? $sku->price : $sku_details[$sku->id]['sku_channel'][0]['price'];
-            $sku_data['unit'] = isset($sku->unit) ? $sku->unit : $sku_details[$sku->id]['unit']['name_en'];
-            $sku_data['warranty'] = isset($sku->warranty) ? $sku->warranty : ($sku_details[$sku->id]['warranty'] ?: 0);
-            $sku_data['warranty_unit'] = isset($sku->warranty_unit) ? $sku->warranty_unit : ($sku_details[$sku->id]['warranty'] ?: WarrantyUnits::DAY);
-            $sku_data['vat_percentage'] = isset($sku->vat_percentage) ? $sku->vat_percentage : $sku_details[$sku->id]['vat_percentage'];
-            $sku_data['discount']['discount'] = isset($sku->discount) ? $sku->discount : 0;
-            $sku_data['discount']['is_discount_percentage'] = isset($sku->is_discount_percentage)  ? $sku->is_discount_percentage : null;
-            $sku_data['discount']['cap'] = isset($sku->cap) ? $sku->cap : null;
+            $sku_data['unit_price'] = $sku->price ?? $sku_details[$sku->id]['sku_channel'][0]['price'];
+            $sku_data['unit'] = $sku->unit ?? (isset($sku_details[$sku->id]) ? $sku_details[$sku->id]['unit']['name_en'] : null);
+            $sku_data['warranty'] = $sku->warranty ?? (isset($sku_details[$sku->id]) && $sku_details[$sku->id]['warranty'] ?: 0);
+            $sku_data['warranty_unit'] = $sku->warranty_unit ?? (isset($sku_details[$sku->id]) && $sku_details[$sku->id]['warranty'] ?: WarrantyUnits::DAY);
+            $sku_data['vat_percentage'] = $sku->vat_percentage ?? (isset($sku_details[$sku->id]) ? $sku_details[$sku->id]['vat_percentage'] : 0);
+            $sku_data['discount']['discount'] = $sku->discount ?? 0;
+            $sku_data['discount']['is_discount_percentage'] = $sku->is_discount_percentage ?? null;
+            $sku_data['discount']['cap'] = $sku->cap ?? null;
             $order_sku = $this->orderSkuRepository->create($sku_data);
             $this->discountHandler->setType(DiscountTypes::SKU)->setOrder($this->order)->setSkuData($sku_data)->setOrderSkuId($order_sku->id);
             if ($this->discountHandler->hasDiscount()) {
