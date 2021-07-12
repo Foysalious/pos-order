@@ -22,7 +22,7 @@ class OrderCreateRequest extends FormRequest
     public function rules()
     {
         return [
-            'customer_id'       => 'sometimes|required|numeric',
+            'customer_id'       => 'sometimes|required',
             'delivery_name'     => 'sometimes|required',
             'delivery_mobile'   => 'sometimes|required',
             'delivery_address'  => 'sometimes|required',
