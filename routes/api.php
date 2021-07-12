@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\Webstore\ReviewController as WebstoreReviewController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OrderController;
@@ -33,6 +34,7 @@ Route::group(['prefix'=>'v1'], function(){
         });
         Route::group(['prefix' => 'webstore'], function () {
             Route::get('partners/{partner_id}/orders/{order_id}', [\App\Http\Controllers\Webstore\OrderController::class, 'show']);
+            Route::get('partners/{partner_id}/products-by-ratings', [WebstoreReviewController::class, 'getProductIdsByRating']);
         });
         Route::apiResource('partners.orders', OrderController::class);
         Route::group(['prefix' => 'partners'], function () {

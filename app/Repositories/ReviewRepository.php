@@ -114,5 +114,10 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         return $query->offset($offset)->limit($limit)->get();
     }
 
+    public function getProductIdsByRating($partnerId, $ratings)
+    {
+        return $this->model->where('partner_id',$partnerId)->whereIn('rating',$ratings)->pluck('product_id');
+    }
+
 
 }
