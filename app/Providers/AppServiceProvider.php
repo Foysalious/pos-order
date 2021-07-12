@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Sheba\DataMigration\DataMigrationServiceProvider;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\UrlGenerator;
 use Illuminate\Support\ServiceProvider;
@@ -15,6 +16,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        $this->app->register(DataMigrationServiceProvider::class);
     }
 
     /**

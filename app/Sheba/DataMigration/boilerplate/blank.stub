@@ -1,0 +1,14 @@
+<?php namespace DummyNameSpace;
+
+class DummyClass extends DataMigrationBase implements DataMigrationInterface
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void | string
+     */
+    public function handle()
+    {
+        //
+    }
+}
