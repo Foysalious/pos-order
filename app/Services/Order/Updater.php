@@ -274,6 +274,7 @@ class Updater
     {
         $order = $this->setExistingOrder();
         $this->calculateOrderChangesAndUpdateSkus();
+        if(isset($this->customer_id)) $this->updateCustomer();
         $this->orderRepositoryInterface->update($this->order, $this->makeData());
         if(isset($this->voucher_id)) $this->updateVoucherDiscount();
         $this->updateOrderPayments();
@@ -447,5 +448,10 @@ class Updater
             $this->orderDiscountRepository->where('order_id', $this->order_id)->where('type', 'voucher')->delete();
             return $this->discountHandler->setVoucherId($this->voucher_id)->setHeader($this->header)->voucherDiscountCalculate($this->order);
         }
+    }
+
+    private function updateCustomer()
+    {
+        return $this->orderRepositoryInterface->where('id', $this->order->id)->update(['customer_id' => $this->customer_id]);
     }
 }
