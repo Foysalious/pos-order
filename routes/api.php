@@ -24,7 +24,8 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 Route::group(['prefix'=>'v1'], function(){
-    Route::group(['middleware' => 'ip.whitelist'], function () {
+    //Route::group(['middleware' => 'ip.whitelist'], function ()
+    //{
         Route::group(['prefix' => 'customers'], function () {
             Route::post('', [CustomerController::class, 'store']);
             Route::post('/{customer_id}', [CustomerController::class, 'update']);
@@ -42,6 +43,7 @@ Route::group(['prefix'=>'v1'], function(){
                 Route::group(['prefix' => 'orders'], function () {
                     Route::group(['prefix' => '{order}'], function () {
                         Route::get('delivery-info', [OrderController::class, 'getDeliveryInfo']);
+                        Route::put('update-customer', [OrderController::class, 'updateCustomer']);
                     });
                 });
             });
@@ -53,5 +55,5 @@ Route::group(['prefix'=>'v1'], function(){
         Route::apiResource('payments', PaymentController::class);
         Route::post('customers/{customer}/orders/{order}/review', [ReviewController::class, 'store']);
         Route::get('products/{product}/reviews', [ReviewController::class, 'index']);
-    });
+   // });
 });
