@@ -272,20 +272,18 @@ class Updater
 
     public function update()
     {
-        list($previous_order, $existing_order_skus) = $this->setExistingOrderAndSkus();
+        $order = $this->setExistingOrder();
         $this->calculateOrderChangesAndUpdateSkus();
         $this->orderRepositoryInterface->update($this->order, $this->makeData());
         if(isset($this->voucher_id)) $this->updateVoucherDiscount();
         $this->updateOrderPayments();
         if(isset($this->discount)) $this->updateDiscount();
-        $this->createLog($previous_order, $existing_order_skus);
-        //event(new OrderUpdated($this->order, $this->orderProductChangeData));
+        $this->createLog($order);
     }
 
     public function makeData() : array
     {
         $data = [];
-        if(isset($this->customer_id)) $data['customer_id']                          = $this->customer_id;
         if(isset($this->sales_channel_id)) $data['sales_channel_id']                = $this->sales_channel_id;
         if(isset($this->emi_month)) $data['emi_month']                              = $this->emi_month;
         if(isset($this->interest)) $data['interest']                                = $this->interest;
@@ -308,16 +306,21 @@ class Updater
         return $data + $this->modificationFields(false, true);
     }
 
-    private function setExistingOrderAndSkus() : array
+    private function setExistingOrder()
     {
         $previous_order = clone $this->order;
-        $existing_order_skus = clone $this->orderSkusRepositoryInterface->where('order_id', $previous_order->id)->latest()->get();
-        return [$previous_order, $existing_order_skus];
+        $order = $previous_order;
+        $order->products = $previous_order->items;
+        $order->customer = $previous_order->customer;
+        $order->price = $previous_order->price;
+        $order->payments = $previous_order->payments;
+        $order->payment_link = $previous_order->payment_link;
+        return $order;
     }
 
-    private function createLog($previous_order, $existing_order_skus)
+    private function createLog($previous_order)
     {
-        $this->setPreviousOrder($previous_order, $existing_order_skus);
+        $this->setPreviousOrder($previous_order);
         $this->setNewOrder();
         $this->orderLogCreator->create();
     }
@@ -327,20 +330,14 @@ class Updater
         return $this->orderLogType;
     }
 
-    private function setPreviousOrder($order, $existing_order_skus)
+    private function setPreviousOrder($order)
     {
-        $this->orderLogCreator->setExistingOrderData($order)
-            ->setExistingOrderSkus($existing_order_skus)
-            ->setOrderId($this->order_id);
+        $this->orderLogCreator->setExistingOrderData($order)->setOrderId($this->order_id);
     }
 
     private function setNewOrder()
     {
-        $new_order_skus = $this->orderSkusRepositoryInterface->where('order_id', $this->order_id)->latest()->get();
-        $this->orderLogCreator
-            ->setChangedOrderData($this->orderRepositoryInterface->find($this->order->id))
-            ->setChangedOrderSkus($new_order_skus)
-            ->setType($this->getTypeOfChangeLog());
+        $this->orderLogCreator->setChangedOrderData($this->orderRepositoryInterface->find($this->order->id))->setType($this->getTypeOfChangeLog());
     }
 
     private function calculateOrderChangesAndUpdateSkus()
@@ -384,6 +381,7 @@ class Updater
             $payment_data['amount'] = $this->paidAmount;
             $payment_data['method'] = PaymentMethods::CASH_ON_DELIVERY;
             $this->orderPaymentCreator->credit($payment_data);
+            $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
         } elseif(isset($this->paymentMethod) && $this->paymentMethod == PaymentMethods::PAYMENT_LINK && isset($this->paymentLinkAmount)) {
             $order_payment_link = $this->orderPaymentRepository->where('order_id', $this->order->id)->where('method', PaymentMethods::PAYMENT_LINK)->first();
             if ($order_payment_link) {
@@ -395,6 +393,7 @@ class Updater
                 $payment_data['method'] = PaymentMethods::PAYMENT_LINK;
                 $this->orderPaymentCreator->credit($payment_data);
             }
+            $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
         }
     }
 

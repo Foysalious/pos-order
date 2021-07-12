@@ -135,8 +135,8 @@ class Order extends BaseModel
     public function getVoucher()
     {
         return $this->discounts()->where('order_id', $this->id)
-                                ->where('type', DiscountTypes::VOUCHER)
-                                ->get();
+            ->where('type', DiscountTypes::VOUCHER)
+            ->get();
     }
 
     public function logs()
@@ -152,7 +152,7 @@ class Order extends BaseModel
 
     public function isUpdated() : bool
     {
-       $type = $this->logs->where('type', 'products_and_prices')->first();
-       return !empty($type) ? true : false;
+        $type = $this->logs->where('type', 'products_and_prices')->first();
+        return !empty($type) ? true : false;
     }
 }
