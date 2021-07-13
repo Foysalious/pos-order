@@ -4,15 +4,15 @@ use function App\Helper\Formatters\formatTakaToDecimal;
 
 trait OrderSkuTrait
 {
-    private float $price;
-    private float $unit_price;
-    private float $quantity;
-    private float $discountAmount;
-    private float $priceAfterDiscount;
-    private float $priceWithVat;
-    private float $total;
-    private float $vat;
-    private bool $isCalculated;
+    protected float $price;
+    protected float $unit_price;
+    protected float $quantity;
+    protected float $discountAmount;
+    protected float $priceAfterDiscount;
+    protected float $priceWithVat;
+    protected float $total;
+    protected float $vat;
+    protected bool $isCalculated;
 
     public function calculate()
     {
@@ -28,7 +28,7 @@ trait OrderSkuTrait
         return $this;
     }
 
-    private function formatAllToTaka()
+    protected function formatAllToTaka()
     {
         $this->price = formatTakaToDecimal($this->price);
         $this->vat = formatTakaToDecimal($this->vat);
