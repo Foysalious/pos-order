@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use App\Services\Discount\Constants\DiscountTypes;
+use App\Services\Order\PriceCalculation;
 use App\Services\Transaction\Constants\TransactionTypes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Services\PaymentLink\Target;
@@ -154,5 +155,20 @@ class Order extends BaseModel
     {
         $type = $this->logs->where('type', 'products_and_prices')->first();
         return !empty($type) ? true : false;
+    }
+
+    public function price()
+    {
+        return app(PriceCalculation::class)->setOrder($this)->getNetBill();
+    }
+
+    public function due()
+    {
+        return app(PriceCalculation::class)->setOrder($this)->getDue();
+    }
+
+    public function paid()
+    {
+        return app(PriceCalculation::class)->setOrder($this)->getPaid();
     }
 }

@@ -30,7 +30,10 @@ class OrderResource extends JsonResource
             'note'                    => $this->note,
             'voucher_id'              => $this->voucher_id,
             'payment_status'          => $this->closed_and_paid_at,
-            'order_update_message'    => $this->isUpdated() ? trans('order.update.updated') : null
+            'order_update_message'    => $this->isUpdated() ? trans('order.update.updated') : null,
+            'price'                   => $this->price(),
+            'paid'                    => $this->paid(),
+            'due'                     => $this->due()
         ];
     }
 }
