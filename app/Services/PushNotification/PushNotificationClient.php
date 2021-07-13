@@ -47,7 +47,9 @@ class PushNotificationClient
     private function getOptions($data = null, $multipart = false): array
     {
         $options['headers'] = [
-            'Accept' => 'application/json'
+            'Accept' => 'application/json',
+            'app-key' => config('sheba.notification_services_app_key'),
+            'app-secret' => config('sheba.notification_services_app_secret'),
         ];
         if (!$data) return $options;
         if ($multipart) {
