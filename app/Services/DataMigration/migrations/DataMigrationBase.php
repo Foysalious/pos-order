@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\DataMigration\migrations;
+<?php namespace App\Services\DataMigration\migrations;
 
 use App\Models\User;
 use App\Traits\ModificationFields;

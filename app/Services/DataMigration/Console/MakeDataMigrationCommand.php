@@ -1,7 +1,7 @@
-<?php namespace App\Sheba\DataMigration\Console;
+<?php namespace App\Services\DataMigration\Console;
 
 use Illuminate\Support\Composer;
-use App\Sheba\DataMigration\DataMigrationCreator;
+use App\Services\DataMigration\DataMigrationCreator;
 
 class MakeDataMigrationCommand extends BaseCommand
 {

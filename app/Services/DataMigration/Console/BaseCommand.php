@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\DataMigration\Console;
+<?php namespace App\Services\DataMigration\Console;
 
 use App\Console\Commands\Command;
 

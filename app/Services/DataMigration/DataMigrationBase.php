@@ -1,10 +1,10 @@
-<?php namespace App\Sheba\DataMigration;
+<?php namespace App\Services\DataMigration;
 
 use Illuminate\Support\Str;
 
 class DataMigrationBase
 {
-    protected $namespace = "App\\Sheba\\DataMigration\\migrations";
+    protected $namespace = "App\\Services\\DataMigration\\migrations";
 
     /**
      * Get the date prefix for the migration.

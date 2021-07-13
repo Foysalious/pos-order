@@ -1,10 +1,10 @@
-<?php namespace App\Sheba\DataMigration;
+<?php namespace App\Services\DataMigration;
 
 use App\Interfaces\DataMigrationRepositoryInterface;
 use App\Repositories\DataMigrationRepository;
 use Illuminate\Support\ServiceProvider;
-use App\Sheba\DataMigration\Console\DataMigrateCommand;
-use App\Sheba\DataMigration\Console\MakeDataMigrationCommand;
+use App\Services\DataMigration\Console\DataMigrateCommand;
+use App\Services\DataMigration\Console\MakeDataMigrationCommand;
 
 class DataMigrationServiceProvider extends ServiceProvider
 {
