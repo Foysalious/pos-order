@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DataMigrationController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\Webstore\ReviewController as WebstoreReviewController;
@@ -38,6 +39,7 @@ Route::group(['prefix'=>'v1'], function(){
             Route::get('partners/{partner_id}/products-by-ratings', [WebstoreReviewController::class, 'getProductIdsByRating']);
         });
         Route::apiResource('partners.orders', OrderController::class);
+        Route::apiResource('partners.migrate', DataMigrationController::class)->only('store');
         Route::group(['prefix' => 'partners'], function () {
             Route::group(['prefix' => '{partner}'], function () {
                 Route::group(['prefix' => 'orders'], function () {
