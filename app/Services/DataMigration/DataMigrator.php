@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\DataMigration;
+<?php namespace App\Services\DataMigration;
 
 use App\Interfaces\DataMigrationRepositoryInterface;
 use Illuminate\Filesystem\Filesystem;

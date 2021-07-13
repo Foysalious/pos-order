@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\DataMigration;
+<?php namespace App\Services\DataMigration;
 
 use Exception;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
@@ -70,7 +70,7 @@ class DataMigrationCreator extends DataMigrationBase
      */
     private function getBoilerplatePath(): string
     {
-        return __DIR__.'/boilerplate';
+        return __DIR__ . '/boilerplate';
     }
 
     /**
