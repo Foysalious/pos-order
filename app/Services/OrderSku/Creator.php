@@ -75,7 +75,7 @@ class Creator
             $sku_data['details'] = json_encode($sku);
             $sku_data['quantity'] = $sku->quantity;
             $sku_data['unit_price'] = $sku->price ?? $sku_details[$sku->id]['sku_channel'][0]['price'];
-            $sku_data['unit'] = $sku->unit ?? (isset($sku_details[$sku->id]) ? $sku_details[$sku->id]['unit']['name_en'] : null);
+            $sku_data['unit'] = $sku->unit ?? (isset($sku_details[$sku->id]) ? ($sku_details[$sku->id]['unit']['name_en'] ?? null) : null);
             $sku_data['warranty'] = $sku->warranty ?? (isset($sku_details[$sku->id]) && $sku_details[$sku->id]['warranty'] ?: 0);
             $sku_data['warranty_unit'] = $sku->warranty_unit ?? (isset($sku_details[$sku->id]) && $sku_details[$sku->id]['warranty'] ?: WarrantyUnits::DAY);
             $sku_data['vat_percentage'] = $sku->vat_percentage ?? (isset($sku_details[$sku->id]) ? $sku_details[$sku->id]['vat_percentage'] : 0);
