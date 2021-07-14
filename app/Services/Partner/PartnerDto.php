@@ -2,7 +2,7 @@
 
 use Spatie\DataTransferObject\DataTransferObject;
 
-class PartnerUpdateDto extends DataTransferObject
+class PartnerDto extends DataTransferObject
 {
     public ?string $name;
     public ?string $sub_domain;

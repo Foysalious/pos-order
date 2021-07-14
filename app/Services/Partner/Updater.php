@@ -6,14 +6,15 @@ use App\Traits\ModificationFields;
 class Updater
 {
     use ModificationFields;
-    protected PartnerUpdateDto $partnerDto;
+    protected PartnerDto $partnerDto;
     protected Partner $partner;
 
 
     /**
-     * @param PartnerUpdateDto $partnerDto
+     * @param PartnerDto $partnerDto
+     * @return $this
      */
-    public function setPartnerDto(PartnerUpdateDto $partnerDto)
+    public function setPartnerDto(PartnerDto $partnerDto)
     {
         $this->partnerDto = $partnerDto;
         return $this;
