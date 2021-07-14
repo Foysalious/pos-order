@@ -57,5 +57,6 @@ Route::group(['prefix'=>'v1'], function(){
         Route::apiResource('payments', PaymentController::class);
         Route::post('customers/{customer}/orders/{order}/review', [ReviewController::class, 'store']);
         Route::get('products/{product}/reviews', [ReviewController::class, 'index']);
+        Route::put('partners/{partner_id}',[DataMigrationController::class, 'updatePartnersTable']);
     });
 });

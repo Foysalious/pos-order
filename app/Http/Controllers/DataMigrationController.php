@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers;
 
+use App\Http\Requests\PartnerUpdateRequest;
 use App\Services\DataMigration\DataMigrationService;
+use App\Services\Partner\PartnerService;
 use App\Traits\ResponseAPI;
 use Illuminate\Http\Request;
 
@@ -9,7 +11,7 @@ class DataMigrationController extends Controller
     use ResponseAPI;
     private DataMigrationService $dataMigrationService;
 
-    public function __construct(DataMigrationService $dataMigrationService)
+    public function __construct(DataMigrationService $dataMigrationService, protected PartnerService $partnerService)
     {
         $this->dataMigrationService = $dataMigrationService;
     }
@@ -38,4 +40,8 @@ class DataMigrationController extends Controller
         return !is_array($data) ? json_decode($data,1) : $data;
     }
 
+    public function updatePartnersTable($partner_id, PartnerUpdateRequest $request)
+    {
+        return $this->partnerService->updatePartner($partner_id,$request);
+    }
 }
