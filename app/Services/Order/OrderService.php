@@ -15,6 +15,7 @@ use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Jobs\Order\OrderPlacePushNotification;
+use App\Models\Order;
 use App\Services\BaseService;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\SalesChannelIds;
@@ -103,7 +104,7 @@ class OrderService extends BaseService
             ->setHeader($request->header('Authorization'))
             ->create();
 
-//        if ($order) event(new OrderCreated($order));
+        if ($order) event(new OrderCreated($order));
         if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
         return $this->success();
     }

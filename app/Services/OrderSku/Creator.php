@@ -72,7 +72,7 @@ class Creator
             $sku_data['order_id'] = $this->order->id;
             $sku_data['name'] = $sku->product_name ?? $sku_details[$sku->id]['product_name'];
             $sku_data['sku_id'] = $sku->id ?: null;
-            $sku_data['details'] = json_encode($sku);
+            $sku_data['details'] = $this->makeSkudetails($sku,$sku_details[$sku->id] ?? null);
             $sku_data['quantity'] = $sku->quantity;
             $sku_data['unit_price'] = $sku->price ?? $sku_details[$sku->id]['sku_channel'][0]['price'];
             $sku_data['unit'] = $sku->unit ?? (isset($sku_details[$sku->id]) ? ($sku_details[$sku->id]['unit']['name_en'] ?? null) : null);
@@ -110,6 +110,17 @@ class Creator
                 continue;
             if ($sku_details[$sku->id]['stock'] < $sku->quantity)
                 throw new NotFoundHttpException("Product #" . $sku->id . " Not Enough Stock");
+        }
+    }
+
+    private function makeSkudetails($sku, $sku_details)
+    {
+        if ( is_null($sku_details)) {
+           return json_encode($sku);
+        } else {
+            $mapper = new OrderSkuDetail();
+            $data = $mapper->mapData($sku, $sku_details)->getData();
+            return json_encode($data);
         }
     }
 }

@@ -4,6 +4,7 @@ use App\Models\Order;
 use App\Repositories\Accounting\AccountingRepository;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\PriceCalculation;
+use App\Services\OrderSku\OrderSkuDetail;
 use App\Traits\ModificationFields;
 use Illuminate\Support\Facades\App;
 
@@ -38,16 +39,21 @@ class BaseEntry
         $ordered_skus = $this->order->orderSkus()->get();
         $skus_ids = $ordered_skus->where('sku_id', '<>', null)->pluck('sku_id')->toArray();
         $sku_details = collect($this->getSkuDetails($skus_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
-
+        $mapper = new OrderSkuDetail();
         foreach ($ordered_skus as $sku) {
-            if (isset($sku_details[$sku->sku_id])) {
-                $data [] = [
-                    'id' => $sku->sku_id,
-                    'name' => $sku->name,
-                    'unit_price' => (double)$sku_details[$sku->sku_id]['sku_channel'][0]['price'],
-                    'selling_price' => (double)$sku->unit_price,
-                    'quantity' => (double) $sku->quantity
-                ];
+
+            if (!is_null($sku->sku_id)) {
+                $batches = $mapper->setData($sku->details)->getBatchDetail();
+                foreach ($batches as $batch) {
+                    $data [] = [
+                        'id' => $sku->sku_id,
+                        'name' => $sku->name,
+                        'unit_price' => (double) $batch['cost'],
+                        'selling_price' => (double)$sku->unit_price,
+                        'quantity' => (double) $batch['quantity']
+                    ];
+                }
+
             } else {
                 $data [] = [
                     'id' => 0,
@@ -58,7 +64,6 @@ class BaseEntry
                 ];
             }
         }
-
         return $data ? json_encode($data) : null;
     }
 

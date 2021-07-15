@@ -33,7 +33,8 @@ class CreateEntry extends BaseEntry
         /** @var PriceCalculation $order_price_details */
         $order_price_details = $this->getOrderPriceDetails();
 
-        $customer = $this->order->customer->only('id','name');
+        $customer = $this->order->customer ? $this->order->customer->only('id','name') : null;
+
         $data = [
             'created_from' => json_encode($this->withBothModificationFields((new RequestIdentification())->get())),
             'credit_account_key' => Sales::SALES_FROM_POS,
@@ -47,9 +48,12 @@ class CreateEntry extends BaseEntry
             'total_vat'          => (double) $order_price_details->getTotalVat(),
             'entry_at' => $this->order->created_at->format('Y-m-d H:i:s'),
             'inventory_products' => $this->getOrderedItemsData(),
-            'customer_id' => $customer['id'],
-            'customer_name' => $customer['name'],
         ];
+
+        if(!is_null($customer)) {
+            $data['customer_id'] = $customer['id'];
+            $data['customer_name'] = $customer['name'];
+        }
         return $data;
     }
 
