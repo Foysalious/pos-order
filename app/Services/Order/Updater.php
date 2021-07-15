@@ -428,7 +428,7 @@ class Updater
         {
             /** @var PriceCalculation $orderPriceCalculation */
             $orderPriceCalculation = app(PriceCalculation::class);
-            $orderTotalBill = $orderPriceCalculation->setOrder($this->order)->getTotalBill();
+            $orderTotalBill = $orderPriceCalculation->setOrder($this->order)->getProductDiscountedPrice();
             $data['amount'] = ($orderTotalBill * $discountData->is_percentage)/100.00;
         }
         else

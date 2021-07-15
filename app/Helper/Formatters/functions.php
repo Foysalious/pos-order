@@ -1,8 +1,6 @@
 <?php
 
-
-namespace App\Helper\Formatters;
-
+use App\Helper\Formatters\TakaFormatter;
 
 if (!function_exists('formatTakaToDecimal')) {
     /**

@@ -2,8 +2,7 @@
 
 use App\Http\Controllers\DataMigrationController;
 use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\Webstore\ReviewController as WebstoreReviewController;
+use App\Http\Controllers\Webstore\ReviewController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OrderController;
@@ -25,8 +24,8 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 Route::group(['prefix'=>'v1'], function(){
-  //  Route::group(['middleware' => 'ip.whitelist'], function ()
-   // {
+    Route::group(['middleware' => 'ip.whitelist'], function ()
+    {
         Route::group(['prefix' => 'customers'], function () {
             Route::post('', [CustomerController::class, 'store']);
             Route::post('/{customer_id}', [CustomerController::class, 'update']);
@@ -36,7 +35,7 @@ Route::group(['prefix'=>'v1'], function(){
         });
         Route::group(['prefix' => 'webstore'], function () {
             Route::get('partners/{partner_id}/orders/{order_id}', [\App\Http\Controllers\Webstore\OrderController::class, 'show']);
-            Route::get('partners/{partner_id}/products-by-ratings', [WebstoreReviewController::class, 'getProductIdsByRating']);
+            Route::get('partners/{partner_id}/products-by-ratings', [ReviewController::class, 'getProductIdsByRating']);
         });
         Route::apiResource('partners.orders', OrderController::class);
         Route::apiResource('partners.migrate', DataMigrationController::class)->only('store');
@@ -58,5 +57,5 @@ Route::group(['prefix'=>'v1'], function(){
         Route::post('customers/{customer}/orders/{order}/review', [ReviewController::class, 'store']);
         Route::get('products/{product}/reviews', [ReviewController::class, 'index']);
         Route::put('partners/{partner_id}',[DataMigrationController::class, 'updatePartnersTable']);
-    //});
+    });
 });
