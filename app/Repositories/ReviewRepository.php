@@ -7,6 +7,7 @@ use App\Models\OrderSku;
 use App\Models\Review;
 use App\Services\FileManagers\CdnFileManager;
 use App\Services\FileManagers\FileManager;
+use Illuminate\Support\Facades\DB;
 
 class ReviewRepository extends BaseRepository implements ReviewRepositoryInterface
 {
@@ -95,7 +96,7 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         }
     }
 
-    public function getReviews($offset, $limit, $product_id, $rating, $orderBy)
+    public function getReviews( $offset,  $limit,  $product_id,  $rating,  $orderBy)
     {
         if (!$orderBy)
             $orderBy = 'desc';
@@ -104,7 +105,11 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
             $query = $query->where('rating', $rating);
         }
         return $query->orderBy('created_at', $orderBy)->offset($offset)->limit($limit)->get();
+    }
 
+    public function getRatingStatistics($productId)
+    {
+        return  $this->model->where('product_id', $productId)->groupBy('rating')->select('rating', DB::raw('count(*) as count'))->pluck('count','rating')->all();
     }
 
     public function getCustomerReviews(string $customer_id, int $offset, int $limit, $order)
