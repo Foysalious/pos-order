@@ -2,22 +2,27 @@
 
 use App\Models\Order;
 use App\Models\OrderSku;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use function App\Helper\Formatters\formatTakaToDecimal;
 
 class PriceCalculation
 {
     private Order $order;
-    private float $totalPrice;
-    private float $totalVat;
-    private float $totalItemDiscount;
-    private float $totalBill;
+    private float $originalPrice;
+    private float $vat;
+    private float $productDiscount;
+    private float $productDiscountedPrice;
     private float $paid;
     private float $due;
-    private float $totalDiscount;
-    private float $appliedDiscount;
-    private float $originalTotal;
-    private float $netBill;
+    private float $discount;
+    private float $discountedPrice;
+    private float $discountedPriceWithoutVat;
+    /**
+     * @var int|mixed
+     */
+    private mixed $orderDiscount;
+    /**
+     * @var int|mixed
+     */
+    private mixed $promoDiscount;
 
     /**
      * @param Order $order
@@ -32,51 +37,86 @@ class PriceCalculation
 
     private function calculate()
     {
-        $this->calculateThisItems();
-        $this->totalDiscount = $this->totalItemDiscount + $this->discountsAmountWithoutProduct();
-        $this->appliedDiscount = ($this->discountsAmountWithoutProduct() > $this->totalBill) ? $this->totalBill : $this->discountsAmountWithoutProduct();
-        $this->originalTotal = round($this->totalBill - $this->appliedDiscount, 2);
-        $this->netBill = $this->originalTotal + round((double)$this->order->interest, 2) + (double)round($this->order->bank_transaction_charge, 2);
-        $this->netBill += round($this->order->delivery_charge, 2);
+        $this->calculateOrderSkus();
+        $this->orderDiscount = $this->orderDiscount();
+        $this->promoDiscount = $this->promoDiscount();
+        $orderAndVoucherDiscount = $this->orderDiscount + $this->promoDiscount;
+        $this->discount = $this->productDiscount + $orderAndVoucherDiscount;
+        $appliedOrderAndVoucherDiscount = ($orderAndVoucherDiscount > $this->productDiscountedPrice) ? $this->productDiscountedPrice : $orderAndVoucherDiscount;
+        $originalTotal = round($this->productDiscountedPrice - $appliedOrderAndVoucherDiscount, 2);
+        $this->discountedPrice = $originalTotal + round((double)$this->order->interest, 2) + (double)round($this->order->bank_transaction_charge, 2);
+        $this->discountedPrice += round($this->order->delivery_charge, 2);
         $this->calculatePaidAmount();
         $this->paid = round($this->paid ?: 0, 2);
-        $this->due = ($this->netBill - $this->paid) > 0 ? ($this->netBill - $this->paid) : 0;
+        $this->due = ($this->discountedPrice - $this->paid) > 0 ? ($this->discountedPrice - $this->paid) : 0;
         $this->formatAllToTaka();
     }
 
     /**
+     * Total products/skus price (without vat and discount)
      * @return float
      */
-    public function getTotalPrice(): float
+    public function getOriginalPrice(): float
     {
-        return $this->totalPrice;
+        return $this->originalPrice;
     }
 
     /**
-     * @return float|int
-     */
-    public function getNetBill(): float|int
-    {
-        return $this->netBill;
-    }
-
-    /**
+     * Total product/sku discounted price without VAT
      * @return float
      */
-    public function getTotalBill(): float
+    public function getDiscountedPriceWithoutVat(): float
     {
-        return $this->totalBill;
+        return $this->discountedPriceWithoutVat;
     }
 
     /**
+     * Total price the customer will pay
      * @return float
      */
-    public function getTotalVat(): float
+    public function getDiscountedPrice(): float
     {
-        return $this->totalVat;
+        return $this->discountedPrice;
     }
 
     /**
+     * Product discounted price (without order and voucher discount, bank transaction charge, interest and delivery charge)
+     * @return float
+     */
+    public function getProductDiscountedPrice(): float
+    {
+        return $this->productDiscountedPrice;
+    }
+
+    /**
+     * Promo Discount
+     * @return float
+     */
+    public function getPromoDiscount(): float
+    {
+        return $this->promoDiscount;
+    }
+
+    /**
+     * Discount on Order
+     * @return float
+     */
+    public function getOrderDiscount(): float
+    {
+        return $this->orderDiscount;
+    }
+
+    /**
+     * Total VAT of the order
+     * @return float
+     */
+    public function getVat(): float
+    {
+        return $this->vat;
+    }
+
+    /**
+     * Total due of the order
      * @return float
      */
     public function getDue(): float
@@ -85,6 +125,7 @@ class PriceCalculation
     }
 
     /**
+     * Total paid amount of the order
      * @return float
      */
     public function getPaid(): float
@@ -93,34 +134,45 @@ class PriceCalculation
     }
 
     /**
+     * Total discounts on products/skus
      * @return float|int
      */
-    public function getTotalItemDiscount(): float|int
+    public function getProductDiscount(): float|int
     {
-        return $this->totalItemDiscount;
+        return $this->productDiscount;
     }
 
     /**
+     * Total discount of the order (product discount + order discount + voucher discount)
      * @return float
      */
-    public function getTotalDiscount(): float
+    public function getDiscount(): float
     {
-        return $this->totalDiscount;
+        return $this->discount;
+    }
+
+    /**
+     * Delivery Charge of the order
+     * @return float
+     */
+    public function getDeliveryCharge(): float
+    {
+        return (double) $this->order->delivery_charge;
     }
 
     private function initializeTotalsToZero()
     {
-        $this->totalPrice = 0;
-        $this->totalVat = 0;
-        $this->totalItemDiscount = 0;
-        $this->totalBill = 0;
+        $this->originalPrice = 0;
+        $this->vat = 0;
+        $this->productDiscount = 0;
+        $this->productDiscountedPrice = 0;
     }
 
-    private function calculateThisItems(): void
+    private function calculateOrderSkus(): void
     {
         $this->initializeTotalsToZero();
+        /** @var OrderSku $order_sku */
         foreach ($this->order->orderSkus as $order_sku) {
-            /** @var OrderSku $order_sku */
             $order_sku = $order_sku->calculate();
             $this->updateTotalPriceAndCost($order_sku);
         }
@@ -128,23 +180,21 @@ class PriceCalculation
 
     private function updateTotalPriceAndCost(OrderSku $orderSku)
     {
-        $this->totalPrice += $orderSku->getPrice();
-        $this->totalVat += $orderSku->getVat();
-        $this->totalItemDiscount += $orderSku->getDiscountAmount();
-        $this->totalBill += $orderSku->getTotal();
+        $this->originalPrice += $orderSku->getOriginalPrice();
+        $this->vat += $orderSku->getVat();
+        $this->productDiscount += $orderSku->getDiscountAmount();
+        $this->discountedPriceWithoutVat += $orderSku->discountedPriceWithoutVat();
+        $this->productDiscountedPrice += $orderSku->getDiscountedPrice();
     }
 
-    private function discountsAmountWithoutProduct()
+    private function orderDiscount()
     {
-        return $this->discountsWithoutProduct()->sum('amount');
+        return $this->order->orderDiscounts()->sum('amount');
     }
 
-    /**
-     * @return HasMany
-     */
-    public function discountsWithoutProduct(): HasMany
+    private function promoDiscount()
     {
-        return $this->order->discounts()->whereNull('item_id');
+        return $this->order->voucherDiscounts()->sum('amount');
     }
 
     private function creditPaymentsCollect()
@@ -170,11 +220,12 @@ class PriceCalculation
 
     private function formatAllToTaka(): void
     {
-        $this->totalPrice = formatTakaToDecimal($this->totalPrice);
-        $this->totalVat = formatTakaToDecimal($this->totalVat);
-        $this->totalItemDiscount = formatTakaToDecimal($this->totalItemDiscount);
-        $this->totalBill = formatTakaToDecimal($this->totalBill);
+        $this->originalPrice = formatTakaToDecimal($this->originalPrice);
+        $this->discountedPriceWithoutVat = formatTakaToDecimal($this->discountedPriceWithoutVat);
+        $this->orderDiscount = formatTakaToDecimal($this->orderDiscount);
+        $this->promoDiscount = formatTakaToDecimal($this->promoDiscount);
+        $this->vat = formatTakaToDecimal($this->vat);
+        $this->paid = formatTakaToDecimal($this->paid);
         $this->due = formatTakaToDecimal($this->due);
     }
-
 }

@@ -47,15 +47,15 @@ class CustomerOrderDetailsResource extends JsonResource
         $price_calculator = (App::make(PriceCalculation::class))->setOrder($this->order);
 
         return [
-            'delivery_charge'   => $this->delivery_charge,
-            'promo'             => $this->getVoucher()->pluck('amount')->first(),
-            'total_price' => $price_calculator->getTotalPrice(),
-            'total_bill' => $price_calculator->getTotalBill(),
-            'discount_amount' => $price_calculator->getTotalDiscount(),
-            'due_amount' => $price_calculator->getDue(),
-            'paid_amount' => $price_calculator->getPaid(),
-            'total_item_discount' => $price_calculator->getTotalItemDiscount(),
-            'total_vat' => $price_calculator->getTotalVat(),
+            'original_price' => $price_calculator->getOriginalPrice(),
+            'discounted_price_without_vat' => $price_calculator->getDiscountedPriceWithoutVat(),
+            'promo_discount' => $price_calculator->getPromoDiscount(),
+            'order_discount' => $price_calculator->getOrderDiscount(),
+            'vat' => $price_calculator->getVat(),
+            'delivery_charge' => $price_calculator->getDeliveryCharge(),
+            'discounted_price' => $price_calculator->getDiscountedPrice(),
+            'paid' => $price_calculator->getPaid(),
+            'due' => $price_calculator->getDue(),
         ];
     }
 

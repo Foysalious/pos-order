@@ -42,6 +42,6 @@ class Voucher extends SetParams
     {
         /** @var $priceCalculation PriceCalculation */
         $priceCalculation = app(PriceCalculation::class);
-        return $this->isPercentage ? (($this->totalAmount / 100) * $priceCalculation->setOrder($this->order)->getTotalBill()) : $this->totalAmount;
+        return $this->isPercentage ? (($this->totalAmount / 100) * $priceCalculation->setOrder($this->order)->getProductDiscountedPrice()) : $this->totalAmount;
     }
 }

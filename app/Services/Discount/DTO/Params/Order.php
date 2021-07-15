@@ -42,6 +42,6 @@ class Order extends SetParams
     {
         /** @var $priceCalculation PriceCalculation */
         $priceCalculation = app(PriceCalculation::class);
-        return $this->isPercentage ? (($this->originalAmount / 100) * $priceCalculation->setOrder($this->order)->getTotalBill()) : $this->originalAmount;
+        return $this->isPercentage ? (($this->originalAmount / 100) * $priceCalculation->setOrder($this->order)->getProductDiscountedPrice()) : $this->originalAmount;
     }
 }

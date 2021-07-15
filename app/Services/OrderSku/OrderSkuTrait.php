@@ -1,58 +1,80 @@
 <?php namespace App\Services\OrderSku;
 
-use function App\Helper\Formatters\formatTakaToDecimal;
 
 trait OrderSkuTrait
 {
-    protected float $price;
+    protected float $originalPrice;
     protected float $unit_price;
     protected float $quantity;
     protected float $discountAmount;
-    protected float $priceAfterDiscount;
+    protected float $discountedPriceWithoutVat;
     protected float $priceWithVat;
-    protected float $total;
+    protected float $discountedPrice;
     protected float $vat;
-    protected bool $isCalculated;
 
     public function calculate()
     {
-        $this->price = ($this['unit_price'] * $this['quantity']);
-        $this->discountAmount = $this->discount ? (($this->price > $this->discount->amount) ? $this->discount->amount : $this->price) : 0.00;
-        $this->priceAfterDiscount = $this->price - $this->discountAmount;
-        $this->vat = ($this->priceAfterDiscount * $this->vat_percentage) / 100;
-        $this->priceWithVat = $this->price + $this->vat;
-        $this->total = $this->priceWithVat - $this->discountAmount;
-        $this->isCalculated = true;
+        $this->originalPrice = ($this['unit_price'] * $this['quantity']);
+        $this->discountAmount = $this->discount ? (($this->originalPrice > $this->discount->amount) ? $this->discount->amount : $this->originalPrice) : 0.00;
+        $this->discountedPriceWithoutVat = $this->originalPrice - $this->discountAmount;
+        $this->vat = ($this->discountedPriceWithoutVat * $this->vat_percentage) / 100;
+        $this->discountedPrice = $this->discountedPriceWithoutVat - $this->vat;
         $this->formatAllToTaka();
-
         return $this;
     }
 
     protected function formatAllToTaka()
     {
-        $this->price = formatTakaToDecimal($this->price);
-        $this->vat = formatTakaToDecimal($this->vat);
-        $this->priceWithVat = formatTakaToDecimal($this->priceWithVat);
+        $this->originalPrice = formatTakaToDecimal($this->originalPrice);
         $this->discountAmount = formatTakaToDecimal($this->discountAmount);
-        $this->total = formatTakaToDecimal($this->total);
-    }
-    public function getPrice()
-    {
-        return $this->price;
+        $this->discountedPriceWithoutVat = formatTakaToDecimal($this->discountedPriceWithoutVat);
+        $this->vat = formatTakaToDecimal($this->vat);
+        $this->discountedPrice = formatTakaToDecimal($this->discountedPrice);
     }
 
-    public function getVat()
+    /**
+     * Original price of a product/sku (without VAT and discount)
+     * @return float
+     */
+    public function getOriginalPrice(): float
     {
-        return $this->vat;
+        return $this->originalPrice;
     }
 
-    public function getDiscountAmount()
+    /**
+     * Discount Amount of a product/sku
+     * @return float
+     */
+    public function getDiscountAmount(): float
     {
         return $this->discountAmount;
     }
 
-    public function getTotal()
+    /**
+     * VAT of a product/sku
+     * @return float
+     */
+    public function getVat(): float
     {
-        return $this->total;
+        return $this->vat;
+    }
+
+    /**
+     * Discounted price of a product/sku without VAT
+     * @return float
+     */
+    public function discountedPriceWithoutVat(): float
+    {
+        return $this->discountedPriceWithoutVat;
+    }
+
+    /**
+     * Discounted price of a product/sku with VAT
+     * Customer payable price
+     * @return float
+     */
+    public function getDiscountedPrice(): float
+    {
+        return $this->discountedPrice;
     }
 }
