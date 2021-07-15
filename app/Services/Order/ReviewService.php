@@ -23,17 +23,39 @@ class ReviewService extends BaseService
         $this->reviewCreator = $reviewCreator;
     }
 
-    public function getProductReviews($request, $rating, $orderBy, $product_id): object
+    /**
+     * @param $request
+     * @param int $rating
+     * @param string $orderBy
+     * @param int $product_id
+     * @return object
+     */
+    public function getProductReviews($request,  $rating,  $orderBy, int $product_id): object
     {
         list($offset, $limit) = calculatePagination($request);
         $reviews = $this->reviewRepositoryInterface->getReviews($offset, $limit, $product_id, $rating, $orderBy);
         if (count($reviews) == 0) return $this->error('এই প্রোডাক্ট এর জন্য কোন রিভিউ পাওয়া যায় নি', 404);
         $reviews = ReviewResource::collection($reviews);
-
-
-        return $this->success('Successful', ['reviews' => $reviews, 'rating_statistics' => $this->reviewStatistics()], 200);
+        $review_statistics = $this->reviewStatistics($product_id);
+        return $this->success('Successful', ['reviews' => $reviews, 'rating_statistics' => $review_statistics], 200);
     }
 
+    public function reviewStatistics($productId): array
+    {
+        $statistics = $this->reviewRepositoryInterface->getRatingStatistics($productId);
+        $sorted_statistics = [];
+        for($i=1 ; $i<=5 ; $i++)
+            if(!isset($statistics[$i]))
+                $sorted_statistics[$i] = 0;
+            else
+                $sorted_statistics[$i] = $statistics[$i];
+        return $sorted_statistics;
+    }
+
+    /**
+     * @param $productId
+     * @return mixed
+     */
     public function getCustomerReviews(string $customer_id, $request)
     {
         $order = $request->order;
@@ -44,22 +66,12 @@ class ReviewService extends BaseService
         return $this->success('Successful', ['reviews' => $reviews], 200);
     }
 
-    public function reviewStatistics()
-    {
-        return json_decode(json_encode([
-            "5" => 1,
-            "4" => 1,
-            "3" => 0,
-            "2" => 0,
-            "1" => 0,
-        ]));
 
-    }
 
     public function create($request, $customer_id, $order_id)
     {
         $order = $this->orderRepositoryInterface->where('customer_id', $customer_id)->find($order_id);
-        if (is_null($order)) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
+        if(is_null($order)) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
 
         $this->reviewCreator->setOrderId($order_id)
             ->setCustomerId($customer_id)
@@ -68,6 +80,6 @@ class ReviewService extends BaseService
             ->setReviewImages($request->review_images)
             ->create();
 
-        return $this->success('Successful', null, 201, true);
+        return $this->success('Successful', null, 201);
     }
 }
