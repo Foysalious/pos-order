@@ -157,7 +157,7 @@ class Order extends BaseModel
         return !empty($type) ? true : false;
     }
 
-    public function price()
+    public function totalPrice()
     {
         return app(PriceCalculation::class)->setOrder($this)->getNetBill();
     }
