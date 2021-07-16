@@ -165,6 +165,7 @@ class PriceCalculation
         $this->originalPrice = 0;
         $this->vat = 0;
         $this->productDiscount = 0;
+        $this->discountedPriceWithoutVat = 0;
         $this->productDiscountedPrice = 0;
     }
 
