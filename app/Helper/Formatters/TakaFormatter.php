@@ -48,7 +48,9 @@ class TakaFormatter
         }
 
         for ($i = strlen($amount) - 1, $r = 1; $i >= 0; $i--, $r++) {
-            if (in_array($r, $comma_positions)) $n_amount[] = ",";
+            if (in_array($r, $comma_positions)) {
+                $n_amount[] = ",";
+            }
 
             $n_amount[] = $amount[$i];
         }

@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Exceptions;
+<?php namespace App\Exceptions;
 
 use App\Traits\ResponseAPI;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -57,17 +55,17 @@ class Handler extends ExceptionHandler
             $defaultMessage = Response::$statusTexts[$code];
             $message = $e->getMessage() == "" ? $defaultMessage : $e->getMessage();
             return $this->error($message, $code);
-        } else if ($e instanceof ModelNotFoundException) {
+        } elseif ($e instanceof ModelNotFoundException) {
             $model = strtolower(class_basename($e->getModel()));
             return $this->error("Does not exist any instance of {$model} with the given id", Response::HTTP_NOT_FOUND);
-        } else if ($e instanceof AuthorizationException) {
+        } elseif ($e instanceof AuthorizationException) {
             return $this->error($e->getMessage(), Response::HTTP_FORBIDDEN);
-        } else if ($e instanceof AuthenticationException) {
+        } elseif ($e instanceof AuthenticationException) {
             return $this->error($e->getMessage(), Response::HTTP_UNAUTHORIZED);
-        } else if ($e instanceof ValidationException) {
+        } elseif ($e instanceof ValidationException) {
             $errors = $e->validator->errors()->all();
             return $this->error(getValidationErrorMessage($errors), Response::HTTP_UNPROCESSABLE_ENTITY);
-        } else if ($e instanceof BaseException) {
+        } elseif ($e instanceof BaseException) {
             return $this->error($e->getMessage(), $e->getCode());
         } else {
             $response = [];

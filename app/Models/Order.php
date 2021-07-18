@@ -62,6 +62,6 @@ class Order extends BaseModel
     public function isUpdated() : bool
     {
         $type = $this->logs->where('type', 'products_and_prices')->first();
-        return !empty($type) ? true : false;
+        return !empty($type);
     }
 }

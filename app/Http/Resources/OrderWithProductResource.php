@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Resources;
+<?php namespace App\Http\Resources;
 
 use App\Repositories\PaymentLinkRepository;
 use App\Services\Order\PriceCalculation;
