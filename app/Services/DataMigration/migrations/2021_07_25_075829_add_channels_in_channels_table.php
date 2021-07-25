@@ -1,5 +1,6 @@
 <?php namespace App\Services\DataMigration\migrations;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class AddChannelsInChannelsTable extends DataMigrationBase implements DataMigrationInterface
@@ -14,11 +15,15 @@ class AddChannelsInChannelsTable extends DataMigrationBase implements DataMigrat
         $channels = [
             [
                 'id' => 1,
-                'name' => 'pos'
+                'name' => 'pos',
+                'created_at' => Carbon::now(),
+                'created_by_name' => 'automatic'
             ],
             [
                 'id' => 2,
-                'name' => 'webstore'
+                'name' => 'webstore',
+                'created_at' => Carbon::now(),
+                'created_by_name' => 'automatic'
             ]
         ];
         DB::table('channels')->insert($channels);
