@@ -210,4 +210,12 @@ class CustomerController extends Controller
         return $this->customerService->getNotRatedOrderSkuList($customer_id, $request);
     }
 
+    public function getCustomerOrderAmount()
+    {
+        return [
+            'total_purchase_amount' => 3500,
+            'total_used_promo' => 700,
+        ];
+    }
+
 }
