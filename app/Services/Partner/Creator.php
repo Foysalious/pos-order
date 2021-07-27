@@ -23,6 +23,6 @@ class Creator
 
     public function create()
     {
-        $this->partnerRepository->create($this->withCreateModificationField($this->partnerDto->toArray()));
+        $this->partnerRepository->insert($this->withCreateModificationField($this->partnerDto->toArray()));
     }
 }
