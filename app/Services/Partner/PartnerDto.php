@@ -4,6 +4,7 @@ use Spatie\DataTransferObject\DataTransferObject;
 
 class PartnerDto extends DataTransferObject
 {
+    public int $id;
     public ?string $name;
     public ?string $sub_domain;
     public ?bool $sms_invoice;
