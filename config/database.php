@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Str;
 
-CONST LOCALHOST = 'localhost';
 
 return [
 
@@ -82,7 +81,7 @@ return [
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DATABASE_URL'),
-            'host' => env('DB_HOST', LOCALHOST),
+            'host' => env('DB_HOST', 'localhost'),
             'port' => env('DB_PORT', '1433'),
             'database' => env('DB_DATABASE', 'forge'),
             'username' => env('DB_USERNAME', 'forge'),
@@ -127,14 +126,14 @@ return [
         ],
 
         'default' => [
-            'host' => env('REDIS_HOST', LOCALHOST),
+            'host' => env('REDIS_HOST', 'localhost'),
             'password' => env('REDIS_PASSWORD', null),
             'port' => env('REDIS_PORT', 6379),
             'database' => 0,
         ],
 
         'cache' => [
-            'host' => env('REDIS_HOST', LOCALHOST),
+            'host' => env('REDIS_HOST', 'localhost'),
             'password' => env('REDIS_PASSWORD', null),
             'port' => env('REDIS_PORT', '6379'),
             'database' => env('REDIS_CACHE_DB', '1'),

@@ -121,8 +121,7 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
 
     public function getProductIdsByRating($partnerId, $ratings)
     {
-        return $this->model->where('partner_id',$partnerId)->whereIn('rating',$ratings)->pluck('product_id');
+        return $this->model->where('partner_id',$partnerId)->whereIn('rating',$ratings)->select('product_id')->pluck('product_id');
     }
-
 
 }

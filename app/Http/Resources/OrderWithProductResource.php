@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Resources;
+<?php namespace App\Http\Resources;
 
 use App\Repositories\PaymentLinkRepository;
 use App\Services\Order\PriceCalculation;
@@ -102,7 +100,7 @@ class OrderWithProductResource extends JsonResource
     private function getPayments()
     {
         /** @var Collection $payments */
-        $payments = $this->payments->where('transaction_type', TransactionTypes::CREDIT)->sortByDesc('created_at');
+        $payments = $this->payments->where('transaction_type', TransactionTypes::CREDIT)->sortByDesc('created_at')->values();
         return $payments->map(function ($each){
             return [
                 'amount'     => $each->amount,

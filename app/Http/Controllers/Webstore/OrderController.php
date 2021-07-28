@@ -51,6 +51,4 @@ class OrderController extends Controller
     {
         return $this->orderService->getWebStoreOrderDetails($partner_id, $order_id,$customer_id);
     }
-
-
 }

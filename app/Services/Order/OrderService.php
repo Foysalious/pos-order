@@ -193,8 +193,7 @@ class OrderService extends BaseService
                 ->setOrderLogType(OrderLogTypes::CUSTOMER)
                 ->update();
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
-        $customer = $this->customerRepository->where('id', $order->customer_id)->first();
-        return $this->success('Successful', ['customer' => $customer], 200);
+        return $this->success();
     }
 
     public function getDeliveryInfo(int $partner_id, int $order_id): JsonResponse

@@ -40,8 +40,9 @@ class Updater
     {
         $data = $this->partnerDto->toArray();
         foreach ($data as $key=>$value) {
-            if(is_null($value))
+            if (is_null($value)) {
                 unset($data[$key]);
+            }
         }
         return $data;
     }

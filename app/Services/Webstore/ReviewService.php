@@ -12,7 +12,7 @@ use Illuminate\Http\JsonResponse;
 class ReviewService extends BaseService
 {
     private $partnerId;
-    private array $ratings;
+    private $ratings;
     use FileManager, CdnFileManager;
 
     public function __construct(private ReviewRepositoryInterface $reviewRepositoryInterface, private OrderRepositoryInterface $orderRepositoryInterface, Private ReviewCreator $reviewCreator)
@@ -28,6 +28,7 @@ class ReviewService extends BaseService
 
     public function getProductIdsByRating()
     {
+
         $product_ids_by_ratings = $this->reviewRepositoryInterface->getProductIdsByRating($this->partnerId, $this->ratings);
         return $this->success('Successful', ['product_ids_by_ratings' => $product_ids_by_ratings], 200);
     }
