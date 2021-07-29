@@ -199,13 +199,12 @@ class CustomerController extends Controller
      *      @OA\Response(response=404, description="message: স্টকে কোন পণ্য নেই! প্রয়োজনীয় তথ্য দিয়ে স্টকে পণ্য যোগ করুন।"),
      *      @OA\Response(response=403, description="Forbidden")
      *     )
-     * @param $partner
      * @param Request $request
+     * @param int $customer_id
      * @return JsonResponse
-     *
      */
 
-    public function notRatedOrderSkuList(Request $request, int $customer_id)
+    public function notRatedOrderSkuList(Request $request, int $customer_id): JsonResponse
     {
         return $this->customerService->getNotRatedOrderSkuList($customer_id, $request);
     }

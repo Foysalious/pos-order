@@ -47,10 +47,12 @@ class CustomerService extends BaseService
         return $this->success();
     }
 
-    public function getNotRatedOrderSkuList(int $customerId,$request)
+    public function getNotRatedOrderSkuList(int $customerId,$request): JsonResponse
     {
         list($offset, $limit) = calculatePagination($request);
-        $not_rated_skus = $this->orderSkuRepositoryInterface->getNotRatedOrderSkuListOfCustomer($customerId,$offset, $limit);
+        if(!$request->order)
+            $request->order = 'desc';
+        $not_rated_skus = $this->orderSkuRepositoryInterface->getNotRatedOrderSkuListOfCustomer($customerId,$offset, $limit,$request->order);
         if ($not_rated_skus->isEmpty())
             throw new NotFoundHttpException("No SKUS Found");
         $not_rated_skus = NotRatedSkuResource::collection($not_rated_skus);
