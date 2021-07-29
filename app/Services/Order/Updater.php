@@ -272,8 +272,11 @@ class Updater
 
     public function update()
     {
-        $order = $this->setExistingOrder();
+//        $order = $this->setExistingOrder();
         $this->calculateOrderChangesAndUpdateSkus();
+        dd($this->orderProductChangeData);
+        event(new OrderUpdated($this->order, $this->orderProductChangeData));
+        dd('after updating');
         if(isset($this->customer_id)) $this->updateCustomer();
         $this->orderRepositoryInterface->update($this->order, $this->makeData());
         if(isset($this->voucher_id)) $this->updateVoucherDiscount();
@@ -352,11 +355,13 @@ class Updater
 
         if($comparator->isProductAdded()){
             /** @var AddProductInOrder $updater */
+            dd('added');
             $updater = OrderUpdateFactory::getProductAddingUpdater($this->order, $this->skus);
             $updated_flag = $updater->update();
             $this->orderProductChangeData['new'] = $updated_flag;
         }
         if($comparator->isProductDeleted()){
+            dd('deleted');
             /** @var DeleteProductFromOrder $updater */
             $updater = OrderUpdateFactory::getProductDeletionUpdater($this->order, $this->skus);
             $updated_flag = $updater->update();
@@ -364,6 +369,7 @@ class Updater
         }
         if($comparator->isProductUpdated()){
             /** @var UpdateProductInOrder $updater */
+//            dd('updated');
             $updater = OrderUpdateFactory::getOrderProductUpdater($this->order, $this->skus);
             $updated_flag = $updater->update();
             $this->orderProductChangeData['refund_exchanged'] = $updated_flag;

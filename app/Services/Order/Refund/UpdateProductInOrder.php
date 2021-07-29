@@ -2,7 +2,9 @@
 
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\SalesChannelIds;
+use App\Services\OrderSku\BatchManipulator;
 use App\Services\OrderSku\Creator;
+use App\Services\OrderSku\OrderSkuDetail;
 use App\Services\Transaction\Constants\TransactionTypes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
@@ -20,7 +22,7 @@ class UpdateProductInOrder extends ProductOrder
     public function update()
     {
         $updated_products = $this->getUpdatedProducts();
-        $skus_details = $this->getUpdatedProductsSkuDetails($updated_products); //only updated product's sku details
+        $skus_details = $this->getUpdatedProductsSkuDetails($updated_products);
         $this->checkStockAvailability($updated_products, $skus_details);
 
         foreach ($updated_products as $each) {
@@ -87,7 +89,7 @@ class UpdateProductInOrder extends ProductOrder
         $current_sku_price = $sku_details['sku_channel'][0]['price'];
         //handle when price same and quantity does not matter
         if($product['previous_unit_price'] == $current_sku_price) { //price is same so we are changing the quantity in order_skus
-            $this->updateOrderSkuQuantityForSamePrice($product);
+            $this->updateOrderSkuQuantityForSamePrice($product, $sku_details);
         }
         //handle when price changed and quantity increased
         elseif ($product['previous_unit_price'] != $current_sku_price && $product['quantity_changing_info']['type'] == self::QUANTITY_INCREASED) {
@@ -142,17 +144,21 @@ class UpdateProductInOrder extends ProductOrder
         $this->added_products[] = $product;
     }
 
-    private function updateOrderSkuQuantityForSamePrice(array $product)
+    private function updateOrderSkuQuantityForSamePrice(array $product, $sku_details)
     {
+//        dd($sku_details);
         $order_sku = $this->order->orderSkus()->where('id', $product['id'])->first();
         $order_sku->quantity = $product['quantity'];
-        $updated = $order_sku->save();
-        $updated = true;
-        if ($updated && (isset($product['quantity_changing_info']) && $product['quantity_changing_info']['type'] == self::QUANTITY_DECREASED)) {
-            $this->refunded_products[] = $product;
+        $old_order_sku_details = $order_sku->details;
+        $order_sku->details = $this->calculateUpdatedOrderSkuDetails($product,$sku_details['batches'],$order_sku);
+        dd($order_sku->details);
+//        $order_sku->save();
+        if ((isset($product['quantity_changing_info']) && $product['quantity_changing_info']['type'] == self::QUANTITY_DECREASED)) {
+            $this->refunded_products[] = [ 'product' => $product, 'old_order_sku_details' => $old_order_sku_details ];
         } else {
-            $this->added_products[] = $product;
+            $this->added_products[] = [ 'product' => $product, 'old_order_sku_details' => $old_order_sku_details ];
         }
+        dd($this->refunded_products,$this->added_products);
     }
 
     private function handleNullSkuItemInOrder(array $product)
@@ -253,6 +259,13 @@ class UpdateProductInOrder extends ProductOrder
         $this->refunded_amount = $total_refund;
     }
 
+    private function calculateUpdatedOrderSkuDetails(array $product,$sku_batch,$order_sku)
+    {
+        /** @var BatchManipulator $manipulator */
+        $manipulator = App::make(BatchManipulator::class);
+        return $manipulator->setOrderSkuDetails($order_sku->details)
+            ->setQuantity($product['quantity'])->setSkuBatch($sku_batch)->updateBatchDetail()->getUpdatedSkuDetails();
+    }
 
 
 }
