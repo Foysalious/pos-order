@@ -18,6 +18,7 @@ use App\Services\OrderSku\Creator as OrderSkuCreator;
 use App\Traits\ResponseAPI;
 
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -264,19 +265,25 @@ class Creator
      */
     public function create()
     {
-        $order_data = $this->makeOrderData();
-        $order = $this->orderRepositoryInterface->create($order_data);
-        $this->orderSkuCreator->setOrder($order)->setSkus($this->skus)->create();
-        $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($order_data);
-        if ($this->discountHandler->hasDiscount()) $this->discountHandler->create();
-        if (isset($this->voucher_id)) $this->discountHandler->setVoucherId($this->voucher_id)->setHeader($this->header)->voucherDiscountCalculate($order);
-        if ($this->paidAmount > 0) {
-            $payment_data['order_id'] = $order->id;
-            $payment_data['amount'] = $this->paidAmount;
-            $payment_data['method'] = $this->paymentMethod ?: 'cod';
-            $this->paymentCreator->credit($payment_data);
+        try {
+            DB::beginTransaction();
+            $order_data = $this->makeOrderData();
+            $order = $this->orderRepositoryInterface->create($order_data);
+            $this->orderSkuCreator->setOrder($order)->setSkus($this->skus)->create();
+            $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($order_data);
+            if ($this->discountHandler->hasDiscount()) $this->discountHandler->create();
+            if (isset($this->voucher_id)) $this->discountHandler->setVoucherId($this->voucher_id)->setHeader($this->header)->voucherDiscountCalculate($order);
+            if ($this->paidAmount > 0) {
+                $payment_data['order_id'] = $order->id;
+                $payment_data['amount'] = $this->paidAmount;
+                $payment_data['method'] = $this->paymentMethod ?: 'cod';
+                $this->paymentCreator->credit($payment_data);
+            }
+            DB::commit();
+            return $order;
+        } catch (\Exception $e) {
+            DB::rollback();
         }
-        return $order;
     }
 
     private function resolveCustomerId()

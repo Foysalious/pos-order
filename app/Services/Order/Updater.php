@@ -15,6 +15,7 @@ use App\Services\Order\Refund\UpdateProductInOrder;
 use App\Traits\ModificationFields;
 use Illuminate\Support\Facades\App;
 use App\Services\Order\Payment\Creator as OrderPaymentCreator;
+use Illuminate\Support\Facades\DB;
 
 class Updater
 {
@@ -272,14 +273,20 @@ class Updater
 
     public function update()
     {
-        $order = $this->setExistingOrder();
-        $this->calculateOrderChangesAndUpdateSkus();
-        if(isset($this->customer_id)) $this->updateCustomer();
-        $this->orderRepositoryInterface->update($this->order, $this->makeData());
-        if(isset($this->voucher_id)) $this->updateVoucherDiscount();
-        $this->updateOrderPayments();
-        if(isset($this->discount)) $this->updateDiscount();
-        $this->createLog($order);
+        try {
+            DB::beginTransaction();
+            $order = $this->setExistingOrder();
+            $this->calculateOrderChangesAndUpdateSkus();
+            if (isset($this->customer_id)) $this->updateCustomer();
+            $this->orderRepositoryInterface->update($this->order, $this->makeData());
+            if (isset($this->voucher_id)) $this->updateVoucherDiscount();
+            $this->updateOrderPayments();
+            if (isset($this->discount)) $this->updateDiscount();
+            $this->createLog($order);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+        }
     }
 
     public function makeData() : array
