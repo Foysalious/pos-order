@@ -155,6 +155,10 @@ class OrderService extends BaseService
             ->setPaymentLinkAmount($orderUpdateRequest->payment_link_amount ?? null)
             ->setDiscount($orderUpdateRequest->discount)
             ->setHeader($orderUpdateRequest->header('Authorization'))
+            ->setDeliveryVendorName($orderUpdateRequest->delivery_vendor_name ?? null)
+            ->setDeliveryRequestId($orderUpdateRequest->delivery_request_id ?? null)
+            ->setDeliveryThana($orderUpdateRequest->delivery_thana ?? null)
+            ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
             ->update();
 
         return $this->success('Successful', [], 200);
