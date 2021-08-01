@@ -27,12 +27,10 @@ class CustomerController extends Controller
     /**
      * Store Customer.
      *
-     * @param \Illuminate\Http\Request $request
-     * @param Request $request
+     * @param CustomerRequest $request
      *
      * @return JsonResponse
-     * @return JsonResponse
-     *
+     * @throws UnknownProperties
      * @OA\Post(
      *      path="/api/v1/customers",
      *      operationId="creatingcustomer",
@@ -62,7 +60,6 @@ class CustomerController extends Controller
      *        )
      *       ),
      *     )
-     * @throws UnknownProperties
      */
 
 
@@ -82,12 +79,10 @@ class CustomerController extends Controller
     /**
      * Update Customer.
      *
-     * @param \Illuminate\Http\Request $request
      * @param Request $request
-     *
+     * @param string $customer_id
      * @return JsonResponse
-     * @return JsonResponse
-     *
+     * @throws UnknownProperties
      * @OA\Post(
      *      path="/api/v1/customers/{customer_id}",
      *      operationId="updatingcustomer",
@@ -117,7 +112,6 @@ class CustomerController extends Controller
      *        )
      *       ),
      *     )
-     * @throws UnknownProperties
      */
     public function update(Request $request, string $customer_id)
     {
@@ -199,13 +193,12 @@ class CustomerController extends Controller
      *      @OA\Response(response=404, description="message: স্টকে কোন পণ্য নেই! প্রয়োজনীয় তথ্য দিয়ে স্টকে পণ্য যোগ করুন।"),
      *      @OA\Response(response=403, description="Forbidden")
      *     )
-     * @param $partner
      * @param Request $request
+     * @param int $customer_id
      * @return JsonResponse
-     *
      */
 
-    public function notRatedOrderSkuList(Request $request, int $customer_id)
+    public function notRatedOrderSkuList(Request $request, int $customer_id): JsonResponse
     {
         return $this->customerService->getNotRatedOrderSkuList($customer_id, $request);
     }
@@ -216,6 +209,28 @@ class CustomerController extends Controller
             'total_purchase_amount' => 3500,
             'total_used_promo' => 700,
         ];
+    }
+
+
+    /**
+     * Delete customer
+     *
+     * @param $customer_id
+     * @return JsonResponse
+     *
+     * @OA\Delete(
+     *     path="/api/v1/customers/{customer}",
+     *     tags={"Customer API"},
+     *     summary="To Delete a Customer",
+     *     description="Delete customer and related orders",
+     *     @OA\Parameter(name="customer", description="customer id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="200", description="Successful"),
+     *     @OA\Response(response="403", description="Customer Not Found"),
+     * )
+     */
+    public function destroy($customer_id)
+    {
+        return $this->customerService->delete($customer_id);
     }
 
 }

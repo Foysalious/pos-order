@@ -33,6 +33,7 @@ Route::group(['prefix'=>'v1'], function(){
             Route::get('/{customer_id}/orders', [OrderController::class, 'getCustomerOrderList']);
             Route::get('/{customer_id}/reviews', [ReviewController::class, 'getCustomerReviewList']);
             Route::get('/{customer_id}/order-amount', [CustomerController::class, 'getCustomerOrderAmount']);
+            Route::delete('/{customer_id}', [CustomerController::class, 'destroy']);
         });
         Route::group(['prefix' => 'webstore'], function () {
             Route::get('partners/{partner_id}/orders/{order_id}/customers/{customer_id}/order-details', [\App\Http\Controllers\Webstore\OrderController::class, 'show']);
