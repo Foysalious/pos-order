@@ -4,8 +4,6 @@
 namespace App\Services\OrderSku;
 
 
-use Illuminate\Support\Collection;
-
 class BatchManipulator
 {
     protected $orderSkuDetails;
@@ -131,5 +129,13 @@ class BatchManipulator
             }
         }
         return array_merge($new_batch_details,$old_batch_details->toArray());
+    }
+
+    /**
+     * @return array
+     */
+    public function getBatchDetails(): array
+    {
+        return $this->oldBatchDetails;
     }
 }
