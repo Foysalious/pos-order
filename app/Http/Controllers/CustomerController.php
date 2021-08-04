@@ -210,7 +210,7 @@ class CustomerController extends Controller
      * @return JsonResponse
      *
      * @OA\GET(
-     *     path="/api/v1/customers/{customer}/order-and-promo",
+     *     path="/api/v1/customers/{customer}/purchase-amount-promo-usage",
      *     tags={"Customer API"},
      *     summary="To get a Customer's total purchase amount and used promo",
      *     description="Delete customer and related orders",
