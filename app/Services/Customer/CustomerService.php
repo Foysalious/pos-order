@@ -2,11 +2,14 @@
 
 use App\Http\Resources\Webstore\Customer\NotRatedSkuResource;
 use App\Interfaces\CustomerRepositoryInterface;
+use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;
 use App\Services\BaseService;
+use App\Services\Order\PriceCalculation;
 use Illuminate\Http\JsonResponse;
 use App\Traits\ModificationFields;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -18,7 +21,9 @@ class CustomerService extends BaseService
         private CustomerRepositoryInterface $customerRepository,
         private ReviewRepositoryInterface $reviewRepositoryInterface,
         private Updater $updater,
-        private OrderSkuRepositoryInterface $orderSkuRepositoryInterface){}
+        private OrderSkuRepositoryInterface $orderSkuRepositoryInterface,
+        protected OrderRepositoryInterface $orderRepository
+    ){}
 
     public function update(string $customer_id, CustomerUpdateDto $updateDto): JsonResponse
     {
@@ -69,6 +74,29 @@ class CustomerService extends BaseService
         } catch (\Exception $e) {
             DB::rollback();
         }
+    }
+
+    public function getPuchaseAmountAndPromoUsed(string $customer_id)
+    {
+        $customer =  $this->customerRepository->where('id', $customer_id)->first();
+        if(!$customer) {
+            return $this->error('customer not found', 404);
+        }
+        $return_data = [
+            'total_purchase_amount' => 0,
+            'total_used_promo' => 0
+        ];
+        $all_orders = $this->orderRepository->where('customer_id', $customer->id)->get();
+        /** @var PriceCalculation $order_calculator */
+        $order_calculator = App::make(PriceCalculation::class);
+        $all_orders->each(function ($order) use (&$return_data, $order_calculator){
+            $order_calculator->setOrder($order);
+            $return_data['total_purchase_amount'] += $order_calculator->getDiscountedPrice();
+            $return_data['total_used_promo'] += $order_calculator->getPromoDiscount();
+        });
+        $return_data['total_purchase_amount'] = round($return_data['total_purchase_amount'],2);
+        $return_data['total_used_promo'] = round($return_data['total_used_promo'],2);
+        return $this->success('Successful', [ 'data' => $return_data ], 200);
     }
 }
 

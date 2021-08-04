@@ -32,7 +32,7 @@ Route::group(['prefix'=>'v1'], function(){
             Route::get('/{customer_id}/not-rated-order-sku-list', [CustomerController::class, 'notRatedOrderSkuList']);
             Route::get('/{customer_id}/orders', [OrderController::class, 'getCustomerOrderList']);
             Route::get('/{customer_id}/reviews', [ReviewController::class, 'getCustomerReviewList']);
-            Route::get('/{customer_id}/order-amount', [CustomerController::class, 'getCustomerOrderAmount']);
+            Route::get('/{customer_id}/order-and-promo', [CustomerController::class, 'getPurchaseAmountAndPromoUsed']);
             Route::delete('/{customer_id}', [CustomerController::class, 'destroy']);
         });
         Route::group(['prefix' => 'webstore'], function () {
