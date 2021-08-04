@@ -1,11 +1,11 @@
 <?php namespace App\Services\Order;
 
+use App\Exceptions\OrderException;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Interfaces\PartnerRepositoryInterface;
 use App\Models\Customer;
 use App\Models\Order;
-use App\Models\OrderSku;
 use App\Models\Partner;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Inventory\InventoryServerClient;
@@ -18,6 +18,7 @@ use App\Services\OrderSku\Creator as OrderSkuCreator;
 use App\Traits\ResponseAPI;
 
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -279,6 +280,9 @@ class Creator
                 $payment_data['method'] = $this->paymentMethod ?: 'cod';
                 $this->paymentCreator->credit($payment_data);
             }
+            if($this->hasDueError($order)){
+                throw new OrderException("Can not make due order without customer", 421);
+            }
             DB::commit();
             return $order;
         } catch (\Exception $e) {
@@ -342,5 +346,16 @@ class Creator
         $order_data['is_discount_percentage']   = json_decode($this->discount)->is_percentage ?? 0;
         $order_data['voucher_id']               = $this->voucher_id;
         return $order_data;
+    }
+
+    private function hasDueError(Order $order)
+    {
+        /** @var PriceCalculation $order_bill */
+        $order_bill = App::make(PriceCalculation::class);
+        $order_bill = $order_bill->setOrder($order);
+        if ($order_bill->getDue() > 0 && is_null($this->customer)){
+            return true;
+        }
+        return false;
     }
 }
