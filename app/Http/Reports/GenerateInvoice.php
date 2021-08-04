@@ -53,16 +53,18 @@ class GenerateInvoice
             ] : null
         ];
 
-        $customer = Customer::where('id',$order->customer_id)->get();
-
-        if ($order->customer) {
-            $customer = $order->customer->profile;
-            $info['user'] = [
-                'name' => $customer->name,
-                'mobile' => $customer->mobile,
-                'address' => !$order->address ? $customer->address : $order->address
-            ];
-        }
+//        //$customer = Customer::where('id',$order->customer_id)->get();
+//        $customer = Customer::find($order->customer_id);
+//        dd($customer);
+//
+//        if ($order->customer) {
+//            $customer = $order->customer->profile;
+//            $info['user'] = [
+//                'name' => $customer->name,
+//                'mobile' => $customer->mobile,
+//                'address' => !$order->address ? $customer->address : $order->address
+//            ];
+//        }
         $invoice_name = 'pos_order_invoice_' . $order->id;
         $link = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save(true);
 
