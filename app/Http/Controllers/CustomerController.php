@@ -198,7 +198,7 @@ class CustomerController extends Controller
      * @return JsonResponse
      */
 
-    public function notRatedOrderSkuList(Request $request, int $customer_id): JsonResponse
+    public function notRatedOrderSkuList(Request $request, string $customer_id): JsonResponse
     {
         return $this->customerService->getNotRatedOrderSkuList($customer_id, $request);
     }

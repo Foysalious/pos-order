@@ -44,7 +44,7 @@ class CustomerService extends BaseService
         return $this->success();
     }
 
-    public function getNotRatedOrderSkuList(int $customerId,$request): JsonResponse
+    public function getNotRatedOrderSkuList(string $customerId,$request): JsonResponse
     {
         list($offset, $limit) = calculatePagination($request);
         if(!$request->order)

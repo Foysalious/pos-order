@@ -2,6 +2,7 @@
 
 use App\Events\OrderCreated;
 use App\Events\OrderUpdated;
+use App\Http\Reports\GenerateInvoice;
 use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
 use App\Http\Resources\CustomerOrderResource;
@@ -29,6 +30,10 @@ class OrderService extends BaseService
     protected $updater, $orderSearch, $orderFilter;
     /** @var Creator */
     protected Creator $creator;
+    /**
+     * @var GenerateInvoice
+     */
+    private GenerateInvoice $generateInvoice;
 
     public function __construct(OrderRepositoryInterface $orderRepository,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
@@ -36,8 +41,10 @@ class OrderService extends BaseService
                                 OrderFilter $orderFilter,
                                 Updater $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
                                 Creator $creator,
+                                GenerateInvoice $generateInvoice
     )
     {
+        $this->generateInvoice = $generateInvoice;
         $this->orderRepository = $orderRepository;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->updater = $updater;
@@ -86,26 +93,28 @@ class OrderService extends BaseService
      */
     public function store($partner, OrderCreateRequest $request)
     {
-        $skus = is_array($request->skus) ? $request->skus : json_decode($request->skus);
-        $order = $this->creator->setPartner($partner)
-            ->setCustomerId($request->customer_id)
-            ->setDeliveryName($request->delivery_name)
-            ->setDeliveryMobile($request->delivery_mobile)
-            ->setDeliveryAddress($request->delivery_address)
-            ->setCustomerId($request->customer_id)
-            ->setSalesChannelId($request->sales_channel_id)
-            ->setDeliveryCharge($request->delivery_charge)
-            ->setEmiMonth($request->emi_month)
-            ->setSkus($skus)
-            ->setDiscount($request->discount)
-            ->setPaidAmount($request->paid_amount)
-            ->setPaymentMethod($request->payment_method)
-            ->setVoucherId($request->voucher_id)
-            ->setHeader($request->header('Authorization'))
-            ->create();
+//        $skus = is_array($request->skus) ? $request->skus : json_decode($request->skus);
+//        $order = $this->creator->setPartner($partner)
+//            ->setCustomerId($request->customer_id)
+//            ->setDeliveryName($request->delivery_name)
+//            ->setDeliveryMobile($request->delivery_mobile)
+//            ->setDeliveryAddress($request->delivery_address)
+//            ->setCustomerId($request->customer_id)
+//            ->setSalesChannelId($request->sales_channel_id)
+//            ->setDeliveryCharge($request->delivery_charge)
+//            ->setEmiMonth($request->emi_month)
+//            ->setSkus($skus)
+//            ->setDiscount($request->discount)
+//            ->setPaidAmount($request->paid_amount)
+//            ->setPaymentMethod($request->payment_method)
+//            ->setVoucherId($request->voucher_id)
+//            ->setHeader($request->header('Authorization'))
+//            ->create();
+//
+//        if ($order) event(new OrderCreated($order));
+//        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
 
-        if ($order) event(new OrderCreated($order));
-        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
+        $this>$this->generateInvoice->downloadInvoice(2000771);
         return $this->success();
     }
 
@@ -119,7 +128,7 @@ class OrderService extends BaseService
 
     public function getWebStoreOrderDetails(int $partner_id, int $order_id, int $customer_id): JsonResponse
     {
-        $order = $this->orderRepository->where('partner_id', $partner_id)->where('customer_id',$customer_id)->find($order_id);
+        $order = $this->orderRepository->where('partner_id', $partner_id)->where('customer_id', $customer_id)->find($order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new CustomerOrderDetailsResource($order);
         return $this->success('Successful', ['order' => $resource], 200);
