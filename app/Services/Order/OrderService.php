@@ -88,7 +88,6 @@ class OrderService extends BaseService
     /**
      * @param $partner
      * @param OrderCreateRequest $request
-     * @return JsonResponse
      * @throws ValidationException
      */
     public function store($partner, OrderCreateRequest $request)
@@ -113,9 +112,10 @@ class OrderService extends BaseService
 //
 //        if ($order) event(new OrderCreated($order));
 //        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
-     $this > $this->generateInvoice->generateInvoice(2000833);
-
-       // return $this->success();
+        $invoice = $this->generateInvoice->generateInvoice(2000954);
+//        $orderDetails = $this->orderRepository->where('partner_id', $partner)->find($order->id);
+//        $this->updater->setPartnerId($partner)->setOrderId($order->id)->setOrder($orderDetails)->setInvoiceLink($invoice)->update();
+//        return $this->success('Successful');
     }
 
     public function getOrderDetails($partner_id, $order_id)
@@ -169,7 +169,9 @@ class OrderService extends BaseService
             ->setDeliveryThana($orderUpdateRequest->delivery_thana ?? null)
             ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
             ->update();
-
+        $invoice = $this->generateInvoice->generateInvoice($order_id);
+        $orderDetailsAfterUpdate = $orderDetails;
+        $this->updater->setPartnerId($partner_id)->setOrderId($order_id)->setOrder($orderDetailsAfterUpdate)->setInvoiceLink($invoice)->update();
         return $this->success('Successful', [], 200);
     }
 

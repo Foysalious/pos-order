@@ -80,7 +80,6 @@ class PdfHandler extends Handler
     /**
      * @throws MpdfException
      * @throws Throwable
-     *   @return JsonResponse
      */
 
     public function save()
@@ -99,7 +98,7 @@ class PdfHandler extends Handler
         $mPDF->Output($path, "F");
         $cdn = $this->saveFileToCDN($path, $folder, $file);
         File::delete($path);
-        return $this->success('success');
+        return $cdn;
     }
 
     protected function getViewPath()

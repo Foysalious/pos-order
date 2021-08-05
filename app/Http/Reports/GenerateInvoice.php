@@ -1,11 +1,13 @@
 <?php namespace App\Http\Reports;
 
 
+use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Services\APIServerClient\ApiServerClient;
 use App\Services\Order\PriceCalculation;
+use App\Services\Order\Updater;
 use App\Traits\ModificationFields;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -15,10 +17,20 @@ class GenerateInvoice
     use ModificationFields;
 
     protected ApiServerClient $client;
+    /**
+     * @var Updater
+     */
+    private Updater $updater;
+    /**
+     * @var OrderRepositoryInterface
+     */
+    private OrderRepositoryInterface $orderRepository;
 
-    public function __construct(ApiServerClient $client)
+    public function __construct(ApiServerClient $client, Updater $updater, OrderRepositoryInterface $orderRepository)
     {
         $this->client = $client;
+        $this->updater = $updater;
+        $this->orderRepository = $orderRepository;
     }
 
 
@@ -62,8 +74,10 @@ class GenerateInvoice
             ];
         }
         $invoice_name = 'pos_order_invoice_' . $order->id;
-        $link= $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
-
-
+        $link = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+        //dd($link,$order->partner_id,$orderID);
+        $orderDetails = $this->orderRepository->where('partner_id', $order->partner_id)->find($orderID);
+        $this->updater->setPartnerId($partner)->setOrderId($orderID)->setOrder($orderDetails)->setInvoiceLink($link)->update();
+        return $link;
     }
 }
