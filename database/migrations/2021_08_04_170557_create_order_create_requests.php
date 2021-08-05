@@ -19,6 +19,7 @@ class CreateOrderCreateRequests extends Migration
             $table->bigInteger('order_id')->nullable()->unsigned()->index();
             $table->foreign('order_id')->references('id')->on('orders')
                 ->onUpdate('cascade')->onDelete('set null');
+            $table->string('route')->nullable();
             $table->enum('portal_name',PortalNames::get())->nullable();
             $table->string('portal_version')->nullable();
             $table->string('ip_address')->nullable();
