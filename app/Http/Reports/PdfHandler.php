@@ -10,6 +10,7 @@ use Mpdf\Mpdf;
 use Mpdf\MpdfException;
 use Throwable;
 use App\Services\FileManagers\CdnFileManager;
+use Illuminate\Http\JsonResponse;
 
 class PdfHandler extends Handler
 {
@@ -79,7 +80,9 @@ class PdfHandler extends Handler
     /**
      * @throws MpdfException
      * @throws Throwable
+     *   @return JsonResponse
      */
+
     public function save()
     {
         $mPDF = $this->getMpdf();
@@ -96,8 +99,7 @@ class PdfHandler extends Handler
         $mPDF->Output($path, "F");
         $cdn = $this->saveFileToCDN($path, $folder, $file);
         File::delete($path);
-        dd($cdn);
-        return $cdn;
+        return $this->success('success');
     }
 
     protected function getViewPath()

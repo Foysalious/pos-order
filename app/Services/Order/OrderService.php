@@ -93,30 +93,29 @@ class OrderService extends BaseService
      */
     public function store($partner, OrderCreateRequest $request)
     {
-        $skus = is_array($request->skus) ? $request->skus : json_decode($request->skus);
-        $order = $this->creator->setPartner($partner)
-            ->setCustomerId($request->customer_id)
-            ->setDeliveryName($request->delivery_name)
-            ->setDeliveryMobile($request->delivery_mobile)
-            ->setDeliveryAddress($request->delivery_address)
-            ->setCustomerId($request->customer_id)
-            ->setSalesChannelId($request->sales_channel_id)
-            ->setDeliveryCharge($request->delivery_charge)
-            ->setEmiMonth($request->emi_month)
-            ->setSkus($skus)
-            ->setDiscount($request->discount)
-            ->setPaidAmount($request->paid_amount)
-            ->setPaymentMethod($request->payment_method)
-            ->setVoucherId($request->voucher_id)
-            ->setHeader($request->header('Authorization'))
-            ->create();
+//        $skus = is_array($request->skus) ? $request->skus : json_decode($request->skus);
+//        $order = $this->creator->setPartner($partner)
+//            ->setCustomerId($request->customer_id)
+//            ->setDeliveryName($request->delivery_name)
+//            ->setDeliveryMobile($request->delivery_mobile)
+//            ->setDeliveryAddress($request->delivery_address)
+//            ->setCustomerId($request->customer_id)
+//            ->setSalesChannelId($request->sales_channel_id)
+//            ->setDeliveryCharge($request->delivery_charge)
+//            ->setEmiMonth($request->emi_month)
+//            ->setSkus($skus)
+//            ->setDiscount($request->discount)
+//            ->setPaidAmount($request->paid_amount)
+//            ->setPaymentMethod($request->payment_method)
+//            ->setVoucherId($request->voucher_id)
+//            ->setHeader($request->header('Authorization'))
+//            ->create();
+//
+//        if ($order) event(new OrderCreated($order));
+//        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
+     $this > $this->generateInvoice->generateInvoice(2000833);
 
-        if ($order) event(new OrderCreated($order));
-        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
-        dd($order);
-//      $this>$this->generateInvoice->downloadInvoice(2000771);
-
-     //return $this->success();
+       // return $this->success();
     }
 
     public function getOrderDetails($partner_id, $order_id)

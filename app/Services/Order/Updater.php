@@ -276,6 +276,12 @@ class Updater
         return $this;
     }
 
+    public function setInvoiceLink(string $invoice)
+    {
+        $this->invoice = $invoice;
+        return $this;
+    }
+
     /**
      * @param string|null $delivery_vendor_name
      * @return Updater

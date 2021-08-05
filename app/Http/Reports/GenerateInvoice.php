@@ -22,7 +22,7 @@ class GenerateInvoice
     }
 
 
-    public function downloadInvoice($orderID)
+    public function generateInvoice($orderID)
     {
         $pdf_handler = new PdfHandler();
         $order = Order::find($orderID);
@@ -62,9 +62,8 @@ class GenerateInvoice
             ];
         }
         $invoice_name = 'pos_order_invoice_' . $order->id;
-        $link = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+        $link= $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
 
 
-        return $this->success('Successful', ['link' => $link], 200);
     }
 }
