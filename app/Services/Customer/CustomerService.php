@@ -1,10 +1,13 @@
 <?php namespace App\Services\Customer;
 
+use App\Exceptions\CustomerNotFound;
+use App\Exceptions\OrderException;
 use App\Http\Resources\Webstore\Customer\NotRatedSkuResource;
 use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;
+use App\Models\Customer;
 use App\Services\BaseService;
 use App\Services\Order\PriceCalculation;
 use Illuminate\Http\JsonResponse;
@@ -12,6 +15,7 @@ use App\Traits\ModificationFields;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use function PHPUnit\Framework\throwException;
 
 class CustomerService extends BaseService
 {
@@ -76,17 +80,17 @@ class CustomerService extends BaseService
         }
     }
 
-    public function getPuchaseAmountAndPromoUsed(string $customer_id)
+    /**
+     * @throws CustomerNotFound
+     */
+    public function getPuchaseAmountAndPromoUsed(int $partner_id, string $customer_id)
     {
-        $customer =  $this->customerRepository->where('id', $customer_id)->first();
-        if(!$customer) {
-            return $this->error('customer not found', 404);
-        }
+        $customer =  $this->findTheCustomer($partner_id,$customer_id);
         $return_data = [
             'total_purchase_amount' => 0,
             'total_used_promo' => 0
         ];
-        $all_orders = $this->orderRepository->where('customer_id', $customer->id)->get();
+        $all_orders = $this->orderRepository->where('customer_id', $customer->id)->where('partner_id', $partner_id)->get();
         /** @var PriceCalculation $order_calculator */
         $order_calculator = App::make(PriceCalculation::class);
         $all_orders->each(function ($order) use (&$return_data, $order_calculator){
@@ -97,6 +101,29 @@ class CustomerService extends BaseService
         $return_data['total_purchase_amount'] = round($return_data['total_purchase_amount'],2);
         $return_data['total_used_promo'] = round($return_data['total_used_promo'],2);
         return $this->success('Successful', [ 'data' => $return_data ], 200);
+    }
+
+    /**
+     * @throws CustomerNotFound
+     */
+    public function getOrdersByDateWise(int $partner_id, string $customer_id)
+    {
+        $customer = $this->findTheCustomer($partner_id,$customer_id);
+
+    }
+
+
+    /**
+     * @throws CustomerNotFound
+     */
+    private function findTheCustomer(int $partner_id, string $customer_id)
+    {
+        $customer =  $this->customerRepository->where('id', $customer_id)->where('partner_id', $partner_id)->first();
+        if(!$customer) {
+            throw new CustomerNotFound();
+        } else {
+            return $customer;
+        }
     }
 }
 

@@ -32,7 +32,6 @@ Route::group(['prefix'=>'v1'], function(){
             Route::get('/{customer_id}/not-rated-order-sku-list', [CustomerController::class, 'notRatedOrderSkuList']);
             Route::get('/{customer_id}/orders', [OrderController::class, 'getCustomerOrderList']);
             Route::get('/{customer_id}/reviews', [ReviewController::class, 'getCustomerReviewList']);
-            Route::get('/{customer_id}/purchase-amount-promo-usage', [CustomerController::class, 'getPurchaseAmountAndPromoUsed']);
             Route::delete('/{customer_id}', [CustomerController::class, 'destroy']);
         });
         Route::group(['prefix' => 'webstore'], function () {
@@ -59,5 +58,7 @@ Route::group(['prefix'=>'v1'], function(){
         Route::post('customers/{customer}/orders/{order}/review', [ReviewController::class, 'store']);
         Route::get('products/{product}/reviews', [ReviewController::class, 'index']);
         Route::put('partners/{partner_id}',[DataMigrationController::class, 'updatePartnersTable']);
+        Route::get('/partners/{partner_id}/customers/{customer_id}/purchase-amount-promo-usage', [CustomerController::class, 'getPurchaseAmountAndPromoUsed']);
+        Route::get('/partners/{partner_id}/customers/{customer_id}/order-list', [CustomerController::class, 'getOrdersByDateWise']);
     });
 });
