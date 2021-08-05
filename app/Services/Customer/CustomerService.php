@@ -2,20 +2,22 @@
 
 use App\Exceptions\CustomerNotFound;
 use App\Exceptions\OrderException;
+use App\Http\Requests\CustomerOrderListRequest;
 use App\Http\Resources\Webstore\Customer\NotRatedSkuResource;
 use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;
 use App\Models\Customer;
+use App\Models\Order;
 use App\Services\BaseService;
+use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\PriceCalculation;
 use Illuminate\Http\JsonResponse;
 use App\Traits\ModificationFields;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use function PHPUnit\Framework\throwException;
 
 class CustomerService extends BaseService
 {
@@ -25,8 +27,7 @@ class CustomerService extends BaseService
         private CustomerRepositoryInterface $customerRepository,
         private ReviewRepositoryInterface $reviewRepositoryInterface,
         private Updater $updater,
-        private OrderSkuRepositoryInterface $orderSkuRepositoryInterface,
-        protected OrderRepositoryInterface $orderRepository
+        private OrderSkuRepositoryInterface $orderSkuRepositoryInterface
     ){}
 
     public function update(string $customer_id, CustomerUpdateDto $updateDto): JsonResponse
@@ -83,14 +84,14 @@ class CustomerService extends BaseService
     /**
      * @throws CustomerNotFound
      */
-    public function getPuchaseAmountAndPromoUsed(int $partner_id, string $customer_id)
+    public function getPurchaseAmountAndPromoUsed(int $partner_id, string $customer_id): JsonResponse
     {
         $customer =  $this->findTheCustomer($partner_id,$customer_id);
         $return_data = [
             'total_purchase_amount' => 0,
             'total_used_promo' => 0
         ];
-        $all_orders = $this->orderRepository->where('customer_id', $customer->id)->where('partner_id', $partner_id)->get();
+        $all_orders = Order::with('orderSkus','payments','discounts')->where('partner_id', $partner_id)->where('customer_id', $customer->id)->get();
         /** @var PriceCalculation $order_calculator */
         $order_calculator = App::make(PriceCalculation::class);
         $all_orders->each(function ($order) use (&$return_data, $order_calculator){
@@ -100,15 +101,44 @@ class CustomerService extends BaseService
         });
         $return_data['total_purchase_amount'] = round($return_data['total_purchase_amount'],2);
         $return_data['total_used_promo'] = round($return_data['total_used_promo'],2);
-        return $this->success('Successful', [ 'data' => $return_data ], 200);
+        return $this->success('Successful', [ 'data' => $return_data ]);
     }
 
     /**
      * @throws CustomerNotFound
      */
-    public function getOrdersByDateWise(int $partner_id, string $customer_id)
+    public function getOrdersByDateWise(CustomerOrderListRequest $request, int $partner_id, string $customer_id)
     {
         $customer = $this->findTheCustomer($partner_id,$customer_id);
+        $status = $request->status ?? null;
+        list($offset, $limit) = calculatePagination($request);
+        $order_list = [];
+        $all_orders = Order::with('orderSkus','payments','discounts')
+            ->where('customer_id', $customer->id)
+            ->where('partner_id', $partner_id)
+            ->orderBy('created_at', 'desc')
+            ->skip($offset)->take($limit)->get();
+        foreach ($all_orders as $order) {
+            $date = $order->created_at->format('Y-m-d');
+            $order_list[$date]['total_sale'] = $order_list[$date]['total_sale'] ?? 0;
+            $order_list[$date]['total_due'] = $order_list[$date]['total_due'] ?? 0;
+            /** @var PriceCalculation $order_calculator */
+            $order_calculator = App::make(PriceCalculation::class);
+            $order_calculator->setOrder($order);
+            $order->discounted_price = $order_calculator->getDiscountedPrice();
+            $order->due = $order_calculator->getDue();
+
+            $order_list[$date]['total_sale'] += $order->discounted_price;
+            $order_list[$date]['total_due'] += $order->due;
+            if (!is_null($status) && ($status == PaymentStatuses::DUE || $status == 'Due' )) {
+                if($order->due > 0) {
+                    $order_list[$date]['orders'][] = $order->only(['id','partner_wise_order_id','status', 'discounted_price', 'due', 'created_at']);
+                }
+            } else {
+                $order_list[$date]['orders'][] = $order->only(['id','partner_wise_order_id','status', 'discounted_price', 'due', 'created_at']);
+            }
+        }
+        return $this->success('Successful', [ 'data' => $order_list ]);
 
     }
 
@@ -118,7 +148,7 @@ class CustomerService extends BaseService
      */
     private function findTheCustomer(int $partner_id, string $customer_id)
     {
-        $customer =  $this->customerRepository->where('id', $customer_id)->where('partner_id', $partner_id)->first();
+        $customer = $this->customerRepository->where('id', $customer_id)->where('partner_id', $partner_id)->first();
         if(!$customer) {
             throw new CustomerNotFound();
         } else {

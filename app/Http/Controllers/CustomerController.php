@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
 use App\Exceptions\ProductNotFoundException;
+use App\Http\Requests\CustomerOrderListRequest;
 use App\Http\Requests\CustomerRequest;
 use App\Services\Customer\CustomerCreateDto;
 use App\Services\Customer\CustomerService;
@@ -221,13 +222,13 @@ class CustomerController extends Controller
      */
     public function getPurchaseAmountAndPromoUsed(int $partner_id, string $customer_id): JsonResponse
     {
-        return $this->customerService->getPuchaseAmountAndPromoUsed($partner_id,$customer_id);
+        return $this->customerService->getPurchaseAmountAndPromoUsed($partner_id,$customer_id);
     }
 
 
-    public function getOrdersByDateWise(int $partner_id,string $customer_id)
+    public function getOrdersByDateWise(CustomerOrderListRequest $request, int $partner_id,string $customer_id)
     {
-        return $this->customerService->getOrdersByDateWise($partner_id,$customer_id);
+        return $this->customerService->getOrdersByDateWise($request, $partner_id,$customer_id);
     }
 
     /**
