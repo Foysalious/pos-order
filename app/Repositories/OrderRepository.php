@@ -31,6 +31,11 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
         if ($orderBy && $order) $query = $query->orderBy($orderBy, $order);
         return $query->offset($offset)->limit($limit)->get();
     }
+    public function getCustomerOrderCount($customer_id)
+    {
+       return $this->model->where('customer_id', $customer_id)->get();
+    }
+
 
     private function getSearchingQuery($partner_id, $orderSearch)
     {

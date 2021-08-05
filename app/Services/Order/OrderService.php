@@ -72,9 +72,10 @@ class OrderService extends BaseService
         $order = $request->order;
         list($offset, $limit) = calculatePagination($request);
         $orderList = $this->orderRepository->getCustomerOrderList($customer_id, $offset, $limit, $orderBy, $order);
+        $orderCount = count($this->orderRepository->getCustomerOrderCount($customer_id));
         if (count($orderList) == 0) return $this->error("You don't have any order", 404);
         $orderList = CustomerOrderResource::collection($orderList);
-        return $this->success('Successful', ['orders' => $orderList], 200);
+        return $this->success('Successful', ['order_count' => $orderCount,'orders' => $orderList ], 200);
     }
 
 
@@ -119,7 +120,7 @@ class OrderService extends BaseService
 
     public function getWebStoreOrderDetails(int $partner_id, int $order_id, int $customer_id): JsonResponse
     {
-        $order = $this->orderRepository->where('partner_id', $partner_id)->where('customer_id',$customer_id)->find($order_id);
+        $order = $this->orderRepository->where('partner_id', $partner_id)->where('customer_id', $customer_id)->find($order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new CustomerOrderDetailsResource($order);
         return $this->success('Successful', ['order' => $resource], 200);
