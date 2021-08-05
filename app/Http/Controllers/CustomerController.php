@@ -203,12 +203,25 @@ class CustomerController extends Controller
         return $this->customerService->getNotRatedOrderSkuList($customer_id, $request);
     }
 
-    public function getCustomerOrderAmount()
+    /**
+     * Get customers order amount and promo used
+     *
+     * @param string $customer_id
+     * @return JsonResponse
+     *
+     * @OA\GET(
+     *     path="/api/v1/customers/{customer}/purchase-amount-promo-usage",
+     *     tags={"Customer API"},
+     *     summary="To get a Customer's total purchase amount and used promo",
+     *     description="Delete customer and related orders",
+     *     @OA\Parameter(name="customer", description="customer id", required=true, in="path", @OA\Schema(type="string")),
+     *     @OA\Response(response="200", description="Successful"),
+     *     @OA\Response(response="404", description="Customer Not Found"),
+     * )
+     */
+    public function getPurchaseAmountAndPromoUsed(string $customer_id): JsonResponse
     {
-        return [
-            'total_purchase_amount' => 3500,
-            'total_used_promo' => 700,
-        ];
+        return $this->customerService->getPuchaseAmountAndPromoUsed($customer_id);
     }
 
 
