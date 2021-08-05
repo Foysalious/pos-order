@@ -39,12 +39,12 @@ class PdfHandler extends Handler
     public function download($mPdf = false)
     {
         if ($mPdf) {
-            $mPDF=$this->getMpdf();
+            $mPDF = $this->getMpdf();
             $mPDF->simpleTables = true;
             $mPDF->packTableData = true;
             $mPDF->shrink_tables_to_fit = 1;
-            $keep_table_proportions     = TRUE;
-            $data                       = view($this->viewFileName, $this->data)->render();
+            $keep_table_proportions = TRUE;
+            $data = view($this->viewFileName, $this->data)->render();
             $mPDF->WriteHTML("$data", HTMLParserMode::DEFAULT_MODE);
             return $mPDF->Output("$this->filename.$this->downloadFormat", "d");
         }
@@ -58,16 +58,16 @@ class PdfHandler extends Handler
      */
     private function getMpdf()
     {
-        $defaultConfig     = (new ConfigVariables())->getDefaults();
-        $fontDirs          = $defaultConfig['fontDir'];
+        $defaultConfig = (new ConfigVariables())->getDefaults();
+        $fontDirs = $defaultConfig['fontDir'];
         $defaultFontConfig = (new FontVariables())->getDefaults();
-        $fontData          = $defaultFontConfig['fontdata'];
+        $fontData = $defaultFontConfig['fontdata'];
         return new Mpdf([
             'mode' => 'utf-8',
             'tempDir' => storage_path('app/temp'),
             'fontDir' => array_merge($fontDirs, [
                 storage_path('/fonts'),
-            ]), 'fontdata'        => $fontData + [
+            ]), 'fontdata' => $fontData + [
                     'kalpurush' => [
                         'R' => 'Siyamrupali.ttf', 'I' => 'Siyamrupali.ttf', 'useOTL' => 0xFF, 'useKashida' => 75,
                     ]
@@ -80,36 +80,23 @@ class PdfHandler extends Handler
      * @throws MpdfException
      * @throws Throwable
      */
-    public function save($mPdf = false)
+    public function save()
     {
-        if (!is_dir(public_path('temp'))) {
-            mkdir(public_path('temp'), 0777, true);
-        }
-        if ($mPdf) {
-            $mPDF                       = $this->getMpdf();
-            $mPDF->simpleTables         = true;
-            $mPDF->packTableData        = true;
-            $mPDF->shrink_tables_to_fit = 1;
-            $data                       = view($this->viewFileName, $this->data)->render();
-            $mPDF->WriteHTML("$data", HTMLParserMode::DEFAULT_MODE);
+        $mPDF = $this->getMpdf();
+        $mPDF->simpleTables = true;
+        $mPDF->packTableData = true;
+        $mPDF->shrink_tables_to_fit = 1;
+        $data = view($this->viewFileName, $this->data)->render();
+        $mPDF->WriteHTML("$data", HTMLParserMode::DEFAULT_MODE);
 
-            $folder = $this->folder ?: 'invoices/pdf/';
-            $time   = time();
-            $file   = $this->filename . "_$time." . $this->downloadFormat;
-            $path   = public_path('temp') . '/' . $file;
-            $mPDF->Output($path, "F");
-            $cdn = $this->saveFileToCDN($path, $folder, $file);
-            File::delete($path);
-            return $cdn;
-        }
-        $this->create();
         $folder = $this->folder ?: 'invoices/pdf/';
-        $time   = time();
-        $file   = $this->filename . "_$time." . $this->downloadFormat;
-        $path   = public_path('temp') . '/' . $file;
-        $this->pdf->save($path);
+        $time = time();
+        $file = $this->filename . "_$time." . $this->downloadFormat;
+        $path = public_path('temp') . '/' . $file;
+        $mPDF->Output($path, "F");
         $cdn = $this->saveFileToCDN($path, $folder, $file);
         File::delete($path);
+        dd($cdn);
         return $cdn;
     }
 

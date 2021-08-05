@@ -113,9 +113,9 @@ class OrderService extends BaseService
 //
 //        if ($order) event(new OrderCreated($order));
 //        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
+      $this>$this->generateInvoice->downloadInvoice(2000771);
 
-        $this>$this->generateInvoice->downloadInvoice(2000771);
-        return $this->success();
+     //return $this->success();
     }
 
     public function getOrderDetails($partner_id, $order_id)

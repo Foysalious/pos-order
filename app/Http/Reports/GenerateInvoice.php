@@ -29,7 +29,7 @@ class GenerateInvoice
 
         /** @var PriceCalculation $price_calculator */
         $price_calculator = (App::make(PriceCalculation::class))->setOrder($order);
-        $partner=Partner::find($order->partner_id);
+        $partner = Partner::find($order->partner_id);
         $partner = $this->client->setBaseUrl()->get('v2/partners/' . $partner->sub_domain);
         $info = [
             'amount' => $price_calculator->getOriginalPrice(),
@@ -45,7 +45,7 @@ class GenerateInvoice
                 'discount' => $price_calculator->getOrderDiscount(),
                 'total' => $price_calculator->getDiscountedPriceWithoutVat(),
                 'grand_total' => $price_calculator->getDiscountedPriceWithoutVat(),
-                'promo_discount' =>$price_calculator->getPromoDiscount(),
+                'promo_discount' => $price_calculator->getPromoDiscount(),
                 'paid' => $price_calculator->getPaid(),
                 'due' => $price_calculator->getDue(),
                 'vat' => $price_calculator->getVat(),
@@ -53,20 +53,16 @@ class GenerateInvoice
             ] : null
         ];
 
-//        //$customer = Customer::where('id',$order->customer_id)->get();
-//        $customer = Customer::find($order->customer_id);
-//        dd($customer);
-//
-//        if ($order->customer) {
-//            $customer = $order->customer->profile;
-//            $info['user'] = [
-//                'name' => $customer->name,
-//                'mobile' => $customer->mobile,
-//                'address' => !$order->address ? $customer->address : $order->address
-//            ];
-//        }
+        if ($order->customer_id) {
+            $customer = Customer::find($order->customer_id);
+            $info['user'] = [
+                'name' => $customer->name,
+                'mobile' => $customer->mobile,
+                'address' => $order->address
+            ];
+        }
         $invoice_name = 'pos_order_invoice_' . $order->id;
-        $link = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save(true);
+        $link = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
 
 
         return $this->success('Successful', ['link' => $link], 200);
