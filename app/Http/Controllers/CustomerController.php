@@ -220,8 +220,14 @@ class CustomerController extends Controller
      *     description="customers total order amount and promo usage",
      *     @OA\Parameter(name="partner", description="partner id", required=true, in="path", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="customer", description="customer id", required=true, in="path", @OA\Schema(type="string")),
-     *     @OA\Response(response="200", description="Successful"),
+     *     @OA\Response(response=200, description="Successful operation",
+     *          @OA\JsonContent(
+     *          type="object",
+     *          example={"message":"Successful","data":{"total_purchase_amount":10947436.8,"total_used_promo":50}},
+     *       ),
+     *      ),
      *     @OA\Response(response="404", description="Customer Not Found"),
+     *
      * )
      */
     public function getPurchaseAmountAndPromoUsed(int $partner_id, string $customer_id): JsonResponse
@@ -249,7 +255,12 @@ class CustomerController extends Controller
      *     @OA\Parameter(name="limit", description="limit", required=false, in="query", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="offset", description="offset", required=false, in="query", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="status", description="status which has one value = due", required=false, in="query", @OA\Schema(type="string")),
-     *     @OA\Response(response="200", description="Successful"),
+     *     @OA\Response(response=200, description="Successful operation",
+     *          @OA\JsonContent(
+     *          type="object",
+     *          example={"message":"Successful","data":{"2021-08-05":{"total_sale":610,"total_due":0,"orders":{{"id":2000955,"partner_wise_order_id":775,"status":"Pending","discounted_price":555,"due":0,"created_at":"2021-08-05T13:24:52.000000Z"},{"id":2000949,"partner_wise_order_id":770,"status":"Pending","discounted_price":55,"due":0,"created_at":"2021-08-05T11:05:38.000000Z"}}}}},
+     *       ),
+     *      ),
      *     @OA\Response(response="404", description="Customer Not Found"),
      * )
      */
