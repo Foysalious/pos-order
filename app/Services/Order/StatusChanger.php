@@ -2,10 +2,14 @@
 
 use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Order;
+use App\Repositories\Accounting\Constants\EntryTypes;
+use App\Repositories\ExpenseTracker\AutomaticEntryRepository;
+use App\Services\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Order\Payment\Creator as PaymentCreator;
 use App\Traits\ResponseAPI;
+use Illuminate\Support\Facades\App;
 
 class StatusChanger
 {
@@ -46,13 +50,16 @@ class StatusChanger
 
     public function changeStatus()
     {
-        $this->orderRepositoryInterface->update($this->order, ['status' => $this->status]);
-        return $this->success('Successful', ['order' => $this->order], 200);
+//        $this->orderRepositoryInterface->update($this->order, ['status' => $this->status]);
+        /** @var PriceCalculation $order_calculator */
+        $order_calculator = App::make(PriceCalculation::class);
+        $order_calculator->setOrder($this->order);
 
-      /*  if ($this->order->sales_channel == SalesChannels::WEBSTORE) {
-            if ($this->status == Statuses::DECLINED || $this->status == Statuses::CANCELLED) $this->refund();
-            if ($this->status == Statuses::COMPLETED && $this->order->getDue()) $this->collectPayment($this->order);
-        }*/
+        if ($this->order->sales_channel_id == SalesChannelIds::WEBSTORE) {
+              if ($this->status == Statuses::DECLINED || $this->status == Statuses::CANCELLED) $this->refund();
+              if ($this->status == Statuses::COMPLETED && $order_calculator->getDue() > 0) $this->collectPayment($this->order, $order_calculator );
+          }
+        return $this->success('Successful', ['order' => $this->order], 200);
     }
 
 
@@ -61,22 +68,39 @@ class StatusChanger
 
     }
 
-    private function collectPayment($order)
+    /**
+     * @throws ExpenseTrackingServerError
+     */
+    private function collectPayment(Order $order, PriceCalculation $order_calculator)
     {
         $payment_data = [
-            'pos_order_id' => $order->id,
-            'amount' => $order->getDue(),
+            'order_id' => $order->id,
+            'amount' => $order_calculator->getDue(),
             'method' => 'cod'
         ];
         if ($order->emi_month) $payment_data['emi_month'] = $order->emi_month;
-        $this->paymentCreator->credit($payment_data);
-        $order = $order->calculate();
-        $order->payment_status = $order->getPaymentStatus();
-        $this->updateIncome($order, $order->getDue(), $order->emi_month);
+//        $this->paymentCreator->credit($payment_data);
+        $this->updateIncome($order, $order_calculator);
     }
 
-    private function updateIncome(Order $order, $paid_amount, $emi_month)
+    /**
+     * @throws ExpenseTrackingServerError
+     */
+    private function updateIncome(Order $order, PriceCalculation $order_calculator)
     {
-
+        /** @var AutomaticEntryRepository $entry */
+        $entry  = app(AutomaticEntryRepository::class);
+        $amount = $order_calculator->getDiscountedPrice();
+        $entry->setPartner($order->partner)
+            ->setAmount($amount)
+            ->setAmountCleared($order_calculator->getDue())
+            ->setFor(EntryTypes::INCOME)
+            ->setSourceType(class_basename($order))
+            ->setSourceId($order->id)
+            ->setCreatedAt($order->created_at)
+            ->setEmiMonth($order->emi_month)
+            ->setIsWebstoreOrder($order->sales_channel_id == SalesChannelIds::WEBSTORE ? 1 : 0)
+            ->updateFromSrc();
+        dd('entry inserted');
     }
 }
