@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Exceptions\CustomerNotFound;
 use App\Exceptions\ProductNotFoundException;
 use App\Http\Requests\CustomerOrderListRequest;
 use App\Http\Requests\CustomerRequest;
@@ -207,14 +208,17 @@ class CustomerController extends Controller
     /**
      * Get customers order amount and promo used
      *
+     * @param int $partner_id
      * @param string $customer_id
      * @return JsonResponse
      *
+     * @throws CustomerNotFound
      * @OA\GET(
-     *     path="/api/v1/customers/{customer}/purchase-amount-promo-usage",
+     *     path="/api/v1/partners/{partner}/customers/{customer}/purchase-amount-promo-usage",
      *     tags={"Customer API"},
      *     summary="To get a Customer's total purchase amount and used promo",
-     *     description="Delete customer and related orders",
+     *     description="customers total order amount and promo usage",
+     *     @OA\Parameter(name="partner", description="partner id", required=true, in="path", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="customer", description="customer id", required=true, in="path", @OA\Schema(type="string")),
      *     @OA\Response(response="200", description="Successful"),
      *     @OA\Response(response="404", description="Customer Not Found"),
@@ -226,7 +230,10 @@ class CustomerController extends Controller
     }
 
 
-    public function getOrdersByDateWise(CustomerOrderListRequest $request, int $partner_id,string $customer_id)
+    /**
+     * @throws CustomerNotFound
+     */
+    public function getOrdersByDateWise(CustomerOrderListRequest $request, int $partner_id, string $customer_id): JsonResponse
     {
         return $this->customerService->getOrdersByDateWise($request, $partner_id,$customer_id);
     }
