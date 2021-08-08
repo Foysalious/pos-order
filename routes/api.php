@@ -59,6 +59,6 @@ Route::group(['prefix'=>'v1'], function(){
         Route::get('products/{product}/reviews', [ReviewController::class, 'index']);
         Route::put('partners/{partner_id}',[DataMigrationController::class, 'updatePartnersTable']);
         Route::get('/partners/{partner_id}/customers/{customer_id}/purchase-amount-promo-usage', [CustomerController::class, 'getPurchaseAmountAndPromoUsed']);
-        Route::get('/partners/{partner_id}/customers/{customer_id}/order-list', [CustomerController::class, 'getOrdersByDateWise']);
+        Route::get('/partners/{partner_id}/customers/{customer_id}/orders', [CustomerController::class, 'getOrdersByDateWise']);
     });
 });

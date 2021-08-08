@@ -246,7 +246,7 @@ class CustomerController extends Controller
      *
      * @throws CustomerNotFound
      * @OA\GET(
-     *     path="/api/v1/partners/{partner}/customers/{customer}/order-list",
+     *     path="/api/v1/partners/{partner}/customers/{customer}/orders",
      *     tags={"Customer API"},
      *     summary="To get a Customer's total purchase amount and used promo",
      *     description="customers order list date-wise",
