@@ -30,13 +30,13 @@ Route::group(['prefix'=>'v1'], function(){
             Route::post('', [CustomerController::class, 'store']);
             Route::post('/{customer_id}', [CustomerController::class, 'update']);
             Route::get('/{customer_id}/not-rated-order-sku-list', [CustomerController::class, 'notRatedOrderSkuList']);
-            Route::get('/{customer_id}/orders', [OrderController::class, 'getCustomerOrderList']);
             Route::get('/{customer_id}/reviews', [ReviewController::class, 'getCustomerReviewList']);
             Route::delete('/{customer_id}', [CustomerController::class, 'destroy']);
         });
         Route::group(['prefix' => 'webstore'], function () {
             Route::get('partners/{partner_id}/orders/{order_id}/customers/{customer_id}/order-details', [\App\Http\Controllers\Webstore\OrderController::class, 'show']);
             Route::get('partners/{partner_id}/products-by-ratings', [ReviewController::class, 'getProductIdsByRating']);
+            Route::get('/{customer_id}/orders', [OrderController::class, 'getCustomerOrderList']);
         });
         Route::apiResource('partners.orders', OrderController::class);
         Route::apiResource('partners.migrate', DataMigrationController::class)->only('store');
