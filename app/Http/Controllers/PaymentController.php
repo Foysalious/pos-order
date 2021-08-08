@@ -21,4 +21,9 @@ class PaymentController extends Controller
     {
         return $this->paymentService->store($request);
     }
+
+    public function delete(Request $request)
+    {
+        return $this->paymentService->setOrderId($request->order_id)->setAmount($request->amount)->deletePayment();
+    }
 }
