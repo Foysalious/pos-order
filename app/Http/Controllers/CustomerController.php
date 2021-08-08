@@ -231,7 +231,27 @@ class CustomerController extends Controller
 
 
     /**
+     * Get customers order list date wise
+     *
+     * @param CustomerOrderListRequest $request
+     * @param int $partner_id
+     * @param string $customer_id
+     * @return JsonResponse
+     *
      * @throws CustomerNotFound
+     * @OA\GET(
+     *     path="/api/v1/partners/{partner}/customers/{customer}/order-list",
+     *     tags={"Customer API"},
+     *     summary="To get a Customer's total purchase amount and used promo",
+     *     description="customers order list date-wise",
+     *     @OA\Parameter(name="partner", description="partner id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="customer", description="customer id", required=true, in="path", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="limit", description="limit", required=false, in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="offset", description="offset", required=false, in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="status", description="status which has one value = due", required=false, in="query", @OA\Schema(type="string")),
+     *     @OA\Response(response="200", description="Successful"),
+     *     @OA\Response(response="404", description="Customer Not Found"),
+     * )
      */
     public function getOrdersByDateWise(CustomerOrderListRequest $request, int $partner_id, string $customer_id): JsonResponse
     {
