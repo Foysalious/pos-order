@@ -3,7 +3,7 @@
 use Illuminate\Foundation\Http\FormRequest;
 
 
-class CustomerOrderRequest extends FormRequest
+class CustomerOrderListRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,6 +23,7 @@ class CustomerOrderRequest extends FormRequest
     public function rules()
     {
         return [
+            'status' => 'sometimes',
             'offset' => 'numeric',
             'limit' => 'numeric'
         ];

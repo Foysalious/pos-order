@@ -2,6 +2,7 @@
 
 use App\Models\Order;
 use App\Models\OrderSku;
+use App\Services\Discount\Constants\DiscountTypes;
 
 class PriceCalculation
 {
