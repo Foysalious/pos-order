@@ -196,11 +196,11 @@ class CustomerController extends Controller
      *      @OA\Response(response=403, description="Forbidden")
      *     )
      * @param Request $request
-     * @param int $customer_id
+     * @param $customer_id
      * @return JsonResponse
      */
 
-    public function notRatedOrderSkuList(Request $request, int $customer_id): JsonResponse
+    public function notRatedOrderSkuList(Request $request, $customer_id): JsonResponse
     {
         return $this->customerService->getNotRatedOrderSkuList($customer_id, $request);
     }
