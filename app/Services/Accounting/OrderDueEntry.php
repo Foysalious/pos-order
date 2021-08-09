@@ -9,7 +9,6 @@ use App\Services\Accounting\Constants\Sales;
 use App\Services\Order\Constants\SalesChannel;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\PriceCalculation;
-use Carbon\Carbon;
 
 class OrderDueEntry extends BaseEntry
 {
@@ -38,15 +37,6 @@ class OrderDueEntry extends BaseEntry
             'amount_cleared'     => $order_price_details->getDue(),
             'note'               => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ?  SalesChannel::WEBSTORE : SalesChannel::POS,
             'entry_at'           => $this->order->updated_at->format('Y-m-d H:i:s'),
-            'total_discount'     => null,
-            'total_vat'          => null,
-            'inventory_products' => null,
-            'attachments'   => null,
-            'delivery_charge'   => null,
-            'bank_transaction_charge'   => null,
-            'interest'  => null,
-            'details'   => null,
-            'reference' => null,
         ];
         if(!is_null($customer)) {
             $data['customer_id'] = $customer['id'];

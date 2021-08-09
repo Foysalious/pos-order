@@ -3,9 +3,6 @@
 use App\Events\OrderDueCleared;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Order;
-use App\Repositories\Accounting\Constants\EntryTypes;
-use App\Repositories\ExpenseTracker\AutomaticEntryRepository;
-use App\Services\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Order\Payment\Creator as PaymentCreator;
