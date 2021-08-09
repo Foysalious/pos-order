@@ -115,7 +115,7 @@ class CustomerController extends Controller
      *       ),
      *     )
      */
-    public function update(Request $request, string $customer_id, int $partner_id)
+    public function update(Request $request, int $partner_id, string $customer_id )
     {
         $customer = new CustomerUpdateDto([
             'name' => $request->name,
