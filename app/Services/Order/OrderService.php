@@ -17,6 +17,7 @@ use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Jobs\Order\OrderPlacePushNotification;
 use App\Models\Order;
 use App\Services\BaseService;
+use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\SalesChannelIds;
@@ -227,19 +228,24 @@ class OrderService extends BaseService
         $order_resource = json_decode(($order_resource->toJson()), true);
         $sku_ids = $order->orderSkus()->whereNotNull('sku_id')->pluck('sku_id');
         $sku_details = $this->getSkuDetails($sku_ids, $order);
+        $order_sku_discounts = $order->discounts()->where('type', DiscountTypes::SKU)->get();
         foreach ($order_resource['items'] as &$item) {
+            $flag = true;
            if ($item['sku_id'] !== null) {
                 $sku = $sku_details->where('id', $item['sku_id'])->first();
                 if ($sku['sku_channel'][0]['price'] != $item['unit_price']){
-                    $item['is_updatable'] = false;
+                    $flag = false;
                 } else {
-                    $item['is_updatable'] = true;
+                    $channels_discount = collect($sku['sku_channel'])->where('channel_id', $order->sales_channel_id)->pluck('discounts')->first()[0] ?? [];
+                    $sku_discount = $order_sku_discounts->where('item_id', $item['sku_id'])->first();
+                    if($channels_discount && ($sku_discount->amount != $channels_discount['amount'] || $sku_discount->is_percentage !== $channels_discount['is_amount_percentage'])) {
+                        $flag = false;
+                    }
                 }
-           } else {
-               $item['is_updatable'] = true;
-           }
-        }
 
+           }
+            $item['is_updatable'] = $flag;
+        }
         return $order_resource;
     }
 
