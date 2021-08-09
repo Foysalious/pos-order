@@ -17,6 +17,7 @@ class PaymentService extends BaseService
      * PaymentService constructor.
      * @param Creator $creator
      * @param OrderRepositoryInterface $orderRepository
+     * @param PaymentRepositoryInterface $paymentRepository
      */
     public function __construct(Creator $creator, private OrderRepositoryInterface $orderRepository, private PaymentRepositoryInterface $paymentRepository)
     {
