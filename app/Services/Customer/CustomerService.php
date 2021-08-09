@@ -30,9 +30,9 @@ class CustomerService extends BaseService
         private OrderSkuRepositoryInterface $orderSkuRepositoryInterface
     ){}
 
-    public function update(string $customer_id, CustomerUpdateDto $updateDto): JsonResponse
+    public function update(string $customer_id, CustomerUpdateDto $updateDto,$partner_id): JsonResponse
     {
-        $customerDetails = $this->customerRepository->find($customer_id);
+        $customerDetails = $this->customerRepository->where('partner_id',$partner_id)->find($customer_id);
         if (!$customerDetails) return $this->error('Customer Not Found', 404);
         $this->customerRepository->update($customerDetails, $this->makeData($updateDto));
         return $this->success();

@@ -115,7 +115,7 @@ class CustomerController extends Controller
      *       ),
      *     )
      */
-    public function update(Request $request, string $customer_id)
+    public function update(Request $request, string $customer_id, int $partner_id)
     {
         $customer = new CustomerUpdateDto([
             'name' => $request->name,
@@ -123,7 +123,7 @@ class CustomerController extends Controller
             'mobile' => $request->mobile,
             'pro_pic' => $request->pro_pic,
         ]);
-        return $this->customerService->update($customer_id, $customer);
+        return $this->customerService->update($customer_id, $customer,$partner_id);
     }
 
     /**
