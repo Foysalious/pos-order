@@ -26,13 +26,14 @@ class AccountingRepository extends BaseRepository
     }
 
     /**
-     * @param Request $request
-     * @param $sourceId
-     * @param $sourceType
+     * @param array $data
+     * @param int $order_id
+     * @param int $partner_id
+     * @param string $sourceType
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function updateEntryBySource(array $data, int $order_id, int $partner_id, $sourceType='pos')
+    public function updateEntryBySource(array $data, int $order_id, int $partner_id, string $sourceType='pos')
     {
 
         $url = "api/entries/source/" . $sourceType . '/' . $order_id;
@@ -42,5 +43,4 @@ class AccountingRepository extends BaseRepository
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
-
 }
