@@ -1,5 +1,6 @@
 <?php namespace App\Services\Order;
 
+use App\Events\OrderDueCleared;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Order;
 use App\Repositories\Accounting\Constants\EntryTypes;
@@ -50,7 +51,7 @@ class StatusChanger
 
     public function changeStatus()
     {
-//        $this->orderRepositoryInterface->update($this->order, ['status' => $this->status]);
+        $this->orderRepositoryInterface->update($this->order, ['status' => $this->status]);
         /** @var PriceCalculation $order_calculator */
         $order_calculator = App::make(PriceCalculation::class);
         $order_calculator->setOrder($this->order);
@@ -68,9 +69,6 @@ class StatusChanger
 
     }
 
-    /**
-     * @throws ExpenseTrackingServerError
-     */
     private function collectPayment(Order $order, PriceCalculation $order_calculator)
     {
         $payment_data = [
@@ -79,28 +77,7 @@ class StatusChanger
             'method' => 'cod'
         ];
         if ($order->emi_month) $payment_data['emi_month'] = $order->emi_month;
-//        $this->paymentCreator->credit($payment_data);
-        $this->updateIncome($order, $order_calculator);
-    }
-
-    /**
-     * @throws ExpenseTrackingServerError
-     */
-    private function updateIncome(Order $order, PriceCalculation $order_calculator)
-    {
-        /** @var AutomaticEntryRepository $entry */
-        $entry  = app(AutomaticEntryRepository::class);
-        $amount = $order_calculator->getDiscountedPrice();
-        $entry->setPartner($order->partner)
-            ->setAmount($amount)
-            ->setAmountCleared($order_calculator->getDue())
-            ->setFor(EntryTypes::INCOME)
-            ->setSourceType(class_basename($order))
-            ->setSourceId($order->id)
-            ->setCreatedAt($order->created_at)
-            ->setEmiMonth($order->emi_month)
-            ->setIsWebstoreOrder($order->sales_channel_id == SalesChannelIds::WEBSTORE ? 1 : 0)
-            ->updateFromSrc();
-        dd('entry inserted');
+        $this->paymentCreator->credit($payment_data);
+        event(new OrderDueCleared($order));
     }
 }
