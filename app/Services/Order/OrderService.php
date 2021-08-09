@@ -2,6 +2,7 @@
 
 use App\Events\OrderCreated;
 use App\Events\OrderUpdated;
+use App\Helper\Miscellaneous\RequestIdentification;
 use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
 use App\Http\Resources\CustomerOrderResource;
@@ -16,10 +17,12 @@ use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Jobs\Order\OrderPlacePushNotification;
 use App\Models\Order;
+use App\Services\APIServerClient\ApiServerClient;
 use App\Services\BaseService;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\SalesChannelIds;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
 
 class OrderService extends BaseService
@@ -29,6 +32,8 @@ class OrderService extends BaseService
     protected $updater, $orderSearch, $orderFilter;
     /** @var Creator */
     protected Creator $creator;
+    private const ORDER_CREATE_REWARD_EVENT_NAME = 'pos_order_create';
+    private const ORDER_CREATE_REWARDABLE_TYPE = 'partner';
 
     public function __construct(OrderRepositoryInterface $orderRepository,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
@@ -36,6 +41,7 @@ class OrderService extends BaseService
                                 OrderFilter $orderFilter,
                                 Updater $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
                                 Creator $creator,
+                                protected ApiServerClient $apiServerClient
     )
     {
         $this->orderRepository = $orderRepository;
@@ -88,6 +94,7 @@ class OrderService extends BaseService
     public function store($partner, OrderCreateRequest $request)
     {
         $skus = is_array($request->skus) ? $request->skus : json_decode($request->skus);
+        $header = $request->header('Authorization');
         $order = $this->creator->setPartner($partner)
             ->setCustomerId($request->customer_id)
             ->setDeliveryName($request->delivery_name)
@@ -102,12 +109,32 @@ class OrderService extends BaseService
             ->setPaidAmount($request->paid_amount)
             ->setPaymentMethod($request->payment_method)
             ->setVoucherId($request->voucher_id)
-            ->setHeader($request->header('Authorization'))
+            ->setHeader($header)
             ->create();
 
-//        if ($order) event(new OrderCreated($order));
+        if ($order) event(new OrderCreated($order));
+        $this->callRewardApi($partner,$header,$order);
         if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
         return $this->success();
+    }
+
+    private function callRewardApi($partnerId,$header, $order)
+    {
+        $price_calculator = (App::make(PriceCalculation::class))->setOrder($order);
+        $data = [
+            'event' => self::ORDER_CREATE_REWARD_EVENT_NAME,
+            'rewardable_type' => self::ORDER_CREATE_REWARDABLE_TYPE,
+            'rewardable_id' => $partnerId,
+            'event_data' => [
+                'id' => $order->id,
+                'paymnet_status' => $order->status,
+                'net_bill' => $price_calculator->getOriginalPrice(),
+                'client_pos_order_id' => '',
+                'partner_wise_order_id' => $order->partner_wise_order_id,
+                'portal_name' => (new RequestIdentification())->get()['portal_name']
+            ]
+        ];
+        return $this->apiServerClient->setBaseUrl()->setHeader($header)->post( 'pos/v1/reward/action', $data);
     }
 
     public function getOrderDetails($partner_id, $order_id)
