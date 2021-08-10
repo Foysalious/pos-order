@@ -15,7 +15,7 @@ class ReviewService extends BaseService
     private $ratings;
     use FileManager, CdnFileManager;
 
-    public function __construct(private ReviewRepositoryInterface $reviewRepositoryInterface, private OrderRepositoryInterface $orderRepositoryInterface, Private ReviewCreator $reviewCreator)
+    public function __construct(private ReviewRepositoryInterface $reviewRepositoryInterface, private OrderRepositoryInterface $orderRepositoryInterface, private ReviewCreator $reviewCreator)
     {
     }
 
@@ -39,7 +39,7 @@ class ReviewService extends BaseService
      */
     public function setRatings($ratings)
     {
-        $this->ratings = !is_array($ratings) ? json_decode($ratings,1) : $ratings;
+        $this->ratings = !is_array($ratings) ? json_decode($ratings, 1) : $ratings;
         return $this;
     }
 
@@ -50,7 +50,7 @@ class ReviewService extends BaseService
      * @param int $product_id
      * @return object
      */
-    public function getProductReviews($request,  $rating,  $orderBy, int $product_id): object
+    public function getProductReviews($request, $rating, $orderBy, int $product_id): object
     {
         list($offset, $limit) = calculatePagination($request);
         $reviews = $this->reviewRepositoryInterface->getReviews($offset, $limit, $product_id, $rating, $orderBy);
@@ -64,8 +64,8 @@ class ReviewService extends BaseService
     {
         $statistics = $this->reviewRepositoryInterface->getRatingStatistics($productId);
         $sorted_statistics = [];
-        for($i=1 ; $i<=5 ; $i++)
-            if(!isset($statistics[$i]))
+        for ($i = 1; $i <= 5; $i++)
+            if (!isset($statistics[$i]))
                 $sorted_statistics[$i] = 0;
             else
                 $sorted_statistics[$i] = $statistics[$i];
@@ -80,18 +80,18 @@ class ReviewService extends BaseService
     {
         $order = $request->order;
         list($offset, $limit) = calculatePagination($request);
+        $reviewCount = count($this->reviewRepositoryInterface->getCustomerCount($customer_id));
         $reviews = $this->reviewRepositoryInterface->getCustomerReviews($customer_id, $offset, $limit, $order);
         if (count($reviews) == 0) return $this->error('You have not placed any reviews yet', 404);
         $reviews = CustomerReviewResource::collection($reviews);
-        return $this->success('Successful', ['reviews' => $reviews], 200);
+        return $this->success('Successful', ['total_count' => $reviewCount, 'reviews' => $reviews,], 200);
     }
-
 
 
     public function create($request, $customer_id, $order_id): JsonResponse
     {
         $order = $this->orderRepositoryInterface->where('customer_id', $customer_id)->find($order_id);
-        if(is_null($order)) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
+        if (is_null($order)) return $this->error('অর্ডারটি পাওয়া যায় নি', 404);
 
         $this->reviewCreator->setOrderId($order_id)
             ->setCustomerId($customer_id)
