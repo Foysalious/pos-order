@@ -11,7 +11,7 @@ class OrderSkuRepository extends BaseRepository implements OrderSkuRepositoryInt
         parent::__construct($model);
     }
 
-    public function getNotRatedOrderSkuListOfCustomer($customerId,int $offset, int $limit, string $order)
+    public function getNotRatedOrderSkuListOfCustomer($partner_id,$customerId,int $offset, int $limit, string $order)
     {
         return  $this->model->whereHas('order',function($q)use($customerId){
             $q->where('customer_id',$customerId);
