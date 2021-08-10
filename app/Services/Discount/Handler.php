@@ -21,7 +21,6 @@ class Handler
     private $skuData;
     private $orderSkuId;
     private ?int $voucher_id;
-    private $header;
     private OrderRepositoryInterface $orderRepository;
 
     public function __construct(OrderDiscountRepositoryInterface $orderDiscountRepo, OrderRepositoryInterface $orderRepository)
@@ -88,16 +87,6 @@ class Handler
         return $this;
     }
 
-    /**
-     * @param mixed $header
-     * @return Handler
-     */
-    public function setHeader($header)
-    {
-        $this->header = $header;
-        return $this;
-    }
-
     public function hasDiscount()
     {
         if ($this->type == DiscountTypes::ORDER) {
@@ -132,7 +121,8 @@ class Handler
 
     public function voucherDiscountCalculate($order)
     {
-        $voucherDetails = $this->orderRepository->getVoucherInformation($this->voucher_id, $this->header);
+        $voucherDetails = $this->orderRepository->getVoucherInformation($this->voucher_id);
+        dd($voucherDetails);
         return $this->setOrder($order)->setType(DiscountTypes::VOUCHER)->setData($voucherDetails)->create();
     }
 

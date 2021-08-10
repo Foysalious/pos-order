@@ -90,8 +90,8 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
         return $this->getPaymentStatusFilterResult($paymentStatus, $orderStatusFilterResult);
     }
 
-    public function getVoucherInformation($voucher_id, $header)
+    public function getVoucherInformation($voucher_id)
     {
-        return $this->client->setBaseUrl()->setHeader($header)->get('pos/v1/voucher-details/'. $voucher_id);
+        return $this->client->setBaseUrl()->get('pos/v1/voucher-details/'. $voucher_id);
     }
 }
