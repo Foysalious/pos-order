@@ -19,9 +19,12 @@ use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Jobs\Order\OrderPlacePushNotification;
 use App\Models\Order;
 use App\Services\BaseService;
+use App\Services\Discount\Constants\DiscountTypes;
+use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\SalesChannelIds;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 class OrderService extends BaseService
@@ -38,11 +41,12 @@ class OrderService extends BaseService
 
     public function __construct(OrderRepositoryInterface     $orderRepository,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
-                                OrderSearch                  $orderSearch, CustomerRepositoryInterface $customerRepository,
-                                OrderFilter                  $orderFilter,
-                                Updater                      $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
-                                Creator                      $creator,
-                                GenerateInvoice              $generateInvoice
+                                OrderSearch $orderSearch, CustomerRepositoryInterface $customerRepository,
+                                OrderFilter $orderFilter,
+                                Updater $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
+                                Creator $creator,
+                                protected InventoryServerClient $client,
+                                GenerateInvoice  $generateInvoice
     )
     {
         $this->generateInvoice = $generateInvoice;
@@ -80,9 +84,10 @@ class OrderService extends BaseService
         $order = $request->order;
         list($offset, $limit) = calculatePagination($request);
         $orderList = $this->orderRepository->getCustomerOrderList($customer_id, $offset, $limit, $orderBy, $order);
+        $orderCount = count($this->orderRepository->getCustomerOrderCount($customer_id));
         if (count($orderList) == 0) return $this->error("You don't have any order", 404);
         $orderList = CustomerOrderResource::collection($orderList);
-        return $this->success('Successful', ['orders' => $orderList], 200);
+        return $this->success('Successful', ['order_count' => $orderCount,'orders' => $orderList ], 200);
     }
 
 
@@ -108,13 +113,12 @@ class OrderService extends BaseService
             ->setPaidAmount($request->paid_amount)
             ->setPaymentMethod($request->payment_method)
             ->setVoucherId($request->voucher_id)
-            ->setHeader($request->header('Authorization'))
             ->create();
 
-        if ($order) event(new OrderCreated($order));
+//        if ($order) event(new OrderCreated($order));
         if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
         $this->generateInvoice->generateInvoice($order->id);
-        return $this->success('Successful');
+        return $this->success('Successful', ['order' => ['id' => $order->id]]);
     }
 
     public function getOrderInvoice($order_id)
@@ -126,9 +130,10 @@ class OrderService extends BaseService
 
     public function getOrderDetails($partner_id, $order_id)
     {
-        $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        $order = $this->orderRepository->getOrderDetailsByPartner($partner_id, $order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new OrderWithProductResource($order);
+        $resource = $this->addUpdatableFlagForItems($resource,$order);
         return $this->success('Successful', ['order' => $resource], 200);
     }
 
@@ -175,10 +180,8 @@ class OrderService extends BaseService
             ->setDeliveryThana($orderUpdateRequest->delivery_thana ?? null)
             ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
             ->update();
-        $invoice = $this->generateInvoice->generateInvoice($order_id);
-        $orderDetailsAfterUpdate = $orderDetails;
-        $this->updater->setPartnerId($partner_id)->setOrderId($order_id)->setOrder($orderDetailsAfterUpdate)->setInvoiceLink($invoice)->update();
-        return $this->success('Successful', [], 200);
+            $this->generateInvoice->generateInvoice($order_id);
+         return $this->success('Successful', [], 200);
     }
 
     public function delete($partner_id, $order_id)
@@ -232,5 +235,38 @@ class OrderService extends BaseService
         $orderPaymentStatus = $this->orderPaymentRepository->where('order_id', $order_id)->get();
         if (count($orderPaymentStatus) > 0) throw new OrderException(trans('order.update.no_customer_update'));
         else return true;
+    }
+
+    private function addUpdatableFlagForItems($order_resource, Order $order)
+    {
+        $order_resource = json_decode(($order_resource->toJson()), true);
+        $sku_ids = $order->orderSkus->whereNotNull('sku_id')->pluck('sku_id');
+        $sku_details = $this->getSkuDetails($sku_ids, $order);
+        $order_sku_discounts = $order->discounts->where('type', DiscountTypes::SKU);
+        foreach ($order_resource['items'] as &$item) {
+            $flag = true;
+           if ($item['sku_id'] !== null) {
+                $sku = $sku_details->where('id', $item['sku_id'])->first();
+                if ($sku['sku_channel'][0]['price'] != $item['unit_price']){
+                    $flag = false;
+                } else {
+                    $channels_discount = collect($sku['sku_channel'])->where('channel_id', $order->sales_channel_id)->pluck('discounts')->first()[0] ?? [];
+                    $sku_discount = $order_sku_discounts->where('item_id', $item['sku_id'])->first();
+                    if($channels_discount && ($sku_discount->amount != $channels_discount['amount'] || $sku_discount->is_percentage !== $channels_discount['is_amount_percentage'])) {
+                        $flag = false;
+                    }
+                }
+
+           }
+            $item['is_updatable'] = $flag;
+        }
+        return $order_resource;
+    }
+
+    private function getSkuDetails($sku_ids, $order)
+    {
+        $url = 'api/v1/partners/' . $order->partner_id . '/skus?skus=' . json_encode($sku_ids->toArray()) . '&channel_id='.$order->sales_channel_id;
+        $sku_details = $this->client->setBaseUrl()->get($url)['skus'] ?? [];
+        return collect($sku_details);
     }
 }

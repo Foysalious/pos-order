@@ -2,6 +2,7 @@
 
 use App\Http\Requests\PaymentRequest;
 use App\Interfaces\OrderRepositoryInterface;
+use App\Interfaces\PaymentRepositoryInterface;
 use App\Services\BaseService;
 use App\Services\Order\PriceCalculation;
 use Carbon\Carbon;
@@ -9,13 +10,16 @@ use Carbon\Carbon;
 class PaymentService extends BaseService
 {
     private Creator $creator;
+    private int $orderId;
+    private float $amount;
 
     /**
      * PaymentService constructor.
      * @param Creator $creator
      * @param OrderRepositoryInterface $orderRepository
+     * @param PaymentRepositoryInterface $paymentRepository
      */
-    public function __construct(Creator $creator, private OrderRepositoryInterface $orderRepository)
+    public function __construct(Creator $creator, private OrderRepositoryInterface $orderRepository, private PaymentRepositoryInterface $paymentRepository)
     {
         $this->creator = $creator;
     }
@@ -33,6 +37,33 @@ class PaymentService extends BaseService
         /** @var PriceCalculation $priceCalculation */
         $priceCalculation = app(PriceCalculation::class);
         $closed_and_paid_at = $payment->created_at ?: Carbon::now();
-        if (!$priceCalculation->getDue() && !$order->closed_and_paid_at) $this->orderRepository->update($order, ['closed_and_paid_at' => $closed_and_paid_at]);
+        if (!$priceCalculation->getDue() && !$order->closed_and_paid_at)
+            $this->orderRepository->update($order, ['closed_and_paid_at' => $closed_and_paid_at]);
+        return true;
+    }
+
+    /**
+     * @param mixed $orderId
+     * @return PaymentService
+     */
+    public function setOrderId(int $orderId)
+    {
+        $this->orderId = $orderId;
+        return $this;
+    }
+
+    /**
+     * @param mixed $amount
+     * @return PaymentService
+     */
+    public function setAmount(float $amount)
+    {
+        $this->amount = $amount;
+        return $this;
+    }
+
+    public function deletePayment()
+    {
+        return  $this->paymentRepository->where('order_id', $this->orderId)->where('amount',$this->amount)->delete();
     }
 }

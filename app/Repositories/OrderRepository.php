@@ -31,6 +31,11 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
         if ($orderBy && $order) $query = $query->orderBy($orderBy, $order);
         return $query->offset($offset)->limit($limit)->get();
     }
+    public function getCustomerOrderCount($customer_id)
+    {
+       return $this->model->where('customer_id', $customer_id)->get();
+    }
+
 
     private function getSearchingQuery($partner_id, $orderSearch)
     {
@@ -85,8 +90,15 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
         return $this->getPaymentStatusFilterResult($paymentStatus, $orderStatusFilterResult);
     }
 
-    public function getVoucherInformation($voucher_id, $header)
+    public function getVoucherInformation($voucher_id)
     {
-        return $this->client->setBaseUrl()->setHeader($header)->get('pos/v1/voucher-details/'. $voucher_id);
+        return $this->client->setBaseUrl()->get('pos/v1/voucher-details/'. $voucher_id);
+    }
+
+    public function getOrderDetailsByPartner(int $partnerId, int $orderId)
+    {
+        return $this->model->where('partner_id', $partnerId)->with(['orderSkus' => function($q) {
+            $q->with('discount');
+        }, 'discounts', 'payments'])->find($orderId);
     }
 }

@@ -65,7 +65,10 @@ class Creator
         $sku_ids = array_filter($sku_ids, function ($value) {
             return !is_null($value);
         });
-        $sku_details = collect($this->getSkuDetails($sku_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
+        $sku_details = [];
+        if(count($sku_ids) > 0){
+            $sku_details = collect($this->getSkuDetails($sku_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
+        }
         $this->checkProductAndStockAvailability($skus,$sku_details);
         foreach ($skus as $sku) {
 
