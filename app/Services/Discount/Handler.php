@@ -122,7 +122,6 @@ class Handler
     public function voucherDiscountCalculate($order)
     {
         $voucherDetails = $this->orderRepository->getVoucherInformation($this->voucher_id);
-        dd($voucherDetails);
         return $this->setOrder($order)->setType(DiscountTypes::VOUCHER)->setData($voucherDetails)->create();
     }
 
