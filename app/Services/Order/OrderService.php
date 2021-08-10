@@ -115,7 +115,7 @@ class OrderService extends BaseService
 
     public function getOrderDetails($partner_id, $order_id)
     {
-        $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        $order = $this->orderRepository->getOrderDetailsByPartner($partner_id, $order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new OrderWithProductResource($order);
         $resource = $this->addUpdatableFlagForItems($resource,$order);
@@ -225,9 +225,9 @@ class OrderService extends BaseService
     private function addUpdatableFlagForItems($order_resource, Order $order)
     {
         $order_resource = json_decode(($order_resource->toJson()), true);
-        $sku_ids = $order->orderSkus()->whereNotNull('sku_id')->pluck('sku_id');
+        $sku_ids = $order->orderSkus->whereNotNull('sku_id')->pluck('sku_id');
         $sku_details = $this->getSkuDetails($sku_ids, $order);
-        $order_sku_discounts = $order->discounts()->where('type', DiscountTypes::SKU)->get();
+        $order_sku_discounts = $order->discounts->where('type', DiscountTypes::SKU);
         foreach ($order_resource['items'] as &$item) {
             $flag = true;
            if ($item['sku_id'] !== null) {

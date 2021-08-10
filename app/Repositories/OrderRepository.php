@@ -94,4 +94,11 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
     {
         return $this->client->setBaseUrl()->get('pos/v1/voucher-details/'. $voucher_id);
     }
+
+    public function getOrderDetailsByPartner(int $partnerId, int $orderId)
+    {
+        return $this->model->where('partner_id', $partnerId)->with(['orderSkus' => function($q) {
+            $q->with('discount');
+        }, 'discounts', 'payments'])->find($orderId);
+    }
 }
