@@ -63,7 +63,7 @@ class CustomerService extends BaseService
         if ($not_rated_skus->isEmpty())
             throw new NotFoundHttpException("No SKUS Found");
         $not_rated_skus = NotRatedSkuResource::collection($not_rated_skus);
-        return $this->success('Successful', ['skus' => $not_rated_skus], 200);
+        return $this->success('Successful', ['total_count' => count($not_rated_skus),'not_rated_orders' => $not_rated_skus]);
     }
 
     public function delete(int $customer_id)
