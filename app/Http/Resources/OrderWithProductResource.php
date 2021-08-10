@@ -42,7 +42,7 @@ class OrderWithProductResource extends JsonResource
             'delivery_mobile'         => $this->delivery_mobile,
             'delivery_address'        => $this->delivery_address,
             'note'                    => $this->note,
-            'invoice'                    => $this->invoice,
+            'invoice'                 => $this->invoice,
             'items'                   => OrderSkuResource::collection($this->items),
             'price'                   => $this->getOrderPriceRelatedInfo(),
             'customer'                => $this->getOrderCustomer(),

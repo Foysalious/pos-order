@@ -8,6 +8,7 @@ use App\Exceptions\OrderException;
 use App\Http\Resources\CustomerOrderResource;
 use App\Http\Requests\OrderUpdateRequest;
 use App\Http\Resources\DeliveryResource;
+use App\Http\Resources\OrderInvoiceResource;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderWithProductResource;
 use App\Http\Resources\Webstore\CustomerOrderDetailsResource;
@@ -35,13 +36,13 @@ class OrderService extends BaseService
      */
     private GenerateInvoice $generateInvoice;
 
-    public function __construct(OrderRepositoryInterface $orderRepository,
+    public function __construct(OrderRepositoryInterface     $orderRepository,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
-                                OrderSearch $orderSearch, CustomerRepositoryInterface $customerRepository,
-                                OrderFilter $orderFilter,
-                                Updater $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
-                                Creator $creator,
-                                GenerateInvoice $generateInvoice
+                                OrderSearch                  $orderSearch, CustomerRepositoryInterface $customerRepository,
+                                OrderFilter                  $orderFilter,
+                                Updater                      $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
+                                Creator                      $creator,
+                                GenerateInvoice              $generateInvoice
     )
     {
         $this->generateInvoice = $generateInvoice;
@@ -92,30 +93,35 @@ class OrderService extends BaseService
      */
     public function store($partner, OrderCreateRequest $request)
     {
-//        $skus = is_array($request->skus) ? $request->skus : json_decode($request->skus);
-//        $order = $this->creator->setPartner($partner)
-//            ->setCustomerId($request->customer_id)
-//            ->setDeliveryName($request->delivery_name)
-//            ->setDeliveryMobile($request->delivery_mobile)
-//            ->setDeliveryAddress($request->delivery_address)
-//            ->setCustomerId($request->customer_id)
-//            ->setSalesChannelId($request->sales_channel_id)
-//            ->setDeliveryCharge($request->delivery_charge)
-//            ->setEmiMonth($request->emi_month)
-//            ->setSkus($skus)
-//            ->setDiscount($request->discount)
-//            ->setPaidAmount($request->paid_amount)
-//            ->setPaymentMethod($request->payment_method)
-//            ->setVoucherId($request->voucher_id)
-//            ->setHeader($request->header('Authorization'))
-//            ->create();
-//
-//        if ($order) event(new OrderCreated($order));
-//        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
-        $invoice = $this->generateInvoice->generateInvoice(2000954);
-//        $orderDetails = $this->orderRepository->where('partner_id', $partner)->find($order->id);
-//        $this->updater->setPartnerId($partner)->setOrderId($order->id)->setOrder($orderDetails)->setInvoiceLink($invoice)->update();
-//        return $this->success('Successful');
+        $skus = is_array($request->skus) ? $request->skus : json_decode($request->skus);
+        $order = $this->creator->setPartner($partner)
+            ->setCustomerId($request->customer_id)
+            ->setDeliveryName($request->delivery_name)
+            ->setDeliveryMobile($request->delivery_mobile)
+            ->setDeliveryAddress($request->delivery_address)
+            ->setCustomerId($request->customer_id)
+            ->setSalesChannelId($request->sales_channel_id)
+            ->setDeliveryCharge($request->delivery_charge)
+            ->setEmiMonth($request->emi_month)
+            ->setSkus($skus)
+            ->setDiscount($request->discount)
+            ->setPaidAmount($request->paid_amount)
+            ->setPaymentMethod($request->payment_method)
+            ->setVoucherId($request->voucher_id)
+            ->setHeader($request->header('Authorization'))
+            ->create();
+
+        if ($order) event(new OrderCreated($order));
+        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
+        $this->generateInvoice->generateInvoice($order->id);
+        return $this->success('Successful');
+    }
+
+    public function getOrderInvoice($order_id)
+    {
+        $order = $this->orderRepository->find($order_id);
+        if (!$order) return $this->error("No Order Found", 404);
+        return $this->success('Successful', ['invoice' =>  $order->invoice], 200);
     }
 
     public function getOrderDetails($partner_id, $order_id)

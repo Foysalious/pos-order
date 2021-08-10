@@ -6,13 +6,14 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Services\APIServerClient\ApiServerClient;
+use App\Services\BaseService;
 use App\Services\Order\PriceCalculation;
 use App\Services\Order\Updater;
 use App\Traits\ModificationFields;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 
-class GenerateInvoice
+
+class GenerateInvoice extends BaseService
 {
     use ModificationFields;
 
@@ -34,8 +35,9 @@ class GenerateInvoice
     }
 
 
-    public function generateInvoice($orderID)
+    public function generateInvoice(int $orderID)
     {
+
         $pdf_handler = new PdfHandler();
         $order = Order::find($orderID);
 
@@ -75,9 +77,8 @@ class GenerateInvoice
         }
         $invoice_name = 'pos_order_invoice_' . $order->id;
         $link = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
-        //dd($link,$order->partner_id,$orderID);
         $orderDetails = $this->orderRepository->where('partner_id', $order->partner_id)->find($orderID);
-        $this->updater->setPartnerId($partner)->setOrderId($orderID)->setOrder($orderDetails)->setInvoiceLink($link)->update();
-        return $link;
+        $this->updater->setPartnerId($order->partner_id)->setOrderId($orderID)->setOrder($orderDetails)->setInvoiceLink($link)->update();
+        return $this->success('Successful', ['invoice' =>  $link], 200);
     }
 }

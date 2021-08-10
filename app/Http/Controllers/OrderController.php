@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Http\Reports\GenerateInvoice;
 use App\Http\Requests\CustomerOrderRequest;
 use App\Http\Requests\OrderCreateRequest;
 use App\Http\Requests\OrderCustomerRequest;
@@ -20,9 +21,11 @@ class OrderController extends Controller
     use ResponseAPI;
 
     protected $orderService;
+    private GenerateInvoice $generateInvoice;
 
-    public function __construct(OrderService $orderService)
+    public function __construct(OrderService $orderService,GenerateInvoice $generateInvoice)
     {
+        $this->generateInvoice = $generateInvoice;
         $this->orderService = $orderService;
     }
 
@@ -323,5 +326,14 @@ class OrderController extends Controller
     public function getDeliveryInfo(int $partner_id, int $order_id): JsonResponse
     {
         return $this->orderService->getDeliveryInfo($partner_id, $order_id);
+    }
+
+    public function getOrderinvoice(int $order_id){
+        $invoice= $this->orderService->getOrderInvoice($order_id);
+       if ($invoice->getData()->invoice==null) {
+           $invoice= $this->generateInvoice->generateInvoice($order_id);
+           return $invoice;
+       }
+       return $invoice;
     }
 }
