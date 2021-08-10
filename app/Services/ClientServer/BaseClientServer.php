@@ -9,17 +9,10 @@ abstract class BaseClientServer implements BaseClientServerInterface
 {
     protected Client $client;
     protected string $baseUrl;
-    protected string $header;
 
     public function __construct(Client $client)
     {
         $this->client = $client;
-    }
-
-    public function setHeader($header)
-    {
-        $this->header = $header;
-        return $this;
     }
 
     abstract public function setBaseUrl();
@@ -52,7 +45,6 @@ abstract class BaseClientServer implements BaseClientServerInterface
         $options['headers'] = [
             'Accept' => 'application/json'
         ];
-        if (isset($this->header))  $options['headers'] += ['Authorization' => $this->header];
         if (!$data) return $options;
         if ($multipart) {
             $options['multipart'] = $data;
