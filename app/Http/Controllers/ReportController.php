@@ -13,6 +13,6 @@ class ReportController
 
     public function getProductWise(int $partner_id, ProductWiseReportRequest $request )
     {
-        $this->reportService->getProductReport($partner_id, $request);
+        return $this->reportService->getProductReport($partner_id, $request);
     }
 }
