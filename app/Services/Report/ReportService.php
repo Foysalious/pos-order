@@ -1,6 +1,7 @@
 <?php namespace App\Services\Report;
 
 
+use App\Http\Requests\CustomerWiseReportRequest;
 use App\Http\Requests\ProductWiseReportRequest;
 use App\Services\BaseService;
 use Illuminate\Http\JsonResponse;
@@ -8,7 +9,8 @@ use Illuminate\Http\JsonResponse;
 class ReportService extends  BaseService
 {
     public function __construct(
-        protected ProductReport $productReport
+        protected ProductReport $productReport,
+        protected CustomerReport $customerReport
     )
     {}
 
@@ -22,5 +24,13 @@ class ReportService extends  BaseService
             ->create();
 
         return $this->success('Success', [ 'data' => $report ]);
+    }
+
+    public function getCustomerReport(int $partner_id, CustomerWiseReportRequest $request)
+    {
+        $report = $this->customerReport->setPartnerId($partner_id)
+            ->setFrom($request->from)
+            ->setTo($request->to)
+            ->create();
     }
 }

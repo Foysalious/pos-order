@@ -63,5 +63,6 @@ Route::group(['prefix'=>'v1'], function(){
         Route::get('/partners/{partner_id}/customers/{customer_id}/purchase-amount-promo-usage', [CustomerController::class, 'getPurchaseAmountAndPromoUsed']);
         Route::get('/partners/{partner_id}/customers/{customer_id}/orders', [CustomerController::class, 'getOrdersByDateWise']);
         Route::get('partners/{partner_id}/reports/product-wise', [ReportController::class, 'getProductWise']);
+        Route::get('partners/{partner_id}/reports/customer-wise', [ReportController::class, 'getCustomerWise']);
     });
 });
