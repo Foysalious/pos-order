@@ -112,13 +112,13 @@ class OrderService extends BaseService
             ->setHeader($header)
             ->create();
 
-        if ($order) event(new OrderCreated($order));
-        $this->callRewardApi($partner,$header,$order);
+        //if ($order) event(new OrderCreated($order));
+        $this->callRewardApi($partner,$header,$order, $request->client_pos_order_id);
         if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
         return $this->success();
     }
 
-    private function callRewardApi($partnerId,$header, $order)
+    private function callRewardApi($partnerId,$header, $order,$client_pos_order_id)
     {
         $price_calculator = (App::make(PriceCalculation::class))->setOrder($order);
         $data = [
@@ -129,11 +129,12 @@ class OrderService extends BaseService
                 'id' => $order->id,
                 'paymnet_status' => $order->status,
                 'net_bill' => $price_calculator->getOriginalPrice(),
-                'client_pos_order_id' => '',
+                'client_pos_order_id' => $client_pos_order_id ?? null,
                 'partner_wise_order_id' => $order->partner_wise_order_id,
                 'portal_name' => (new RequestIdentification())->get()['portal_name']
             ]
         ];
+        dd($data);
         return $this->apiServerClient->setBaseUrl()->setHeader($header)->post( 'pos/v1/reward/action', $data);
     }
 
