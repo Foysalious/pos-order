@@ -1,6 +1,6 @@
 <?php namespace App\Http\Controllers;
 
-use App\Http\Reports\GenerateInvoice;
+use App\Http\Reports\InvoiceService;
 use App\Http\Requests\CustomerOrderRequest;
 use App\Http\Requests\OrderCreateRequest;
 use App\Http\Requests\OrderCustomerRequest;
@@ -21,11 +21,11 @@ class OrderController extends Controller
     use ResponseAPI;
 
     protected $orderService;
-    private GenerateInvoice $generateInvoice;
+    private InvoiceService $invoiceService;
 
-    public function __construct(OrderService $orderService,GenerateInvoice $generateInvoice)
+    public function __construct(OrderService $orderService, InvoiceService $invoiceService)
     {
-        $this->generateInvoice = $generateInvoice;
+        $this->invoiceService = $invoiceService;
         $this->orderService = $orderService;
     }
 
@@ -328,12 +328,13 @@ class OrderController extends Controller
         return $this->orderService->getDeliveryInfo($partner_id, $order_id);
     }
 
-    public function getOrderinvoice(int $order_id){
-        $invoice= $this->orderService->getOrderInvoice($order_id);
-       if ($invoice->getData()->invoice==null) {
-           $invoice= $this->generateInvoice->generateInvoice($order_id);
-           return $invoice;
-       }
-       return $invoice;
+    public function getOrderinvoice(int $order_id)
+    {
+        $invoice = $this->invoiceService->setOrder($order_id)->isAlreadyGenerated()->getInvoiceLink();
+        if ($invoice == null) {
+            $invoice = $this->invoiceService->setOrder($order_id)->generateInvoice();
+            return $this->success('Successful', ['invoice' => $invoice], 200);
+        }
+        return $this->success('Successful', ['invoice' => $invoice], 200);
     }
 }

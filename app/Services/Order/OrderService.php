@@ -2,7 +2,7 @@
 
 use App\Events\OrderCreated;
 use App\Events\OrderUpdated;
-use App\Http\Reports\GenerateInvoice;
+use App\Http\Reports\InvoiceService;
 use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
 use App\Http\Resources\CustomerOrderResource;
@@ -35,9 +35,9 @@ class OrderService extends BaseService
     /** @var Creator */
     protected Creator $creator;
     /**
-     * @var GenerateInvoice
+     * @var InvoiceService
      */
-    private GenerateInvoice $generateInvoice;
+    private InvoiceService $generateInvoice;
 
     public function __construct(OrderRepositoryInterface     $orderRepository,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
@@ -46,7 +46,7 @@ class OrderService extends BaseService
                                 Updater $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
                                 Creator $creator,
                                 protected InventoryServerClient $client,
-                                GenerateInvoice  $generateInvoice
+                                InvoiceService $generateInvoice
     )
     {
         $this->generateInvoice = $generateInvoice;
