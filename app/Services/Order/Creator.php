@@ -94,7 +94,7 @@ class Creator
      * @param int|null $customerId
      * @return Creator
      */
-    public function setCustomerId(?int $customerId): Creator
+    public function setCustomerId(?string $customerId): Creator
     {
         $this->customerId = $customerId;
         $this->customer = Customer::find($customerId);
