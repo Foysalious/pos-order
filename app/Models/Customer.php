@@ -10,6 +10,14 @@ class Customer extends BaseModel
 
     protected $guarded = [];
 
+    protected $casts = ['id' => 'string'];
+
+    protected $primaryKey = 'id';
+
+    public $incrementing = false;
+
+    protected $keyType = 'string';
+
     public function orders()
     {
         return $this->hasMany(Order::class);

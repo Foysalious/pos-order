@@ -56,7 +56,6 @@ class CustomerReport
         $orders = $this->orderRepository->where('partner_id', $this->partner_id)
             ->with(['orderSkus','payments','discounts','customer'])
             ->whereNotNull('customer_id')
-            ->whereNotIn('status', [Statuses::DECLINED, Statuses::CANCELLED])
             ->whereBetween('created_at', [$this->from, $this->to])
             ->get();
 
