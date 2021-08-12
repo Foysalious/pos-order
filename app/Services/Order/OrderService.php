@@ -124,7 +124,7 @@ class OrderService extends BaseService
             ->create();
 
         //if ($order) event(new OrderCreated($order));
-        $this->callRewardApi($partner,$header,$order, $request->client_pos_order_id);
+        //$this->callRewardApi($partner,$header,$order, $request->client_pos_order_id);
         if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
         $this->generateInvoice->generateInvoice($order->id);
         return $this->success('Successful', ['order' => ['id' => $order->id]]);
