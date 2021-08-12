@@ -73,10 +73,11 @@ class ReviewService extends BaseService
     }
 
     /**
-     * @param $productId
-     * @return mixed
+     * @param string $customer_id
+     * @param $request
+     * @return JsonResponse
      */
-    public function getCustomerReviews(string $customer_id, $request)
+    public function getCustomerReviews(string $customer_id, $request): JsonResponse
     {
         $order = $request->order;
         list($offset, $limit) = calculatePagination($request);
@@ -102,6 +103,4 @@ class ReviewService extends BaseService
 
         return $this->success('Successful', null, 201);
     }
-
-
 }
