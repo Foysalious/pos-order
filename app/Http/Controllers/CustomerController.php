@@ -79,10 +79,10 @@ class CustomerController extends Controller
     }
 
     /**
-     * Update Customer.
-     *
+     * Update Customer
      * @param Request $request
      * @param string $customer_id
+     * @param int $partner_id
      * @return JsonResponse
      * @throws UnknownProperties
      * @OA\Post(
@@ -285,7 +285,7 @@ class CustomerController extends Controller
      *     @OA\Response(response="403", description="Customer Not Found"),
      * )
      */
-    public function destroy($customer_id)
+    public function destroy($customer_id): JsonResponse
     {
         return $this->customerService->delete($customer_id);
     }
