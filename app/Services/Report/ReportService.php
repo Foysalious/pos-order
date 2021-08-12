@@ -32,5 +32,7 @@ class ReportService extends  BaseService
             ->setFrom($request->from)
             ->setTo($request->to)
             ->create();
+
+        return $this->success('Success', [ 'data' => $report ]);
     }
 }
