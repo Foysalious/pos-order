@@ -276,6 +276,12 @@ class Updater
         return $this;
     }
 
+    public function setInvoiceLink(string $invoice)
+    {
+        $this->invoice = $invoice;
+        return $this;
+    }
+
     /**
      * @param string|null $delivery_vendor_name
      * @return Updater
@@ -354,6 +360,7 @@ class Updater
         if (isset($this->delivery_request_id)) $data['delivery_request_id'] = $this->delivery_request_id;
         if (isset($this->delivery_thana)) $data['delivery_thana'] = $this->delivery_thana;
         if (isset($this->delivery_district)) $data['delivery_district'] = $this->delivery_district;
+        if (isset($this->invoice)) $data['invoice'] = $this->invoice;
         if (isset($this->voucher_id)) {
             $data['voucher_id'] = $this->voucher_id;
             $this->setOrderLogType(OrderLogTypes::PRODUCTS_AND_PRICES);

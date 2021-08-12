@@ -23,6 +23,8 @@ class CustomerReviewResource extends JsonResource
             'variation'             => $this->variation(),
             'rating'                => $this->rating,
             'created_at'            => $this->created_at,
+            'product_name'          => 'Floral Embroydary',
+            'product_image'         =>'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/20210611_233930.jpg'
         ];
     }
 

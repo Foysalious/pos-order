@@ -2,11 +2,13 @@
 
 use App\Events\OrderCreated;
 use App\Events\OrderUpdated;
+use App\Http\Reports\GenerateInvoice;
 use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
 use App\Http\Resources\CustomerOrderResource;
 use App\Http\Requests\OrderUpdateRequest;
 use App\Http\Resources\DeliveryResource;
+use App\Http\Resources\OrderInvoiceResource;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderWithProductResource;
 use App\Http\Resources\Webstore\CustomerOrderDetailsResource;
@@ -32,16 +34,22 @@ class OrderService extends BaseService
     protected $updater, $orderSearch, $orderFilter;
     /** @var Creator */
     protected Creator $creator;
+    /**
+     * @var GenerateInvoice
+     */
+    private GenerateInvoice $generateInvoice;
 
-    public function __construct(OrderRepositoryInterface $orderRepository,
+    public function __construct(OrderRepositoryInterface     $orderRepository,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
                                 OrderSearch $orderSearch, CustomerRepositoryInterface $customerRepository,
                                 OrderFilter $orderFilter,
                                 Updater $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
                                 Creator $creator,
-                                protected InventoryServerClient $client
+                                protected InventoryServerClient $client,
+                                GenerateInvoice  $generateInvoice
     )
     {
+        $this->generateInvoice = $generateInvoice;
         $this->orderRepository = $orderRepository;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->updater = $updater;
@@ -86,7 +94,6 @@ class OrderService extends BaseService
     /**
      * @param $partner
      * @param OrderCreateRequest $request
-     * @return JsonResponse
      * @throws ValidationException
      */
     public function store($partner, OrderCreateRequest $request)
@@ -110,12 +117,20 @@ class OrderService extends BaseService
 
 //        if ($order) event(new OrderCreated($order));
         if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
+        $this->generateInvoice->generateInvoice($order->id);
         return $this->success('Successful', ['order' => ['id' => $order->id]]);
+    }
+
+    public function getOrderInvoice($order_id)
+    {
+        $order = $this->orderRepository->find($order_id);
+        if (!$order) return $this->error("No Order Found", 404);
+        return $this->success('Successful', ['invoice' =>  $order->invoice], 200);
     }
 
     public function getOrderDetails($partner_id, $order_id)
     {
-        $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        $order = $this->orderRepository->getOrderDetailsByPartner($partner_id, $order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new OrderWithProductResource($order);
         $resource = $this->addUpdatableFlagForItems($resource,$order);
@@ -165,8 +180,8 @@ class OrderService extends BaseService
             ->setDeliveryThana($orderUpdateRequest->delivery_thana ?? null)
             ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
             ->update();
-
-        return $this->success('Successful', [], 200);
+            $this->generateInvoice->generateInvoice($order_id);
+         return $this->success('Successful', [], 200);
     }
 
     public function delete($partner_id, $order_id)
@@ -225,9 +240,9 @@ class OrderService extends BaseService
     private function addUpdatableFlagForItems($order_resource, Order $order)
     {
         $order_resource = json_decode(($order_resource->toJson()), true);
-        $sku_ids = $order->orderSkus()->whereNotNull('sku_id')->pluck('sku_id');
+        $sku_ids = $order->orderSkus->whereNotNull('sku_id')->pluck('sku_id');
         $sku_details = $this->getSkuDetails($sku_ids, $order);
-        $order_sku_discounts = $order->discounts()->where('type', DiscountTypes::SKU)->get();
+        $order_sku_discounts = $order->discounts->where('type', DiscountTypes::SKU);
         foreach ($order_resource['items'] as &$item) {
             $flag = true;
            if ($item['sku_id'] !== null) {
