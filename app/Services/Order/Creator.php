@@ -261,8 +261,12 @@ class Creator
             $order = $this->orderRepositoryInterface->create($order_data);
             $this->orderSkuCreator->setOrder($order)->setSkus($this->skus)->create();
             $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($order_data);
-            if ($this->discountHandler->hasDiscount()) $this->discountHandler->create();
-            if (isset($this->voucher_id)) $this->discountHandler->setVoucherId($this->voucher_id)->voucherDiscountCalculate($order);
+            if ($this->discountHandler->hasDiscount()) {
+                $this->discountHandler->create();
+            }
+            if (isset($this->voucher_id)) {
+                $this->discountHandler->setVoucherId($this->voucher_id)->voucherDiscountCalculate($order);
+            }
             if ($this->paidAmount > 0) {
                 $payment_data['order_id'] = $order->id;
                 $payment_data['amount'] = $this->paidAmount;
@@ -282,12 +286,19 @@ class Creator
 
     private function resolveCustomerId()
     {
-        if ($this->customer) return $this->customer->id;
-        if (!isset($this->customerId) || !$this->customerId) return null;
+        if ($this->customer) {
+            return $this->customer->id;
+        }
+        if (!isset($this->customerId) || !$this->customerId) {
+            return null;
+        }
         $customer = Customer::find($this->customerId);
-        if (!$customer) throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Exists.");
-        if ($customer->partner_id != $this->partner->id)
+        if (!$customer) {
+            throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Exists.");
+        }
+        if ($customer->partner_id != $this->partner->id) {
             throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Belong To Partner #" . $this->partner->id);
+        }
         return $this->customerId;
     }
 

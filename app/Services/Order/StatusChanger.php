@@ -54,8 +54,12 @@ class StatusChanger
         $order_calculator->setOrder($this->order);
 
         if ($this->order->sales_channel_id == SalesChannelIds::WEBSTORE) {
-              if ($this->status == Statuses::DECLINED || $this->status == Statuses::CANCELLED) $this->refund();
-              if ($this->status == Statuses::COMPLETED && $order_calculator->getDue() > 0) $this->collectPayment($this->order, $order_calculator );
+              if ($this->status == Statuses::DECLINED || $this->status == Statuses::CANCELLED) {
+                  $this->refund();
+              }
+              if ($this->status == Statuses::COMPLETED && $order_calculator->getDue() > 0) {
+                  $this->collectPayment($this->order, $order_calculator );
+              }
           }
         return $this->success('Successful', ['order' => $this->order], 200);
     }

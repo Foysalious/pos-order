@@ -350,8 +350,7 @@ class OrderController extends Controller
     public function getOrderinvoice(int $order_id){
         $invoice= $this->orderService->getOrderInvoice($order_id);
        if ($invoice->getData()->invoice==null) {
-           $invoice= $this->generateInvoice->generateInvoice($order_id);
-           return $invoice;
+           return $this->generateInvoice->generateInvoice($order_id);
        }
        return $invoice;
     }
