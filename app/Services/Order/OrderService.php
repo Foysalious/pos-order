@@ -25,6 +25,8 @@ use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\SalesChannelIds;
+use App\Services\Usage\Types;
+use App\Services\Usage\UsageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
@@ -52,7 +54,8 @@ class OrderService extends BaseService
                                 Creator $creator,
                                 protected InventoryServerClient $client,
                                 GenerateInvoice  $generateInvoice,
-                                protected ApiServerClient $apiServerClient
+                                protected ApiServerClient $apiServerClient,
+                                protected UsageService $usageService
     )
     {
         $this->generateInvoice = $generateInvoice;
@@ -127,6 +130,8 @@ class OrderService extends BaseService
         //$this->callRewardApi($partner,$header,$order, $request->client_pos_order_id);
         if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
         $this->generateInvoice->generateInvoice($order->id);
+        $usage_type = $request->sales_channel_id == SalesChannelIds::WEBSTORE ? Types::PRODUCT_LINK : Types::POS_ORDER_CREATE;
+        $this->usageService->setUserId((int) $partner)->setUsageType($usage_type)->store();
         return $this->success('Successful', ['order' => ['id' => $order->id]]);
     }
 
