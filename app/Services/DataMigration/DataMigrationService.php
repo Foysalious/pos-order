@@ -83,12 +83,24 @@ class DataMigrationService extends BaseService
 
     public function migrate()
     {
-        if ($this->partnerInfo) $this->migratePartnerInfoData();
-        if ($this->orders) $this->migrateOrdersData();
-        if ($this->orderSkus) $this->migrateOrderSkusData();
-        if ($this->orderPayments) $this->migrateOrderPaymentsData();
-        if ($this->discounts) $this->migrateOrderDiscountsData();
-        if ($this->logs) $this->migrateOrderLogsData();
+        if ($this->partnerInfo) {
+            $this->migratePartnerInfoData();
+        }
+        if ($this->orders) {
+            $this->migrateOrdersData();
+        }
+        if ($this->orderSkus) {
+            $this->migrateOrderSkusData();
+        }
+        if ($this->orderPayments) {
+            $this->migrateOrderPaymentsData();
+        }
+        if ($this->discounts) {
+            $this->migrateOrderDiscountsData();
+        }
+        if ($this->logs) {
+            $this->migrateOrderLogsData();
+        }
     }
 
     private function migratePartnerInfoData()

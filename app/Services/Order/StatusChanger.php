@@ -6,6 +6,8 @@ use App\Models\Order;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Order\Payment\Creator as PaymentCreator;
+use App\Services\Usage\Types;
+use App\Services\Usage\UsageService;
 use App\Traits\ResponseAPI;
 use Illuminate\Support\Facades\App;
 
@@ -15,18 +17,13 @@ class StatusChanger
     protected $status;
     /** @var Order */
     protected $order;
-    /** @var OrderRepositoryInterface */
-    protected $orderRepositoryInterface;
-    /** @var PaymentCreator */
-    protected $paymentCreator;
     protected $modifier;
 
 
-    public function __construct(OrderRepositoryInterface $orderRepositoryInterface, PaymentCreator $paymentCreator)
-    {
-        $this->orderRepositoryInterface = $orderRepositoryInterface;
-        $this->paymentCreator = $paymentCreator;
-    }
+    public function __construct(
+        protected OrderRepositoryInterface $orderRepositoryInterface,
+        protected PaymentCreator $paymentCreator,
+        protected UsageService $usageService){}
 
     public function setOrder(Order $order)
     {
@@ -54,8 +51,12 @@ class StatusChanger
         $order_calculator->setOrder($this->order);
 
         if ($this->order->sales_channel_id == SalesChannelIds::WEBSTORE) {
-              if ($this->status == Statuses::DECLINED || $this->status == Statuses::CANCELLED) $this->refund();
-              if ($this->status == Statuses::COMPLETED && $order_calculator->getDue() > 0) $this->collectPayment($this->order, $order_calculator );
+              if ($this->status == Statuses::DECLINED || $this->status == Statuses::CANCELLED) {
+                  $this->refund();
+              }
+              if ($this->status == Statuses::COMPLETED && $order_calculator->getDue() > 0) {
+                  $this->collectPayment($this->order, $order_calculator );
+              }
           }
         return $this->success('Successful', ['order' => $this->order], 200);
     }
@@ -75,6 +76,7 @@ class StatusChanger
         ];
         if ($order->emi_month) $payment_data['emi_month'] = $order->emi_month;
         $this->paymentCreator->credit($payment_data);
+        $this->usageService->setUserId($order->partner->id)->setUsageType(Types::POS_DUE_COLLECTION)->store();
         event(new OrderDueCleared($order));
     }
 }
