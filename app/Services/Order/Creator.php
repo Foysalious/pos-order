@@ -47,7 +47,7 @@ class Creator
     private $orderSkuRepository;
     /** @var PaymentCreator */
     private $paymentCreator;
-    private ?int $customerId;
+    private ?string $customerId;
     /** @var Customer|null */
     private ?Customer $customer;
     private ?string $deliveryName;
