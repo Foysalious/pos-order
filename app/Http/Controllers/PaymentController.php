@@ -29,8 +29,8 @@ class PaymentController extends Controller
      *     description="Order payment delete ",
      *     @OA\Parameter(name="order_id", description="partner id", required=true, in="path", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="amount", description="order id", required=true, in="path", @OA\Schema(type="integer")),
-     *     @OA\Response(response="true", description="Successful"),
-     *     @OA\Response(response="false", description="Order Not Fount"),
+     *     @OA\Response(response=200, description="Successful"),
+     *     @OA\Response(response=404, description="Order Not Fount"),
      * )
      */
     public function deletePayment(Request $request)
