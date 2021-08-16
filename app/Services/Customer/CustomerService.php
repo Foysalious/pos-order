@@ -13,6 +13,7 @@ use App\Models\Order;
 use App\Services\BaseService;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\PriceCalculation;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use App\Traits\ModificationFields;
 use Illuminate\Support\Facades\App;
@@ -66,18 +67,21 @@ class CustomerService extends BaseService
         return $this->success('Successful', ['total_count' => count($not_rated_skus),'not_rated_orders' => $not_rated_skus]);
     }
 
-    public function delete(int $customer_id)
+    /**
+     * @throws Exception
+     */
+    public function delete(int $customer_id): JsonResponse
     {
         try {
             $customer = $this->customerRepository->find($customer_id);
             if (!$customer) return $this->error('Customer Not Found', 404);
             DB::beginTransaction();
-            $customer->orders()->delete();
             $customer->delete();
             DB::commit();
             return $this->success();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollback();
+            throw $e;
         }
     }
 
