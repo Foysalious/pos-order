@@ -3,10 +3,11 @@
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Transaction\Constants\TransactionTypes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Order extends BaseModel
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
     protected $guarded = ['id'];
 
     public function customer()
