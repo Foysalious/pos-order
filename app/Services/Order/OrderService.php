@@ -2,6 +2,7 @@
 
 use App\Events\OrderCreated;
 use App\Events\OrderUpdated;
+use App\Exceptions\AuthorizationException;
 use App\Http\Reports\GenerateInvoice;
 use App\Helper\Miscellaneous\RequestIdentification;
 use App\Http\Requests\OrderCreateRequest;
@@ -19,6 +20,7 @@ use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Jobs\Order\OrderPlacePushNotification;
 use App\Models\Order;
+use App\Services\AccessManager\AccessManager;
 use App\Services\APIServerClient\ApiServerClient;
 use App\Services\BaseService;
 use App\Services\Discount\Constants\DiscountTypes;
@@ -55,7 +57,8 @@ class OrderService extends BaseService
                                 protected InventoryServerClient $client,
                                 GenerateInvoice  $generateInvoice,
                                 protected ApiServerClient $apiServerClient,
-                                protected UsageService $usageService
+                                protected UsageService $usageService,
+                                protected AccessManager $accessManager
     )
     {
         $this->generateInvoice = $generateInvoice;
@@ -135,10 +138,14 @@ class OrderService extends BaseService
         return $this->success('Successful', ['order' => ['id' => $order->id]]);
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function getOrderInvoice($order_id)
     {
         $order = $this->orderRepository->find($order_id);
         if (!$order) return $this->error("No Order Found", 404);
+        $this->accessManager->setPartnerId($order->partner_id)->setFeature('pos.invoice.download')->checkAccess();
         return $this->success('Successful', ['invoice' =>  $order->invoice], 200);
     }
 
