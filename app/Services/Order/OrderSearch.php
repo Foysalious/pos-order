@@ -2,7 +2,10 @@
 
 class OrderSearch
 {
-    protected $order_id, $customer_name, $query_string, $sales_channel_id;
+    protected ?int $order_id;
+    protected ?string $customer_name;
+    protected ?string $query_string;
+    protected $sales_channel_id;
 
     /**
      * @return mixed

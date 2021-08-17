@@ -33,7 +33,8 @@ class OrderFilterRequest extends FormRequest
             'sales_channel_id'  => 'sometimes|required',
             'type'              => Rule::in(OrderTypes::COMPLETED, OrderTypes::NEW, OrderTypes::RUNNING),
             'offset'            => 'numeric',
-            'limit'             => 'numeric'
+            'limit'             => 'numeric',
+            'q'                 => 'sometimes|string'
         ];
     }
 }

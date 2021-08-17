@@ -6,6 +6,7 @@ use App\Services\APIServerClient\ApiServerClient;
 use App\Services\Order\Constants\OrderTypes;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\Constants\Statuses;
+use App\Services\Order\OrderSearch;
 
 class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 {
@@ -37,19 +38,26 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
     }
 
 
-    private function getSearchingQuery($partner_id, $orderSearch)
+    private function getSearchingQuery(int $partner_id, OrderSearch $orderSearch)
     {
         $order_id = $orderSearch->getOrderId();
-        $customer_name = $orderSearch->getCustomerName();
+        $query_string = $orderSearch->getQueryString();
         $sales_channel_id = $orderSearch->getSalesChannelId();
 
-        return $this->model->where('partner_id', $partner_id)->whereHas('customer', function ($query) use ($customer_name) {
-            $query->where('name', 'like', '%' . $customer_name . '%');
-        })->when($order_id, function ($query) use ($order_id) {
-            return $query->where('partner_wise_order_id', $order_id);
-        })->when($sales_channel_id, function ($query) use ($sales_channel_id) {
-            return $query->where('sales_channel_id', $sales_channel_id);
-        });
+        return $this->model->with(['orderSkus','payments','discounts','customer'])
+            ->where('partner_id', $partner_id)->whereHas('customer', function ($query) use ($query_string) {
+                $query->when($query_string !== null, function ($query) use ($query_string) {
+                    $query->Where('name', 'LIKE', '%' . $query_string . '%');
+                    $query->orWhere('email', 'LIKE', '%' . $query_string . '%');
+                    $query->orWhere('mobile', 'LIKE', '%' . $query_string . '%');
+                });
+            })->when($order_id, function ($query) use ($order_id) {
+                return $query->where('partner_wise_order_id', $order_id);
+            })->when($sales_channel_id, function ($query) use ($sales_channel_id) {
+                return $query->where('sales_channel_id', $sales_channel_id);
+            });
+//        dump($orders->toSql());
+//        dd($orders->get()->count());
     }
 
     private function getTypeFilterResult($type, $searchQueryResult)
