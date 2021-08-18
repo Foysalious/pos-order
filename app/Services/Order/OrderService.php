@@ -75,16 +75,17 @@ class OrderService extends BaseService
     public function getOrderList(int $partner_id, OrderFilterRequest $request): JsonResponse
     {
         list($offset, $limit) = calculatePagination($request);
-        $orderSearch = $this->orderSearch->setOrderId($request->order_id)
-            ->setQueryString($request->q ?? null)
-            ->setSalesChannelId($request->sales_channel_id);
-
-        $orderFilter = $this->orderFilter->setType($request->type)
+        $searched_result = $this->orderSearch->setPartnerId($partner_id)
+            ->setQueryString($request->q)
+            ->setType($request->type)
+            ->setSalesChannelId($request->sales_channel_id)
+            ->setPaymentStatus($request->payment_status)
             ->setOrderStatus($request->order_status)
-            ->setPaymentStatus($request->payment_status);
+            ->setOffset($offset)
+            ->setLimit($limit)
+            ->getOrderListWithPagination();
 
-        $ordersList = $this->orderRepository->getOrderListWithPagination($offset, $limit, $partner_id, $orderSearch, $orderFilter);
-        $orderList = OrderResource::collection($ordersList);
+        $orderList = OrderResource::collection($searched_result);
         if (!$orderList) return $this->error("You're not authorized to access this order", 403);
         else return $this->success('Success', ['orders' => $orderList], 200);
     }

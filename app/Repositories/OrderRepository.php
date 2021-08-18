@@ -20,9 +20,13 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 
     public function getOrderListWithPagination($offset, $limit, $partner_id, $orderSearch, $orderFilter)
     {
-        $searchQueryOrderList = $this->getSearchingQuery($partner_id, $orderSearch);
+
+        $query = $this->model->with(['orderSkus','payments','discounts','customer'])->where('partner_id', $partner_id);
+
+        $query = $this->getSearchingQuery($partner_id, $orderSearch);
         $filterQueryOrderList = $this->getFilteringQuery($orderFilter, $searchQueryOrderList);
         $orderList = $filterQueryOrderList ? $filterQueryOrderList : $searchQueryOrderList;
+        dd($orderList->get()->count());
         return $orderList->offset($offset)->limit($limit)->latest()->get();
     }
 
@@ -40,24 +44,22 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 
     private function getSearchingQuery(int $partner_id, OrderSearch $orderSearch)
     {
-        $order_id = $orderSearch->getOrderId();
         $query_string = $orderSearch->getQueryString();
         $sales_channel_id = $orderSearch->getSalesChannelId();
 
         return $this->model->with(['orderSkus','payments','discounts','customer'])
-            ->where('partner_id', $partner_id)->whereHas('customer', function ($query) use ($query_string) {
-                $query->when($query_string !== null, function ($query) use ($query_string) {
+            ->where('partner_id', $partner_id)
+            ->whereHas('customer', function ($query) use ($query_string,$partner_id) {
+                $query->when($query_string, function ($query) use ($query_string) {
                     $query->Where('name', 'LIKE', '%' . $query_string . '%');
                     $query->orWhere('email', 'LIKE', '%' . $query_string . '%');
                     $query->orWhere('mobile', 'LIKE', '%' . $query_string . '%');
                 });
-            })->when($order_id, function ($query) use ($order_id) {
-                return $query->where('partner_wise_order_id', $order_id);
+            })->when($query_string, function ($query) use ($query_string) {
+                return $query->orWhere('partner_wise_order_id', 'LIKE', '%' .$query_string .'%');
             })->when($sales_channel_id, function ($query) use ($sales_channel_id) {
                 return $query->where('sales_channel_id', $sales_channel_id);
             });
-//        dump($orders->toSql());
-//        dd($orders->get()->count());
     }
 
     private function getTypeFilterResult($type, $searchQueryResult)
