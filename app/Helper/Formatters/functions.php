@@ -1,6 +1,7 @@
 <?php
 
 use App\Helper\Formatters\TakaFormatter;
+use Carbon\Carbon;
 
 if (!function_exists('formatTakaToDecimal')) {
     /**
@@ -15,6 +16,13 @@ if (!function_exists('formatTakaToDecimal')) {
     {
         return TakaFormatter::toDecimal($amount, $comma_separation, $comma_separation_format);
     }
+}
 
+if (!function_exists('convertTimezone')) {
 
+    function convertTimezone(Carbon $datetime, string $timezone = 'Asia/Dhaka'): Carbon
+    {
+        return $datetime->timezone($timezone);
+
+    }
 }

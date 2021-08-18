@@ -46,7 +46,7 @@ class CreateEntry extends BaseEntry
             'amount_cleared'     => $order_price_details->getPaid(),
             'total_discount'     => $order_price_details->getDiscount(),
             'total_vat'          => $order_price_details->getVat(),
-            'entry_at' => $this->order->created_at->format('Y-m-d H:i:s'),
+            'entry_at' => convertTimezone($this->order->created_at)->format('Y-m-d H:i:s'),
             'inventory_products' => $this->getOrderedItemsData(),
         ];
 
