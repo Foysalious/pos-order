@@ -178,8 +178,9 @@ class OrderService extends BaseService
         return $this->success('Successful', ['order' => $resource], 200);
     }
 
-    public function getWebStoreOrderDetails(int $partner_id, int $order_id, int $customer_id): JsonResponse
+    public function getWebStoreOrderDetails(int $partner_id, int $order_id, string $customer_id): JsonResponse
     {
+
         $order = $this->orderRepository->where('partner_id', $partner_id)->where('customer_id', $customer_id)->find($order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new CustomerOrderDetailsResource($order);
