@@ -20,8 +20,14 @@ if (!function_exists('formatTakaToDecimal')) {
 
 if (!function_exists('convertTimezone')) {
 
-    function convertTimezone(Carbon $datetime, string $timezone = 'Asia/Dhaka'): Carbon
+    /**
+     * @param Carbon|null $datetime
+     * @param string $timezone
+     * @return Carbon|null
+     */
+    function convertTimezone(?Carbon $datetime, string $timezone = 'Asia/Dhaka'): ?Carbon
     {
+        if (!$datetime) return null;
         return $datetime->timezone($timezone);
 
     }
