@@ -40,7 +40,9 @@ Route::group(['prefix'=>'v1'], function(){
             Route::get('partners/{partner_id}/products-by-ratings', [ReviewController::class, 'getProductIdsByRating']);
             Route::get('/{customer_id}/orders', [OrderController::class, 'getCustomerOrderList']);
         });
-        Route::apiResource('partners.orders', OrderController::class)->middleware('apiRequestLog');
+        Route::group(['middleware' => 'apiRequestLog'], function() {
+            Route::apiResource('partners.orders', OrderController::class, ['only' => ['store']]);
+        });
         Route::apiResource('partners.migrate', DataMigrationController::class)->only('store');
         Route::group(['prefix' => 'partners'], function () {
             Route::group(['prefix' => '{partner}'], function () {
