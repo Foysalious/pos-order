@@ -59,8 +59,7 @@ class OrderService extends BaseService
                                 protected ApiServerClient $apiServerClient,
                                 protected UsageService $usageService,
                                 protected AccessManager $accessManager,
-                                protected OrderSearch $orderSearch,
-                                protected OrderFilter $orderFilter
+                                protected OrderSearch $orderSearch
     )
     {
         $this->generateInvoice = $generateInvoice;
@@ -75,7 +74,7 @@ class OrderService extends BaseService
     public function getOrderList(int $partner_id, OrderFilterRequest $request): JsonResponse
     {
         list($offset, $limit) = calculatePagination($request);
-        $searched_result = $this->orderSearch->setPartnerId($partner_id)
+        $search_result = $this->orderSearch->setPartnerId($partner_id)
             ->setQueryString($request->q)
             ->setType($request->type)
             ->setSalesChannelId($request->sales_channel_id)
@@ -85,7 +84,7 @@ class OrderService extends BaseService
             ->setLimit($limit)
             ->getOrderListWithPagination();
 
-        $orderList = OrderResource::collection($searched_result);
+        $orderList = OrderResource::collection($search_result);
         if (!$orderList) return $this->error("You're not authorized to access this order", 403);
         else return $this->success('Success', ['orders' => $orderList], 200);
     }
