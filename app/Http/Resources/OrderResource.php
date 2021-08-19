@@ -44,7 +44,7 @@ class OrderResource extends JsonResource
             'discounted_price' => $price_calculator->getDiscountedPrice(),
             'paid' => $price_calculator->getPaid(),
             'due' => $price_calculator->getDue(),
-            'created_at' => convertTimezone($this->created_at)->format('Y-m-d h:i A')
+            'created_at' => convertTimezone($this->created_at)->format('Y-m-d G:i:s')
         ];
     }
 }
