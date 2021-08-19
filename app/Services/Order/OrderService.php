@@ -7,6 +7,7 @@ use App\Http\Reports\GenerateInvoice;
 use App\Helper\Miscellaneous\RequestIdentification;
 use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
+use App\Http\Requests\OrderFilterRequest;
 use App\Http\Resources\CustomerOrderResource;
 use App\Http\Requests\OrderUpdateRequest;
 use App\Http\Resources\DeliveryResource;
@@ -38,7 +39,7 @@ class OrderService extends BaseService
 {
     protected $orderRepository, $orderPaymentRepository, $customerRepository;
     protected $orderSkusRepositoryInterface;
-    protected $updater, $orderSearch, $orderFilter;
+    protected $updater;
     /** @var Creator */
     protected Creator $creator;
     /**
@@ -50,42 +51,40 @@ class OrderService extends BaseService
 
     public function __construct(OrderRepositoryInterface     $orderRepository,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
-                                OrderSearch $orderSearch, CustomerRepositoryInterface $customerRepository,
-                                OrderFilter $orderFilter,
+                                CustomerRepositoryInterface $customerRepository,
                                 Updater $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
                                 Creator $creator,
-                                protected InventoryServerClient $client,
                                 GenerateInvoice  $generateInvoice,
+                                protected InventoryServerClient $client,
                                 protected ApiServerClient $apiServerClient,
                                 protected UsageService $usageService,
-                                protected AccessManager $accessManager
+                                protected AccessManager $accessManager,
+                                protected OrderSearch $orderSearch
     )
     {
         $this->generateInvoice = $generateInvoice;
         $this->orderRepository = $orderRepository;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->updater = $updater;
-        $this->orderSearch = $orderSearch;
-        $this->orderFilter = $orderFilter;
         $this->creator = $creator;
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->customerRepository = $customerRepository;
     }
 
-    public function getOrderList($partner_id, $request)
+    public function getOrderList(int $partner_id, OrderFilterRequest $request): JsonResponse
     {
         list($offset, $limit) = calculatePagination($request);
-        $orderSearch = $this->orderSearch->setOrderId($request->order_id)
-            ->setCustomerName($request->customer_name)
+        $search_result = $this->orderSearch->setPartnerId($partner_id)
             ->setQueryString($request->q)
-            ->setSalesChannelId($request->sales_channel_id);
-
-        $orderFilter = $this->orderFilter->setType($request->type)
+            ->setType($request->type)
+            ->setSalesChannelId($request->sales_channel_id)
+            ->setPaymentStatus($request->payment_status)
             ->setOrderStatus($request->order_status)
-            ->setPaymentStatus($request->payment_status);
+            ->setOffset($offset)
+            ->setLimit($limit)
+            ->getOrderListWithPagination();
 
-        $ordersList = $this->orderRepository->getOrderListWithPagination($offset, $limit, $partner_id, $orderSearch, $orderFilter);
-        $orderList = OrderResource::collection($ordersList);
+        $orderList = OrderResource::collection($search_result);
         if (!$orderList) return $this->error("You're not authorized to access this order", 403);
         else return $this->success('Success', ['orders' => $orderList], 200);
     }

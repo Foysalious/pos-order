@@ -65,7 +65,7 @@ class OrderController extends Controller
      *      )
      *     )
      */
-    public function index($partner_id, OrderFilterRequest $request)
+    public function index(int $partner_id, OrderFilterRequest $request)
     {
         return $this->orderService->getOrderList($partner_id, $request);
     }
