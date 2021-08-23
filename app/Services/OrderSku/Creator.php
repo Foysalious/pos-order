@@ -7,6 +7,7 @@ use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\WarrantyUnits;
 use App\Services\Product\StockManager;
+use Illuminate\Support\Facades\App;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Creator
@@ -123,7 +124,8 @@ class Creator
         if ( is_null($sku_details)) {
            return json_encode($sku);
         } else {
-            $creator = new OrderSkuDetailCreator();
+            /** @var OrderSkuDetailCreator $creator */
+            $creator = App::make(OrderSkuDetailCreator::class);
             $data = $creator->setSku($sku)->setSkuDetails($sku_details)->create();
             return json_encode($data);
         }

@@ -39,15 +39,17 @@ class BaseEntry
         $data = [];
         $ordered_skus = $this->order->orderSkus()->get();
         $skus_ids = $ordered_skus->where('sku_id', '<>', null)->pluck('sku_id')->toArray();
-        $sku_details = collect($this->getSkuDetails($skus_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
+        if ($skus_ids) {
+            $sku_details = collect($this->getSkuDetails($skus_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
+        }
         $mapper = new BatchManipulator();
         foreach ($ordered_skus as $sku) {
-
             if (!is_null($sku->sku_id)) {
                 $batches = $mapper->setOrderSkuDetails($sku->details)->getBatchDetails();
                 foreach ($batches as $batch) {
                     $data [] = [
-                        'id' => $sku->sku_id,
+                        'id' => $sku_details[$sku->sku_id]['product_id'],
+                        'sku_id' => $sku->sku_id,
                         'name' => $sku->name,
                         'unit_price' => (double) $batch['cost'],
                         'selling_price' => (double)$sku->unit_price,
