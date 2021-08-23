@@ -10,10 +10,10 @@ class NotRatedSkuResource extends JsonResource
         $details = json_decode($this->details,true);
         return [
             'order_id' => $this->order_id,
-            'product_id' => $details ? $details['product_id'] : null,
-            'product_name' => $details ? $details['product_name'] : null,
-            'product_image'  =>'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/20210611_233930.jpg',
-            'variation' => $details ? $details['combination']: null,
+            'product_id' => $details ? ($details['product_id'] ?? null) : null,
+            'product_name' => $details ? ($details['product_id'] ?? null) : null,
+            'product_image'  => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/20210611_233930.jpg',
+            'variation' => $details ? ($details['product_id'] ?? null) : null,
         ];
     }
 }
