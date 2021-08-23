@@ -23,8 +23,8 @@ class PartnerService extends  BaseService
                 'id' => $partner_id,
                 'name' => $request->name ?? null,
                 'sub_domain' => $request->sub_domain ?? null,
-                'sms_invoice' => $request->sms_invoice ?? null,
-                'auto_printing' => $request->auto_printing ?? null,
+                'sms_invoice' => $request->sms_invoice ?? 0,
+                'auto_printing' => $request->auto_printing ?? 0,
                 'printer_name' => $request->printer_name ?? null,
                 'printer_model' => $request->printer_model ?? null,
             ]);

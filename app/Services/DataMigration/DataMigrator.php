@@ -78,7 +78,9 @@ class DataMigrator extends DataMigrationBase
         $result = $migration->handle();
         $this->repo->save($file, $batch);
         $this->note("<info>Migrated Data:</info> $file");
-        if($result) $this->note("<info>Returned:</info> $result");
+        if($result) {
+            $this->note("<info>Returned:</info> $result");
+        }
     }
 
     /**
@@ -89,10 +91,12 @@ class DataMigrator extends DataMigrationBase
      */
     public function getMigrationFiles($path)
     {
-        $files = $this->files->glob($path.'/*_*.php');
-        if ($files === false) return [];
-        $files = $this->formatMigrationFiles($files);
-        return $this->removeDefaultFiles($files);
+        $file_list = $this->files->glob($path.'/*_*.php');
+        if ($file_list === false) {
+            return [];
+        }
+        $file_list = $this->formatMigrationFiles($file_list);
+        return $this->removeDefaultFiles($file_list);
     }
 
     private function formatMigrationFiles($files)

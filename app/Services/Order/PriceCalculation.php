@@ -2,6 +2,7 @@
 
 use App\Models\Order;
 use App\Models\OrderSku;
+use App\Services\Discount\Constants\DiscountTypes;
 
 class PriceCalculation
 {
@@ -190,12 +191,12 @@ class PriceCalculation
 
     private function orderDiscount()
     {
-        return $this->order->orderDiscounts()->sum('amount');
+        return $this->order->discounts->where('type', DiscountTypes::ORDER)->sum('amount');
     }
 
     private function promoDiscount()
     {
-        return $this->order->voucherDiscounts()->sum('amount');
+        return $this->order->discounts->where('type', DiscountTypes::VOUCHER)->sum('amount');
     }
 
     private function creditPaymentsCollect()

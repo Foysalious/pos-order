@@ -96,7 +96,7 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         }
     }
 
-    public function getReviews( $offset,  $limit,  $product_id,  $rating,  $orderBy)
+    public function getReviews($offset, $limit, $product_id, $rating, $orderBy)
     {
         if (!$orderBy)
             $orderBy = 'desc';
@@ -109,7 +109,7 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
 
     public function getRatingStatistics($productId)
     {
-        return  $this->model->where('product_id', $productId)->groupBy('rating')->select('rating', DB::raw('count(*) as count'))->pluck('count','rating')->all();
+        return $this->model->where('product_id', $productId)->groupBy('rating')->select('rating', DB::raw('count(*) as count'))->pluck('count', 'rating')->all();
     }
 
     public function getCustomerReviews(string $customer_id, int $offset, int $limit, $order)
@@ -119,9 +119,14 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         return $query->offset($offset)->limit($limit)->get();
     }
 
+    public function getCustomerCount(string $customer_id)
+    {
+        return $this->model->where('customer_id', $customer_id)->get();
+    }
+
     public function getProductIdsByRating($partnerId, $ratings)
     {
-        return $this->model->where('partner_id',$partnerId)->whereIn('rating',$ratings)->select('product_id')->pluck('product_id');
+        return $this->model->where('partner_id', $partnerId)->whereIn('rating', $ratings)->select('product_id')->pluck('product_id');
     }
 
 }

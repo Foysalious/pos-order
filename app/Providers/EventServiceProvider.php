@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Events\OrderCreated;
+use App\Events\OrderDueCleared;
 use App\Events\OrderUpdated;
 use App\Listeners\AccountingEntryOnOrderCreation;
+use App\Listeners\AccountingEntryOnOrderDueCleared;
 use App\Listeners\AccountingEntryOnOrderUpdating;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -27,6 +29,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         OrderUpdated::class => [
             AccountingEntryOnOrderUpdating::class,
+        ],
+        OrderDueCleared::class => [
+            AccountingEntryOnOrderDueCleared::class,
         ],
     ];
 

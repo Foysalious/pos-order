@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers;
 
+use App\Exceptions\CustomerNotFound;
 use App\Exceptions\ProductNotFoundException;
+use App\Http\Requests\CustomerOrderListRequest;
 use App\Http\Requests\CustomerRequest;
 use App\Services\Customer\CustomerCreateDto;
 use App\Services\Customer\CustomerService;
@@ -27,12 +29,10 @@ class CustomerController extends Controller
     /**
      * Store Customer.
      *
-     * @param \Illuminate\Http\Request $request
-     * @param Request $request
+     * @param CustomerRequest $request
      *
      * @return JsonResponse
-     * @return JsonResponse
-     *
+     * @throws UnknownProperties
      * @OA\Post(
      *      path="/api/v1/customers",
      *      operationId="creatingcustomer",
@@ -62,7 +62,6 @@ class CustomerController extends Controller
      *        )
      *       ),
      *     )
-     * @throws UnknownProperties
      */
 
 
@@ -80,14 +79,12 @@ class CustomerController extends Controller
     }
 
     /**
-     * Update Customer.
-     *
-     * @param \Illuminate\Http\Request $request
+     * Update Customer
      * @param Request $request
-     *
+     * @param string $customer_id
+     * @param int $partner_id
      * @return JsonResponse
-     * @return JsonResponse
-     *
+     * @throws UnknownProperties
      * @OA\Post(
      *      path="/api/v1/customers/{customer_id}",
      *      operationId="updatingcustomer",
@@ -117,9 +114,8 @@ class CustomerController extends Controller
      *        )
      *       ),
      *     )
-     * @throws UnknownProperties
      */
-    public function update(Request $request, string $customer_id)
+    public function update(Request $request, int $partner_id, string $customer_id )
     {
         $customer = new CustomerUpdateDto([
             'name' => $request->name,
@@ -127,7 +123,7 @@ class CustomerController extends Controller
             'mobile' => $request->mobile,
             'pro_pic' => $request->pro_pic,
         ]);
-        return $this->customerService->update($customer_id, $customer);
+        return $this->customerService->update($customer_id, $customer,$partner_id);
     }
 
     /**
@@ -199,23 +195,99 @@ class CustomerController extends Controller
      *      @OA\Response(response=404, description="message: স্টকে কোন পণ্য নেই! প্রয়োজনীয় তথ্য দিয়ে স্টকে পণ্য যোগ করুন।"),
      *      @OA\Response(response=403, description="Forbidden")
      *     )
-     * @param $partner
      * @param Request $request
+     * @param $customer_id
      * @return JsonResponse
-     *
      */
 
-    public function notRatedOrderSkuList(Request $request, int $customer_id)
+    public function notRatedOrderSkuList(Request $request,$partner_id,$customer_id): JsonResponse
     {
-        return $this->customerService->getNotRatedOrderSkuList($customer_id, $request);
+        return $this->customerService->getNotRatedOrderSkuList($partner_id,$customer_id, $request);
     }
 
-    public function getCustomerOrderAmount()
+    /**
+     * Get customers order amount and promo used
+     *
+     * @param int $partner_id
+     * @param string $customer_id
+     * @return JsonResponse
+     *
+     * @throws CustomerNotFound
+     * @OA\GET(
+     *     path="/api/v1/partners/{partner}/customers/{customer}/purchase-amount-promo-usage",
+     *     tags={"Customer API"},
+     *     summary="To get a Customer's total purchase amount and used promo",
+     *     description="customers total order amount and promo usage",
+     *     @OA\Parameter(name="partner", description="partner id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="customer", description="customer id", required=true, in="path", @OA\Schema(type="string")),
+     *     @OA\Response(response=200, description="Successful operation",
+     *          @OA\JsonContent(
+     *          type="object",
+     *          example={"message":"Successful","data":{"total_purchase_amount":10947436.8,"total_used_promo":50}},
+     *       ),
+     *      ),
+     *     @OA\Response(response="404", description="Customer Not Found"),
+     *
+     * )
+     */
+    public function getPurchaseAmountAndPromoUsed(int $partner_id, string $customer_id): JsonResponse
     {
-        return [
-            'total_purchase_amount' => 3500,
-            'total_used_promo' => 700,
-        ];
+        return $this->customerService->getPurchaseAmountAndPromoUsed($partner_id,$customer_id);
+    }
+
+
+    /**
+     * Get customers order list date wise
+     *
+     * @param CustomerOrderListRequest $request
+     * @param int $partner_id
+     * @param string $customer_id
+     * @return JsonResponse
+     *
+     * @throws CustomerNotFound
+     * @OA\GET(
+     *     path="/api/v1/partners/{partner}/customers/{customer}/orders",
+     *     tags={"Customer API"},
+     *     summary="To get a Customer's total purchase amount and used promo",
+     *     description="customers order list date-wise",
+     *     @OA\Parameter(name="partner", description="partner id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="customer", description="customer id", required=true, in="path", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="limit", description="limit", required=false, in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="offset", description="offset", required=false, in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="status", description="status which has one value = due", required=false, in="query", @OA\Schema(type="string")),
+     *     @OA\Response(response=200, description="Successful operation",
+     *          @OA\JsonContent(
+     *          type="object",
+     *          example={"message":"Successful","data":{"2021-08-05":{"total_sale":610,"total_due":0,"orders":{{"id":2000955,"partner_wise_order_id":775,"status":"Pending","discounted_price":555,"due":0,"created_at":"2021-08-05T13:24:52.000000Z"},{"id":2000949,"partner_wise_order_id":770,"status":"Pending","discounted_price":55,"due":0,"created_at":"2021-08-05T11:05:38.000000Z"}}}}},
+     *       ),
+     *      ),
+     *     @OA\Response(response="404", description="Customer Not Found"),
+     * )
+     */
+    public function getOrdersByDateWise(CustomerOrderListRequest $request, int $partner_id, string $customer_id): JsonResponse
+    {
+        return $this->customerService->getOrdersByDateWise($request, $partner_id,$customer_id);
+    }
+
+    /**
+     * Delete customer
+     *
+     * @param $customer_id
+     * @return JsonResponse
+     *
+     * @OA\Delete(
+     *     path="/api/v1/customers/{customer}",
+     *     tags={"Customer API"},
+     *     summary="To Delete a Customer",
+     *     description="Delete customer and related orders",
+     *     @OA\Parameter(name="customer", description="customer id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="200", description="Successful"),
+     *     @OA\Response(response="403", description="Customer Not Found"),
+     * )
+     */
+    public function destroy($customer_id): JsonResponse
+    {
+        return $this->customerService->delete($customer_id);
     }
 
 }

@@ -4,6 +4,7 @@ use App\Http\Requests\PartnerUpdateRequest;
 use App\Services\DataMigration\DataMigrationService;
 use App\Services\Partner\PartnerService;
 use App\Traits\ResponseAPI;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class DataMigrationController extends Controller
@@ -40,6 +41,38 @@ class DataMigrationController extends Controller
         return !is_array($data) ? json_decode($data,1) : $data;
     }
 
+
+    /**
+     *
+     *     @OA\Put (
+     *     path="/api/v1/partners/{partner}",
+     *     summary="Sync partners pos setting",
+     *     tags={"Partner Sync API"},
+     *     @OA\Parameter(name="partner", description="partner id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *          @OA\MediaType(mediaType="application/x-www-form-urlencoded",
+     *              @OA\Schema(
+     *                  @OA\Property(property="name", type="String"),
+     *                  @OA\Property(property="sub_domain", type="String"),
+     *                  @OA\Property(property="sms_invoice", type="boolean"),
+     *                  @OA\Property(property="auto_printing", type="boolean"),
+     *                  @OA\Property(property="printer_name", type="String"),
+     *                  @OA\Property(property="printer_model", type="String"),
+     *             )
+     *         )
+     *      ),
+     *     @OA\Response(response=200, description="Successful",
+     *          @OA\JsonContent(
+     *          type="object",
+     *          example={ "message": "Successful" }
+     *       ),
+     *     )
+     * )
+     *
+     * @param $partner_id
+     * @param PartnerUpdateRequest $request
+     * @return JsonResponse
+     */
     public function updatePartnersTable($partner_id, PartnerUpdateRequest $request)
     {
         return $this->partnerService->updatePartner($partner_id,$request);

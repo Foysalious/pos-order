@@ -1,11 +1,15 @@
 <?php namespace App\Services\Order;
 
+use App\Events\OrderDueCleared;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Order;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Order\Payment\Creator as PaymentCreator;
+use App\Services\Usage\Types;
+use App\Services\Usage\UsageService;
 use App\Traits\ResponseAPI;
+use Illuminate\Support\Facades\App;
 
 class StatusChanger
 {
@@ -13,18 +17,13 @@ class StatusChanger
     protected $status;
     /** @var Order */
     protected $order;
-    /** @var OrderRepositoryInterface */
-    protected $orderRepositoryInterface;
-    /** @var PaymentCreator */
-    protected $paymentCreator;
     protected $modifier;
 
 
-    public function __construct(OrderRepositoryInterface $orderRepositoryInterface, PaymentCreator $paymentCreator)
-    {
-        $this->orderRepositoryInterface = $orderRepositoryInterface;
-        $this->paymentCreator = $paymentCreator;
-    }
+    public function __construct(
+        protected OrderRepositoryInterface $orderRepositoryInterface,
+        protected PaymentCreator $paymentCreator,
+        protected UsageService $usageService){}
 
     public function setOrder(Order $order)
     {
@@ -47,12 +46,19 @@ class StatusChanger
     public function changeStatus()
     {
         $this->orderRepositoryInterface->update($this->order, ['status' => $this->status]);
-        return $this->success('Successful', ['order' => $this->order], 200);
+        /** @var PriceCalculation $order_calculator */
+        $order_calculator = App::make(PriceCalculation::class);
+        $order_calculator->setOrder($this->order);
 
-      /*  if ($this->order->sales_channel == SalesChannels::WEBSTORE) {
-            if ($this->status == Statuses::DECLINED || $this->status == Statuses::CANCELLED) $this->refund();
-            if ($this->status == Statuses::COMPLETED && $this->order->getDue()) $this->collectPayment($this->order);
-        }*/
+        if ($this->order->sales_channel_id == SalesChannelIds::WEBSTORE) {
+              if ($this->status == Statuses::DECLINED || $this->status == Statuses::CANCELLED) {
+                  $this->refund();
+              }
+              if ($this->status == Statuses::COMPLETED && $order_calculator->getDue() > 0) {
+                  $this->collectPayment($this->order, $order_calculator );
+              }
+          }
+        return $this->success('Successful', ['order' => $this->order], 200);
     }
 
 
@@ -61,22 +67,16 @@ class StatusChanger
 
     }
 
-    private function collectPayment($order)
+    private function collectPayment(Order $order, PriceCalculation $order_calculator)
     {
         $payment_data = [
-            'pos_order_id' => $order->id,
-            'amount' => $order->getDue(),
+            'order_id' => $order->id,
+            'amount' => $order_calculator->getDue(),
             'method' => 'cod'
         ];
         if ($order->emi_month) $payment_data['emi_month'] = $order->emi_month;
         $this->paymentCreator->credit($payment_data);
-        $order = $order->calculate();
-        $order->payment_status = $order->getPaymentStatus();
-        $this->updateIncome($order, $order->getDue(), $order->emi_month);
-    }
-
-    private function updateIncome(Order $order, $paid_amount, $emi_month)
-    {
-
+        $this->usageService->setUserId($order->partner->id)->setUsageType(Types::POS_DUE_COLLECTION)->store();
+        event(new OrderDueCleared($order));
     }
 }

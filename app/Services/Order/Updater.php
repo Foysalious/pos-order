@@ -15,10 +15,12 @@ use App\Services\Order\Refund\UpdateProductInOrder;
 use App\Traits\ModificationFields;
 use Illuminate\Support\Facades\App;
 use App\Services\Order\Payment\Creator as OrderPaymentCreator;
+use Illuminate\Support\Facades\DB;
 
 class Updater
 {
     use ModificationFields;
+
     protected $partner_id, $order_id, $customer_id, $status, $sales_channel_id, $emi_month, $interest, $delivery_charge, $header;
     protected $bank_transaction_charge, $delivery_name, $delivery_mobile, $delivery_address, $note, $voucher_id, $discount;
     protected $skus, $order, $existingOrder;
@@ -31,6 +33,10 @@ class Updater
     protected $paymentLinkAmount;
     protected $orderProductChangeData;
     protected string $orderLogType = OrderLogTypes::OTHERS;
+    protected ?string $delivery_vendor_name;
+    protected ?string $delivery_request_id;
+    protected ?string $delivery_thana;
+    protected ?string $delivery_district;
 
     public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
@@ -54,7 +60,7 @@ class Updater
      * @param mixed $paymentLinkAmount
      * @return Updater
      */
-    public function setPaymentLinkAmount($paymentLinkAmount) : Updater
+    public function setPaymentLinkAmount($paymentLinkAmount): Updater
     {
         $this->paymentLinkAmount = $paymentLinkAmount;
         return $this;
@@ -84,7 +90,7 @@ class Updater
      * @param mixed $header
      * @return Creator
      */
-    public function setHeader($header) : Updater
+    public function setHeader($header): Updater
     {
         $this->header = $header;
         return $this;
@@ -270,39 +276,92 @@ class Updater
         return $this;
     }
 
-    public function update()
+    public function setInvoiceLink(string $invoice)
     {
-//        $order = $this->setExistingOrder();
-        $this->calculateOrderChangesAndUpdateSkus();
-        dd($this->orderProductChangeData);
-        event(new OrderUpdated($this->order, $this->orderProductChangeData));
-        dd('after updating');
-        if(isset($this->customer_id)) $this->updateCustomer();
-        $this->orderRepositoryInterface->update($this->order, $this->makeData());
-        if(isset($this->voucher_id)) $this->updateVoucherDiscount();
-        $this->updateOrderPayments();
-        if(isset($this->discount)) $this->updateDiscount();
-        $this->createLog($order);
+        $this->invoice = $invoice;
+        return $this;
     }
 
-    public function makeData() : array
+    /**
+     * @param string|null $delivery_vendor_name
+     * @return Updater
+     */
+    public function setDeliveryVendorName(?string $delivery_vendor_name): Updater
+    {
+        $this->delivery_vendor_name = $delivery_vendor_name;
+        return $this;
+    }
+
+    /**
+     * @param string|null $delivery_request_id
+     * @return Updater
+     */
+    public function setDeliveryRequestId(?string $delivery_request_id): Updater
+    {
+        $this->delivery_request_id = $delivery_request_id;
+        return $this;
+    }
+
+    /**
+     * @param string|null $delivery_thana
+     * @return Updater
+     */
+    public function setDeliveryThana(?string $delivery_thana): Updater
+    {
+        $this->delivery_thana = $delivery_thana;
+        return $this;
+    }
+
+    /**
+     * @param string|null $delivery_district
+     * @return Updater
+     */
+    public function setDeliveryDistrict(?string $delivery_district): Updater
+    {
+        $this->delivery_district = $delivery_district;
+        return $this;
+    }
+
+
+    public function update()
+    {
+        try {
+            DB::beginTransaction();
+            $order = $this->setExistingOrder();
+            $this->calculateOrderChangesAndUpdateSkus();
+            if (isset($this->customer_id)) $this->updateCustomer();
+            $this->orderRepositoryInterface->update($this->order, $this->makeData());
+            if (isset($this->voucher_id)) $this->updateVoucherDiscount();
+            $this->updateOrderPayments();
+            if (isset($this->discount)) $this->updateDiscount();
+            $this->createLog($order);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+        }
+    }
+
+    public function makeData(): array
     {
         $data = [];
-        if(isset($this->sales_channel_id)) $data['sales_channel_id']                = $this->sales_channel_id;
-        if(isset($this->emi_month)) $data['emi_month']                              = $this->emi_month;
-        if(isset($this->interest)) $data['interest']                                = $this->interest;
-        if(isset($this->delivery_charge))
-        {
+        if (isset($this->sales_channel_id)) $data['sales_channel_id'] = $this->sales_channel_id;
+        if (isset($this->emi_month)) $data['emi_month'] = $this->emi_month;
+        if (isset($this->interest)) $data['interest'] = $this->interest;
+        if (isset($this->delivery_charge)) {
             $data['delivery_charge'] = $this->delivery_charge;
             $this->setOrderLogType(OrderLogTypes::PRODUCTS_AND_PRICES);
         }
-        if(isset($this->bank_transaction_charge)) $data['bank_transaction_charge']  = $this->bank_transaction_charge;
-        if(isset($this->delivery_name)) $data['delivery_name']                      = $this->delivery_name;
-        if(isset($this->delivery_mobile)) $data['delivery_mobile']                  = $this->delivery_mobile;
-        if(isset($this->delivery_address)) $data['delivery_address']                = $this->delivery_address;
-        if(isset($this->note)) $data['note']                                        = $this->note;
-        if(isset($this->voucher_id))
-        {
+        if (isset($this->bank_transaction_charge)) $data['bank_transaction_charge'] = $this->bank_transaction_charge;
+        if (isset($this->delivery_name)) $data['delivery_name'] = $this->delivery_name;
+        if (isset($this->delivery_mobile)) $data['delivery_mobile'] = $this->delivery_mobile;
+        if (isset($this->delivery_address)) $data['delivery_address'] = $this->delivery_address;
+        if (isset($this->note)) $data['note'] = $this->note;
+        if (isset($this->delivery_vendor_name)) $data['delivery_vendor_name'] = $this->delivery_vendor_name;
+        if (isset($this->delivery_request_id)) $data['delivery_request_id'] = $this->delivery_request_id;
+        if (isset($this->delivery_thana)) $data['delivery_thana'] = $this->delivery_thana;
+        if (isset($this->delivery_district)) $data['delivery_district'] = $this->delivery_district;
+        if (isset($this->invoice)) $data['invoice'] = $this->invoice;
+        if (isset($this->voucher_id)) {
             $data['voucher_id'] = $this->voucher_id;
             $this->setOrderLogType(OrderLogTypes::PRODUCTS_AND_PRICES);
         }
@@ -329,7 +388,7 @@ class Updater
         $this->orderLogCreator->create();
     }
 
-    private function getTypeOfChangeLog() : string
+    private function getTypeOfChangeLog(): string
     {
         return $this->orderLogType;
     }
@@ -353,21 +412,20 @@ class Updater
         $comparator = App::make(OrderComparator::class);
         $comparator->setOrder($this->order)->setOrderNewSkus($this->skus)->compare();
 
-        if($comparator->isProductAdded()){
+        if ($comparator->isProductAdded()) {
             /** @var AddProductInOrder $updater */
             dd('added');
             $updater = OrderUpdateFactory::getProductAddingUpdater($this->order, $this->skus);
             $updated_flag = $updater->update();
             $this->orderProductChangeData['new'] = $updated_flag;
         }
-        if($comparator->isProductDeleted()){
-            dd('deleted');
+        if ($comparator->isProductDeleted()) {
             /** @var DeleteProductFromOrder $updater */
             $updater = OrderUpdateFactory::getProductDeletionUpdater($this->order, $this->skus);
             $updated_flag = $updater->update();
             $this->orderProductChangeData['deleted'] = $updated_flag;
         }
-        if($comparator->isProductUpdated()){
+        if ($comparator->isProductUpdated()) {
             /** @var UpdateProductInOrder $updater */
 //            dd('updated');
             $updater = OrderUpdateFactory::getOrderProductUpdater($this->order, $this->skus);
@@ -383,13 +441,13 @@ class Updater
 
     private function updateOrderPayments()
     {
-        if(isset($this->paymentMethod) && $this->paymentMethod == PaymentMethods::CASH_ON_DELIVERY && isset($this->paidAmount)) {
+        if (isset($this->paymentMethod) && $this->paymentMethod == PaymentMethods::CASH_ON_DELIVERY && isset($this->paidAmount)) {
             $payment_data['order_id'] = $this->order->id;
             $payment_data['amount'] = $this->paidAmount;
             $payment_data['method'] = PaymentMethods::CASH_ON_DELIVERY;
             $this->orderPaymentCreator->credit($payment_data);
             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
-        } elseif(isset($this->paymentMethod) && $this->paymentMethod == PaymentMethods::PAYMENT_LINK && isset($this->paymentLinkAmount)) {
+        } elseif (isset($this->paymentMethod) && $this->paymentMethod == PaymentMethods::PAYMENT_LINK && isset($this->paymentLinkAmount)) {
             $order_payment_link = $this->orderPaymentRepository->where('order_id', $this->order->id)->where('method', PaymentMethods::PAYMENT_LINK)->first();
             if ($order_payment_link) {
                 $order_payment_link->amount = $this->paymentLinkAmount;
@@ -410,35 +468,32 @@ class Updater
         $discountData = json_decode($this->discount);
         $originalAmount = $discountData->original_amount;
         $hasDiscount = $this->validateDiscountData($originalAmount);
-        if($hasDiscount) $this->orderDiscountRepository->where('order_id', $this->order_id)->update($this->makeOrderDiscountData($discountData));
+        if ($hasDiscount) $this->orderDiscountRepository->where('order_id', $this->order_id)->update($this->makeOrderDiscountData($discountData));
         $this->setOrderLogType(OrderLogTypes::PRODUCTS_AND_PRICES);
     }
 
-    private function validateDiscountData($originalAmount) : bool
+    private function validateDiscountData($originalAmount): bool
     {
-        if($originalAmount > 0) return true;
+        if ($originalAmount > 0) return true;
         return false;
     }
 
-    private function makeOrderDiscountData($discountData) : array
+    private function makeOrderDiscountData($discountData): array
     {
         $data = [];
-        $data['order_id']            = $this->order_id;
-        $data['original_amount']     = $discountData->original_amount;
-        $data['is_percentage']       = $discountData->is_percentage;
-        $data['cap']                 = $discountData->cap;
-        $data['discount_details']    = $discountData->discount_details;
-        $data['discount_id']         = $discountData->discount_id;
-        $data['item_id']             = $discountData->item_id;
-        if($discountData->is_percentage)
-        {
+        $data['order_id'] = $this->order_id;
+        $data['original_amount'] = $discountData->original_amount;
+        $data['is_percentage'] = $discountData->is_percentage;
+        $data['cap'] = $discountData->cap;
+        $data['discount_details'] = $discountData->discount_details;
+        $data['discount_id'] = $discountData->discount_id;
+        $data['item_id'] = $discountData->item_id;
+        if ($discountData->is_percentage) {
             /** @var PriceCalculation $orderPriceCalculation */
             $orderPriceCalculation = app(PriceCalculation::class);
             $orderTotalBill = $orderPriceCalculation->setOrder($this->order)->getProductDiscountedPrice();
-            $data['amount'] = ($orderTotalBill * $discountData->is_percentage)/100.00;
-        }
-        else
-        {
+            $data['amount'] = ($orderTotalBill * $discountData->is_percentage) / 100.00;
+        } else {
             $data['amount'] = $discountData->original_amount;
         }
         return $data;
@@ -446,11 +501,10 @@ class Updater
 
     private function updateVoucherDiscount()
     {
-        if(!isset($this->voucher_id)) return false;
-        if(isset($this->voucher_id) && is_null($this->voucher_id)) {
+        if (!isset($this->voucher_id)) return false;
+        if (isset($this->voucher_id) && is_null($this->voucher_id)) {
             return $this->orderDiscountRepository->where('order_id', $this->order_id)->where('type', 'voucher')->delete();
-        }
-        else {
+        } else {
             $this->orderDiscountRepository->where('order_id', $this->order_id)->where('type', 'voucher')->delete();
             return $this->discountHandler->setVoucherId($this->voucher_id)->setHeader($this->header)->voucherDiscountCalculate($this->order);
         }
