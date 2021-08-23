@@ -39,22 +39,15 @@ class OrderService extends BaseService
 {
     protected $orderRepository, $orderPaymentRepository, $customerRepository;
     protected $orderSkusRepositoryInterface;
-    protected $updater;
+    protected $updater, $orderFilter;
     /** @var Creator */
     protected Creator $creator;
-    /**
-     * @var GenerateInvoice
-     */
-    private GenerateInvoice $generateInvoice;
-    private const ORDER_CREATE_REWARD_EVENT_NAME = 'pos_order_create';
-    private const ORDER_CREATE_REWARDABLE_TYPE = 'partner';
 
     public function __construct(OrderRepositoryInterface     $orderRepository,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
                                 CustomerRepositoryInterface $customerRepository,
                                 Updater $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
                                 Creator $creator,
-                                GenerateInvoice  $generateInvoice,
                                 protected InventoryServerClient $client,
                                 protected ApiServerClient $apiServerClient,
                                 protected UsageService $usageService,
@@ -62,7 +55,6 @@ class OrderService extends BaseService
                                 protected OrderSearch $orderSearch
     )
     {
-        $this->generateInvoice = $generateInvoice;
         $this->orderRepository = $orderRepository;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->updater = $updater;
@@ -129,9 +121,7 @@ class OrderService extends BaseService
             ->create();
 
         if ($order) event(new OrderCreated($order));
-        //$this->callRewardApi($partner,$header,$order, $request->client_pos_order_id);
         if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
-        $this->generateInvoice->generateInvoice($order->id);
         $usage_type = $request->sales_channel_id == SalesChannelIds::WEBSTORE ? Types::PRODUCT_LINK : Types::POS_ORDER_CREATE;
         $this->usageService->setUserId((int) $partner)->setUsageType($usage_type)->store();
         return $this->success('Successful', ['order' => ['id' => $order->id]]);
@@ -148,25 +138,6 @@ class OrderService extends BaseService
         return $this->success('Successful', ['invoice' =>  $order->invoice], 200);
     }
 
-    private function callRewardApi($partnerId,$header, $order,$client_pos_order_id)
-    {
-        $price_calculator = (App::make(PriceCalculation::class))->setOrder($order);
-        $data = [
-            'event' => self::ORDER_CREATE_REWARD_EVENT_NAME,
-            'rewardable_type' => self::ORDER_CREATE_REWARDABLE_TYPE,
-            'rewardable_id' => $partnerId,
-            'event_data' => [
-                'id' => $order->id,
-                'paymnet_status' => $order->status,
-                'net_bill' => $price_calculator->getOriginalPrice(),
-                'client_pos_order_id' => $client_pos_order_id ?? null,
-                'partner_wise_order_id' => $order->partner_wise_order_id,
-                'portal_name' => (new RequestIdentification())->get()['portal_name']
-            ]
-        ];
-        dd($data);
-        return $this->apiServerClient->setBaseUrl()->setHeader($header)->post( 'pos/v1/reward/action', $data);
-    }
 
     public function getOrderDetails($partner_id, $order_id)
     {
@@ -221,8 +192,7 @@ class OrderService extends BaseService
             ->setDeliveryThana($orderUpdateRequest->delivery_thana ?? null)
             ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
             ->update();
-            $this->generateInvoice->generateInvoice($order_id);
-         return $this->success('Successful', [], 200);
+        return $this->success('Successful', [], 200);
     }
 
     public function delete($partner_id, $order_id)

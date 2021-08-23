@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use App\Events\RewardOnOrderCreate;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Transaction\Constants\TransactionTypes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -8,6 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Order extends BaseModel
 {
     use HasFactory, SoftDeletes;
+    public static  $savedEventClass = RewardOnOrderCreate::class;
     protected $guarded = ['id'];
 
     public function customer()
