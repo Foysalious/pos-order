@@ -120,7 +120,7 @@ class OrderService extends BaseService
             ->setVoucherId($request->voucher_id)
             ->create();
 
-        if ($order) event(new OrderCreated($order));
+//        if ($order) event(new OrderCreated($order));
         if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
         $usage_type = $request->sales_channel_id == SalesChannelIds::WEBSTORE ? Types::PRODUCT_LINK : Types::POS_ORDER_CREATE;
         $this->usageService->setUserId((int) $partner)->setUsageType($usage_type)->store();
