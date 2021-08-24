@@ -3,7 +3,6 @@
 use App\Events\OrderCreated;
 use App\Events\OrderDueCleared;
 use App\Events\OrderUpdated;
-use App\Events\RewardOnOrderCreate as RewardOnOrderCreateEvent;
 use App\Listeners\AccountingEntryOnOrderCreation;
 use App\Listeners\AccountingEntryOnOrderDueCleared;
 use App\Listeners\AccountingEntryOnOrderUpdating;
@@ -25,15 +24,13 @@ class EventServiceProvider extends ServiceProvider
         ],
         OrderCreated::class => [
             AccountingEntryOnOrderCreation::class,
+            RewardOnOrderCreateListener::class
         ],
         OrderUpdated::class => [
             AccountingEntryOnOrderUpdating::class,
         ],
         OrderDueCleared::class => [
             AccountingEntryOnOrderDueCleared::class,
-        ],
-        RewardOnOrderCreateEvent::class => [
-            RewardOnOrderCreateListener::class
         ]
     ];
 
