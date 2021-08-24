@@ -26,7 +26,7 @@ class ApiRequestMiddleware
             'route' => $request->fullUrl(),
             'ip_address' => getIp(),
             'user_agent' => $request->header('User-Agent'),
-            'portal' => $request->header('portal-name'),
+            'portal_name' => $request->header('portal-name'),
             'portal_version' => $request->header('Version-Code'),
         ]);
 
