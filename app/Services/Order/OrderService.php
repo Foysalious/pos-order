@@ -22,6 +22,7 @@ use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Jobs\Order\OrderPlacePushNotification;
 use App\Models\Order;
 use App\Services\AccessManager\AccessManager;
+use App\Services\AccessManager\Features;
 use App\Services\APIServerClient\ApiServerClient;
 use App\Services\BaseService;
 use App\Services\Discount\Constants\DiscountTypes;
@@ -129,7 +130,7 @@ class OrderService extends BaseService
     {
         $order = $this->orderRepository->find($order_id);
         if (!$order) return $this->error("No Order Found", 404);
-        $this->accessManager->setPartnerId($order->partner_id)->setFeature('pos.invoice.download')->checkAccess();
+        $this->accessManager->setPartnerId($order->partner_id)->setFeature(Features::INVOICE_DOWNLOAD)->checkAccess();
         return $this->success('Successful', ['invoice' =>  $order->invoice], 200);
     }
 
