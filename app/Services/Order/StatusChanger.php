@@ -3,9 +3,11 @@
 use App\Events\OrderDueCleared;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Order;
+use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
-use App\Services\Order\Payment\Creator as PaymentCreator;
+use App\Services\Payment\Creator as PaymentCreator;
+use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ResponseAPI;
 use Illuminate\Support\Facades\App;
 
@@ -66,13 +68,9 @@ class StatusChanger
 
     private function collectPayment(Order $order, PriceCalculation $order_calculator)
     {
-        $payment_data = [
-            'order_id' => $order->id,
-            'amount' => $order_calculator->getDue(),
-            'method' => 'cod'
-        ];
-        if ($order->emi_month) $payment_data['emi_month'] = $order->emi_month;
-        $this->paymentCreator->credit($payment_data);
+        $this->paymentCreator->setOrderId($order->id)->setAmount($order_calculator->getDue())->setMethod(PaymentMethods::CASH_ON_DELIVERY)
+            ->setTransactionType(TransactionTypes::CREDIT)->setEmiMonth($order->emi_month)
+            ->setInterest($order->interest)->create();
         event(new OrderDueCleared($order));
     }
 }

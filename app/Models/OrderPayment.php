@@ -8,6 +8,7 @@ class OrderPayment extends BaseModel
 {
     use HasFactory,SoftDeletes;
 
+    protected $guarded = ['id'];
     protected $casts = ['amount' => 'double'];
 
     public function order()
