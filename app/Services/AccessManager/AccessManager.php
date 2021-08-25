@@ -49,7 +49,6 @@ class AccessManager
         return [
             'partner_id' => $this->partnerId,
             'feature' => $this->feature,
-            'product_published_count' => $this->product_published_count
         ];
     }
 

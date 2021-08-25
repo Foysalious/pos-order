@@ -1,18 +1,15 @@
 <?php namespace App\Listeners;
 
 use App\Events\OrderCreated;
+use App\Jobs\Usage\UsageJob;
 use App\Services\Usage\Types;
-use App\Services\Usage\UsageService;
+use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Queue\SerializesModels;
 
 
 class UsageOnOrderDueClear
 {
-    /**
-     * Create the event listener.
-     *
-     * @return void
-     */
-    public function __construct(protected UsageService $usageService){}
+    use DispatchesJobs,SerializesModels;
 
     /**
      * Handle the event.
@@ -22,6 +19,6 @@ class UsageOnOrderDueClear
      */
     public function handle(OrderCreated $event)
     {
-        $this->usageService->setUserId($event->getOrder()->partner->id)->setUsageType(Types::POS_DUE_COLLECTION)->store();
+        $this->dispatch((new UsageJob((int) $event->getOrder()->partner->id, Types::POS_DUE_COLLECTION)));
     }
 }
