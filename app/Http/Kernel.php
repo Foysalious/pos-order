@@ -2,6 +2,7 @@
 
 namespace App\Http;
 
+use App\Http\Middleware\ApiRequestMiddleware;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel
@@ -63,5 +64,6 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'ip.whitelist' => \App\Http\Middleware\IpWhitelistMiddleware::class,
+        'apiRequestLog' => ApiRequestMiddleware::class
     ];
 }

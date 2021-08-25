@@ -114,6 +114,7 @@ class OrderService extends BaseService
             ->setPaidAmount($request->paid_amount)
             ->setPaymentMethod($request->payment_method)
             ->setVoucherId($request->voucher_id)
+            ->setApiRequest($request->api_request->id)
             ->create();
 
 //        if ($order) event(new OrderCreated($order));
