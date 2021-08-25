@@ -242,13 +242,11 @@ class Creator
         return $this;
     }
 
-    private function sendOrderPlaceSmsToCustomer()
-    {
-        (new Sms())->msg("Hello From The Other Side")
-            ->to("8801715096710")
-            ->shoot();
-    }
 
+    public function setApiRequest($apiRequest){
+        $this->apiRequest= $apiRequest;
+        return $this;
+    }
     /**
      * @return Order
      * @throws ValidationException
@@ -346,6 +344,7 @@ class Creator
         $order_data['discount']                 = json_decode($this->discount)->original_amount ?? 0;
         $order_data['is_discount_percentage']   = json_decode($this->discount)->is_percentage ?? 0;
         $order_data['voucher_id']               = $this->voucher_id;
+        $order_data['api_request_id']           = $this->apiRequest;
         return $order_data;
     }
 
