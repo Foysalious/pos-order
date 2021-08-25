@@ -329,15 +329,14 @@ class Updater
             DB::beginTransaction();
             $order = $this->setExistingOrder();
             $this->calculateOrderChangesAndUpdateSkus();
-            event(new OrderUpdated($this->order, $this->orderProductChangeData));
-            dd('here after accounting');
+            if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order, $this->orderProductChangeData));
             if (isset($this->customer_id)) $this->updateCustomer();
             $this->orderRepositoryInterface->update($this->order, $this->makeData());
             if (isset($this->voucher_id)) $this->updateVoucherDiscount();
             $this->updateOrderPayments();
             if (isset($this->discount)) $this->updateDiscount();
             $this->createLog($order);
-//            DB::commit();
+            DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
             throw $e;
@@ -415,23 +414,20 @@ class Updater
         $comparator = App::make(OrderComparator::class);
         $comparator->setOrder($this->order)->setOrderNewSkus($this->skus)->compare();
 
+        if ($comparator->isProductDeleted()) {
+            /** @var DeleteProductFromOrder $updater */
+            $updater = OrderUpdateFactory::getProductDeletionUpdater($this->order, $this->skus);
+            $updated_flag = $updater->update();
+            $this->orderProductChangeData['deleted'] = $updated_flag;
+        }
         if ($comparator->isProductAdded()) {
             /** @var AddProductInOrder $updater */
-            dump('added');
             $updater = OrderUpdateFactory::getProductAddingUpdater($this->order, $this->skus);
             $updated_flag = $updater->update();
             $this->orderProductChangeData['new'] = $updated_flag;
         }
-        if ($comparator->isProductDeleted()) {
-            /** @var DeleteProductFromOrder $updater */
-            $updater = OrderUpdateFactory::getProductDeletionUpdater($this->order, $this->skus);
-            dump('deleted');
-            $updated_flag = $updater->update();
-            $this->orderProductChangeData['deleted'] = $updated_flag;
-        }
         if ($comparator->isProductUpdated()) {
             /** @var UpdateProductInOrder $updater */
-            dump('updated');
             $updater = OrderUpdateFactory::getOrderProductUpdater($this->order, $this->skus);
             $updated_flag = $updater->update();
             $this->orderProductChangeData['refund_exchanged'] = $updated_flag;

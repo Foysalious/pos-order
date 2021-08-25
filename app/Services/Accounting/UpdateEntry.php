@@ -13,11 +13,16 @@ use App\Services\Order\Constants\SalesChannel;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\PriceCalculation;
 
+use App\Services\Order\Refund\Objects\AddRefundTracker;
 use Illuminate\Support\Facades\App;
 
 class UpdateEntry extends BaseEntry
 {
     protected array $orderProductChangeData;
+    const NEWLY_ADDED_PRODUCT = 'new';
+    const FULLY_DELETED_PRODUCT = 'deleted';
+    const QUANTITY_INCREASED = 'increased';
+    const QUANTITY_DECREASED = 'decreased';
     /**
      * UpdateEntry constructor.
      */
@@ -49,7 +54,6 @@ class UpdateEntry extends BaseEntry
 
         $customer = $this->order->customer->only('id','name');
         $inventory_products = $this->makeInventoryProducts();
-        $calculate_amount_change = $this->calculateAmountChange($inventory_products);
         $data = [
             'created_from' => json_encode($this->withBothModificationFields((new RequestIdentification())->get())),
             'credit_account_key' => Sales::SALES_FROM_POS,
@@ -76,70 +80,54 @@ class UpdateEntry extends BaseEntry
         $sku_ids = $this->getSkuIdsFromProductChangeData();
         $sku_ids_filtered = collect($sku_ids)->flatten()->whereNotNull()->toArray();
         $sku_details = collect($this->getSkuDetails($sku_ids_filtered,$this->order->sales_channel_id))->keyBy('id');
-        $order_skus = $this->order->orderSkus()->get();
+        $order_skus = $this->order->orderSkus()->withTrashed()->get();
 
-        $data = array_merge_recursive($this->makeNewProductsData($order_skus,$sku_details), $data);
-        dd($data);
-        $data = array_merge_recursive($this->makeDeletedProductsData($order_skus,$sku_details), $data);
-        $data = array_merge_recursive($this->makeRefundExchangedProductsData($order_skus,$sku_details), $data);
-
-        return $data;
-
-    }
-
-    private function makeNewProductsData($order_skus, $sku_details)
-    {
-        $data = [];
-        foreach ($this->orderProductChangeData['new'] as $new_item) {
-            if ($new_item['id'] != null) {
-                $sku_id = $new_item['sku_id'];
-                $order_sku = $order_skus->where('id', $new_item['id']);
-                $batch_wise_skus = $this->splitSkuByBatch($order_sku);
-                $data [] = [
-                    'id' => $sku_details[$sku_id]['product_id'],
-                    'sku_id' => $sku_details[$sku_id]['id'],
-                    'name' => $sku_details[$sku_id]['name'] ?? '',
-                    "unit_price" => (double) $sku_details[$sku_id]['sku_channel'][0]['price'],
-                    "selling_price" => (double) $order_skus->where('sku_id', 816)->sortBy('created_at',SORT_REGULAR, true)->pluck('unit_price')->first(),
-                    "quantity" => (double) $new_item['quantity'],
-                    "type" => 'new'
-                ];
-            } else {
-                $data [] = [
-                    'id' => 0,
-                    'name' => 'Custom Amount',
-                    "unit_price" => (double) $new_item['unit_price'],
-                    "selling_price" => (double) $new_item['unit_price'],
-                    "quantity" => (double) $new_item['quantity'],
-                    "type" => 'new'
-                ];
-            }
+        if(isset($this->orderProductChangeData['new'])){
+            $data = array_merge_recursive($this->makeNewAndDeletedProductsData($order_skus,$sku_details, self::NEWLY_ADDED_PRODUCT), $data);
         }
+        if(isset($this->orderProductChangeData['deleted']['refunded_products'])) {
+            $data = array_merge_recursive($this->makeNewAndDeletedProductsData($order_skus,$sku_details, self::FULLY_DELETED_PRODUCT), $data);
+        }
+        $data = array_merge_recursive($this->makeRefundExchangedProductsData($order_skus,$sku_details), $data);
         return $data;
+
     }
 
-    private function makeDeletedProductsData($order_skus, $sku_details)
+    private function makeNewAndDeletedProductsData($order_skus, $sku_details, $product_type)
     {
         $data = [];
-        foreach ($this->orderProductChangeData['deleted']['refunded_products'] as $deleted_item) {
-            if ($deleted_item['sku_id'] != null) {
-                $sku_id = $deleted_item['sku_id'];
-                $data [] = [
-                    'id' => $sku_details[$sku_id]['id'],
-                    'name' => $sku_details[$sku_id]['name'] ?? '',
-                    "unit_price" => (double) $sku_details[$sku_id]['sku_channel'][0]['price'],
-                    "selling_price" => (double) $order_skus->where('sku_id', $sku_id)->sortBy('created_at',SORT_REGULAR, true)->pluck('unit_price')->first(),
-                    "quantity" => (double) $deleted_item['quantity'],
-                    "type" => OrderChangingTypes::REFUND
-                ];
+        if($product_type == self::NEWLY_ADDED_PRODUCT) {
+            $items = $this->orderProductChangeData['new'];
+        } elseif ($product_type == self::FULLY_DELETED_PRODUCT) {
+            $items = $this->orderProductChangeData['deleted']['refunded_products'];
+        } else {
+            return [];
+        }
+        foreach ($items as $item) {
+            $order_sku = $order_skus->where('id', $item['id'])->first();
+            if ($item['id'] != null) {
+                $sku_id = $item['sku_id'];
+                $batch_wise_skus = $this->splitSkuByBatch($order_sku);
+                foreach ($batch_wise_skus as $batch) {
+                    $data [] = [
+                        'id' => $sku_details[$sku_id]['product_id'],
+                        'sku_id' => $sku_details[$sku_id]['id'],
+                        'name' => $sku_details[$sku_id]['name'] ?? '',
+                        "unit_price" => (double) $batch['unit_price'],
+                        "selling_price" => (double) $order_sku->unit_price,
+                        "quantity" => (double) $batch['quantity'],
+                        "type" => $product_type == self::NEWLY_ADDED_PRODUCT ? 'new' : OrderChangingTypes::REFUND,
+                    ];
+                }
+
             } else {
                 $data [] = [
                     'id' => 0,
                     'name' => 'Custom Amount',
-                    "unit_price" => (double) $deleted_item['unit_price'],
-                    "selling_price" => (double) $deleted_item['unit_price'],
-                    "quantity" => (double) $deleted_item['quantity'],
-                    "type" => OrderChangingTypes::REFUND
+                    "unit_price" => (double) $item['unit_price'],
+                    "selling_price" => (double) $item['unit_price'],
+                    "quantity" => (double) $item['quantity'],
+                    "type" =>  $product_type == self::NEWLY_ADDED_PRODUCT ? 'new' : OrderChangingTypes::REFUND,
                 ];
             }
         }
@@ -149,50 +137,64 @@ class UpdateEntry extends BaseEntry
     private function makeRefundExchangedProductsData($order_skus, $sku_details)
     {
         $data = [];
-        //qauntity increasing products
-        foreach ($this->orderProductChangeData['refund_exchanged']['added_products'] as $item) {
-            if ($item['sku_id'] != null) {
-                $sku_id = $item['sku_id'];
-                $data [] = [
-                    'id' => $sku_details[$sku_id]['id'],
-                    'name' => $sku_details[$sku_id]['name'] ?? '',
-                    "unit_price" => (double) $sku_details[$sku_id]['sku_channel'][0]['price'],
-                    "selling_price" => (double) $order_skus->where('id', $item['id'])->pluck('unit_price')->first(),
-                    "quantity" => (double) $item['quantity_changing_info']['value'],
-                    "type" => OrderChangingTypes::QUANTITY_INCREASE
-                ];
+        $added_items = $this->orderProductChangeData['refund_exchanged']['added_products'];
+        $refunded_items = $this->orderProductChangeData['refund_exchanged']['refunded_products'];
+        /** @var AddRefundTracker $item */
+        foreach ($added_items as $item) {
+            $order_sku = $order_skus->where('id', $item->getOrderSkuId())->first();
+            $sku_id = $item->getSkuId();
+
+            if ($item->getSkuId() != null) {
+                $batch_wise_cost = $this->getBatchWiseCost($item, self::QUANTITY_INCREASED);
+                foreach ($batch_wise_cost as $batch) {
+                    $data [] = [
+                        'id' => $sku_details[$sku_id]['product_id'],
+                        'sku_id' => $sku_details[$sku_id]['id'],
+                        'name' => $sku_details[$sku_id]['name'] ?? '',
+                        "unit_price" => (double) $batch['unit_price'],
+                        "selling_price" => (double) $order_sku->unit_price,
+                        "quantity" => (double) $batch['quantity'],
+                        "type" => OrderChangingTypes::QUANTITY_INCREASE
+                    ];
+                }
             } else {
                 $data [] = [
                     'id' => 0,
                     'name' => 'Custom Amount',
-                    "unit_price" => (double) $order_skus->where('id', $item['id'])->pluck('unit_price')->first(),
-                    "selling_price" => (double) $order_skus->where('id', $item['id'])->pluck('unit_price')->first(),
-                    "quantity" => (double) $item['quantity_changing_info']['value'],
-                    "type" => OrderChangingTypes::QUANTITY_INCREASE
+                    "unit_price" => (double) $order_sku->unit_price,
+                    "selling_price" => (double) $order_sku->unit_price,
+                    "quantity" => $item->getQuantityChangedValue(),
+                    "type" =>  OrderChangingTypes::QUANTITY_INCREASE,
                 ];
             }
         }
 
-        //qauntity decreasing products
-        foreach ($this->orderProductChangeData['refund_exchanged']['refunded_products'] as $item) {
-            if ($item['sku_id'] != null) {
-                $sku_id = $item['sku_id'];
-                $data [] = [
-                    'id' => $sku_details[$sku_id]['id'],
-                    'name' => $sku_details[$sku_id]['name'] ?? 'Nigga',
-                    "unit_price" => (double) $sku_details[$sku_id]['sku_channel'][0]['price'],
-                    "selling_price" => (double) $order_skus->where('id', $item['id'])->pluck('unit_price')->first(),
-                    "quantity" => (double) $item['quantity_changing_info']['value'],
-                    "type" => OrderChangingTypes::REFUND
-                ];
+        /** @var AddRefundTracker $item */
+        foreach ($refunded_items as $item) {
+            $order_sku = $order_skus->where('id', $item->getOrderSkuId())->first();
+            $sku_id = $item->getSkuId();
+
+            if ($item->getSkuId() != null) {
+                $batch_wise_cost = $this->getBatchWiseCost($item, self::QUANTITY_DECREASED);
+                foreach ($batch_wise_cost as $batch) {
+                    $data [] = [
+                        'id' => $sku_details[$sku_id]['product_id'],
+                        'sku_id' => $sku_details[$sku_id]['id'],
+                        'name' => $sku_details[$sku_id]['name'] ?? '',
+                        "unit_price" => (double) $batch['unit_price'],
+                        "selling_price" => (double) $order_sku->unit_price,
+                        "quantity" => (double) $batch['quantity'],
+                        "type" => OrderChangingTypes::REFUND
+                    ];
+                }
             } else {
                 $data [] = [
                     'id' => 0,
                     'name' => 'Custom Amount',
-                    "unit_price" => (double) $order_skus->where('id', $item['id'])->pluck('unit_price')->first(),
-                    "selling_price" => (double) $order_skus->where('id', $item['id'])->pluck('unit_price')->first(),
-                    "quantity" => (double) $item['quantity_changing_info']['value'],
-                    "type" => OrderChangingTypes::REFUND
+                    "unit_price" => (double) $order_sku->unit_price,
+                    "selling_price" => (double) $order_sku->unit_price,
+                    "quantity" => $item->getQuantityChangedValue(),
+                    "type" =>  OrderChangingTypes::REFUND,
                 ];
             }
         }
@@ -202,9 +204,10 @@ class UpdateEntry extends BaseEntry
     private function calculateAmountChange($data)
     {
         $amount = 0;
+
         foreach ($data as $each) {
-            if($each['type'] == OrderChangingTypes::QUANTITY_INCREASE) $amount = $amount + ($each['quantity']*$each['selling_price']);
-            if($each['type'] == 'new') $amount = $amount + ($each['quantity']*$each['selling_price']);
+            if($each['type'] == OrderChangingTypes::QUANTITY_INCREASE)$amount = $amount + ($each['quantity']*$each['selling_price']);
+            if($each['type'] == OrderChangingTypes::NEW) $amount = $amount + ($each['quantity']*$each['selling_price']);
             if($each['type'] == OrderChangingTypes::REFUND) $amount = $amount - ($each['quantity']*$each['selling_price']);
         }
         return $amount;
@@ -213,10 +216,10 @@ class UpdateEntry extends BaseEntry
     private function getNote()
     {
         $note = '';
-        if(count($this->orderProductChangeData['new']) > 0) $note .= 'added' ;
-        if(count($this->orderProductChangeData['deleted']) > 0) $note .= '-'. OrderChangingTypes::REFUND;
-        if(count($this->orderProductChangeData['refund_exchanged']['added_products']) > 0) $note .= '-' . OrderChangingTypes::QUANTITY_INCREASE;
-        if(count($this->orderProductChangeData['refund_exchanged']['refunded_products']) > 0) $note .= '-' . OrderChangingTypes::REFUND;
+        if(count($this->orderProductChangeData['new'] ?? []) > 0) $note .= 'added-' ;
+        if(count($this->orderProductChangeData['deleted'] ?? []) > 0) $note .= OrderChangingTypes::REFUND .'-';
+        if(count($this->orderProductChangeData['refund_exchanged']['added_products'] ?? []) > 0) $note .=  OrderChangingTypes::QUANTITY_INCREASE . '-';
+        if(count($this->orderProductChangeData['refund_exchanged']['refunded_products'] ?? []) > 0) $note .=  OrderChangingTypes::REFUND;
         return $note;
     }
 
@@ -237,7 +240,72 @@ class UpdateEntry extends BaseEntry
 
     private function splitSkuByBatch($order_sku)
     {
-        dd($order_sku);
+        $order_details = json_decode($order_sku->details, true);
+        $batch_detail = $order_details['batch_detail'] ?? [];
+        $data = [];
+        if (empty($batch_detail)) {
+            $data [] = [
+                'quantity' => $order_sku->quantity,
+                'unit_price' => $order_sku->unit_price,
+            ];
+        } else {
+            foreach ($batch_detail as $batch) {
+                $data [] = [
+                    'quantity' => $batch['quantity'],
+                    'unit_price' => $batch['cost'],
+                ];
+            }
+        }
+        return $data;
+
+    }
+
+    private function getBatchWiseCost(AddRefundTracker $item, $for)
+    {
+        $batch_detail = $item->getUpdatedBatchDetail();
+        if($for == self::QUANTITY_DECREASED){
+            $batch_detail = $item->getOldBatchDetail();
+        }
+
+
+        if (empty($batch_detail)) {
+            $data [] = [
+                'quantity' => $item->getQuantityChangedValue(),
+                'unit_price' => $item->getOldUnitPrice(),
+            ];
+        } else {
+            $batch_detail = collect($batch_detail)->sortByDesc('batch_id');
+            if($for == self::QUANTITY_INCREASED) {
+                $increase = $item->getQuantityChangedValue();
+                $data = $this->takeOutFromBatchDetail($increase, $batch_detail );
+            } else {
+                $decrease = $item->getQuantityChangedValue();
+                $data = $this->takeOutFromBatchDetail($decrease, $batch_detail );
+            }
+        }
+        return $data;
+
+    }
+
+    private function takeOutFromBatchDetail($quantity, $batch_detail)
+    {
+        foreach ($batch_detail as $batch) {
+            if($batch['quantity'] >= $quantity){
+                $data [] = [
+                    'quantity' => $quantity,
+                    'unit_price' => $batch['cost'],
+                ];
+                break;
+            } elseif ($batch['quantity'] < $quantity) {
+                $data [] = [
+                    'quantity' => $batch['quantity'],
+                    'unit_price' => $batch['cost'],
+                ];
+                $quantity = $quantity - $batch['quantity'];
+            }
+        }
+        return $data;
+
     }
 
 }

@@ -161,4 +161,28 @@ class AddRefundTracker
     {
         return $this->skuId;
     }
+
+    /**
+     * @return int
+     */
+    public function getOrderSkuId(): int
+    {
+        return $this->orderSkuId;
+    }
+
+    /**
+     * @return array|null
+     */
+    public function getUpdatedBatchDetail(): ?array
+    {
+        return $this->updatedBatchDetail;
+    }
+
+    /**
+     * @return array|null
+     */
+    public function getOldBatchDetail(): ?array
+    {
+        return $this->oldBatchDetail;
+    }
 }
