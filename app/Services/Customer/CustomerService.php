@@ -10,6 +10,7 @@ use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;
 use App\Models\Customer;
 use App\Models\Order;
+use App\Repositories\Accounting\AccountingRepository;
 use App\Services\BaseService;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\PriceCalculation;
@@ -28,7 +29,8 @@ class CustomerService extends BaseService
         private CustomerRepositoryInterface $customerRepository,
         private ReviewRepositoryInterface $reviewRepositoryInterface,
         private Updater $updater,
-        private OrderSkuRepositoryInterface $orderSkuRepositoryInterface
+        private OrderSkuRepositoryInterface $orderSkuRepositoryInterface,
+        private AccountingRepository $accountingRepository
     ){}
 
     public function update(string $customer_id, CustomerUpdateDto $updateDto,$partner_id): JsonResponse
@@ -70,12 +72,13 @@ class CustomerService extends BaseService
     /**
      * @throws Exception
      */
-    public function delete(int $customer_id): JsonResponse
+    public function delete(int $partner_id, int|string $customer_id): JsonResponse
     {
         try {
             $customer = $this->customerRepository->find($customer_id);
             if (!$customer) return $this->error('Customer Not Found', 404);
             DB::beginTransaction();
+            $this->accountingRepository->deleteCustomer($partner_id, $customer->id);
             $customer->delete();
             DB::commit();
             return $this->success();

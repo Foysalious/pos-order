@@ -414,6 +414,7 @@ class Updater
 
         if ($comparator->isProductAdded()) {
             /** @var AddProductInOrder $updater */
+            dd('added');
             $updater = OrderUpdateFactory::getProductAddingUpdater($this->order, $this->skus);
             $updated_flag = $updater->update();
             $this->orderProductChangeData['new'] = $updated_flag;
@@ -426,6 +427,7 @@ class Updater
         }
         if ($comparator->isProductUpdated()) {
             /** @var UpdateProductInOrder $updater */
+//            dd('updated');
             $updater = OrderUpdateFactory::getOrderProductUpdater($this->order, $this->skus);
             $updated_flag = $updater->update();
             $this->orderProductChangeData['refund_exchanged'] = $updated_flag;

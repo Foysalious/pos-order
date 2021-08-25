@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Providers;
+<?php namespace App\Providers;
 
 use App\Events\OrderCreated;
 use App\Events\OrderDueCleared;
@@ -8,10 +6,11 @@ use App\Events\OrderUpdated;
 use App\Listeners\AccountingEntryOnOrderCreation;
 use App\Listeners\AccountingEntryOnOrderDueCleared;
 use App\Listeners\AccountingEntryOnOrderUpdating;
+use App\Listeners\RewardOnOrderCreate as RewardOnOrderCreateListener;
+use App\Listeners\UsageOnOrderCreate;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Event;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -25,14 +24,16 @@ class EventServiceProvider extends ServiceProvider
             SendEmailVerificationNotification::class,
         ],
         OrderCreated::class => [
-            AccountingEntryOnOrderCreation::class,
+//            AccountingEntryOnOrderCreation::class,
+            RewardOnOrderCreateListener::class,
+            UsageOnOrderCreate::class
         ],
         OrderUpdated::class => [
             AccountingEntryOnOrderUpdating::class,
         ],
         OrderDueCleared::class => [
             AccountingEntryOnOrderDueCleared::class,
-        ],
+        ]
     ];
 
     /**

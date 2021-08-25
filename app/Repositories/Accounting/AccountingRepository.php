@@ -43,4 +43,16 @@ class AccountingRepository extends BaseRepository
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
+
+    /**
+     * @param int $partnerId
+     * @param string|int $customerId
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
+    public function deleteCustomer(int $partnerId, string|int $customerId)
+    {
+        $url = "api/due-list/" . $customerId;
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($partnerId)->delete($url);
+    }
 }

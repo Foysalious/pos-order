@@ -2,12 +2,13 @@
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Partner extends BaseModel
+class ApiRequest extends BaseModel
 {
     protected $guarded = ['id'];
     use HasFactory;
+
     public function orders()
     {
-        return $this->hasMany(Order::class);
+        return $this->belongsTo(Order::class, 'api_request_id', 'id');
     }
 }
