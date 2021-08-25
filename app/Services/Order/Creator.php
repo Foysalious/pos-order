@@ -277,7 +277,7 @@ class Creator
             if($this->hasDueError($order)){
                 throw new OrderException("Can not make due order without customer", 421);
             }
-//            DB::commit();
+            DB::commit();
             return $order;
         } catch (\Exception $e) {
             DB::rollback();
