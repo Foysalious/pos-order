@@ -41,8 +41,9 @@ Route::group(['prefix'=>'v1'], function(){
             Route::get('/{customer_id}/orders', [OrderController::class, 'getCustomerOrderList']);
         });
         Route::group(['middleware' => 'apiRequestLog'], function() {
-            Route::apiResource('partners.orders', OrderController::class);
+            Route::post('partners/{partner}/orders', [OrderController::class, 'store']);
         });
+        Route::apiResource('partners.orders', OrderController::class)->except('store');
         Route::apiResource('partners.migrate', DataMigrationController::class)->only('store');
         Route::group(['prefix' => 'partners'], function () {
             Route::group(['prefix' => '{partner}'], function () {
