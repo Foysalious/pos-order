@@ -73,15 +73,13 @@ class UpdateEntry extends BaseEntry
     private function makeInventoryProducts()
     {
         $data = [];
-        $sku_ids [] = array_column($this->orderProductChangeData['new'] ?? [], 'id');
-        $sku_ids [] = array_column($this->orderProductChangeData['deleted']['refunded_products'] ?? [], 'sku_id');
-        $sku_ids [] = array_column($this->orderProductChangeData['refund_exchanged']['added_products'] ?? [], 'sku_id');
-        $sku_ids [] = array_column($this->orderProductChangeData['refund_exchanged']['refunded_products'] ?? [], 'sku_id');
-        $sku_ids = collect($sku_ids)->flatten()->whereNotNull()->toArray();
-        $sku_details = collect($this->getSkuDetails($sku_ids,$this->order->sales_channel_id))->keyBy('id');
+        $sku_ids = $this->getSkuIdsFromProductChangeData();
+        $sku_ids_filtered = collect($sku_ids)->flatten()->whereNotNull()->toArray();
+        $sku_details = collect($this->getSkuDetails($sku_ids_filtered,$this->order->sales_channel_id))->keyBy('id');
         $order_skus = $this->order->orderSkus()->get();
 
         $data = array_merge_recursive($this->makeNewProductsData($order_skus,$sku_details), $data);
+        dd($data);
         $data = array_merge_recursive($this->makeDeletedProductsData($order_skus,$sku_details), $data);
         $data = array_merge_recursive($this->makeRefundExchangedProductsData($order_skus,$sku_details), $data);
 
@@ -94,9 +92,12 @@ class UpdateEntry extends BaseEntry
         $data = [];
         foreach ($this->orderProductChangeData['new'] as $new_item) {
             if ($new_item['id'] != null) {
-                $sku_id = $new_item['id'];
+                $sku_id = $new_item['sku_id'];
+                $order_sku = $order_skus->where('id', $new_item['id']);
+                $batch_wise_skus = $this->splitSkuByBatch($order_sku);
                 $data [] = [
-                    'id' => $sku_details[$sku_id]['id'],
+                    'id' => $sku_details[$sku_id]['product_id'],
+                    'sku_id' => $sku_details[$sku_id]['id'],
                     'name' => $sku_details[$sku_id]['name'] ?? '',
                     "unit_price" => (double) $sku_details[$sku_id]['sku_channel'][0]['price'],
                     "selling_price" => (double) $order_skus->where('sku_id', 816)->sortBy('created_at',SORT_REGULAR, true)->pluck('unit_price')->first(),
@@ -217,6 +218,26 @@ class UpdateEntry extends BaseEntry
         if(count($this->orderProductChangeData['refund_exchanged']['added_products']) > 0) $note .= '-' . OrderChangingTypes::QUANTITY_INCREASE;
         if(count($this->orderProductChangeData['refund_exchanged']['refunded_products']) > 0) $note .= '-' . OrderChangingTypes::REFUND;
         return $note;
+    }
+
+    private function getSkuIdsFromProductChangeData()
+    {
+        $sku_ids [] = array_column($this->orderProductChangeData['new'] ?? [], 'sku_id');
+        $sku_ids [] = array_column($this->orderProductChangeData['deleted']['refunded_products'] ?? [], 'sku_id');
+        $quantity_added = $this->orderProductChangeData['refund_exchanged']['added_products'];
+        array_walk($quantity_added, function ($item) use (&$sku_ids){
+           $sku_ids [] = $item->getSkuId();
+        });
+        $refunded = $this->orderProductChangeData['refund_exchanged']['refunded_products'];
+        array_walk($refunded, function ($item) use (&$sku_ids){
+            $sku_ids [] = $item->getSkuId();
+        });
+        return $sku_ids;
+    }
+
+    private function splitSkuByBatch($order_sku)
+    {
+        dd($order_sku);
     }
 
 }

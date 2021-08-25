@@ -252,6 +252,7 @@ class Creator
     /**
      * @return Order
      * @throws ValidationException
+     * @throws OrderException
      */
     public function create()
     {

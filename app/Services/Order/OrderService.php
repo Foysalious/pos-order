@@ -221,8 +221,9 @@ class OrderService extends BaseService
             ->setDeliveryThana($orderUpdateRequest->delivery_thana ?? null)
             ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
             ->update();
-            $this->generateInvoice->generateInvoice($order_id);
-         return $this->success('Successful', [], 200);
+
+        $this->generateInvoice->generateInvoice($order_id);
+        return $this->success('Successful', [], 200);
     }
 
     public function delete($partner_id, $order_id)
