@@ -248,7 +248,7 @@ class OrderService extends BaseService
     {
         $order_resource = json_decode(($order_resource->toJson()), true);
         $sku_ids = $order->orderSkus->whereNotNull('sku_id')->pluck('sku_id');
-        $sku_details = $this->getSkuDetails($sku_ids, $order);
+        $sku_details = $sku_ids->count() > 0 ? $this->getSkuDetails($sku_ids, $order) : collect();
         $order_sku_discounts = $order->discounts->where('type', DiscountTypes::SKU);
         foreach ($order_resource['items'] as &$item) {
             $flag = true;
