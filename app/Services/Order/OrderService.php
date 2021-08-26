@@ -198,7 +198,7 @@ class OrderService extends BaseService
         $OrderSkusIds = $this->orderSkusRepositoryInterface->where('order_id', $order_id)->get(['id']);
         $this->orderSkusRepositoryInterface->whereIn('id', $OrderSkusIds)->delete();
         $order->delete();
-        return $this->success('Successful', null, 200);
+        return $this->success();
     }
 
     public function getOrderWithChannel($order_id)
