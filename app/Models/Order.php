@@ -3,6 +3,7 @@
 use App\Events\OrderCreated;
 use App\Events\RewardOnOrderCreate;
 use App\Services\Discount\Constants\DiscountTypes;
+use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Transaction\Constants\TransactionTypes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -60,6 +61,11 @@ class Order extends BaseModel
     public function logs()
     {
         return $this->hasMany(OrderLog::class);
+    }
+
+    public function statusChangeLogs()
+    {
+        return $this->logs()->where('type',OrderLogTypes::ORDER_STATUS);
     }
 
     public function paymentMethod()

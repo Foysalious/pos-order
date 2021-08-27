@@ -11,7 +11,6 @@ use App\Http\Requests\OrderFilterRequest;
 use App\Http\Resources\CustomerOrderResource;
 use App\Http\Requests\OrderUpdateRequest;
 use App\Http\Resources\DeliveryResource;
-use App\Http\Resources\OrderInvoiceResource;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderWithProductResource;
 use App\Http\Resources\Webstore\CustomerOrderDetailsResource;
@@ -19,7 +18,6 @@ use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
-use App\Jobs\Order\OrderPlacePushNotification;
 use App\Models\Order;
 use App\Services\AccessManager\AccessManager;
 use App\Services\AccessManager\Features;
@@ -29,8 +27,6 @@ use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
 
 class OrderService extends BaseService
@@ -146,8 +142,7 @@ class OrderService extends BaseService
 
     public function getWebStoreOrderDetails(int $partner_id, int $order_id, string $customer_id): JsonResponse
     {
-
-        $order = $this->orderRepository->where('partner_id', $partner_id)->where('customer_id', $customer_id)->find($order_id);
+        $order = $this->orderRepository->where('partner_id', $partner_id)->where('customer_id', $customer_id)->with('statusChangeLogs')->find($order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new CustomerOrderDetailsResource($order);
         return $this->success('Successful', ['order' => $resource], 200);
