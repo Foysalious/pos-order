@@ -142,27 +142,27 @@ class OrderService extends BaseService
         $order = $this->orderRepository->where('partner_id', $partner_id)->where('customer_id', $customer_id)->with('statusChangeLogs')->find($order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new CustomerOrderDetailsResource($order);
-        $statusChangeInfo = $this->getStatusChangeInfo($order);
-        return $this->success('Successful', ['order' => $resource,'statusChangeInfo' => $statusChangeInfo]);
+        $statusHistory = $this->getStatusHistory($order);
+        return $this->success('Successful', ['order' => $resource,'status_history' => $statusHistory]);
     }
 
-    private function getStatusChangeInfo($order): array
+    private function getStatusHistory($order): array
     {
         $logs = $order->statusChangeLogs;
-        $statusChangeInfo = [];
+        $statusHistory = [];
         $temp['status'] = WebStoreStatuses::ORDER_PLACED;
         $temp['time_stamp'] = $order->created_at;
-        array_push($statusChangeInfo, $temp);
+        array_push($statusHistory, $temp);
         $mapped_status = config('mapped_status');
-        $logs->each(function ($log) use (&$statusChangeInfo, $order, $mapped_status) {
+        $logs->each(function ($log) use (&$statusHistory, $order, $mapped_status) {
             $toStatus = json_decode($log->new_value, true)['to'];
             if (in_array($toStatus, [Statuses::PROCESSING, Statuses::SHIPPED, Statuses::COMPLETED])){
                 $temp['status'] = $mapped_status[$toStatus];
                 $temp['time_stamp'] =  convertTimezone($log->created_at);
-                array_push($statusChangeInfo, $temp);
+                array_push($statusHistory, $temp);
             }
         });
-        return $statusChangeInfo;
+        return $statusHistory;
     }
 
     /**
