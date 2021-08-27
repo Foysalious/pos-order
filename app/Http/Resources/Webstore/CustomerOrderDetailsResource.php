@@ -34,7 +34,6 @@ class CustomerOrderDetailsResource extends JsonResource
             'status'                  => $this->status,
             'items'                   => OrderSkuResource::collection($this->items),
             'price'                   => $this->getOrderPriceRelatedInfo(),
-            'status_change_logs'      => $this->statusChangeLogs()->get()->toArray()
         ];
         return $this->orderWithProductResource;
     }

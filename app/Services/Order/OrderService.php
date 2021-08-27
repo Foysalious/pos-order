@@ -1,10 +1,5 @@
 <?php namespace App\Services\Order;
-
-use App\Events\OrderCreated;
-use App\Events\OrderUpdated;
 use App\Exceptions\AuthorizationException;
-use App\Http\Reports\GenerateInvoice;
-use App\Helper\Miscellaneous\RequestIdentification;
 use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
 use App\Http\Requests\OrderFilterRequest;
@@ -28,6 +23,8 @@ use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
+use App\Services\Order\Constants\Statuses;
+use App\Services\Webstore\Order\Statuses as WebStoreStatuses;
 
 class OrderService extends BaseService
 {
@@ -145,8 +142,27 @@ class OrderService extends BaseService
         $order = $this->orderRepository->where('partner_id', $partner_id)->where('customer_id', $customer_id)->with('statusChangeLogs')->find($order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new CustomerOrderDetailsResource($order);
-        return $this->success('Successful', ['order' => $resource], 200);
+        $statusChangeInfo = $this->getStatusChangeInfo($order);
+        return $this->success('Successful', ['order' => $resource,'statusChangeInfo' => $statusChangeInfo]);
+    }
 
+    private function getStatusChangeInfo($order): array
+    {
+        $logs = $order->statusChangeLogs;
+        $statusChangeInfo = [];
+        $temp['status'] = WebStoreStatuses::ORDER_PLACED;
+        $temp['time_stamp'] = $order->created_at;
+        array_push($statusChangeInfo, $temp);
+        $mapped_status = config('mapped_status');
+        $logs->each(function ($log) use (&$statusChangeInfo, $order, $mapped_status) {
+            $toStatus = json_decode($log->new_value, true)['to'];
+            if (in_array($toStatus, [Statuses::PROCESSING, Statuses::SHIPPED, Statuses::COMPLETED])){
+                $temp['status'] = $mapped_status[$toStatus];
+                $temp['time_stamp'] =  convertTimezone($log->created_at);
+                array_push($statusChangeInfo, $temp);
+            }
+        });
+        return $statusChangeInfo;
     }
 
     /**
