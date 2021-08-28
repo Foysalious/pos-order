@@ -47,16 +47,16 @@ class OrderService extends BaseService
      */
     private InvoiceService $invoiceService;
 
-    public function __construct(OrderRepositoryInterface     $orderRepository,
-                                OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
-                                CustomerRepositoryInterface $customerRepository,
-                                Updater $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
-                                Creator $creator,
+    public function __construct(OrderRepositoryInterface        $orderRepository,
+                                OrderSkusRepositoryInterface    $orderSkusRepositoryInterface,
+                                CustomerRepositoryInterface     $customerRepository,
+                                Updater                         $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
+                                Creator                         $creator,
                                 protected InventoryServerClient $client,
-                                protected ApiServerClient $apiServerClient,
-                                protected AccessManager $accessManager,
-                                protected OrderSearch $orderSearch,
-                                InvoiceService $invoiceService
+                                protected ApiServerClient       $apiServerClient,
+                                protected AccessManager         $accessManager,
+                                protected OrderSearch           $orderSearch,
+                                InvoiceService                  $invoiceService
     )
     {
         $this->orderRepository = $orderRepository;
@@ -95,7 +95,7 @@ class OrderService extends BaseService
         $orderCount = count($this->orderRepository->getCustomerOrderCount($customer_id));
         if (count($orderList) == 0) return $this->error("You don't have any order", 404);
         $orderList = CustomerOrderResource::collection($orderList);
-        return $this->success('Successful', ['order_count' => $orderCount,'orders' => $orderList ], 200);
+        return $this->success('Successful', ['order_count' => $orderCount, 'orders' => $orderList], 200);
     }
 
 
@@ -127,7 +127,7 @@ class OrderService extends BaseService
 
 //        if ($order) event(new OrderCreated($order));
 //        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
-       // $this->invoiceService->setOrder($order->id)->generateInvoice();
+        // $this->invoiceService->setOrder($order->id)->generateInvoice();
         return $this->success('Successful', ['order' => ['id' => $order->id]]);
     }
 
@@ -136,17 +136,18 @@ class OrderService extends BaseService
      */
     public function getWebsotreOrderInvoice($order_id)
     {
-        $order = $this->orderRepository->where('sales_channel_id',SalesChannelIds::WEBSTORE)->find($order_id);
-        if (!$order) return $this->error("No Order Found", 404);
-        return $this->success('Successful', ['invoice' =>  $order->invoice], 200);
+        $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::WEBSTORE)->find($order_id);
+        if (!$order) throw new OrderException("NO ORDER FOUND", 404);
+        return $this->success('Successful', ['invoice' => $order->invoice], 200);
     }
 
     public function getOrderInvoice($order_id)
     {
-        $order = $this->orderRepository->where('sales_channel_id',SalesChannelIds::POS)->find($order_id);
-        if (!$order) return $this->error("No Order Found", 404);
+        $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::POS)->find($order_id);
+        if (!$order) throw new OrderException("NO ORDER FOUND", 404);
+
         $this->accessManager->setPartnerId($order->partner_id)->setFeature(Features::INVOICE_DOWNLOAD)->checkAccess();
-        return $this->success('Successful', ['invoice' =>  $order->invoice], 200);
+        return $this->success('Successful', ['invoice' => $order->invoice], 200);
     }
 
 
@@ -155,7 +156,7 @@ class OrderService extends BaseService
         $order = $this->orderRepository->getOrderDetailsByPartner($partner_id, $order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new OrderWithProductResource($order);
-        $resource = $this->addUpdatableFlagForItems($resource,$order);
+        $resource = $this->addUpdatableFlagForItems($resource, $order);
         return $this->success('Successful', ['order' => $resource], 200);
     }
 
@@ -267,19 +268,19 @@ class OrderService extends BaseService
         $order_sku_discounts = $order->discounts->where('type', DiscountTypes::SKU);
         foreach ($order_resource['items'] as &$item) {
             $flag = true;
-           if ($item['sku_id'] !== null) {
+            if ($item['sku_id'] !== null) {
                 $sku = $sku_details->where('id', $item['sku_id'])->first();
-                if ($sku['sku_channel'][0]['price'] != $item['unit_price']){
+                if ($sku['sku_channel'][0]['price'] != $item['unit_price']) {
                     $flag = false;
                 } else {
                     $channels_discount = collect($sku['sku_channel'])->where('channel_id', $order->sales_channel_id)->pluck('discounts')->first()[0] ?? [];
                     $sku_discount = $order_sku_discounts->where('item_id', $item['sku_id'])->first();
-                    if($channels_discount && ($sku_discount->amount != $channels_discount['amount'] || $sku_discount->is_percentage !== $channels_discount['is_amount_percentage'])) {
+                    if ($channels_discount && ($sku_discount->amount != $channels_discount['amount'] || $sku_discount->is_percentage !== $channels_discount['is_amount_percentage'])) {
                         $flag = false;
                     }
                 }
 
-           }
+            }
             $item['is_updatable'] = $flag;
         }
         return $order_resource;
@@ -287,7 +288,7 @@ class OrderService extends BaseService
 
     private function getSkuDetails($sku_ids, $order)
     {
-        $url = 'api/v1/partners/' . $order->partner_id . '/skus?skus=' . json_encode($sku_ids->toArray()) . '&channel_id='.$order->sales_channel_id;
+        $url = 'api/v1/partners/' . $order->partner_id . '/skus?skus=' . json_encode($sku_ids->toArray()) . '&channel_id=' . $order->sales_channel_id;
         $sku_details = $this->client->setBaseUrl()->get($url)['skus'] ?? [];
         return collect($sku_details);
     }

@@ -327,6 +327,7 @@ class OrderController extends Controller
     {
         return $this->orderService->getDeliveryInfo($partner_id, $order_id);
     }
+
     /**
      * * @OA\Get(
      *      path="/api/v1/webstore/orders/{order_id}/generate-invoice",
@@ -347,17 +348,19 @@ class OrderController extends Controller
      * @param int $order_id
      * @return JsonResponse
      */
-    public function getWebstoreOrderinvoice(int $order_id){
-        $invoice= $this->orderService->getWebsotreOrderInvoice($order_id);
-       if ($invoice->getData()->invoice==null) {
-           return $this->invoiceService->setOrder($order_id)->generateInvoice();
-       }
-       return $invoice;
+    public function getWebstoreOrderinvoice(int $order_id)
+    {
+        $invoice = $this->orderService->getWebsotreOrderInvoice($order_id);
+        if ($invoice->getData()->invoice == null) {
+            return $this->invoiceService->setOrder($order_id)->generateInvoice();
+        }
+        return $invoice;
     }
 
-    public function getOrderinvoice(int $order_id){
-        $invoice= $this->orderService->getOrderInvoice($order_id);
-        if ($invoice->getData()->invoice==null) {
+    public function getOrderinvoice(int $order_id)
+    {
+        $invoice = $this->orderService->getOrderInvoice($order_id);
+        if ($invoice->getData()->invoice == null) {
             return $this->invoiceService->setOrder($order_id)->generateInvoice();
         }
         return $invoice;
