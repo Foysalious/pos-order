@@ -47,8 +47,8 @@ class ReviewController extends Controller
      *      tags={"REVIEW CREATE API"},
      *      summary="To create a review of an order",
      *      description="creating review of an order",
-     *      @OA\Parameter(name="customer",description="Customer ID",required=true,in="path", @OA\Schema(type="BigInteger")),
-     *      @OA\Parameter(name="order",description="Order ID",required=true,in="path", @OA\Schema(type="BigInteger")),
+     *      @OA\Parameter(name="customer",description="Customer ID",required=true,in="path", @OA\Schema(type="string")),
+     *      @OA\Parameter(name="order",description="Order ID",required=true,in="path", @OA\Schema(type="integer")),
      *      @OA\RequestBody(
      *          @OA\MediaType(mediaType="multipart/form-data",
      *              @OA\Schema(
@@ -71,7 +71,7 @@ class ReviewController extends Controller
      */
     public function store(Request $request, $customer_id, $order_id)
     {
-        return $this->reviewService->create($request, (int)$customer_id, (int)$order_id);
+        return $this->reviewService->create($request, $customer_id, (int)$order_id);
     }
 
     public function getProductIdsByRating($partner_id,Request $request)

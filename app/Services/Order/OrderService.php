@@ -1,17 +1,11 @@
 <?php namespace App\Services\Order;
-
-use App\Events\OrderCreated;
-use App\Events\OrderUpdated;
 use App\Exceptions\AuthorizationException;
-use App\Http\Reports\GenerateInvoice;
-use App\Helper\Miscellaneous\RequestIdentification;
 use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
 use App\Http\Requests\OrderFilterRequest;
 use App\Http\Resources\CustomerOrderResource;
 use App\Http\Requests\OrderUpdateRequest;
 use App\Http\Resources\DeliveryResource;
-use App\Http\Resources\OrderInvoiceResource;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderWithProductResource;
 use App\Http\Resources\Webstore\CustomerOrderDetailsResource;
@@ -19,50 +13,38 @@ use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
-use App\Jobs\Order\OrderPlacePushNotification;
 use App\Models\Order;
 use App\Services\AccessManager\AccessManager;
+use App\Services\AccessManager\Features;
 use App\Services\APIServerClient\ApiServerClient;
 use App\Services\BaseService;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
-use App\Services\Order\Constants\SalesChannelIds;
-use App\Services\Usage\Types;
-use App\Services\Usage\UsageService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
+use App\Services\Order\Constants\Statuses;
+use App\Services\Webstore\Order\Statuses as WebStoreStatuses;
 
 class OrderService extends BaseService
 {
     protected $orderRepository, $orderPaymentRepository, $customerRepository;
     protected $orderSkusRepositoryInterface;
-    protected $updater;
+    protected $updater, $orderFilter;
     /** @var Creator */
     protected Creator $creator;
-    /**
-     * @var GenerateInvoice
-     */
-    private GenerateInvoice $generateInvoice;
-    private const ORDER_CREATE_REWARD_EVENT_NAME = 'pos_order_create';
-    private const ORDER_CREATE_REWARDABLE_TYPE = 'partner';
 
     public function __construct(OrderRepositoryInterface     $orderRepository,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
                                 CustomerRepositoryInterface $customerRepository,
                                 Updater $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
                                 Creator $creator,
-                                GenerateInvoice  $generateInvoice,
                                 protected InventoryServerClient $client,
                                 protected ApiServerClient $apiServerClient,
-                                protected UsageService $usageService,
                                 protected AccessManager $accessManager,
                                 protected OrderSearch $orderSearch
     )
     {
-        $this->generateInvoice = $generateInvoice;
         $this->orderRepository = $orderRepository;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->updater = $updater;
@@ -126,13 +108,10 @@ class OrderService extends BaseService
             ->setPaidAmount($request->paid_amount)
             ->setPaymentMethod($request->payment_method)
             ->setVoucherId($request->voucher_id)
+            ->setApiRequest($request->api_request->id)
             ->create();
 
-        //$this->callRewardApi($partner,$header,$order, $request->client_pos_order_id);
-        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
-        $this->generateInvoice->generateInvoice($order->id);
-        $usage_type = $request->sales_channel_id == SalesChannelIds::WEBSTORE ? Types::PRODUCT_LINK : Types::POS_ORDER_CREATE;
-        $this->usageService->setUserId((int) $partner)->setUsageType($usage_type)->store();
+//        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
         return $this->success('Successful', ['order' => ['id' => $order->id]]);
     }
 
@@ -143,29 +122,10 @@ class OrderService extends BaseService
     {
         $order = $this->orderRepository->find($order_id);
         if (!$order) return $this->error("No Order Found", 404);
-        $this->accessManager->setPartnerId($order->partner_id)->setFeature('pos.invoice.download')->checkAccess();
+        $this->accessManager->setPartnerId($order->partner_id)->setFeature(Features::INVOICE_DOWNLOAD)->checkAccess();
         return $this->success('Successful', ['invoice' =>  $order->invoice], 200);
     }
 
-    private function callRewardApi($partnerId,$header, $order,$client_pos_order_id)
-    {
-        $price_calculator = (App::make(PriceCalculation::class))->setOrder($order);
-        $data = [
-            'event' => self::ORDER_CREATE_REWARD_EVENT_NAME,
-            'rewardable_type' => self::ORDER_CREATE_REWARDABLE_TYPE,
-            'rewardable_id' => $partnerId,
-            'event_data' => [
-                'id' => $order->id,
-                'paymnet_status' => $order->status,
-                'net_bill' => $price_calculator->getOriginalPrice(),
-                'client_pos_order_id' => $client_pos_order_id ?? null,
-                'partner_wise_order_id' => $order->partner_wise_order_id,
-                'portal_name' => (new RequestIdentification())->get()['portal_name']
-            ]
-        ];
-        dd($data);
-        return $this->apiServerClient->setBaseUrl()->setHeader($header)->post( 'pos/v1/reward/action', $data);
-    }
 
     public function getOrderDetails($partner_id, $order_id)
     {
@@ -178,12 +138,30 @@ class OrderService extends BaseService
 
     public function getWebStoreOrderDetails(int $partner_id, int $order_id, string $customer_id): JsonResponse
     {
-
-        $order = $this->orderRepository->where('partner_id', $partner_id)->where('customer_id', $customer_id)->find($order_id);
+        $order = $this->orderRepository->where('partner_id', $partner_id)->where('customer_id', $customer_id)->with('statusChangeLogs')->find($order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new CustomerOrderDetailsResource($order);
-        return $this->success('Successful', ['order' => $resource], 200);
+        $statusHistory = $this->getStatusHistory($order);
+        return $this->success('Successful', ['order' => $resource,'status_history' => $statusHistory]);
+    }
 
+    private function getStatusHistory($order): array
+    {
+        $logs = $order->statusChangeLogs;
+        $statusHistory = [];
+        $temp['status'] = WebStoreStatuses::ORDER_PLACED;
+        $temp['time_stamp'] = $order->created_at;
+        array_push($statusHistory, $temp);
+        $mapped_status = config('mapped_status');
+        $logs->each(function ($log) use (&$statusHistory, $order, $mapped_status) {
+            $toStatus = json_decode($log->new_value, true)['to'];
+            if (in_array($toStatus, [Statuses::PROCESSING, Statuses::SHIPPED, Statuses::COMPLETED])){
+                $temp['status'] = $mapped_status[$toStatus];
+                $temp['time_stamp'] =  convertTimezone($log->created_at);
+                array_push($statusHistory, $temp);
+            }
+        });
+        return $statusHistory;
     }
 
     /**
@@ -220,8 +198,6 @@ class OrderService extends BaseService
             ->setDeliveryThana($orderUpdateRequest->delivery_thana ?? null)
             ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
             ->update();
-
-        $this->generateInvoice->generateInvoice($order_id);
         return $this->success('Successful', [], 200);
     }
 
@@ -232,7 +208,7 @@ class OrderService extends BaseService
         $OrderSkusIds = $this->orderSkusRepositoryInterface->where('order_id', $order_id)->get(['id']);
         $this->orderSkusRepositoryInterface->whereIn('id', $OrderSkusIds)->delete();
         $order->delete();
-        return $this->success('Successful', null, 200);
+        return $this->success();
     }
 
     public function getOrderWithChannel($order_id)
@@ -282,7 +258,7 @@ class OrderService extends BaseService
     {
         $order_resource = json_decode(($order_resource->toJson()), true);
         $sku_ids = $order->orderSkus->whereNotNull('sku_id')->pluck('sku_id');
-        $sku_details = $this->getSkuDetails($sku_ids, $order);
+        $sku_details = $sku_ids->count() > 0 ? $this->getSkuDetails($sku_ids, $order) : collect();
         $order_sku_discounts = $order->discounts->where('type', DiscountTypes::SKU);
         foreach ($order_resource['items'] as &$item) {
             $flag = true;

@@ -1,6 +1,7 @@
 <?php namespace App\Services\Order\Refund;
 
 use App\Services\Order\Constants\PaymentMethods;
+use App\Services\Transaction\Constants\TransactionTypes;
 use Illuminate\Support\Collection;
 
 class DeleteProductFromOrder extends ProductOrder
@@ -53,10 +54,8 @@ class DeleteProductFromOrder extends ProductOrder
         foreach ($order_skus_details as $each) {
             if(in_array($each->id,$deleted_skus_ids)) $total_refund = $total_refund + ($each->unit_price * $each->quantity);
         }
-        $payment_data['order_id'] = $this->order->id;
-        $payment_data['amount'] = $total_refund;
-        $payment_data['method'] = PaymentMethods::CASH_ON_DELIVERY;
-        $this->orderPaymentCreator->debit($payment_data);
+        $this->paymentCreator->setOrderId($this->order->id)->setAmount($total_refund)->setMethod(PaymentMethods::CASH_ON_DELIVERY)
+            ->setTransactionType(TransactionTypes::DEBIT)->create();
         $this->refunded_amount = $total_refund;
     }
 }

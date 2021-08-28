@@ -12,9 +12,10 @@ use App\Services\Order\Refund\AddProductInOrder;
 use App\Services\Order\Refund\DeleteProductFromOrder;
 use App\Services\Order\Refund\OrderUpdateFactory;
 use App\Services\Order\Refund\UpdateProductInOrder;
+use App\Services\Payment\Creator as PaymentCreator;
+use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ModificationFields;
 use Illuminate\Support\Facades\App;
-use App\Services\Order\Payment\Creator as OrderPaymentCreator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -42,15 +43,14 @@ class Updater
     public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
                                 OrderLogCreator $orderLogCreator, OrderDiscountRepositoryInterface $orderDiscountRepository,
-                                OrderPaymentCreator $orderPaymentCreator,
                                 OrderPaymentRepositoryInterface $orderPaymentRepository,
-                                protected Handler $discountHandler
+                                protected Handler $discountHandler,
+                                protected PaymentCreator $paymentCreator
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->orderLogCreator = $orderLogCreator;
-        $this->orderPaymentCreator = $orderPaymentCreator;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
@@ -449,10 +449,8 @@ class Updater
     private function updateOrderPayments()
     {
         if (isset($this->paymentMethod) && $this->paymentMethod == PaymentMethods::CASH_ON_DELIVERY && isset($this->paidAmount)) {
-            $payment_data['order_id'] = $this->order->id;
-            $payment_data['amount'] = $this->paidAmount;
-            $payment_data['method'] = PaymentMethods::CASH_ON_DELIVERY;
-            $this->orderPaymentCreator->credit($payment_data);
+            $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod(PaymentMethods::CASH_ON_DELIVERY)
+                ->setTransactionType(TransactionTypes::CREDIT)->create();
             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
         } elseif (isset($this->paymentMethod) && $this->paymentMethod == PaymentMethods::PAYMENT_LINK && isset($this->paymentLinkAmount)) {
             $order_payment_link = $this->orderPaymentRepository->where('order_id', $this->order->id)->where('method', PaymentMethods::PAYMENT_LINK)->first();
@@ -460,10 +458,8 @@ class Updater
                 $order_payment_link->amount = $this->paymentLinkAmount;
                 $order_payment_link->save();
             } else {
-                $payment_data['order_id'] = $this->order->id;
-                $payment_data['amount'] = $this->paymentLinkAmount;
-                $payment_data['method'] = PaymentMethods::PAYMENT_LINK;
-                $this->orderPaymentCreator->credit($payment_data);
+                $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paymentLinkAmount)->setMethod(PaymentMethods::PAYMENT_LINK)
+                    ->setTransactionType(TransactionTypes::CREDIT)->create();
             }
             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
         }

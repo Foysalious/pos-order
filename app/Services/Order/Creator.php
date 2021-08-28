@@ -13,9 +13,10 @@ use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Order\Validators\OrderCreateValidator;
-use App\Services\Order\Payment\Creator as PaymentCreator;
+use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\OrderSku\Creator as OrderSkuCreator;
+use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ResponseAPI;
 
 use Illuminate\Support\Collection;
@@ -244,17 +245,14 @@ class Creator
         return $this;
     }
 
-    private function sendOrderPlaceSmsToCustomer()
-    {
-        (new Sms())->msg("Hello From The Other Side")
-            ->to("8801715096710")
-            ->shoot();
-    }
 
+    public function setApiRequest($apiRequest){
+        $this->apiRequest= $apiRequest;
+        return $this;
+    }
     /**
      * @return Order
-     * @throws ValidationException
-     * @throws OrderException
+     * @throws ValidationException|OrderException
      */
     public function create()
     {
@@ -271,10 +269,9 @@ class Creator
                 $this->discountHandler->setVoucherId($this->voucher_id)->voucherDiscountCalculate($order);
             }
             if ($this->paidAmount > 0) {
-                $payment_data['order_id'] = $order->id;
-                $payment_data['amount'] = $this->paidAmount;
-                $payment_data['method'] = $this->paymentMethod ?: 'cod';
-                $this->paymentCreator->credit($payment_data);
+                $this->paymentCreator->setOrderId($order->id)->setAmount($this->paidAmount)->setMethod($this->paymentMethod)
+                    ->setTransactionType(TransactionTypes::CREDIT)->setEmiMonth($order->emi_month)
+                    ->setInterest($order->interest)->create();
             }
             if($this->hasDueError($order)){
                 throw new OrderException("Can not make due order without customer", 421);
@@ -356,6 +353,7 @@ class Creator
         $order_data['discount']                 = json_decode($this->discount)->original_amount ?? 0;
         $order_data['is_discount_percentage']   = json_decode($this->discount)->is_percentage ?? 0;
         $order_data['voucher_id']               = $this->voucher_id;
+        $order_data['api_request_id']           = $this->apiRequest;
         return $order_data;
     }
 

@@ -3,6 +3,7 @@
 
 use App\Exceptions\AuthorizationException;
 use App\Services\APIServerClient\ApiServerClient;
+use Exception;
 
 class AccessManager
 {
@@ -49,7 +50,6 @@ class AccessManager
         return [
             'partner_id' => $this->partnerId,
             'feature' => $this->feature,
-            'product_published_count' => $this->product_published_count
         ];
     }
 
@@ -58,9 +58,14 @@ class AccessManager
      */
     public function checkAccess(): bool
     {
-        $response = $this->apiServerClient->setBaseUrl()->post( 'pos/v1/check-access', $this->makeData());
-        if ($response["code"] !== 200) throw new AuthorizationException($response["message"], $response["code"]);
+        try {
+            $this->apiServerClient->setBaseUrl()->post( 'pos/v1/check-access', $this->makeData());
+        } catch (Exception $e) {
+            $message = json_decode($e->getMessage())->message;
+            throw new AuthorizationException($message, $e->getCode());
+        }
         return true;
+
     }
 
 }

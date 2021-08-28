@@ -19,7 +19,7 @@ class ReportService extends  BaseService
         $report = $this->productReport->setFrom($request->from)
             ->setPartnerId($partner_id)
             ->setTo($request->to)
-            ->setOrderBy($request->orderBy)
+            ->setOrderBy($request->orderBy ?? 'service_name')
             ->setOrder($request->order ?? 'ASC')
             ->create();
 

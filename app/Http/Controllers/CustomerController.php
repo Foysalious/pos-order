@@ -285,9 +285,9 @@ class CustomerController extends Controller
      *     @OA\Response(response="403", description="Customer Not Found"),
      * )
      */
-    public function destroy($customer_id): JsonResponse
+    public function destroy($partner_id, $customer_id): JsonResponse
     {
-        return $this->customerService->delete($customer_id);
+        return $this->customerService->delete($partner_id, $customer_id);
     }
 
 }
