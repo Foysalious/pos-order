@@ -29,6 +29,7 @@ use App\Services\BaseService;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
+use App\Services\Order\Constants\SalesChannelIds;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
@@ -44,7 +45,7 @@ class OrderService extends BaseService
     /**
      * @var InvoiceService
      */
-    private InvoiceService $generateInvoice;
+    private InvoiceService $invoiceService;
 
     public function __construct(OrderRepositoryInterface     $orderRepository,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
@@ -55,7 +56,7 @@ class OrderService extends BaseService
                                 protected ApiServerClient $apiServerClient,
                                 protected AccessManager $accessManager,
                                 protected OrderSearch $orderSearch,
-                                InvoiceService $generateInvoice
+                                InvoiceService $invoiceService
     )
     {
         $this->orderRepository = $orderRepository;
@@ -64,6 +65,7 @@ class OrderService extends BaseService
         $this->creator = $creator;
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->customerRepository = $customerRepository;
+        $this->invoiceService = $invoiceService;
     }
 
     public function getOrderList(int $partner_id, OrderFilterRequest $request): JsonResponse
@@ -106,7 +108,6 @@ class OrderService extends BaseService
     public function store($partner, OrderCreateRequest $request)
     {
         $skus = is_array($request->skus) ? $request->skus : json_decode($request->skus);
-        $header = $request->header('Authorization');
         $order = $this->creator->setPartner($partner)
             ->setCustomerId($request->customer_id)
             ->setDeliveryName($request->delivery_name)
@@ -126,17 +127,23 @@ class OrderService extends BaseService
 
 //        if ($order) event(new OrderCreated($order));
 //        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
-      //  if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
-        $this->generateInvoice->setOrder($order->id)->generateInvoice();
+       // $this->invoiceService->setOrder($order->id)->generateInvoice();
         return $this->success('Successful', ['order' => ['id' => $order->id]]);
     }
 
     /**
      * @throws AuthorizationException
      */
+    public function getWebsotreOrderInvoice($order_id)
+    {
+        $order = $this->orderRepository->where('sales_channel_id',SalesChannelIds::WEBSTORE)->find($order_id);
+        if (!$order) return $this->error("No Order Found", 404);
+        return $this->success('Successful', ['invoice' =>  $order->invoice], 200);
+    }
+
     public function getOrderInvoice($order_id)
     {
-        $order = $this->orderRepository->find($order_id);
+        $order = $this->orderRepository->where('sales_channel_id',SalesChannelIds::POS)->find($order_id);
         if (!$order) return $this->error("No Order Found", 404);
         $this->accessManager->setPartnerId($order->partner_id)->setFeature(Features::INVOICE_DOWNLOAD)->checkAccess();
         return $this->success('Successful', ['invoice' =>  $order->invoice], 200);

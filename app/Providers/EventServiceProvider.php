@@ -6,6 +6,7 @@ use App\Events\OrderUpdated;
 use App\Listeners\AccountingEntryOnOrderCreation;
 use App\Listeners\AccountingEntryOnOrderDueCleared;
 use App\Listeners\AccountingEntryOnOrderUpdating;
+use App\Listeners\GenerateInvoiceOnOrderCreate;
 use App\Listeners\RewardOnOrderCreate as RewardOnOrderCreateListener;
 use App\Listeners\UsageOnOrderCreate;
 use Illuminate\Auth\Events\Registered;
@@ -26,10 +27,12 @@ class EventServiceProvider extends ServiceProvider
         OrderCreated::class => [
 //            AccountingEntryOnOrderCreation::class,
             RewardOnOrderCreateListener::class,
-            UsageOnOrderCreate::class
+            UsageOnOrderCreate::class,
+            GenerateInvoiceOnOrderCreate::class
         ],
         OrderUpdated::class => [
             AccountingEntryOnOrderUpdating::class,
+            GenerateInvoiceOnOrderCreate::class
         ],
         OrderDueCleared::class => [
             AccountingEntryOnOrderDueCleared::class,
