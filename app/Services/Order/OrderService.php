@@ -4,15 +4,12 @@ use App\Events\OrderCreated;
 use App\Events\OrderUpdated;
 use App\Http\Reports\InvoiceService;
 use App\Exceptions\AuthorizationException;
-use App\Http\Reports\GenerateInvoice;
-use App\Helper\Miscellaneous\RequestIdentification;
 use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
 use App\Http\Requests\OrderFilterRequest;
 use App\Http\Resources\CustomerOrderResource;
 use App\Http\Requests\OrderUpdateRequest;
 use App\Http\Resources\DeliveryResource;
-use App\Http\Resources\OrderInvoiceResource;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderWithProductResource;
 use App\Http\Resources\Webstore\CustomerOrderDetailsResource;
@@ -20,7 +17,6 @@ use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
-use App\Jobs\Order\OrderPlacePushNotification;
 use App\Models\Order;
 use App\Services\AccessManager\AccessManager;
 use App\Services\AccessManager\Features;
@@ -31,9 +27,9 @@ use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\SalesChannelIds;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
+use App\Services\Order\Constants\Statuses;
+use App\Services\Webstore\Order\Statuses as WebStoreStatuses;
 
 class OrderService extends BaseService
 {
@@ -127,7 +123,6 @@ class OrderService extends BaseService
 
 //        if ($order) event(new OrderCreated($order));
 //        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
-        // $this->invoiceService->setOrder($order->id)->generateInvoice();
         return $this->success('Successful', ['order' => ['id' => $order->id]]);
     }
 
@@ -162,12 +157,30 @@ class OrderService extends BaseService
 
     public function getWebStoreOrderDetails(int $partner_id, int $order_id, string $customer_id): JsonResponse
     {
-
-        $order = $this->orderRepository->where('partner_id', $partner_id)->where('customer_id', $customer_id)->find($order_id);
+        $order = $this->orderRepository->where('partner_id', $partner_id)->where('customer_id', $customer_id)->with('statusChangeLogs')->find($order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new CustomerOrderDetailsResource($order);
-        return $this->success('Successful', ['order' => $resource], 200);
+        $statusHistory = $this->getStatusHistory($order);
+        return $this->success('Successful', ['order' => $resource,'status_history' => $statusHistory]);
+    }
 
+    private function getStatusHistory($order): array
+    {
+        $logs = $order->statusChangeLogs;
+        $statusHistory = [];
+        $temp['status'] = WebStoreStatuses::ORDER_PLACED;
+        $temp['time_stamp'] = $order->created_at;
+        array_push($statusHistory, $temp);
+        $mapped_status = config('mapped_status');
+        $logs->each(function ($log) use (&$statusHistory, $order, $mapped_status) {
+            $toStatus = json_decode($log->new_value, true)['to'];
+            if (in_array($toStatus, [Statuses::PROCESSING, Statuses::SHIPPED, Statuses::COMPLETED])){
+                $temp['status'] = $mapped_status[$toStatus];
+                $temp['time_stamp'] =  convertTimezone($log->created_at);
+                array_push($statusHistory, $temp);
+            }
+        });
+        return $statusHistory;
     }
 
     /**
@@ -214,7 +227,7 @@ class OrderService extends BaseService
         $OrderSkusIds = $this->orderSkusRepositoryInterface->where('order_id', $order_id)->get(['id']);
         $this->orderSkusRepositoryInterface->whereIn('id', $OrderSkusIds)->delete();
         $order->delete();
-        return $this->success('Successful', null, 200);
+        return $this->success();
     }
 
     public function getOrderWithChannel($order_id)
@@ -264,23 +277,23 @@ class OrderService extends BaseService
     {
         $order_resource = json_decode(($order_resource->toJson()), true);
         $sku_ids = $order->orderSkus->whereNotNull('sku_id')->pluck('sku_id');
-        $sku_details = $this->getSkuDetails($sku_ids, $order);
+        $sku_details = $sku_ids->count() > 0 ? $this->getSkuDetails($sku_ids, $order) : collect();
         $order_sku_discounts = $order->discounts->where('type', DiscountTypes::SKU);
         foreach ($order_resource['items'] as &$item) {
             $flag = true;
-            if ($item['sku_id'] !== null) {
+           if ($item['sku_id'] !== null) {
                 $sku = $sku_details->where('id', $item['sku_id'])->first();
-                if ($sku['sku_channel'][0]['price'] != $item['unit_price']) {
+                if ($sku['sku_channel'][0]['price'] != $item['unit_price']){
                     $flag = false;
                 } else {
                     $channels_discount = collect($sku['sku_channel'])->where('channel_id', $order->sales_channel_id)->pluck('discounts')->first()[0] ?? [];
                     $sku_discount = $order_sku_discounts->where('item_id', $item['sku_id'])->first();
-                    if ($channels_discount && ($sku_discount->amount != $channels_discount['amount'] || $sku_discount->is_percentage !== $channels_discount['is_amount_percentage'])) {
+                    if($channels_discount && ($sku_discount->amount != $channels_discount['amount'] || $sku_discount->is_percentage !== $channels_discount['is_amount_percentage'])) {
                         $flag = false;
                     }
                 }
 
-            }
+           }
             $item['is_updatable'] = $flag;
         }
         return $order_resource;
@@ -288,7 +301,7 @@ class OrderService extends BaseService
 
     private function getSkuDetails($sku_ids, $order)
     {
-        $url = 'api/v1/partners/' . $order->partner_id . '/skus?skus=' . json_encode($sku_ids->toArray()) . '&channel_id=' . $order->sales_channel_id;
+        $url = 'api/v1/partners/' . $order->partner_id . '/skus?skus=' . json_encode($sku_ids->toArray()) . '&channel_id='.$order->sales_channel_id;
         $sku_details = $this->client->setBaseUrl()->get($url)['skus'] ?? [];
         return collect($sku_details);
     }

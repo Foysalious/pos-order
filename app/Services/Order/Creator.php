@@ -1,5 +1,6 @@
 <?php namespace App\Services\Order;
 
+use App\Events\OrderCreated;
 use App\Exceptions\OrderException;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkuRepositoryInterface;
@@ -21,6 +22,7 @@ use App\Traits\ResponseAPI;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -275,11 +277,18 @@ class Creator
                 throw new OrderException("Can not make due order without customer", 421);
             }
             DB::commit();
-            return $order;
+
         } catch (\Exception $e) {
             DB::rollback();
             throw $e;
         }
+
+        try {
+            if ($order) event(new OrderCreated($order));
+        } catch (\Exception $e){
+            Log::error($e);
+        }
+         return $order;
     }
 
     private function resolveCustomerId()

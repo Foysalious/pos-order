@@ -9,4 +9,5 @@ class OrderChangingTypes
     const EXCHANGE = 'exchange';
     const QUANTITY_DECREASE = 'quantity_decrease';
     const QUANTITY_INCREASE = 'quantity_increase';
+    const NEW = 'new';
 }

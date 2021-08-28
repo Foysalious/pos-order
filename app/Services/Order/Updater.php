@@ -17,6 +17,7 @@ use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ModificationFields;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class Updater
 {
@@ -338,6 +339,13 @@ class Updater
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
+            throw $e;
+        }
+
+        try {
+            if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order, $this->orderProductChangeData));
+        } catch (\Exception $e) {
+            Log::error($e);
         }
     }
 
@@ -412,28 +420,27 @@ class Updater
         $comparator = App::make(OrderComparator::class);
         $comparator->setOrder($this->order)->setOrderNewSkus($this->skus)->compare();
 
-        if ($comparator->isProductAdded()) {
-            /** @var AddProductInOrder $updater */
-            dd('added');
-            $updater = OrderUpdateFactory::getProductAddingUpdater($this->order, $this->skus);
-            $updated_flag = $updater->update();
-            $this->orderProductChangeData['new'] = $updated_flag;
-        }
         if ($comparator->isProductDeleted()) {
             /** @var DeleteProductFromOrder $updater */
             $updater = OrderUpdateFactory::getProductDeletionUpdater($this->order, $this->skus);
             $updated_flag = $updater->update();
             $this->orderProductChangeData['deleted'] = $updated_flag;
         }
+        if ($comparator->isProductAdded()) {
+            /** @var AddProductInOrder $updater */
+            $updater = OrderUpdateFactory::getProductAddingUpdater($this->order, $this->skus);
+            $updated_flag = $updater->update();
+            $this->orderProductChangeData['new'] = $updated_flag;
+        }
         if ($comparator->isProductUpdated()) {
             /** @var UpdateProductInOrder $updater */
-//            dd('updated');
             $updater = OrderUpdateFactory::getOrderProductUpdater($this->order, $this->skus);
             $updated_flag = $updater->update();
             $this->orderProductChangeData['refund_exchanged'] = $updated_flag;
         }
 
         if (isset($updated_flag)) {
+            $this->orderProductChangeData['paid_amount'] = is_null($this->paidAmount) ? 0 : $this->paidAmount ;
             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
         }
     }

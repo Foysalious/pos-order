@@ -81,7 +81,6 @@ class BatchManipulator
 
     private function addItemInBatchDetail($quantity)
     {
-        $quantity = 1;
         $batches = $this->skuBatch;
         $temp_quantity = $quantity;
         foreach ($batches as $key=>$batch) {
