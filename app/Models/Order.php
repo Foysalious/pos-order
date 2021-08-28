@@ -8,6 +8,7 @@ class Order extends BaseModel
 {
     use HasFactory;
     protected $guarded = ['id'];
+    private mixed $id;
 
     public function customer()
     {
