@@ -16,6 +16,7 @@ use App\Traits\ModificationFields;
 use Illuminate\Support\Facades\App;
 use App\Services\Order\Payment\Creator as OrderPaymentCreator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class Updater
 {
@@ -329,7 +330,6 @@ class Updater
             DB::beginTransaction();
             $order = $this->setExistingOrder();
             $this->calculateOrderChangesAndUpdateSkus();
-            if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order, $this->orderProductChangeData));
             if (isset($this->customer_id)) $this->updateCustomer();
             $this->orderRepositoryInterface->update($this->order, $this->makeData());
             if (isset($this->voucher_id)) $this->updateVoucherDiscount();
@@ -340,6 +340,12 @@ class Updater
         } catch (\Exception $e) {
             DB::rollback();
             throw $e;
+        }
+
+        try {
+            if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order, $this->orderProductChangeData));
+        } catch (\Exception $e) {
+            Log::error($e);
         }
     }
 
@@ -434,6 +440,7 @@ class Updater
         }
 
         if (isset($updated_flag)) {
+            $this->orderProductChangeData['paid_amount'] = is_null($this->paidAmount) ? 0 : $this->paidAmount ;
             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
         }
     }

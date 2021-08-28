@@ -61,8 +61,9 @@ class UpdateEntry extends BaseEntry
             'source_id'          => $this->order->id,
             'source_type'        => EntryTypes::POS,
             'note'               => $this->getNote(),
-            'amount'             => $this->calculateAmountChange($inventory_products),
-            'amount_cleared'     => $order_price_details->getPaid(),
+            'amount'             => $order_price_details->getDiscountedPrice(),
+            'amount_cleared'     => (float) $this->orderProductChangeData['paid_amount'],
+            'reconcile_amount'   => (float) $this->calculateAmountChange($inventory_products),
             'total_discount'     => $order_price_details->getDiscount(),
             'total_vat'          => $order_price_details->getVat(),
             'entry_at' => convertTimezone($this->order->created_at)->format('Y-m-d H:i:s'),
@@ -204,7 +205,6 @@ class UpdateEntry extends BaseEntry
     private function calculateAmountChange($data)
     {
         $amount = 0;
-
         foreach ($data as $each) {
             if($each['type'] == OrderChangingTypes::QUANTITY_INCREASE)$amount = $amount + ($each['quantity']*$each['selling_price']);
             if($each['type'] == OrderChangingTypes::NEW) $amount = $amount + ($each['quantity']*$each['selling_price']);
@@ -216,7 +216,7 @@ class UpdateEntry extends BaseEntry
     private function getNote()
     {
         $note = '';
-        if(count($this->orderProductChangeData['new'] ?? []) > 0) $note .= 'added-' ;
+        if(count($this->orderProductChangeData['new'] ?? []) > 0) $note .= OrderChangingTypes::NEW . '-' ;
         if(count($this->orderProductChangeData['deleted'] ?? []) > 0) $note .= OrderChangingTypes::REFUND .'-';
         if(count($this->orderProductChangeData['refund_exchanged']['added_products'] ?? []) > 0) $note .=  OrderChangingTypes::QUANTITY_INCREASE . '-';
         if(count($this->orderProductChangeData['refund_exchanged']['refunded_products'] ?? []) > 0) $note .=  OrderChangingTypes::REFUND;
