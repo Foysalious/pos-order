@@ -1,7 +1,11 @@
 <?php namespace App\Services\Payment;
 
 
+use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\PaymentRepositoryInterface;
+use App\Services\Order\Constants\PaymentMethods;
+use App\Services\Order\PriceCalculation;
+use Carbon\Carbon;
 
 class Creator
 {
@@ -17,9 +21,10 @@ class Creator
      * Creator constructor.
      * @param PaymentRepositoryInterface $paymentRepositoryInterface
      */
-    public function __construct(PaymentRepositoryInterface $paymentRepositoryInterface)
+    public function __construct(PaymentRepositoryInterface $paymentRepositoryInterface, protected OrderRepositoryInterface $orderRepository)
     {
         $this->paymentRepositoryInterface = $paymentRepositoryInterface;
+        $this->method = PaymentMethods::CASH_ON_DELIVERY;
     }
 
     /**
@@ -84,7 +89,14 @@ class Creator
 
     public function create()
     {
-        return $this->paymentRepositoryInterface->create($this->makeCreateData());
+        $payment = $this->paymentRepositoryInterface->create($this->makeCreateData());
+        $order = $this->orderRepository->find($this->orderId);
+        /** @var PriceCalculation $priceCalculation */
+        $priceCalculation = app(PriceCalculation::class);
+        $closed_and_paid_at = $payment->created_at ?: Carbon::now();
+        if (! $priceCalculation->setOrder($order)->getDue() && !$order->closed_and_paid_at)
+            $this->orderRepository->update($order, ['closed_and_paid_at' => $closed_and_paid_at]);
+        return $payment;
     }
 
     private function makeCreateData()

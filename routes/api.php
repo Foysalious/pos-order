@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DataMigrationController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\Webstore\ReviewController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -39,7 +40,10 @@ Route::group(['prefix'=>'v1'], function(){
             Route::get('partners/{partner_id}/products-by-ratings', [ReviewController::class, 'getProductIdsByRating']);
             Route::get('/{customer_id}/orders', [OrderController::class, 'getCustomerOrderList']);
         });
-        Route::apiResource('partners.orders', OrderController::class);
+        Route::group(['middleware' => 'apiRequestLog'], function() {
+            Route::post('partners/{partner}/orders', [OrderController::class, 'store']);
+        });
+        Route::apiResource('partners.orders', OrderController::class)->except('store');
         Route::apiResource('partners.migrate', DataMigrationController::class)->only('store');
         Route::group(['prefix' => 'partners'], function () {
             Route::group(['prefix' => '{partner}'], function () {
@@ -62,5 +66,7 @@ Route::group(['prefix'=>'v1'], function(){
         Route::put('partners/{partner_id}',[DataMigrationController::class, 'updatePartnersTable']);
         Route::get('/partners/{partner_id}/customers/{customer_id}/purchase-amount-promo-usage', [CustomerController::class, 'getPurchaseAmountAndPromoUsed']);
         Route::get('/partners/{partner_id}/customers/{customer_id}/orders', [CustomerController::class, 'getOrdersByDateWise']);
+        Route::get('partners/{partner_id}/reports/product-wise', [ReportController::class, 'getProductWise']);
+        Route::get('partners/{partner_id}/reports/customer-wise', [ReportController::class, 'getCustomerWise']);
     });
 });

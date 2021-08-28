@@ -33,12 +33,6 @@ class PaymentService extends BaseService
             ->setEmiMonth($request->emi_month)
             ->setInterest($request->interest)
             ->create();
-        $order = $this->orderRepository->find($request->pos_order_id);
-        /** @var PriceCalculation $priceCalculation */
-        $priceCalculation = app(PriceCalculation::class);
-        $closed_and_paid_at = $payment->created_at ?: Carbon::now();
-        if (!$priceCalculation->getDue() && !$order->closed_and_paid_at)
-            $this->orderRepository->update($order, ['closed_and_paid_at' => $closed_and_paid_at]);
         return true;
     }
 

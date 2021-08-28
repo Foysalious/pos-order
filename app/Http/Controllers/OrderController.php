@@ -65,7 +65,7 @@ class OrderController extends Controller
      *      )
      *     )
      */
-    public function index($partner_id, OrderFilterRequest $request)
+    public function index(int $partner_id, OrderFilterRequest $request)
     {
         return $this->orderService->getOrderList($partner_id, $request);
     }
@@ -327,14 +327,31 @@ class OrderController extends Controller
     {
         return $this->orderService->getDeliveryInfo($partner_id, $order_id);
     }
-
-    public function getOrderinvoice(int $order_id)
-    {
-        $invoice = $this->invoiceService->setOrder($order_id)->isAlreadyGenerated()->getInvoiceLink();
-        if ($invoice == null) {
-            $invoice = $this->invoiceService->setOrder($order_id)->generateInvoice();
-            return $this->success('Successful', ['invoice' => $invoice], 200);
-        }
-        return $this->success('Successful', ['invoice' => $invoice], 200);
+    /**
+     * * @OA\Get(
+     *      path="/api/v1/webstore/orders/{order_id}/generate-invoice",
+     *      operationId="getOrderInvoice",
+     *      tags={"ORDER API"},
+     *      summary="Get an order invoice",
+     *      description="Return invoice",
+     *      @OA\Parameter(name="order_id", description="order id", required=true, in="path", @OA\Schema(type="integer")),
+     *      @OA\Response(response=200, description="Successful operation",
+     *          @OA\JsonContent(
+     *          type="object",
+     *          example={"message":"Successful",  "invoice": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20210810_pos_order_invoice_2001022_report_1628597035.pdf"}
+     *          ),
+     *     ),
+     *      @OA\Response(response=404, description="message: Order Not Found")
+     *  )
+     *
+     * @param int $order_id
+     * @return JsonResponse
+     */
+    public function getOrderinvoice(int $order_id){
+        $invoice= $this->orderService->getOrderInvoice($order_id);
+       if ($invoice->getData()->invoice==null) {
+           return $this->generateInvoice->generateInvoice($order_id);
+       }
+       return $invoice;
     }
 }

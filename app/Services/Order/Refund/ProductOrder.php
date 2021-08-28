@@ -5,7 +5,7 @@ use App\Models\Order;
 use App\Repositories\OrderSkuRepository;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Updater;
-use App\Services\Order\Payment\Creator as OrderPaymentCreator;
+use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Product\StockManager;
 use Illuminate\Support\Collection;
 
@@ -20,8 +20,8 @@ abstract class ProductOrder
     /** @var OrderSkuRepository  */
     protected OrderSkuRepository $orderSkuRepository;
 
-    /** @var OrderPaymentCreator  */
-    protected OrderPaymentCreator $orderPaymentCreator;
+    /** @var PaymentCreator  */
+    protected PaymentCreator $paymentCreator;
 
     protected $data;
 
@@ -38,13 +38,13 @@ abstract class ProductOrder
      * RefundProduct constructor.
      * @param Updater $updater
      */
-    public function __construct(Updater $updater, OrderSkuRepositoryInterface $orderSkuRepository, InventoryServerClient $client, StockManager $stockManager, OrderPaymentCreator $orderPaymentCreator)
+    public function __construct(Updater $updater, OrderSkuRepositoryInterface $orderSkuRepository, InventoryServerClient $client, StockManager $stockManager, PaymentCreator $paymentCreator)
     {
         $this->updater = $updater;
         $this->orderSkuRepository = $orderSkuRepository;
         $this->client = $client;
         $this->stockManager = $stockManager;
-        $this->orderPaymentCreator = $orderPaymentCreator;
+        $this->paymentCreator = $paymentCreator;
     }
 
     /**

@@ -10,9 +10,11 @@ use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;
 use App\Models\Customer;
 use App\Models\Order;
+use App\Repositories\Accounting\AccountingRepository;
 use App\Services\BaseService;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\PriceCalculation;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use App\Traits\ModificationFields;
 use Illuminate\Support\Facades\App;
@@ -27,7 +29,8 @@ class CustomerService extends BaseService
         private CustomerRepositoryInterface $customerRepository,
         private ReviewRepositoryInterface $reviewRepositoryInterface,
         private Updater $updater,
-        private OrderSkuRepositoryInterface $orderSkuRepositoryInterface
+        private OrderSkuRepositoryInterface $orderSkuRepositoryInterface,
+        private AccountingRepository $accountingRepository
     ){}
 
     public function update(string $customer_id, CustomerUpdateDto $updateDto,$partner_id): JsonResponse
@@ -54,7 +57,7 @@ class CustomerService extends BaseService
         return $this->success();
     }
 
-    public function getNotRatedOrderSkuList(string $customerId,$request): JsonResponse
+    public function getNotRatedOrderSkuList($partner_id, $customerId,$request): JsonResponse
     {
         list($offset, $limit) = calculatePagination($request);
         if(!$request->order)
@@ -63,21 +66,25 @@ class CustomerService extends BaseService
         if ($not_rated_skus->isEmpty())
             throw new NotFoundHttpException("No SKUS Found");
         $not_rated_skus = NotRatedSkuResource::collection($not_rated_skus);
-        return $this->success('Successful', ['skus' => $not_rated_skus], 200);
+        return $this->success('Successful', ['total_count' => count($not_rated_skus),'not_rated_orders' => $not_rated_skus]);
     }
 
-    public function delete(int $customer_id)
+    /**
+     * @throws Exception
+     */
+    public function delete(int $partner_id, int|string $customer_id): JsonResponse
     {
         try {
             $customer = $this->customerRepository->find($customer_id);
             if (!$customer) return $this->error('Customer Not Found', 404);
             DB::beginTransaction();
-            $customer->orders()->delete();
+            $this->accountingRepository->deleteCustomer($partner_id, $customer->id);
             $customer->delete();
             DB::commit();
             return $this->success();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollback();
+            throw $e;
         }
     }
 
@@ -119,7 +126,7 @@ class CustomerService extends BaseService
             ->orderBy('created_at', 'desc')
             ->skip($offset)->take($limit)->get();
         foreach ($all_orders as $order) {
-            $date = $order->created_at->format('Y-m-d');
+            $date = convertTimezone($order->created_at)->format('Y-m-d');
             $order_list[$date]['total_sale'] = $order_list[$date]['total_sale'] ?? 0;
             $order_list[$date]['total_due'] = $order_list[$date]['total_due'] ?? 0;
             /** @var PriceCalculation $order_calculator */
