@@ -110,7 +110,7 @@ class Creator
     private function checkProductAndStockAvailability($skus, $sku_details)
     {
         foreach ($skus as $sku) {
-            if ($sku->id != null && !isset($sku_details[$sku->id]))
+            if ($sku->id != null && !isset($sku_details[$sku['id']]))
                 throw new NotFoundHttpException("Product #" . $sku->id . " Doesn't Exists.");
             if($sku->id == null || ($this->order->sales_channel_id == SalesChannelIds::POS))
                 continue;
