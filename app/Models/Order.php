@@ -5,16 +5,18 @@ use App\Events\RewardOnOrderCreate;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Transaction\Constants\TransactionTypes;
+use Dyrynda\Database\Support\CascadeSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Order extends BaseModel
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, CascadeSoftDeletes;
     public static  $createdEventClass = OrderCreated::class;
     protected $guarded = ['id'];
     private mixed $id;
+    protected $cascadeDeletes = ['orderSkus', 'discounts', 'logs', 'payments'];
 
     public function customer()
     {

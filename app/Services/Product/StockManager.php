@@ -8,7 +8,7 @@ use App\Services\Order\Constants\SalesChannelIds;
 class StockManager
 {
     /** @var InventoryServerClient */
-    private InventoryServerClient $client;
+    protected InventoryServerClient $client;
     private $sku;
     private Order $order;
     private string $uri = 'api/v1/partners/{partner_id}/stock-update';

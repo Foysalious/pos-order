@@ -7,6 +7,7 @@ use App\Exceptions\AuthorizationException;
 use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
 use App\Http\Requests\OrderFilterRequest;
+use App\Http\Requests\OrderStatusUpdateRequest;
 use App\Http\Resources\CustomerOrderResource;
 use App\Http\Requests\OrderUpdateRequest;
 use App\Http\Resources\DeliveryResource;
@@ -52,6 +53,7 @@ class OrderService extends BaseService
                                 protected ApiServerClient       $apiServerClient,
                                 protected AccessManager         $accessManager,
                                 protected OrderSearch           $orderSearch,
+                                protected StatusChanger $orderStatusChanger,
                                 InvoiceService                  $invoiceService
     )
     {
@@ -304,5 +306,12 @@ class OrderService extends BaseService
         $url = 'api/v1/partners/' . $order->partner_id . '/skus?skus=' . json_encode($sku_ids->toArray()) . '&channel_id='.$order->sales_channel_id;
         $sku_details = $this->client->setBaseUrl()->get($url)['skus'] ?? [];
         return collect($sku_details);
+    }
+
+    public function updateOrderStatus($partner_id, $order_id, OrderStatusUpdateRequest $request)
+    {
+        $order = $this->orderRepository->where('id', $order_id)->where('partner_id',$partner_id)->first();
+        if (!$order) return $this->error("No Order Found", 404);
+        $this->orderStatusChanger->setOrder($order)->setStatus($request->status)->changeStatus();
     }
 }
