@@ -133,6 +133,9 @@ class OrderService extends BaseService
     {
         $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::WEBSTORE)->find($order_id);
         if (!$order) throw new OrderException("NO ORDER FOUND", 404);
+        if ($order->invoice == null) {
+            return $this->invoiceService->setOrder($order_id)->generateInvoice();
+        }
         return $this->success('Successful', ['invoice' => $order->invoice], 200);
     }
 
@@ -140,7 +143,9 @@ class OrderService extends BaseService
     {
         $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::POS)->find($order_id);
         if (!$order) throw new OrderException("NO ORDER FOUND", 404);
-
+        if ($order->invoice == null) {
+            return $this->invoiceService->setOrder($order_id)->generateInvoice();
+        }
         $this->accessManager->setPartnerId($order->partner_id)->setFeature(Features::INVOICE_DOWNLOAD)->checkAccess();
         return $this->success('Successful', ['invoice' => $order->invoice], 200);
     }
