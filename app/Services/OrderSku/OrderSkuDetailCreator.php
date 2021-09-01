@@ -23,10 +23,10 @@ class OrderSkuDetailCreator
     }
 
 
-    private function generateOrderedSkuBatchDetail(mixed $batches)
+    private function generateOrderedSkuBatchDetail(array $batches): array
     {
         if (empty($batches)) {
-            $batch_detail = null;
+            $batch_detail = [];
         }else {
             $temp_quantity = $this->sku->quantity;
 
@@ -62,13 +62,5 @@ class OrderSkuDetailCreator
     {
         $batch_detail = $this->generateOrderedSkuBatchDetail($this->skuDetails['batches']);
         return (array) $this->sku + [ 'batch_detail' => $batch_detail ];
-    }
-
-    /**
-     * @return array|null
-     */
-    public function getBatchDetail(): ?array
-    {
-        return $this->batch_detail;
     }
 }

@@ -24,7 +24,7 @@ class EventServiceProvider extends ServiceProvider
             SendEmailVerificationNotification::class,
         ],
         OrderCreated::class => [
-//            AccountingEntryOnOrderCreation::class,
+            AccountingEntryOnOrderCreation::class,
             RewardOnOrderCreateListener::class,
             UsageOnOrderCreate::class
         ],

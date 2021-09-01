@@ -119,7 +119,7 @@ class Creator
         }
     }
 
-    private function makeSkudetails($sku, $sku_details)
+    private function makeSkudetails(object $sku, array $sku_details)
     {
         if ( is_null($sku_details)) {
            return json_encode($sku);

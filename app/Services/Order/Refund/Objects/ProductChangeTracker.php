@@ -5,6 +5,10 @@ class ProductChangeTracker
 {
     protected int $orderSkuId;
     protected float $quantity;
+    protected float $currentQuantity;
+    protected float $previousQuantity;
+    protected float $quantityIncreasedValue;
+    protected float $quantityDecreasedValue;
     protected float $quantityChangedValue;
     protected bool  $quantityIncreased;
     protected bool  $quantityDecreased;
@@ -214,6 +218,42 @@ class ProductChangeTracker
     public function getProductId(): int
     {
         return $this->productId;
+    }
+
+    /**
+     * @param float $currentQuantity
+     * @return ProductChangeTracker
+     */
+    public function setCurrentQuantity(float $currentQuantity)
+    {
+        $this->currentQuantity = $currentQuantity;
+        return $this;
+    }
+
+    /**
+     * @param float $previousQuantity
+     * @return ProductChangeTracker
+     */
+    public function setPreviousQuantity(float $previousQuantity)
+    {
+        $this->previousQuantity = $previousQuantity;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getQuantityIncreasedValue(): float
+    {
+        return $this->currentQuantity-$this->previousQuantity;
+    }
+
+    /**
+     * @return float
+     */
+    public function getQuantityDecreasedValue(): float
+    {
+        return $this->previousQuantity-$this->currentQuantity;
     }
 
 }

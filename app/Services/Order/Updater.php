@@ -330,13 +330,15 @@ class Updater
             DB::beginTransaction();
             $order = $this->setExistingOrder();
             $this->calculateOrderChangesAndUpdateSkus();
+            dd($this->orderProductChangeData);
+            dd('after updating');
             if (isset($this->customer_id)) $this->updateCustomer();
             $this->orderRepositoryInterface->update($this->order, $this->makeData());
             if (isset($this->voucher_id)) $this->updateVoucherDiscount();
             $this->updateOrderPayments();
             if (isset($this->discount)) $this->updateDiscount();
             $this->createLog($order);
-            DB::commit();
+//            DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
             throw $e;

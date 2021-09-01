@@ -287,6 +287,7 @@ class Creator
             if ($order) event(new OrderCreated($order));
         } catch (\Exception $e){
             Log::error($e);
+            throw $e;
         }
          return $order;
     }

@@ -24,15 +24,16 @@ class UpdateProductInOrder extends ProductOrder
     public function update()
     {
         $updated_products = $this->getUpdatedProducts();
+        dd($updated_products);
         $skus_details = $this->getUpdatedProductsSkuDetails($updated_products);
         $this->checkStockAvailability($updated_products, $skus_details);
 
-        foreach ($updated_products as $each) {
-            /** @var $each ProductChangeTracker */
-            if($each->getSkuId() == null)
-                $this->handleNullSkuItemInOrder($each);
-            elseif ($each->isQuantityChanged() && $each->getSkuId() != null ) {
-                $this->handleQuantityUpdateForOrderSku($each, $skus_details->where('id', $each->getSkuId())->first());
+        foreach ($updated_products as $product) {
+            /** @var $product ProductChangeTracker */
+            if($product->getSkuId() == null)
+                $this->handleNullSkuItemInOrder($product);
+            elseif ($product->isQuantityChanged() && $product->getSkuId() != null ) {
+                $this->handleQuantityUpdateForOrderSku($product, $skus_details->where('id', $product->getSkuId())->first());
             }
         }
         $this->updateStockForProductsChanges($updated_products,$skus_details);
@@ -64,6 +65,8 @@ class UpdateProductInOrder extends ProductOrder
                 if ($updating_product['quantity'] != $current_product['quantity']) {
                     $updatedFlag = true;
                     $product_obj->setQuantity($updating_product['quantity']);
+                    $product_obj->setCurrentQuantity($updating_product['quantity']);
+                    $product_obj->setPreviousQuantity($current_product['quantity']);
                     $temp['quantity_changing_info'] = $this->getQuantityChangingDetails($current_product, $updating_product);
                     $product_obj->setQuantityIncreased($temp['quantity_changing_info']['type'] == self::QUANTITY_INCREASED);
                     $product_obj->setQuantityChangedValue($temp['quantity_changing_info']['value']);
@@ -74,6 +77,7 @@ class UpdateProductInOrder extends ProductOrder
                 }
             }
             if ($updatedFlag) {
+                dd($product_obj);
                 $updatedProducts [] = $product_obj;
             }
         });
