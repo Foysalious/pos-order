@@ -250,9 +250,12 @@ class Creator
         $this->apiRequest= $apiRequest;
         return $this;
     }
+
+
     /**
-     * @return Order
-     * @throws ValidationException|OrderException
+     * @return mixed
+     * @throws OrderException
+     * @throws ValidationException
      */
     public function create()
     {
