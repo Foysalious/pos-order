@@ -1,8 +1,6 @@
 <?php namespace App\Listeners;
 
 use App\Events\OrderCreated;
-use App\Http\Reports\InvoiceService;
-
 use App\Jobs\Order\OrderInvoice;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -16,7 +14,6 @@ class GenerateInvoiceOnOrderCreate extends Job implements ShouldQueue
     use DispatchesJobs, SerializesModels;
 
 
-
     /**
      * Handle the event.
      *
@@ -26,7 +23,6 @@ class GenerateInvoiceOnOrderCreate extends Job implements ShouldQueue
 
     public function handle(OrderCreated $event)
     {
-//dd($event->getOrder());
         $this->dispatch((new OrderInvoice($event->getOrder())));
     }
 

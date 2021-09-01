@@ -23,7 +23,7 @@ class OrderInvoice implements ShouldQueue
      *
      * @return void
      */
-    public function __construct( Order $order)
+    public function __construct(Order $order)
     {
         $this->order = $order;
     }
@@ -35,6 +35,13 @@ class OrderInvoice implements ShouldQueue
      */
     public function handle()
     {
-        app(InvoiceService::class)->setOrder($this->order->id)->generateInvoice();
+        try {
+
+
+            app(InvoiceService::class)->setOrder($this->order->id)->generateInvoice();
+
+        } catch (\Exception $exception) {
+            throw  $exception;
+        }
     }
 }
