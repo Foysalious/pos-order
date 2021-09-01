@@ -7,7 +7,7 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Queue\Jobs\Job;
 use Illuminate\Queue\SerializesModels;
 
-class GenerateInvoiceOnOrderCreate extends Job implements ShouldQueue
+class GenerateInvoiceOnOrderCreate
 {
     protected $model;
 
@@ -26,13 +26,4 @@ class GenerateInvoiceOnOrderCreate extends Job implements ShouldQueue
         $this->dispatch((new OrderInvoice($event->getOrder())));
     }
 
-    public function getJobId()
-    {
-        // TODO: Implement getJobId() method.
-    }
-
-    public function getRawBody()
-    {
-        // TODO: Implement getRawBody() method.
-    }
 }
