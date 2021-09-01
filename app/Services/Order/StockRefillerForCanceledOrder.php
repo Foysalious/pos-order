@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\App;
 
 class StockRefillerForCanceledOrder
 {
-    const STOCK_INCREMENT = 'increment';
     protected Order $order;
 
     public function __construct(
@@ -22,6 +21,7 @@ class StockRefillerForCanceledOrder
 
     /**
      * @param Order $order
+     * @return StockRefillerForCanceledOrder
      */
     public function setOrder(Order $order)
     {
@@ -31,31 +31,19 @@ class StockRefillerForCanceledOrder
 
     public function refillStock()
     {
-        $data = $this->makeData();
-        dd($data);
-        $this->stockManageByChunk->setOrder($this->order)->manageStock($data);
-
-    }
-
-    public function makeData()
-    {
-        $data = [];
         $order_skus = $this->order->orderSkus()->get();
         $sku_ids = $order_skus->whereNotNull('sku_id')->pluck('sku_id');
         $sku_details = $this->getSkuDetails($sku_ids)->keyBy('id')->toArray();
+        $this->stockManageByChunk->setOrder($this->order);
         foreach ($order_skus as $each_sku) {
             if($each_sku->sku_id != null) {
-                if($this->isStockMaintainable($sku_details[$each_sku->sku_id])) {
-                    $data [] = [
-                        'id' => $each_sku->sku_id,
-                        'product_id' => $sku_details[$each_sku->sku_id]['product_id'],
-                        'operation' => self::STOCK_INCREMENT,
-                        'quantity' => (float) $each_sku->quantity
-                    ];
+                $this->stockManageByChunk->setSku($sku_details[$each_sku->sku_id]);
+                if($this->stockManageByChunk->isStockMaintainable()){
+                    $this->stockManageByChunk->increaseAndInsertInChunk($each_sku->quantity);
                 }
             }
         }
-        return $data;
+        $this->stockManageByChunk->updateStock();
     }
 
 
@@ -66,15 +54,6 @@ class StockRefillerForCanceledOrder
         $client = App::make(InventoryServerClient::class);
         $sku_details = $client->setBaseUrl()->get($url)['skus'] ?? [];
         return collect($sku_details);
-    }
-
-    private function isStockMaintainable($sku)
-    {
-        if(is_null($sku['stock'])) {
-            return false;
-        } else {
-            return true;
-        }
     }
 
 }

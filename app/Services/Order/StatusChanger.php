@@ -1,5 +1,6 @@
 <?php namespace App\Services\Order;
 
+use App\Events\OrderDeleted;
 use App\Events\OrderDueCleared;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkuRepositoryInterface;
@@ -70,10 +71,9 @@ class StatusChanger
 
     private function cancelOrder()
     {
-
         $this->stockRefillerForCanceledOrder->setOrder($this->order)->refillStock();
-        dd('order stock refill');
-
+        dd('here');
+        event(new OrderDeleted($this->order));
         $this->order->delete();
     }
 
