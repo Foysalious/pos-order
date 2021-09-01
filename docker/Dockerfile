@@ -49,8 +49,9 @@ COPY entrypoint.sh /etc/entrypoint.sh
 RUN chmod +x /etc/entrypoint.sh
 
 #Give permission to temp file for order invoice
-RUN chmod 664 /public/temp
 
+RUN chmod 664 /public/temp
+mkdir public/temp
 RUN usermod -u 1000 www-data
 
 # Set working directory
