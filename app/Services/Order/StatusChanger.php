@@ -65,14 +65,13 @@ class StatusChanger
                   $this->collectPayment($this->order, $order_calculator );
               }
           }
-        return $this->success('Successful', ['order' => $this->order], 200);
+        return $this->success('Successful', [], 200);
     }
 
 
     private function cancelOrder()
     {
         $this->stockRefillerForCanceledOrder->setOrder($this->order)->refillStock();
-        dd('here');
         event(new OrderDeleted($this->order));
         $this->order->delete();
     }

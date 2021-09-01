@@ -5,7 +5,7 @@ class StockManageByChunk extends StockManager
 {
     public function updateStock()
     {
-        $this->client->setBaseUrl()->put($this->uri,[ 'data' => $this->data ]);
+        $this->client->setBaseUrl()->put($this->uri,[ 'data' => json_encode($this->data) ]);
     }
 
     public function increaseAndInsertInChunk($quantity)

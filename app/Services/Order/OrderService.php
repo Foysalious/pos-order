@@ -1,5 +1,6 @@
 <?php namespace App\Services\Order;
 
+use App\Events\OrderDeleted;
 use App\Events\OrderTransactionCompleted;
 use App\Events\OrderUpdated;
 use App\Http\Reports\InvoiceService;
@@ -54,6 +55,7 @@ class OrderService extends BaseService
                                 protected AccessManager         $accessManager,
                                 protected OrderSearch           $orderSearch,
                                 protected StatusChanger $orderStatusChanger,
+                                protected StockRefillerForCanceledOrder $stockRefillerForCanceledOrder,
                                 InvoiceService                  $invoiceService
     )
     {
@@ -123,7 +125,6 @@ class OrderService extends BaseService
             ->setApiRequest($request->api_request->id)
             ->create();
 
-//        if ($order) event(new OrderCreated($order));
 //        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
         return $this->success('Successful', ['order' => ['id' => $order->id]]);
     }
@@ -231,8 +232,8 @@ class OrderService extends BaseService
     {
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
-        $OrderSkusIds = $this->orderSkusRepositoryInterface->where('order_id', $order_id)->get(['id']);
-        $this->orderSkusRepositoryInterface->whereIn('id', $OrderSkusIds)->delete();
+        $this->stockRefillerForCanceledOrder->setOrder($order)->refillStock();
+        event(new OrderDeleted($order));
         $order->delete();
         return $this->success();
     }

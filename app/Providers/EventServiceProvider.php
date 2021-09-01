@@ -1,5 +1,6 @@
 <?php namespace App\Providers;
 
+use App\Events\OrderDeleted;
 use App\Events\OrderTransactionCompleted;
 use App\Events\OrderDueCleared;
 use App\Events\OrderUpdated;
