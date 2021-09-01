@@ -3,6 +3,7 @@
 namespace App\Jobs\Order;
 
 use App\Http\Reports\InvoiceService;
+use App\Jobs\Job;
 use App\Models\Order;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -11,7 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class OrderInvoice implements ShouldQueue
+class OrderInvoice extends Job implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -35,13 +36,7 @@ class OrderInvoice implements ShouldQueue
      */
     public function handle()
     {
-        try {
+        app(InvoiceService::class)->setOrder($this->order->id)->generateInvoice();
 
-
-            app(InvoiceService::class)->setOrder($this->order->id)->generateInvoice();
-
-        } catch (\Exception $exception) {
-            throw  $exception;
-        }
     }
 }

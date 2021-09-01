@@ -129,7 +129,7 @@ class OrderService extends BaseService
     /**
      * @throws AuthorizationException
      */
-    public function getWebsotreOrderInvoice($order_id)
+    public function getWebsotreOrderInvoice(int $order_id)
     {
         $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::WEBSTORE)->find($order_id);
         if (!$order) throw new OrderException("NO ORDER FOUND", 404);
@@ -139,7 +139,7 @@ class OrderService extends BaseService
         return $this->success('Successful', ['invoice' => $order->invoice], 200);
     }
 
-    public function getOrderInvoice($order_id)
+    public function getOrderInvoice(int $order_id)
     {
         $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::POS)->find($order_id);
         if (!$order) throw new OrderException("NO ORDER FOUND", 404);
