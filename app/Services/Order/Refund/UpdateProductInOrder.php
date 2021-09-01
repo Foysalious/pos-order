@@ -24,7 +24,6 @@ class UpdateProductInOrder extends ProductOrder
     public function update()
     {
         $updated_products = $this->getUpdatedProducts();
-        dd($updated_products);
         $skus_details = $this->getUpdatedProductsSkuDetails($updated_products);
         $this->checkStockAvailability($updated_products, $skus_details);
 
@@ -77,7 +76,6 @@ class UpdateProductInOrder extends ProductOrder
                 }
             }
             if ($updatedFlag) {
-                dd($product_obj);
                 $updatedProducts [] = $product_obj;
             }
         });
@@ -227,7 +225,7 @@ class UpdateProductInOrder extends ProductOrder
             if ($product->getSkuId() == null) continue;
             $product_detail = $skus_details->where('id', $product->getSkuId())->first();
             if ($product->isQuantityIncreased()) {
-                if ($product->getQuantityChangedValue() > $product_detail['stock']) throw new NotFoundHttpException("Product #" . $product->getSkuId() . " Not Enough Stock");
+                if ($product->getQuantityIncreasedValue() > $product_detail['stock']) throw new NotFoundHttpException("Product #" . $product->getSkuId() . " Not Enough Stock");
             }
         }
     }
