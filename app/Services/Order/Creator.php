@@ -1,6 +1,6 @@
 <?php namespace App\Services\Order;
 
-use App\Events\OrderCreated;
+use App\Events\OrderTransactionCompleted;
 use App\Exceptions\OrderException;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkuRepositoryInterface;
@@ -284,7 +284,7 @@ class Creator
         }
 
         try {
-            if ($order) event(new OrderCreated($order));
+            if ($order) event(new OrderTransactionCompleted($order));
         } catch (\Exception $e){
             Log::error($e);
         }

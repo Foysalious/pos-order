@@ -1,6 +1,6 @@
 <?php namespace App\Services\Order;
 
-use App\Events\OrderCreated;
+use App\Events\OrderTransactionCompleted;
 use App\Events\OrderUpdated;
 use App\Http\Reports\InvoiceService;
 use App\Exceptions\AuthorizationException;
@@ -131,18 +131,23 @@ class OrderService extends BaseService
     /**
      * @throws AuthorizationException
      */
-    public function getWebsotreOrderInvoice($order_id)
+    public function getWebsotreOrderInvoice(int $order_id)
     {
         $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::WEBSTORE)->find($order_id);
         if (!$order) throw new OrderException("NO ORDER FOUND", 404);
+        if ($order->invoice == null) {
+            return $this->invoiceService->setOrder($order_id)->generateInvoice();
+        }
         return $this->success('Successful', ['invoice' => $order->invoice], 200);
     }
 
-    public function getOrderInvoice($order_id)
+    public function getOrderInvoice(int $order_id)
     {
         $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::POS)->find($order_id);
         if (!$order) throw new OrderException("NO ORDER FOUND", 404);
-
+        if ($order->invoice == null) {
+            return $this->invoiceService->setOrder($order_id)->generateInvoice();
+        }
         $this->accessManager->setPartnerId($order->partner_id)->setFeature(Features::INVOICE_DOWNLOAD)->checkAccess();
         return $this->success('Successful', ['invoice' => $order->invoice], 200);
     }
