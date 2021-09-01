@@ -94,7 +94,7 @@ class PdfHandler extends Handler
         $folder = $this->folder ?: 'invoices/pdf/';
         $time = time();
         $file = $this->filename . "_$time." . $this->downloadFormat;
-        $path = public_path('temp') . '/' . $file;
+        $path = public_path() . '/' . $file;
         $mPDF->Output($path, "F");
         $cdn = $this->saveFileToCDN($path, $folder, $file);
         File::delete($path);

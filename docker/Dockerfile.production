@@ -90,9 +90,7 @@ RUN chmod +x ./bin/sentry_release.sh
 
 RUN composer install --ignore-platform-reqs && rm -rf /home/www-data/.composer/cache
 
-#Give permission to temp file for order invoice
-mkdir public/temp
-RUN chmod 664 /public/temp
+
 
 # RUN chmod -R g+w /var/www/vendor
 
