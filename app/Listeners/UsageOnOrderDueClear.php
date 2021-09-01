@@ -1,6 +1,6 @@
 <?php namespace App\Listeners;
 
-use App\Events\OrderCreated;
+use App\Events\OrderTransactionCompleted;
 use App\Jobs\Usage\UsageJob;
 use App\Services\Usage\Types;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -14,10 +14,10 @@ class UsageOnOrderDueClear
     /**
      * Handle the event.
      *
-     * @param OrderCreated $event
+     * @param OrderTransactionCompleted $event
      * @return void
      */
-    public function handle(OrderCreated $event)
+    public function handle(OrderTransactionCompleted $event)
     {
         $this->dispatch((new UsageJob((int) $event->getOrder()->partner->id, Types::POS_DUE_COLLECTION)));
     }
