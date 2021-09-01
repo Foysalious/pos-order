@@ -14,6 +14,7 @@ services:
       - ../../:/var/www
       - ../../composer-auth.json:/root/.composer/auth.json
       - ../nginx/conf.d/nginx-local.conf:/etc/nginx/sites-enabled/default
+      - ../supervisor/conf.d/horizon.conf:/etc/supervisor/conf.d/horizon.conf
       - ../php/local.ini:/usr/local/etc/php/conf.d/local.ini
       - ../php/memory_limit.ini:/usr/local/etc/php/conf.d/memory_limit.ini
       - ../php/php.ini:/usr/local/etc/php/conf.d/php.override.ini
