@@ -48,8 +48,7 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 COPY entrypoint.sh /etc/entrypoint.sh
 RUN chmod +x /etc/entrypoint.sh
 
-#Give permission to temp file for order invoice
-RUN chmod 664 /public/temp
+
 
 RUN usermod -u 1000 www-data
 
