@@ -1,9 +1,11 @@
 <?php namespace App\Providers;
 
+use App\Events\OrderDeleted;
 use App\Events\OrderTransactionCompleted;
 use App\Events\OrderDueCleared;
 use App\Events\OrderUpdated;
 use App\Listeners\AccountingEntryOnOrderCreation;
+use App\Listeners\AccountingEntryOnOrderDelete;
 use App\Listeners\AccountingEntryOnOrderDueCleared;
 use App\Listeners\AccountingEntryOnOrderUpdating;
 use App\Listeners\GenerateInvoiceOnOrderCreate;
@@ -36,6 +38,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         OrderDueCleared::class => [
             AccountingEntryOnOrderDueCleared::class,
+        ],
+        OrderDeleted::class => [
+            AccountingEntryOnOrderDelete::class,
         ]
     ];
 

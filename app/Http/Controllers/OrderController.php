@@ -5,6 +5,7 @@ use App\Http\Requests\CustomerOrderRequest;
 use App\Http\Requests\OrderCreateRequest;
 use App\Http\Requests\OrderCustomerRequest;
 use App\Http\Requests\OrderFilterRequest;
+use App\Http\Requests\OrderStatusUpdateRequest;
 use App\Http\Requests\OrderUpdateRequest;
 use App\Services\Order\OrderService;
 use Illuminate\Http\JsonResponse;
@@ -167,10 +168,9 @@ class OrderController extends Controller
         return $this->orderService->store($partner, $request);
     }
 
-    public function updateStatus($partner, Request $request, StatusChanger $statusChanger)
+    public function updateStatus($partner_id, $order_id, OrderStatusUpdateRequest $request)
     {
-        $order = Order::find($request->order);
-        return $statusChanger->setOrder($order)->setStatus($request->status)->changeStatus();
+        return $this->orderService->updateOrderStatus($partner_id, $order_id, $request);
     }
 
     /**
