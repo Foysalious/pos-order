@@ -1,6 +1,6 @@
 <?php namespace App\Models;
 
-use App\Events\OrderCreated;
+use App\Events\OrderTransactionCompleted;
 use App\Events\RewardOnOrderCreate;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Order\Constants\OrderLogTypes;
@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Order extends BaseModel
 {
     use HasFactory, SoftDeletes;
-    public static  $createdEventClass = OrderCreated::class;
     protected $guarded = ['id'];
     private mixed $id;
 

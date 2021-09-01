@@ -1,6 +1,6 @@
 <?php namespace App\Services\Order;
 
-use App\Events\OrderCreated;
+use App\Events\OrderTransactionCompleted;
 use App\Events\OrderUpdated;
 use App\Http\Reports\InvoiceService;
 use App\Exceptions\AuthorizationException;
