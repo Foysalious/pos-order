@@ -136,7 +136,7 @@ class OrderService extends BaseService
     public function getWebsotreOrderInvoice(int $order_id)
     {
         $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::WEBSTORE)->find($order_id);
-        if (!$order) throw new OrderException("NO ORDER FOUND", 404);
+        if (!$order) return $this->error('No Order Found',404);
         if ($order->invoice == null) {
             return $this->invoiceService->setOrder($order_id)->generateInvoice();
         }
@@ -146,7 +146,7 @@ class OrderService extends BaseService
     public function getOrderInvoice(int $order_id)
     {
         $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::POS)->find($order_id);
-        if (!$order) throw new OrderException("NO ORDER FOUND", 404);
+        if (!$order) return $this->error('No Order Found',404);
         if ($order->invoice == null) {
             return $this->invoiceService->setOrder($order_id)->generateInvoice();
         }
