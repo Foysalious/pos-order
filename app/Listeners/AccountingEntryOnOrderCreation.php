@@ -1,6 +1,6 @@
 <?php namespace App\Listeners;
 
-use App\Events\OrderTransactionCompleted;
+use App\Events\OrderPlaceTransactionCompleted;
 use App\Services\Accounting\CreateEntry;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -17,10 +17,10 @@ class AccountingEntryOnOrderCreation
     /**
      * Handle the event.
      *
-     * @param  OrderTransactionCompleted  $event
+     * @param  OrderPlaceTransactionCompleted  $event
      * @return void
      */
-    public function handle(OrderTransactionCompleted $event)
+    public function handle(OrderPlaceTransactionCompleted $event)
     {
         $this->createEntry->setOrder($event->getOrder())->create();
     }

@@ -1,7 +1,7 @@
 <?php namespace App\Services\Order;
 
 use App\Events\OrderDeleted;
-use App\Events\OrderTransactionCompleted;
+use App\Events\OrderPlaceTransactionCompleted;
 use App\Events\OrderUpdated;
 use App\Http\Reports\InvoiceService;
 use App\Exceptions\AuthorizationException;

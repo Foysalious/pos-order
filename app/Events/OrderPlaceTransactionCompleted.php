@@ -4,7 +4,7 @@ use App\Models\Order;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class OrderTransactionCompleted
+class OrderPlaceTransactionCompleted
 {
     use Dispatchable, SerializesModels;
 

@@ -1,7 +1,7 @@
 <?php namespace App\Providers;
 
 use App\Events\OrderDeleted;
-use App\Events\OrderTransactionCompleted;
+use App\Events\OrderPlaceTransactionCompleted;
 use App\Events\OrderDueCleared;
 use App\Events\OrderUpdated;
 use App\Listeners\AccountingEntryOnOrderCreation;
@@ -26,7 +26,7 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
-        OrderTransactionCompleted::class => [
+        OrderPlaceTransactionCompleted::class => [
             AccountingEntryOnOrderCreation::class,
             RewardOnOrderCreateListener::class,
             UsageOnOrderCreate::class,
