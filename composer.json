@@ -16,6 +16,8 @@
         "guzzlehttp/guzzle": "^7.0.1",
         "itsgoingd/clockwork": "^5.0",
         "laravel/framework": "^8.12",
+        "laravel/horizon": "^5.7",
+        "laravel/telescope": "^4.6",
         "laravel/tinker": "^2.5",
         "league/flysystem-aws-s3-v3": "^1.0",
         "mpdf/mpdf": "^8.0",

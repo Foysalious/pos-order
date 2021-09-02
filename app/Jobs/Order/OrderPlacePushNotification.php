@@ -1,12 +1,14 @@
 <?php namespace App\Jobs\Order;
 
 
+use App\Jobs\Job;
 use App\Models\Order;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Services\Order\Notification\OrderPlacePushNotificationHandler;
 
-class OrderPlacePushNotification
+class OrderPlacePushNotification extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 

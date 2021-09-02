@@ -1,10 +1,11 @@
 <?php namespace App\Http\Controllers;
 
-use App\Http\Reports\GenerateInvoice;
+use App\Http\Reports\InvoiceService;
 use App\Http\Requests\CustomerOrderRequest;
 use App\Http\Requests\OrderCreateRequest;
 use App\Http\Requests\OrderCustomerRequest;
 use App\Http\Requests\OrderFilterRequest;
+use App\Http\Requests\OrderStatusUpdateRequest;
 use App\Http\Requests\OrderUpdateRequest;
 use App\Services\Order\OrderService;
 use Illuminate\Http\JsonResponse;
@@ -20,11 +21,11 @@ class OrderController extends Controller
     use ResponseAPI;
 
     protected $orderService;
-    private GenerateInvoice $generateInvoice;
+    private InvoiceService $invoiceService;
 
-    public function __construct(OrderService $orderService,GenerateInvoice $generateInvoice)
+    public function __construct(OrderService $orderService, InvoiceService $invoiceService)
     {
-        $this->generateInvoice = $generateInvoice;
+        $this->invoiceService = $invoiceService;
         $this->orderService = $orderService;
     }
 
@@ -167,10 +168,9 @@ class OrderController extends Controller
         return $this->orderService->store($partner, $request);
     }
 
-    public function updateStatus($partner, Request $request, StatusChanger $statusChanger)
+    public function updateStatus($partner_id, $order_id, OrderStatusUpdateRequest $request)
     {
-        $order = Order::find($request->order);
-        return $statusChanger->setOrder($order)->setStatus($request->status)->changeStatus();
+        return $this->orderService->updateOrderStatus($partner_id, $order_id, $request);
     }
 
     /**
@@ -326,9 +326,34 @@ class OrderController extends Controller
     {
         return $this->orderService->getDeliveryInfo($partner_id, $order_id);
     }
+
     /**
      * * @OA\Get(
      *      path="/api/v1/webstore/orders/{order_id}/generate-invoice",
+     *      operationId="getWebstoreOrderInvoice",
+     *      tags={"ORDER API"},
+     *      summary="Get an order invoice",
+     *      description="Return invoice",
+     *      @OA\Parameter(name="order_id", description="order id", required=true, in="path", @OA\Schema(type="integer")),
+     *      @OA\Response(response=200, description="Successful operation",
+     *          @OA\JsonContent(
+     *          type="object",
+     *          example={"message":"Successful",  "invoice": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20210810_pos_order_invoice_2001022_report_1628597035.pdf"}
+     *          ),
+     *     ),
+     *      @OA\Response(response=404, description="message: Order Not Found")
+     *  )
+     *
+     * @param int $order_id
+     * @return JsonResponse
+     */
+    public function getWebstoreOrderinvoice(int $order_id)
+    {
+        return $this->orderService->getWebsotreOrderInvoice($order_id);
+    }
+    /**
+     * * @OA\Get(
+     *      path="/api/v1/orders/{order_id}/generate-invoice",
      *      operationId="getOrderInvoice",
      *      tags={"ORDER API"},
      *      summary="Get an order invoice",
@@ -346,11 +371,8 @@ class OrderController extends Controller
      * @param int $order_id
      * @return JsonResponse
      */
-    public function getOrderinvoice(int $order_id){
-        $invoice= $this->orderService->getOrderInvoice($order_id);
-       if ($invoice->getData()->invoice==null) {
-           return $this->generateInvoice->generateInvoice($order_id);
-       }
-       return $invoice;
+    public function getOrderinvoice(int $order_id)
+    {
+        return $this->orderService->getOrderInvoice($order_id);
     }
 }

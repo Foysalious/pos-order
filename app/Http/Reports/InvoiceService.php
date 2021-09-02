@@ -13,38 +13,41 @@ use App\Traits\ModificationFields;
 use Illuminate\Support\Facades\App;
 
 
-class GenerateInvoice extends BaseService
+class InvoiceService extends BaseService
 {
     use ModificationFields;
 
-    protected ApiServerClient $client;
-    /**
-     * @var Updater
-     */
-    private Updater $updater;
-    /**
-     * @var OrderRepositoryInterface
-     */
-    private OrderRepositoryInterface $orderRepository;
+    private $posOrder;
 
-    public function __construct(ApiServerClient $client, Updater $updater, OrderRepositoryInterface $orderRepository)
+    public function __construct(protected ApiServerClient $client, private Updater $updater, private OrderRepositoryInterface $orderRepository)
     {
-        $this->client = $client;
-        $this->updater = $updater;
-        $this->orderRepository = $orderRepository;
+
     }
 
-
-    public function generateInvoice(int $orderID)
+    public function setOrder($order_id)
     {
+        $this->order = $this->orderRepository->find($order_id);
+        return $this;
+    }
 
+    public function isAlreadyGenerated()
+    {
+        $this->invoiceLink = $this->order->invoice;
+        return $this;
+    }
+
+    public function getInvoiceLink()
+    {
+        return $this->invoiceLink;
+    }
+
+    public function generateInvoice()
+    {
         $pdf_handler = new PdfHandler();
-        $order = Order::find($orderID);
-
+        $order = $this->order;
         /** @var PriceCalculation $price_calculator */
         $price_calculator = (App::make(PriceCalculation::class))->setOrder($order);
-        $partner = Partner::find($order->partner_id);
-        $partner = $this->client->setBaseUrl()->get('v2/partners/' . $partner->sub_domain);
+        $partner = $this->client->setBaseUrl()->get('v2/partners/' . $order->partner->sub_domain);
         $info = [
             'amount' => $price_calculator->getOriginalPrice(),
             'created_at' => $order->created_at->format('jS M, Y, h:i A'),
@@ -68,7 +71,7 @@ class GenerateInvoice extends BaseService
         ];
 
         if ($order->customer_id) {
-            $customer = Customer::find($order->customer_id);
+            $customer = $order->customer;
             $info['user'] = [
                 'name' => $customer->name,
                 'mobile' => $customer->mobile,
@@ -77,8 +80,7 @@ class GenerateInvoice extends BaseService
         }
         $invoice_name = 'pos_order_invoice_' . $order->id;
         $link = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
-        $orderDetails = $this->orderRepository->where('partner_id', $order->partner_id)->find($orderID);
-        $this->updater->setPartnerId($order->partner_id)->setOrderId($orderID)->setOrder($orderDetails)->setInvoiceLink($link)->update();
+        $this->updater->setPartnerId($order->partner_id)->setOrderId($order->id)->setOrder($this->order)->setInvoiceLink($link)->update();
         return $this->success('Successful', ['invoice' =>  $link], 200);
     }
 }

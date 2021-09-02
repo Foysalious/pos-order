@@ -1,11 +1,14 @@
 <?php namespace App\Providers;
 
-use App\Events\OrderCreated;
+use App\Events\OrderDeleted;
+use App\Events\OrderTransactionCompleted;
 use App\Events\OrderDueCleared;
 use App\Events\OrderUpdated;
 use App\Listeners\AccountingEntryOnOrderCreation;
+use App\Listeners\AccountingEntryOnOrderDelete;
 use App\Listeners\AccountingEntryOnOrderDueCleared;
 use App\Listeners\AccountingEntryOnOrderUpdating;
+use App\Listeners\GenerateInvoiceOnOrderCreate;
 use App\Listeners\RewardOnOrderCreate as RewardOnOrderCreateListener;
 use App\Listeners\UsageOnOrderCreate;
 use Illuminate\Auth\Events\Registered;
@@ -23,16 +26,21 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
-        OrderCreated::class => [
+        OrderTransactionCompleted::class => [
             AccountingEntryOnOrderCreation::class,
             RewardOnOrderCreateListener::class,
-            UsageOnOrderCreate::class
+            UsageOnOrderCreate::class,
+            GenerateInvoiceOnOrderCreate::class
         ],
         OrderUpdated::class => [
             AccountingEntryOnOrderUpdating::class,
+            GenerateInvoiceOnOrderCreate::class
         ],
         OrderDueCleared::class => [
             AccountingEntryOnOrderDueCleared::class,
+        ],
+        OrderDeleted::class => [
+            AccountingEntryOnOrderDelete::class,
         ]
     ];
 

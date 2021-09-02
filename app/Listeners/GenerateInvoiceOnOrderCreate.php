@@ -1,15 +1,13 @@
 <?php namespace App\Listeners;
 
 use App\Events\OrderTransactionCompleted;
-use App\Jobs\Usage\UsageJob;
-use App\Services\Usage\Types;
+use App\Jobs\Order\OrderInvoice;
 use Illuminate\Foundation\Bus\DispatchesJobs;
-use Illuminate\Queue\SerializesModels;
 
-
-class UsageOnOrderDueClear
+class GenerateInvoiceOnOrderCreate
 {
-    use DispatchesJobs,SerializesModels;
+    use DispatchesJobs;
+
 
     /**
      * Handle the event.
@@ -17,8 +15,10 @@ class UsageOnOrderDueClear
      * @param OrderTransactionCompleted $event
      * @return void
      */
+
     public function handle(OrderTransactionCompleted $event)
     {
-        $this->dispatch((new UsageJob((int) $event->getOrder()->partner->id, Types::POS_DUE_COLLECTION)));
+        $this->dispatch((new OrderInvoice($event->getOrder())));
     }
+
 }
