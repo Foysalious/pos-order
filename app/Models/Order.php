@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Order extends BaseModel
 {
     use HasFactory, SoftDeletes;
-    public static  $createdEventClass = OrderCreated::class;
     protected $guarded = ['id'];
 
     public function customer()
