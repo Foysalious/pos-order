@@ -85,7 +85,7 @@ class UpdateEntry extends BaseEntry
         $sku_details = $sku_ids_filtered ? collect($this->getSkuDetails($sku_ids_filtered,$this->order->sales_channel_id))->keyBy('id') : collect();
         $order_skus = $this->order->orderSkus()->withTrashed()->get();
 
-        if(isset($this->orderProductChangeData['new'])){
+        if(isset($this->orderProductChangeData['new'])) {
             $data = array_merge_recursive($this->makeNewAndDeletedProductsData($order_skus,$sku_details, self::NEWLY_ADDED_PRODUCT), $data);
         }
         if(isset($this->orderProductChangeData['deleted']['refunded_products'])) {
@@ -108,12 +108,12 @@ class UpdateEntry extends BaseEntry
         }
         foreach ($items as $item) {
             $order_sku = $order_skus->where('id', $item['id'])->first();
-            if ($item['id'] != null) {
+            if ($item['sku_id'] != null) {
                 $sku_id = $item['sku_id'];
                 $batch_wise_skus = $this->splitSkuByBatch($order_sku);
                 foreach ($batch_wise_skus as $batch) {
                     $data [] = [
-                        'id' => $sku_details[$sku_id]['product_id'],
+                        'id' => $sku_details[$sku_id]['product_id'] ?? 0,
                         'sku_id' => $sku_details[$sku_id]['id'],
                         'name' => $sku_details[$sku_id]['name'] ?? '',
                         "unit_price" => (double) $batch['unit_price'],
