@@ -9,9 +9,8 @@ class AddRefundTracker
     protected int $orderSkuId;
     protected ?int $skuId;
     protected float $quantity;
-    protected float $quantityChangedValue;
-    protected bool  $quantityIncreased;
-    protected bool  $quantityDecreased;
+    protected float $currentQuantity;
+    protected float $previousQuantity;
     protected float $oldUnitPrice;
     protected float $currentUnitPrice;
     protected ?array $oldBatchDetail;
@@ -35,26 +34,6 @@ class AddRefundTracker
     public function setSkuId(?int $skuId)
     {
         $this->skuId = $skuId;
-        return $this;
-    }
-
-    /**
-     * @param float $quantity
-     * @return $this
-     */
-    public function setQuantity(float $quantity)
-    {
-        $this->quantity = $quantity;
-        return $this;
-    }
-
-    /**
-     * @param float $quantityChangedValue
-     * @return $this
-     */
-    public function setQuantityChangedValue(float $quantityChangedValue)
-    {
-        $this->quantityChangedValue = $quantityChangedValue;
         return $this;
     }
 
@@ -100,34 +79,14 @@ class AddRefundTracker
         return $this;
     }
 
-    /**
-     * @param bool $quantityIncreased
-     * @return $this
-     */
-    public function setQuantityIncreased(bool $quantityIncreased)
-    {
-        $this->quantityIncreased = $quantityIncreased;
-        $this->quantityDecreased = !$quantityIncreased;
-        return $this;
-    }
 
-    /**
-     * @param bool $quantityDecreased
-     * @return $this
-     */
-    public function setQuantityDecreased(bool $quantityDecreased)
-    {
-        $this->quantityDecreased = $quantityDecreased;
-        $this->quantityIncreased = !$quantityDecreased;
-        return $this;
-    }
 
     /**
      * @return bool
      */
     public function isQuantityDecreased(): bool
     {
-        return $this->quantityDecreased;
+        return $this->currentQuantity < $this->previousQuantity;
     }
 
     /**
@@ -135,7 +94,7 @@ class AddRefundTracker
      */
     public function isQuantityIncreased(): bool
     {
-        return $this->quantityIncreased;
+        return $this->currentQuantity > $this->previousQuantity;
     }
 
     /**
@@ -151,7 +110,7 @@ class AddRefundTracker
      */
     public function getQuantityChangedValue(): float
     {
-        return $this->quantityChangedValue;
+        return abs($this->currentQuantity-$this->previousQuantity);
     }
 
     /**
@@ -184,5 +143,41 @@ class AddRefundTracker
     public function getOldBatchDetail(): ?array
     {
         return $this->oldBatchDetail;
+    }
+
+    /**
+     * @param float $currentQuantity
+     * @return $this
+     */
+    public function setCurrentQuantity(float $currentQuantity)
+    {
+        $this->currentQuantity = $currentQuantity;
+        return $this;
+    }
+
+    /**
+     * @param float $previousQuantity
+     * @return $this
+     */
+    public function setPreviousQuantity(float $previousQuantity)
+    {
+        $this->previousQuantity = $previousQuantity;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getQuantityDecreasedValue(): float
+    {
+        return $this->previousQuantity - $this->currentQuantity;
+    }
+
+    /**
+     * @return float
+     */
+    public function getCurrentUnitPrice(): float
+    {
+        return $this->currentUnitPrice;
     }
 }

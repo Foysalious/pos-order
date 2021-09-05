@@ -341,11 +341,11 @@ class Updater
             DB::rollback();
             throw $e;
         }
-
         try {
             if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order, $this->orderProductChangeData));
         } catch (\Exception $e) {
             Log::error($e);
+            throw $e;
         }
     }
 

@@ -1,6 +1,6 @@
 <?php namespace App\Models;
 
-use App\Events\OrderTransactionCompleted;
+use App\Events\OrderPlaceTransactionCompleted;
 use App\Events\RewardOnOrderCreate;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Order\Constants\OrderLogTypes;

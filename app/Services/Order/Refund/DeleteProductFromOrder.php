@@ -39,7 +39,7 @@ class DeleteProductFromOrder extends ProductOrder
     private function stockRefillForDeletedItems(Collection $skus)
     {
         $sku_ids = $skus->where('sku_id', '<>', null)->pluck('sku_id')->toArray();
-        $skus_inventory_details = collect($this->getSkuDetails($sku_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
+        $skus_inventory_details = $sku_ids ? collect($this->getSkuDetails($sku_ids, $this->order->sales_channel_id))->keyBy('id')->toArray() : [];
         foreach ($skus as $sku) {
             if ($sku->id == null) continue;
             if(isset($skus_inventory_details[$sku->sku_id])) {

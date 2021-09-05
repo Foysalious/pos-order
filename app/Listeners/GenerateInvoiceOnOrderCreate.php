@@ -1,6 +1,6 @@
 <?php namespace App\Listeners;
 
-use App\Events\OrderTransactionCompleted;
+use App\Events\OrderPlaceTransactionCompleted;
 use App\Jobs\Order\OrderInvoice;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 
@@ -12,11 +12,11 @@ class GenerateInvoiceOnOrderCreate
     /**
      * Handle the event.
      *
-     * @param OrderTransactionCompleted $event
+     * @param OrderPlaceTransactionCompleted $event
      * @return void
      */
 
-    public function handle(OrderTransactionCompleted $event)
+    public function handle(OrderPlaceTransactionCompleted $event)
     {
         $this->dispatch((new OrderInvoice($event->getOrder())));
     }
