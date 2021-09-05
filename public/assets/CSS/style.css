@@ -227,4 +227,8 @@ body {
 .header .container .test {
     display: flex;
 }
+.log-customer{
+    display: flex;
+    justify-content: flex-end;
+}
 
