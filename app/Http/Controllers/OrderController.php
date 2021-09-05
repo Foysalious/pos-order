@@ -245,9 +245,9 @@ class OrderController extends Controller
         return $this->orderService->update($request, $partner_id, $order_id);
     }
 
-    public function getOrderWithChannel($order_id)
+    public function getOrderInfoForPaymentLink($order_id): JsonResponse
     {
-        return $this->orderService->getOrderWithChannel($order_id);
+        return $this->orderService->getOrderInfoForPaymentLink($order_id);
     }
 
     /**

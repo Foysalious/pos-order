@@ -239,13 +239,22 @@ class OrderService extends BaseService
         return $this->success();
     }
 
-    public function getOrderWithChannel($order_id)
+    public function getOrderInfoForPaymentLink($order_id): JsonResponse
     {
         $orderDetails = $this->orderRepository->find($order_id);
-        if (!$orderDetails) return $this->error("You're not authorized to access this order", 403);
+        if (!$orderDetails) return $this->error("Order Not Found", 404);
         $order = [
             'id' => $orderDetails->id,
-            'sales_channel' => $orderDetails->sales_channel_id == 1 ? 'pos' : 'webstore'
+            'sales_channel' => $orderDetails->sales_channel_id == 1 ? 'pos' : 'webstore',
+            'customer' => [
+                'id' => $orderDetails->customer_id,
+                'name' => $orderDetails?->customer?->name,
+                'mobile' => $orderDetails?->customer?->mobile
+            ],
+            'partner' => [
+                'id' => $orderDetails?->partner?->id,
+                'sub_domain' => $orderDetails?->partner?->sub_domain
+            ]
         ];
         return $this->success('Success', ['order' => $order], 200);
     }
