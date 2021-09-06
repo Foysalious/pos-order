@@ -4,416 +4,611 @@
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>sm manager</title>
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-
-    <title>Invoice</title>
-</head>
-<style>
-    * {
-        padding: 0;
-        margin: 0;
-        -webkit-box-sizing: border-box;
-        box-sizing: border-box;
-        outline: none;
-        border: none;
-    }
-
-    body {
-        position: relative;
-        -webkit-transition: all 0.3s ease-in-out;
-        transition: all 0.3s ease-in-out;
-        background-color: #f9f9f9;
-        counter-reset: my-sec-counter;
-        scroll-behavior: smooth;
-        font-family: "roboto";
-    }
-
-    .header {
-        background-color: #D8F3DC;
-        padding: 15px 0;
-    }
-
-    .header .sr-company .logo-content {
-        padding: 0 0 0 10px;
-    }
-
-    .header .sr-company .logo-content h4 {
-        margin: 0px;
-    }
-
-    .header .sr-company .logo-content p {
-        margin: 0px;
-        font-size: 16px;
-    }
-
-    .banner-area .banner-body {
-        border: 3px solid #6fccdb;
-        min-height: 100%;
-    }
-
-    .banner-area .banner-body .swiper-container {
-        width: 100%;
-        height: 100%;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .banner-area .banner-body .swiper-slide {
-        text-align: center;
-        font-size: 18px;
-        background: #fff;
-        /* Center slide text vertically */
-        display: -webkit-box;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-box-pack: center;
-        -ms-flex-pack: center;
-        justify-content: center;
-        -webkit-box-align: center;
-        -ms-flex-align: center;
-        align-items: center;
-    }
-
-    .banner-area .banner-body .swiper-slide img {
-        display: block;
-        width: auto;
-        max-height: 600px;
-        -o-object-fit: cover;
-        object-fit: cover;
-    }
-
-    .banner-area .banner-body .swiper-pagination-fraction, .banner-area .banner-body .swiper-pagination-custom, .banner-area .banner-body .swiper-container-horizontal > .swiper-pagination-bullets {
-        bottom: 10px;
-        left: 0;
-        width: 100%;
-        position: absolute;
-    }
-
-    .banner-area .banner-body .swiper-pagination-bullet {
-        width: 18px;
-        height: 8px;
-        display: inline-block;
-        border-radius: 5px;
-        background: #000;
-        opacity: 0.2;
-    }
-
-    .banner-area .banner-body .swiper-pagination-bullet.swiper-pagination-bullet-active {
-        background-color: #6fccdb;
-        opacity: 1;
-    }
-
-    .banner-area .banner-body .link-area {
-        padding: 0 20px;
-        margin: 0 0;
-    }
-
-    @media (min-width: 768px) {
-        .banner-area .banner-body .link-area {
-            margin: 200px 0;
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+            outline: none;
+            border: none;
         }
-    }
 
-    .banner-area .banner-body .link-area .header-content h1 {
-        color: #797979;
-    }
+        body {
+            position: relative;
+            -webkit-transition: all 0.3s ease-in-out;
+            transition: all 0.3s ease-in-out;
+            counter-reset: my-sec-counter;
+            scroll-behavior: smooth;
+            font-family: "roboto";
+        }
 
-    .banner-area .banner-body .link-area .sub-header h5 {
-        color: #525252;
-    }
+        .headers {
+            width: 100%;
+            margin: 0 auto;
+            text-align: left;
+            border-spacing: 0px;
+            border-collapse: collapse;
+            background-color: #D8F3DC;
+            padding: 15px 0;
+        }
 
-    .banner-area .banner-body .link-area .sub-content p {
-        color: #6f6f6f;
-    }
+        @media (min-width: 1281px) {
+            .headers {
+                width: 1280px;
+            }
+        }
 
-    .banner-area .banner-body .link-area .link-button {
-        margin: 20px 0;
-    }
+        .headers tbody tr .header-left {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-align: center;
+            -ms-flex-align: center;
+            align-items: center;
+            padding: 15px 0;
+        }
 
-    .banner-area .banner-body .link-area .link-button a {
-        text-decoration: none;
-        color: white;
-        background-color: #6fccdb;
-        font-size: 20px;
-        -webkit-transition: all 0.2s ease-in-out;
-        transition: all 0.2s ease-in-out;
-        padding: 10px 25px;
-        border: 5px;
-    }
+        .headers tbody tr .header-left img {
+            padding: 0 10px;
+        }
 
-    .banner-area .banner-body .link-area .link-button a:hover {
-        background-color: #525252;
-    }
+        .headers tbody tr .header-left div {
+            margin: 0 0 0 10px;
+        }
 
-    .invoice-date-area {
-        padding: 20px 0;
-    }
+        .headers tbody tr .header-right {
+            text-align: right;
+            padding: 0 10px;
+        }
 
-    .invoice-date-area .invoice-order-area .invoice {
-        padding: 0 0 10px 0;
-        width: 100%;
-    }
+        .header {
+            background-color: #D8F3DC;
+            padding: 15px 0;
+        }
 
-    .bill-from-to-area table thead {
-        background-color: #F2F2F2;
-    }
+        .header .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 10px;
+        }
 
-    .bill-from-to-area table thead tr th {
-        padding: 15px;
-    }
+        .header .container .d-flex {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+        }
 
-    .bill-from-to-area table tr td {
-        padding: 15px 15px 0 15px;
-    }
+        .header .container .justify-content-between {
+            -webkit-box-pack: justify;
+            -ms-flex-pack: justify;
+            justify-content: space-between;
+        }
 
-    .bill-calculation-area table thead {
-        background-color: #F2F2F2;
-    }
+        .header .container .align-items-center {
+            -webkit-box-align: center;
+            -ms-flex-align: center;
+            align-items: center;
+        }
 
-    .bill-calculation-area table thead tr {
-        border: 0px;
-    }
+        .header .container .sr-company .logo-content {
+            padding: 0 0 0 10px;
+        }
 
-    .bill-calculation-area table thead tr th {
-        padding: 15px;
-    }
+        .header .container .sr-company .logo-content h4 {
+            margin: 0px;
+        }
 
-    .bill-calculation-area table tr {
-        border: 2px solid #E5E5E5;
-    }
+        .header .container .sr-company .logo-content p {
+            margin: 0px;
+            font-size: 16px;
+        }
 
-    .bill-calculation-area table tr .total-price {
-        font-weight: bold;
-    }
+        .table-invoice-date {
+            width: 100%;
+            margin: 0 auto;
+            text-align: left;
+            border-spacing: 0px;
+            border-collapse: collapse;
+            padding: 15px 0;
+        }
 
-    .bill-calculation-area table tr td .item-sub-cotent {
-        font-size: 14px;
-        color: #676767;
-    }
+        @media (min-width: 1281px) {
+            .table-invoice-date {
+                width: 1280px;
+            }
+        }
 
-    .bill-calculation-area table .vat-discount-row {
-        border: 0px;
-    }
+        .table-invoice-date tbody tr .table-invoice-left {
+            padding: 10px 5px;
+        }
 
-    .bill-calculation-area table .vat-discount-row .border-bottom {
-        border-bottom: 2px solid #E5E5E5 !important;
-    }
+        .table-invoice-date tbody tr .table-invoice-left div {
+            padding: 5px 0;
+        }
 
-    .bill-calculation-area table tfoot.last-empty-field {
-        border: 0px;
-    }
+        .table-invoice-date tbody tr .table-invoice-right {
+            padding: 10px 5px;
+            text-align: right;
+        }
 
-    .bill-calculation-area table tfoot .last-amount {
-        background-color: #F2F2F2;
-    }
+        .table-bill-form-area {
+            width: 100%;
+            margin: 30px auto;
+            text-align: left;
+            border-spacing: 0px;
+            border-collapse: collapse;
+            padding: 15px 0;
+        }
 
-    .bill-calculation-area table tfoot .last-amount:nth-child(2) {
-        border: none;
-        border-bottom: 2px solid #E5E5E5;
-        border-left: 2px solid #E5E5E5;
-    }
+        @media (min-width: 1281px) {
+            .table-bill-form-area {
+                width: 1280px;
+            }
+        }
 
-    .bill-calculation-area table tfoot .last-amount:nth-child(3) {
-        border: none;
-        border-bottom: 2px solid #E5E5E5;
-        border-right: 2px solid #E5E5E5;
-    }
+        .table-bill-form-area thead {
+            background-color: #F2F2F2;
+        }
 
-    .footer {
-        background-color: #D8F3DC;
-        margin: 100px 0 0 0;
-        padding: 10px 0;
-        font-weight: 600;
-    }
+        .table-bill-form-area thead tr th {
+            padding: 15px;
+        }
 
-    .footer a {
-        text-decoration: none;
-        color: black;
-    }
+        .table-bill-form-area tr td {
+            padding: 15px 15px 0 15px;
+        }
 
-    .footer a .fa-phone-alt {
-        color: #00B553;
-        margin-right: 5px;
-    }
+        .bill-calculate-area {
+            width: 100%;
+            margin: 0 auto;
+            text-align: left;
+            border-spacing: 0px;
+            border-collapse: collapse;
+            padding: 15px 0;
+        }
 
-    .log-customer {
-        display: flex;
-        justify-content: flex-end;
-    }
+        @media (min-width: 1281px) {
+            .bill-calculate-area {
+                width: 1280px;
+            }
+        }
 
-    .header-table {
-        background-color: #D8F3DC;
-        padding: 15px;
-        width: 100%;
-    }
+        .bill-calculate-area thead {
+            background-color: #F2F2F2;
+        }
 
-    .table-row {
-        padding: 15px;
-    }
-</style>
+        .bill-calculate-area thead tr {
+            border: 0px;
+        }
+
+        .bill-calculate-area thead tr th {
+            padding: 15px;
+        }
+
+        .bill-calculate-area tbody tr {
+            border: 2px solid #E5E5E5;
+        }
+
+        .bill-calculate-area tbody tr .total-price {
+            font-weight: bold;
+        }
+
+        .bill-calculate-area tbody tr td {
+            padding: 7px 15px 7px 15px;
+        }
+
+        .bill-calculate-area tbody tr td .item-sub-cotent {
+            font-size: 14px;
+            color: #676767;
+        }
+
+        .bill-calculate-area .vat-discount-row {
+            border: 0px solid #E5E5E5;
+        }
+
+        .bill-calculate-area .vat-discount-row .border-bottom {
+            border-bottom: 2px solid #E5E5E5 !important;
+        }
+
+        .bill-calculate-area .vat-discount-row td {
+            padding: 7px 15px 7px 15px;
+            border-top: 0px solid #E5E5E5;
+        }
+
+        .bill-calculate-area .vat-discount-row td:nth-child(01) {
+            border-left: 0px solid #E5E5E5;
+        }
+
+        .bill-calculate-area .vat-discount-row td:nth-last-child(01) {
+            border-right: 0px solid #E5E5E5;
+        }
+
+        .bill-calculate-area .vat-discount-row td .item-sub-cotent {
+            font-size: 14px;
+            color: #676767;
+        }
+
+        .bill-calculate-area tfoot tr {
+            border: 2px solid #E5E5E5;
+        }
+
+        .bill-calculate-area tfoot tr .total-price {
+            font-weight: bold;
+        }
+
+        .bill-calculate-area tfoot tr td {
+            padding: 7px 15px 7px 15px;
+        }
+
+        .bill-calculate-area tfoot tr td .item-sub-cotent {
+            font-size: 14px;
+            color: #676767;
+        }
+
+        .bill-calculate-area tfoot.last-empty-field {
+            border: 0px;
+        }
+
+        .bill-calculate-area tfoot .last-amount {
+            background-color: #F2F2F2;
+        }
+
+        .bill-calculate-area tfoot .last-amount:nth-child(2) {
+            border: none;
+            border-bottom: 2px solid #E5E5E5;
+            border-left: 2px solid #E5E5E5;
+        }
+
+        .bill-calculate-area tfoot .last-amount:nth-child(3) {
+            border: none;
+            border-bottom: 2px solid #E5E5E5;
+            border-right: 2px solid #E5E5E5;
+        }
+
+        .footers {
+            width: 100%;
+            margin: 30px auto;
+            text-align: left;
+            border-spacing: 0px;
+            border-collapse: collapse;
+            padding: 15px 0;
+            background-color: #D8F3DC;
+        }
+
+        @media (min-width: 1281px) {
+            .footers {
+                width: 1280px;
+            }
+        }
+
+        .footers tbody tr td {
+            text-align: right;
+            padding: 10px 10px;
+            font-weight: 600;
+            -webkit-box-align: center;
+            -ms-flex-align: center;
+            align-items: center;
+        }
+
+        .footers tbody tr td a {
+            text-decoration: none;
+            color: black;
+        }
+
+        .footers tbody tr td a .fa-phone-alt {
+            color: #00B553;
+            margin-right: 5px;
+        }
+    </style>
+</head>
 <body>
 <!--header area start-->
 
-<table class="header-table">
-    <tr class="table-row">
-        <th class="table-row" style="width: 10%"><img
-                src="https://www.smanager.xyz/wp-content/uploads/2021/01/fav-icon.png" alt="n/a"></th>
-        <th class="table-row" style="width: 10%">{{$payment_receiver['name']}}<br>{{$payment_receiver['mobile']}}</th>
-        <th class="table-row" style="width: 80%">
-            <div class="log-customer">
-                <div><img src="{{$payment_receiver['image']}} " style="width:40px;height:40px" alt="n/a"></div>
+<table class="headers">
+    <tbody class="container">
+    <tr>
+        <td scope="col" class="header-left">
+            <img src="https://www.smanager.xyz/wp-content/uploads/2021/01/fav-icon.png" alt="n/a">
+            <div>
+                <h4>{{$payment_receiver['name']}}</h4>
+                <p>{{$payment_receiver['mobile']}}</p>
             </div>
-        </th>
-    </tr>
-</table>
 
-<!--header area end-->
-<!--invoice area area-->
-<section class="container">
-    <div class="invoice-date-area">
-        <div class=" justify-content-between">
-            <div class="invoice-order-area">
-                <table>
-                    <tr>
-                        <th style="width: 20%">Invoice: # ****** <br>Order ID: # {{$order_id}}</th>
-                        <th class="table-row" style="width: 80%">
-                            <div class="log-customer">
-                                <div>Date: {{$created_at}}</div>
-                            </div>
-                        </th>
-                    </tr>
-                </table>
-            </div>
+        </td>
+        <td scope="col" class="header-right">
+
+            <img src="{{$payment_receiver['image']}}" style="width:40px;height:40px" alt="n/a">
+        </td>
+    </tr>
+    </tbody>
+</table>
+<!-- <header class="header">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="sr-company">
+        <div class="d-flex align-items-center">
+          <img src="assets/images/01.jpg" alt="n/a">
+          <div class="logo-content">
+            <h4>SR COMPANY</h4>
+            <p>+880 1833 309461</p>
+          </div>
         </div>
+      </div>
+      <div class="s-manager">
+        <img src="assets/images/01.jpg" alt="n/a">
+      </div>
     </div>
-    <div class="bill-from-to-area">
-        <table class="table table-borderless table-hover">
-            <thead>
-            <tr>
-                <th scope="col">Bill From</th>
-                <th scope="col">Bill To</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td>{{$payment_receiver['name']}}</td>
-                <td>{{$user['name']}}</td>
-            </tr>
-            <tr>
-                <td>{{$payment_receiver['address']}}</td>
-                <td>{{$user['address']}}</td>
-            </tr>
-            <tr>
-                <td>{{$payment_receiver['mobile']}}</td>
-                <td>{{$user['mobile']}}</td>
-            </tr>
-            </tbody>
-        </table>
+  </div>
+</header> -->
+<!--header area end-->
+<!--table-invoice-date area start-->
+<table class="table-invoice-date">
+    <tbody>
+    <tr>
+        <td class="table-invoice-left">
+            <div>Invoice: # ******</div>
+            <div> Order ID: # {{$order_id}}</div>
+
+        </td>
+        <td class="table-invoice-right">Date: {{$created_at}}</td>
+    </tr>
+    </tbody>
+</table>
+<!--table-invoice-date area end-->
+<!--table-bill-form-area area start-->
+<table class="table-bill-form-area">
+    <thead>
+    <tr>
+        <th scope="col">Bill From</th>
+        <th scope="col">Bill To</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>{{$payment_receiver['name']}}</td>
+        <td>{{$user['name']}}</td>
+    </tr>
+    <tr>
+        <td>{{$payment_receiver['address']}}</td>
+        <td>{{$user['address']}}</td>
+    </tr>
+    <tr>
+        <td>{{$payment_receiver['mobile']}}</td>
+        <td>{{$user['mobile']}}</td>
+    </tr>
+    </tbody>
+</table>
+<!--table-bill-form-area area end-->
+<!--bill-calculation-area start-->
+<table class="bill-calculate-area">
+    <thead>
+    <tr>
+        <th>Item</th>
+        <th>Quantity</th>
+        <th>Unit Cost</th>
+        <th>Total Price</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach($pos_order['items'] as $key=>$skus)
+        <tr>
+            <td>
+                {{$skus->name}}
+                @php
+                    $sku_details= json_decode($skus['details'],true);
+                    $sku_name=$sku_details['name'];
+
+                @endphp
+                <div class="item-sub-cotent">{{$sku_name}}</div>
+
+            </td>
+            <td>{{$skus->quantity}}</td>
+            <td>৳{{$skus->unit_price}}</td>
+            <td>৳{{$skus->quantity*$skus->unit_price}}</td>
+        </tr>
+    @endforeach
+
+    <tr>
+        <td colspan="3">Sub Total</td>
+        <td class="total-price">৳{{$pos_order['total']}}</td>
+    </tr>
+
+    <tr class="vat-discount-row border-top">
+        <td colspan="2"></td>
+        <td>Vat</td>
+        <td>৳{{$pos_order['vat']}}</td>
+    </tr>
+    <tr class="vat-discount-row">
+        <td colspan="2"></td>
+        <td>Discount</td>
+        <td>৳{{$pos_order['discount']}}</td>
+    </tr>
+    <tr class="vat-discount-row">
+        <td colspan="2"></td>
+        <td>Promo</td>
+        <td>৳{{$pos_order['promo_discount']}}</td>
+    </tr>
+    <tr class="vat-discount-row">
+        <td colspan="2"></td>
+        <td>Delivery Charge</td>
+        <td>৳{{$pos_order['delivery_charge']}}</td>
+    </tr>
+    <tr class="vat-discount-row">
+        <td colspan="2"></td>
+        <td class="border-bottom"></td>
+        <td class="border-bottom"></td>
+    </tr>
+    <tr class="vat-discount-row">
+        <td colspan="2"></td>
+        <td>Paid Amount</td>
+        <td>৳{{$pos_order['paid']}}</td>
+    </tr>
+    <tr class="vat-discount-row">
+        <td colspan="2"></td>
+        <td>Due Amount</td>
+        <td>৳{{$pos_order['due']}}</td>
+    </tr>
+
+    <tr class="vat-discount-row">
+        <td colspan="2"></td>
+        <td class="border-bottom"></td>
+        <td class="border-bottom"></td>
+    </tr>
+    </tbody>
+    <tfoot>
+    <tr class="vat-discount-row">
+        <td colspan="2"></td>
+        <td class="last-amount">Need To Pay</td>
+        <td class="last-amount">৳{{$pos_order['due']-$pos_order['total']}}</td>
+    </tr>
+    </tfoot>
+</table>
+<!--bill-calculation-area end-->
+<!--table footer start-->
+<table class="footers">
+    <tbody>
+    <tr>
+        <td><img src=" https://cdn-shebadev.s3.ap-south-1.amazonaws.com/phone_24px.png" alt="n/a"> <a
+                href="#0">16516</a href="#0"></td>
+    </tr>
+    </tbody>
+</table>
+<!--table footer end-->
+<section class="container">
+    <!-- <div class="invoice-date-area">
+      <div class="d-flex justify-content-between">
+        <div class="invoice-order-area">
+          <div class="invoice">Invoice: # ******</div>
+          <div class="order">Order ID: # ******</div>
+        </div>
+        <div class="date-area">
+          <div class="date">Date: 16th May 2021</div>
+        </div>
+      </div>
+    </div> -->
+    <!-- <div class="bill-from-to-area">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Bill From</th>
+            <th scope="col">Bill To</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>SR COMPANY</td>
+            <td>Mionel Lessi</td>
+          </tr>
+          <tr>
+            <td>51 Green corner, Green Road Dhanmondi Dhaka</td>
+            <td>51 Green corner, Green Road Dhanmondi Dhaka</td>
+          </tr>
+          <tr>
+            <td>+880 1833 309461</td>
+            <td>+880 1833 309461</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
     <div class="bill-calculation-area">
-        <table class="table table-borderless table-hover">
-            <thead>
-            <tr>
-                <th>Item</th>
-                <th>Quantity</th>
-                <th>Unit Cost</th>
-                <th>Total Price</th>
-            </tr>
-            </thead>
-            <tbody>
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th >Item</th>
+            <th >Quantity</th>
+            <th >Unit Cost</th>
+            <th >Total Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              Cyberpunk T-shirt
+              <div class="item-sub-cotent">Black = Double XL = Cotton = Polo </div>
+            </td>
+            <td>1</td>
+            <td>$1,000.00</td>
+            <td>$1,000.00</td>
+          </tr>
+          <tr>
+            <td>
+              Cyberpunk T-shirt
+              <div class="item-sub-cotent">Black = Double XL = Cotton = Polo </div>
+            </td>
+            <td>1</td>
+            <td>$1,000.00</td>
+            <td>$1,000.00</td>
+          </tr>
+          <tr>
+            <td colspan="3">Sub Total </td>
+            <td class="total-price">$2,000.00</td>
+          </tr>
 
-            @foreach($pos_order['items'] as $key=>$skus)
-                <tr>
-                    <td>
-                        {{$skus->name}}
-                        @php
-                            $sku_details= json_decode($skus['details'],true);
-                            $sku_name=$sku_details['name'];
+          <tr class="vat-discount-row border-top">
+            <td colspan="2"></td>
+            <td>Vat</td>
+            <td>$20.00</td>
+          </tr>
+          <tr class="vat-discount-row">
+            <td colspan="2"></td>
+            <td>Discount</td>
+            <td>$20.00</td>
+          </tr>
+          <tr class="vat-discount-row">
+            <td colspan="2"></td>
+            <td>Promo</td>
+            <td>$20.00</td>
+          </tr>
+          <tr class="vat-discount-row">
+            <td colspan="2"></td>
+            <td>Delivery Charge</td>
+            <td>$20.00</td>
+          </tr>
+          <tr class="vat-discount-row">
+            <td colspan="2"></td>
+            <td class="border-bottom"></td>
+            <td class="border-bottom"></td>
+          </tr>
+          <tr class="vat-discount-row">
+            <td colspan="2"></td>
+            <td>Paid Amount</td>
+            <td>$20.00</td>
+          </tr>
+          <tr class="vat-discount-row">
+            <td colspan="2"></td>
+            <td>Due Amount</td>
+            <td>$20.00</td>
+          </tr>
 
-                        @endphp
-                        <div class="item-sub-cotent">{{$sku_name}}</div>
+          <tr class="vat-discount-row">
+            <td colspan="2"></td>
+            <td class="border-bottom"></td>
+            <td class="border-bottom"></td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="vat-discount-row">
+            <td colspan="2"></td>
+            <td class="last-amount">Need To Pay</td>
+            <td class="last-amount">$20.00</td>
+          </tr>
+        </tfoot>
 
-                    </td>
-                    <td>{{$skus->quantity}}</td>
-                    <td>৳{{$skus->unit_price}}</td>
-                    <td>৳{{$skus->quantity*$skus->unit_price}}</td>
-                </tr>
-            @endforeach
-
-            <tr>
-                <td colspan="3">Sub Total</td>
-                <td class="total-price">৳{{$pos_order['total']}}</td>
-            </tr>
-
-            <tr class="vat-discount-row">
-                <td colspan="2"></td>
-                <td>Vat</td>
-                <td>৳{{$pos_order['vat']}}</td>
-            </tr>
-            <tr class="vat-discount-row">
-                <td colspan="2"></td>
-                <td>Discount</td>
-                <td>৳{{$pos_order['discount']}}</td>
-            </tr>
-            <tr class="vat-discount-row">
-                <td colspan="2"></td>
-                <td>Promo</td>
-                <td>৳{{$pos_order['promo_discount']}}</td>
-            </tr>
-            <tr class="vat-discount-row">
-                <td colspan="2"></td>
-                <td>Delivery Charge</td>
-                <td>৳{{$pos_order['delivery_charge']}}</td>
-            </tr>
-            <tr class="vat-discount-row">
-                <td colspan="2"></td>
-                <td class="border-bottom"></td>
-                <td class="border-bottom"></td>
-            </tr>
-            <tr class="vat-discount-row">
-                <td colspan="2"></td>
-                <td>Paid Amount</td>
-                <td>৳{{$pos_order['paid']}}</td>
-            </tr>
-            <tr class="vat-discount-row">
-                <td colspan="2"></td>
-                <td>Due Amount</td>
-                <td>৳{{$pos_order['due']}}</td>
-            </tr>
-
-            <tr class="vat-discount-row">
-                <td colspan="2"></td>
-                <td class="border-bottom"></td>
-                <td class="border-bottom"></td>
-            </tr>
-            </tbody>
-            <tfoot>
-            <tr class="vat-discount-row">
-                <td colspan="2"></td>
-                <td class="last-amount">Need To Pay</td>
-                <td class="last-amount">৳{{$pos_order['due']-$pos_order['total']}}</td>
-            </tr>
-            </tfoot>
-
-        </table>
+      </table> -->
     </div>
 </section>
-
 <!--invoice area end-->
 <!--footer area start-->
-<footer class="footer">
-    <div class="container">
-        <div class="d-flex justify-content-end align-items-center">
-            <a href="#0"> <i class="fas fa-phone-alt"></i> 16516 </a>
-        </div>
+<!-- <footer class="footer">
+  <div class="container">
+    <div class="d-flex justify-content-end align-items-center">
+     <a href="#0"> <img src="" alt="n/a"> 16516 </a>
     </div>
-</footer>
-
-<!-- Option 1: Bootstrap Bundle with Popper -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
+  </div>
+</footer> -->
+<!--footer area end-->
 </body>
 </html>
