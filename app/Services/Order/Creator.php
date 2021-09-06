@@ -290,7 +290,7 @@ class Creator
             if ($order) event(new OrderPlaceTransactionCompleted($order));
         } catch (\Exception $e){
             Log::error($e);
-            throw $e;
+//            throw $e;
         }
          return $order;
     }
