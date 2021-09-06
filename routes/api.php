@@ -24,9 +24,8 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::group(['prefix'=>'v1'], function(){
-    Route::group(['middleware' => 'ip.whitelist'], function ()
-    {
+Route::group(['prefix' => 'v1'], function () {
+    Route::group(['middleware' => 'ip.whitelist'], function () {
         Route::group(['prefix' => 'partners/{partner_id}/customers'], function () {
             Route::post('', [CustomerController::class, 'store']);
             Route::post('/{customer_id}', [CustomerController::class, 'update']);
@@ -41,7 +40,7 @@ Route::group(['prefix'=>'v1'], function(){
             Route::get('partners/{partner_id}/products-by-ratings', [ReviewController::class, 'getProductIdsByRating']);
             Route::get('/{customer_id}/orders', [OrderController::class, 'getCustomerOrderList']);
         });
-        Route::group(['middleware' => 'apiRequestLog'], function() {
+        Route::group(['middleware' => 'apiRequestLog'], function () {
             Route::post('partners/{partner}/orders', [OrderController::class, 'store']);
         });
         Route::apiResource('partners.orders', OrderController::class)->except('store');
@@ -61,10 +60,10 @@ Route::group(['prefix'=>'v1'], function(){
             Route::post('update-status', [OrderController::class, 'updateStatus']);
         });
         Route::apiResource('payments', PaymentController::class);
-        Route::post('payment/delete', [PaymentController::class,'deletePayment']);
+        Route::post('payment/delete', [PaymentController::class, 'deletePayment']);
         Route::post('customers/{customer}/orders/{order}/review', [ReviewController::class, 'store']);
         Route::get('products/{product}/reviews', [ReviewController::class, 'index']);
-        Route::put('partners/{partner_id}',[DataMigrationController::class, 'updatePartnersTable']);
+        Route::put('partners/{partner_id}', [DataMigrationController::class, 'updatePartnersTable']);
         Route::get('/partners/{partner_id}/customers/{customer_id}/purchase-amount-promo-usage', [CustomerController::class, 'getPurchaseAmountAndPromoUsed']);
         Route::get('/partners/{partner_id}/customers/{customer_id}/orders', [CustomerController::class, 'getOrdersByDateWise']);
         Route::get('partners/{partner_id}/reports/product-wise', [ReportController::class, 'getProductWise']);

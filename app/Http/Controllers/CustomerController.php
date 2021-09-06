@@ -205,6 +205,7 @@ class CustomerController extends Controller
         return $this->customerService->getNotRatedOrderSkuList($partner_id,$customer_id, $request);
     }
 
+
     /**
      * Get customers order amount and promo used
      *
