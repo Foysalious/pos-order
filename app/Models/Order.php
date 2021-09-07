@@ -41,6 +41,11 @@ class Order extends BaseModel
         return $this->belongsTo(Channel::class);
     }
 
+    public function apiRequest()
+    {
+        return $this->belongsTo(ApiRequest::class);
+    }
+
     public function orderDiscounts()
     {
         return $this->discounts()->where('type', DiscountTypes::ORDER);
