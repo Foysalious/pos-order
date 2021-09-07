@@ -14,7 +14,6 @@ class RemoveCustomerIdToOrdersTable extends Migration
     public function up()
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->dropForeign('orders_customer_id_foreign');
             $table->dropColumn('customer_id');
         });
     }
@@ -27,7 +26,7 @@ class RemoveCustomerIdToOrdersTable extends Migration
     public function down()
     {
         Schema::table('orders', function (Blueprint $table) {
-            //
+            $table->bigInteger('customer_id')->unsigned()->nullable();
         });
     }
 }
