@@ -1,9 +1,11 @@
 <?php namespace App\Services\Order\Objects;
 
 
+use App\Models\Order;
+
 class OrderDetailsObject
 {
-    protected $orderDetail;
+    protected $orderDetails;
     protected $id;
     protected $created_at;
     protected $partner_wise_order_id;
@@ -17,26 +19,26 @@ class OrderDetailsObject
     protected ?array $skus;
     protected ?OrderPriceObject $price;
     protected ?OrderCustomerObject $customer;
-    /** @var OrderPaymentObject[]|null  */
+    /** @var OrderPaymentObject[]|null */
     protected ?array $payments;
     protected ?OrderPaymentLinkObject $payment_link;
 
-    public function setOrderId($orderDetail)
+    public function setOrderDetails(Order $orderDetail): OrderDetailsObject
     {
-        $this->orderDetail = $orderDetail;
+        $this->orderDetails = $orderDetail;
         return $this;
     }
 
-    public function build()
+    public function build(): OrderDetailsObject
     {
-        $this->id = $this->orderDetail->id;
-        $this->created_at = $this->orderDetail->created_at;
-        $this->partner_wise_order_id = $this->orderDetail->partner_wise_order_id;
-        $this->status = $this->orderDetail->status;
-        $this->sales_channel_id = $this->orderDetail->sales_channel_id;
-        $this->sales_channel_id = $this->orderDetail->sales_channel_id;
-        $this->delivery_name = $this->orderDetail->delivery_name;
-        $this->note = $this->orderDetail->note;
+        $this->id = $this->orderDetails->id;
+        $this->created_at = $this->orderDetails->created_at;
+        $this->partner_wise_order_id = $this->orderDetails->partner_wise_order_id;
+        $this->status = $this->orderDetails->status;
+        $this->sales_channel_id = $this->orderDetails->sales_channel_id;
+        $this->sales_channel_id = $this->orderDetails->sales_channel_id;
+        $this->delivery_name = $this->orderDetails->delivery_name;
+        $this->note = $this->orderDetails->note;
         $this->buildSkus();
         $this->buildPrice();
         $this->buildCustomer();
@@ -45,54 +47,49 @@ class OrderDetailsObject
         return $this;
     }
 
-    private function buildSkus()
+    private function buildSkus(): void
     {
         $final = [];
-        foreach ($this->orderDetail->skus as $sku) {
+        foreach ($this->orderDetails->skus as $sku) {
             /** @var OrderSkuObject $orderSkuObject */
             $orderSkuObject = app(OrderSkuObject::class);
             array_push($final, $orderSkuObject->setSkuDetails($sku)->build());
         }
         $this->skus = $final;
-        return $this;
     }
 
-    private function buildPrice()
+    private function buildPrice(): void
     {
         /** @var OrderPriceObject $orderPriceObject */
         $orderPriceObject = app(OrderPriceObject::class);
-        $price = $orderPriceObject->setPriceDetails($this->orderDetail->price)->build();
+        $price = $orderPriceObject->setPriceDetails($this->orderDetails->price)->build();
         $this->price = $price;
-        return $this;
     }
 
-    private function buildCustomer()
+    private function buildCustomer(): void
     {
         /** @var OrderCustomerObject $orderCustomerObject */
         $orderCustomerObject = app(OrderCustomerObject::class);
-        $customer = $orderCustomerObject->setCustomerDetails($this->orderDetail->customer)->build();
+        $customer = $orderCustomerObject->setCustomerDetails($this->orderDetails->customer)->build();
         $this->customer = $customer;
-        return $this;
     }
 
-    private function buildPayments()
+    private function buildPayments(): void
     {
         $final = [];
-        foreach ($this->orderDetail->paymnets as $payment) {
+        foreach ($this->orderDetails->paymnets as $payment) {
             /** @var OrderPaymentObject $orderPaymentObject */
             $orderPaymentObject = app(OrderPaymentObject::class);
             array_push($final, $orderPaymentObject->setPaymentDetails($payment)->build());
         }
         $this->payments = $final;
-        return $this;
     }
 
-    private function buildPaymentLink()
+    private function buildPaymentLink(): void
     {
         /** @var OrderPaymentLinkObject $orderPaymentLinkObject */
         $orderPaymentLinkObject = app(OrderPaymentLinkObject::class);
-        $payment_link = $orderPaymentLinkObject->setPaymentLinkDetails($this->orderDetail->payment_link)->build();
+        $payment_link = $orderPaymentLinkObject->setPaymentLinkDetails($this->orderDetails->payment_link)->build();
         $this->payment_link = $payment_link;
-        return $this;
     }
 }

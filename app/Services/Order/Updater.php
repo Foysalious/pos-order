@@ -8,6 +8,7 @@ use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Services\Discount\Handler;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
+use App\Services\Order\Objects\OrderDetailsObject;
 use App\Services\Order\Refund\AddProductInOrder;
 use App\Services\Order\Refund\DeleteProductFromOrder;
 use App\Services\Order\Refund\OrderUpdateFactory;
@@ -45,7 +46,8 @@ class Updater
                                 OrderLogCreator $orderLogCreator, OrderDiscountRepositoryInterface $orderDiscountRepository,
                                 OrderPaymentRepositoryInterface $orderPaymentRepository,
                                 protected Handler $discountHandler,
-                                protected PaymentCreator $paymentCreator
+                                protected PaymentCreator $paymentCreator,
+                                private OrderDetailsObject $orderDetailsObject
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -408,7 +410,10 @@ class Updater
 
     private function setNewOrder()
     {
-        $this->orderLogCreator->setChangedOrderData($this->orderRepositoryInterface->find($this->order->id))->setType($this->getTypeOfChangeLog());
+        $order = $this->orderRepositoryInterface->find($this->order->id);
+        $this->orderDetailsObject->setOrderDetails($order)->build();
+        dd('here');
+        $this->orderLogCreator->setChangedOrderData()->setType($this->getTypeOfChangeLog());
     }
 
     private function calculateOrderChangesAndUpdateSkus()
