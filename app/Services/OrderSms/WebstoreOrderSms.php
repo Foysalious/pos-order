@@ -10,7 +10,7 @@ use Illuminate\Queue\SerializesModels;
 class WebstoreOrderSms extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
-    const SMS_TYPE = 'WebStoreOrder';
+    const SMS_TYPE = 'web_store_order';
 
     private $orderId;
     protected $tries = 1;
