@@ -1,6 +1,7 @@
 <?php namespace App\Services\Order;
 
 use App\Events\OrderUpdated;
+use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderDiscountRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
@@ -45,7 +46,8 @@ class Updater
                                 OrderLogCreator $orderLogCreator, OrderDiscountRepositoryInterface $orderDiscountRepository,
                                 OrderPaymentRepositoryInterface $orderPaymentRepository,
                                 protected Handler $discountHandler,
-                                protected PaymentCreator $paymentCreator
+                                protected PaymentCreator $paymentCreator,
+                                protected CustomerRepositoryInterface $customerRepository
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -330,7 +332,10 @@ class Updater
             DB::beginTransaction();
             $order = $this->setExistingOrder();
             $this->calculateOrderChangesAndUpdateSkus();
-            if (isset($this->customer_id)) $this->updateCustomer();
+            if (isset($this->customer_id)) {
+                $this->updateCustomer();
+                $this->setDeliveryNameAndMobile();
+            }
             $this->orderRepositoryInterface->update($this->order, $this->makeData());
             if (isset($this->voucher_id)) $this->updateVoucherDiscount();
             $this->updateOrderPayments();
@@ -516,5 +521,12 @@ class Updater
     private function updateCustomer()
     {
         return $this->orderRepositoryInterface->where('id', $this->order->id)->update(['customer_id' => $this->customer_id]);
+    }
+
+    private function setDeliveryNameAndMobile()
+    {
+        $customer = $this->customerRepository->where('id',$this->customer_id)->first();
+        $this->delivery_name = $customer->name;
+        $this->delivery_mobile = $customer->mobile;
     }
 }

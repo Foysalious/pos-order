@@ -4,6 +4,7 @@ use App\Interfaces\OrderRepositoryInterface;
 use App\Services\Order\Constants\OrderTypes;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\Constants\Statuses;
+use Illuminate\Database\Eloquent\Builder;
 
 class OrderSearch
 {
@@ -114,7 +115,7 @@ class OrderSearch
         return $query->offset($this->offset)->limit($this->limit)->latest()->get();
     }
 
-    private function filterByType($query)
+    private function filterByType(Builder $query)
     {
         return $query->when($this->type == OrderTypes::NEW, function ($q) {
             return $q->where('status', Statuses::PENDING);
@@ -125,14 +126,14 @@ class OrderSearch
         });
     }
 
-    private function filterByOrderStatus($query)
+    private function filterByOrderStatus(Builder $query)
     {
         return $query->when($this->orderStatus, function ($q) {
             return $q->where('status', $this->orderStatus);
         });
     }
 
-    private function filterByPaymentStatus($query)
+    private function filterByPaymentStatus(Builder $query)
     {
         return $query->when($this->paymentStatus == PaymentStatuses::PAID, function ($q) {
             return $q->whereNotNull('closed_and_paid_at');
@@ -141,11 +142,13 @@ class OrderSearch
         });
     }
 
-    private function filterBySearchQuery($query)
+    private function filterBySearchQuery(Builder $query)
     {
-        return $query->when(is_integer($this->queryString), function ($q) {
+        return $query->when($this->queryString, function ($q) {
+            $q->orWhere('delivery_name', 'LIKE', '%' .$this->queryString .'%');
+            $q->orWhere('delivery_mobile', 'LIKE', '%' .$this->queryString .'%');
             $q->where('partner_wise_order_id', 'LIKE', '%' .$this->queryString .'%');
-        })->whereHas('customer', function ($q) {
+        })->orWhereHas('customer', function ($q) {
             $q->when( $this->queryString, function ($q) {
                 $q->where('name', 'LIKE', '%' . $this->queryString . '%');
                 $q->orWhere('email', 'LIKE', '%' . $this->queryString . '%');
@@ -154,7 +157,7 @@ class OrderSearch
         });
     }
 
-    private function filterBySalesChannelId($query)
+    private function filterBySalesChannelId(Builder $query)
     {
         return $query->when($this->salesChannelId, function ($q) {
             return $q->where('sales_channel_id', $this->salesChannelId);

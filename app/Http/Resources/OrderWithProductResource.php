@@ -120,7 +120,12 @@ class OrderWithProductResource extends JsonResource
         if (empty($this->customer)) {
             return null;
         } else {
-            return $this->customer->only('id','name', 'mobile', 'pro_pic');
+            return [
+                'id' => $this->customer->id,
+                'name' => $this->delivery_name,
+                'mobile' => $this->delivery_mobile,
+                'pro_pic' => $this->customer->pro_pic,
+            ];
         }
     }
 }
