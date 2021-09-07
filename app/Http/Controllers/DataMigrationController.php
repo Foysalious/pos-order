@@ -4,8 +4,10 @@ use App\Http\Requests\PartnerUpdateRequest;
 use App\Services\DataMigration\DataMigrationService;
 use App\Services\Partner\PartnerService;
 use App\Traits\ResponseAPI;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DataMigrationController extends Controller
 {
@@ -17,23 +19,35 @@ class DataMigrationController extends Controller
         $this->dataMigrationService = $dataMigrationService;
     }
 
-    public function store(Request $request, $partner_id)
+    /**
+     * @throws Exception
+     */
+    public function store(Request $request, $partner_id): JsonResponse
     {
-        $partner_info = $this->formatData($request->partner_info);
-        $pos_orders = $this->formatData($request->pos_orders);
-        $pos_order_items = $this->formatData($request->pos_order_items);
-        $pos_order_payments = $this->formatData($request->pos_order_payments);
-        $pos_order_discounts = $this->formatData($request->pos_order_discounts);
-        $pos_order_logs = $this->formatData($request->pos_order_logs);
+        try {
+            DB::beginTransaction();
+            $partner_info = $this->formatData($request->partner_info);
+            $pos_orders = $this->formatData($request->pos_orders);
+            $pos_order_items = $this->formatData($request->pos_order_items);
+            $pos_order_payments = $this->formatData($request->pos_order_payments);
+            $pos_order_discounts = $this->formatData($request->pos_order_discounts);
+            $pos_order_logs = $this->formatData($request->pos_order_logs);
+            $customers = $this->formatData($request->pos_customers);
+            $this->dataMigrationService->setPartnerInfo($partner_info)
+                ->setOrders($pos_orders)
+                ->setOrderSkus($pos_order_items)
+                ->setOrderPayments($pos_order_payments)
+                ->setDiscounts($pos_order_discounts)
+                ->setOrderLogs($pos_order_logs)
+                ->setCustomers($customers)
+                ->migrate();
+            DB::commit();
+        } catch (Exception $e){
+            DB::rollBack();
+            throw $e;
+        }
+        return $this->success();
 
-       $this->dataMigrationService->setPartnerInfo($partner_info)
-            ->setOrders($pos_orders)
-            ->setOrderSkus($pos_order_items)
-            ->setOrderPayments($pos_order_payments)
-            ->setDiscounts($pos_order_discounts)
-            ->setOrderLogs($pos_order_logs)
-            ->migrate();
-        return $this->success('Successful', $partner_info);
     }
 
     private function formatData($data)

@@ -1,5 +1,6 @@
 <?php namespace App\Services\DataMigration;
 
+use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\DiscountRepositoryInterface;
 use App\Interfaces\LogRepositoryInterface;
 use App\Interfaces\OrderPaymentsRepositoryInterface;
@@ -28,6 +29,7 @@ class DataMigrationService extends BaseService
      * @var LogRepositoryInterface
      */
     private $logRepositoryInterface;
+    private $customers;
 
 
     public function __construct(PartnerRepositoryInterface $partnerRepositoryInterface,
@@ -35,7 +37,8 @@ class DataMigrationService extends BaseService
                                 OrderRepositoryInterface $orderRepositoryInterface,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
                                 OrderPaymentsRepositoryInterface $orderPaymentsRepositoryInterface,
-                                LogRepositoryInterface $logRepositoryInterface)
+                                LogRepositoryInterface $logRepositoryInterface,
+                                private CustomerRepositoryInterface $customerRepository)
     {
         $this->discountRepositoryInterface = $discountRepositoryInterface;
         $this->partnerRepositoryInterface = $partnerRepositoryInterface;
@@ -81,10 +84,19 @@ class DataMigrationService extends BaseService
         return $this;
     }
 
+    public function setCustomers($customers)
+    {
+        $this->customers = $customers;
+        return $this;
+    }
+
     public function migrate()
     {
         if ($this->partnerInfo) {
             $this->migratePartnerInfoData();
+        }
+        if ($this->customers) {
+            $this->migrateCustomersData();
         }
         if ($this->orders) {
             $this->migrateOrdersData();
@@ -106,6 +118,11 @@ class DataMigrationService extends BaseService
     private function migratePartnerInfoData()
     {
         $this->partnerRepositoryInterface->insertOrIgnore($this->partnerInfo);
+    }
+
+    private function migrateCustomersData()
+    {
+        $this->customerRepository->insertOrIgnore($this->customers);
     }
 
     private function migrateOrdersData()
