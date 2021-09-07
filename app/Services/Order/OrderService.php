@@ -292,8 +292,8 @@ class OrderService extends BaseService
                     $flag = false;
                 } else {
                     $channels_discount = collect($sku['sku_channel'])->where('channel_id', $order->sales_channel_id)->pluck('discounts')->first()[0] ?? [];
-                    $sku_discount = $order_sku_discounts->where('item_id', $item['sku_id'])->first();
-                    if($channels_discount && ($sku_discount->amount != $channels_discount['amount'] || $sku_discount->is_percentage !== $channels_discount['is_amount_percentage'])) {
+                    $sku_discount = $order_sku_discounts->where('item_id', $item['id'])->first();
+                    if(($channels_discount && $sku_discount) && ($sku_discount->amount != $channels_discount['amount'] || $sku_discount->is_percentage !== $channels_discount['is_amount_percentage'])) {
                         $flag = false;
                     }
                 }
