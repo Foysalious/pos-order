@@ -29,6 +29,7 @@ use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\SalesChannelIds;
+use App\Services\OrderSms\WebstoreOrderSms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use App\Services\Order\Constants\Statuses;
@@ -126,7 +127,11 @@ class OrderService extends BaseService
             ->setVoucherId($request->voucher_id)
             ->setApiRequest($request->api_request->id)
             ->create();
-        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) dispatch(new OrderPlacePushNotification($order));
+        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE)
+        {
+            dispatch(new OrderPlacePushNotification($order));
+            dispatch(new WebstoreOrderSms($order->id));
+        }
         return $this->success('Successful', ['order' => ['id' => $order->id]]);
     }
 
