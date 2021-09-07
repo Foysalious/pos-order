@@ -14,6 +14,7 @@ class AddPartnerIdToCustomersTable extends Migration
     public function up()
     {
         Schema::table('customers', function (Blueprint $table) {
+            $table->dropColumn('phone');
             $table->integer('partner_id')->after('name')->index();
             $table->string('mobile')->after('email')->index();
         });
@@ -27,6 +28,7 @@ class AddPartnerIdToCustomersTable extends Migration
     public function down()
     {
         Schema::table('customers', function (Blueprint $table) {
+            $table->string('phone')->after('email')->unique()->index();
             $table->dropColumn('partner_id');
             $table->dropColumn('mobile');
         });

@@ -1,40 +1,34 @@
 <?php namespace App\Services\OrderSku;
 
 
-class OrderSkuDetail
+class OrderSkuDetailCreator
 {
-    protected int $sku_id;
-    protected ?array $batch_detail;
-    protected float $quantity;
-    protected array $data;
-    protected object $sku_object;
+    protected $sku;
+    protected $skuDetails;
 
+
+    public function setSku($sku)
+    {
+        $this->sku = $sku;
+        return $this;
+    }
 
     /**
-     * @param mixed $data
+     * @param mixed $skuDetail
      */
-    public function setData($data)
+    public function setSkuDetails($skuDetails)
     {
-        $this->data = json_decode($data,true);
-        $this->batch_detail = $this->data['batch_detail'] ?? null;
+        $this->skuDetails = $skuDetails;
         return $this;
     }
 
-    public function mapData($sku, $sku_details)
-    {
-        $this->sku_id = $sku->id;
-        $this->quantity = $sku->quantity;
-        $this->sku_object = $sku;
-        $this->generateOrderedSkuBatchDetail($sku_details['batches']);
-        return $this;
-    }
 
-    private function generateOrderedSkuBatchDetail(mixed $batches)
+    private function generateOrderedSkuBatchDetail(array $batches): array
     {
         if (empty($batches)) {
-            $this->batch_detail = null;
+            $batch_detail = [];
         }else {
-            $temp_quantity = $this->quantity;
+            $temp_quantity = $this->sku->quantity;
 
             foreach ($batches as $key=>$batch) {
                 $data ['batch_id'] = $batch['batch_id'];
@@ -43,36 +37,30 @@ class OrderSkuDetail
                 $is_last_batch = ($key+1) == count($batches);
                 if($batch['stock'] >= $temp_quantity) { //quantity less than batch size then substitute and break the loop
                     $data['quantity'] = $temp_quantity;
-                    $this->batch_detail [] = $data;
+                    $batch_detail [] = $data;
                     break;
                 }
                 if ($temp_quantity > $batch['stock']  && !$is_last_batch ) { //quantity greater than batch size and not last batch then batch zero, quantity decrease from batch size
                     $data['quantity'] = $batch['stock'];
                     $temp_quantity = $temp_quantity - $batch['stock'];
-                    $this->batch_detail [] = $data;
+                    $batch_detail [] = $data;
                     continue;
                 }
                 if ($is_last_batch) { // last batch then stock go negative
                     $data['quantity'] = $temp_quantity;
-                    $this->batch_detail [] = $data;
+                    $batch_detail [] = $data;
                 }
             }
         }
+        return $batch_detail;
     }
 
     /**
      * @return array
      */
-    public function getData(): array
+    public function create(): array
     {
-        return (array) $this->sku_object + [ 'batch_detail' => $this->batch_detail ];
-    }
-
-    /**
-     * @return array|null
-     */
-    public function getBatchDetail(): ?array
-    {
-        return $this->batch_detail;
+        $batch_detail = $this->generateOrderedSkuBatchDetail($this->skuDetails['batches']);
+        return (array) $this->sku + [ 'batch_detail' => $batch_detail ];
     }
 }

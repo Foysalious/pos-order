@@ -1,17 +1,30 @@
 <?php namespace App\Models;
 
+use App\Events\OrderPlaceTransactionCompleted;
+use App\Events\RewardOnOrderCreate;
 use App\Services\Discount\Constants\DiscountTypes;
+use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Transaction\Constants\TransactionTypes;
+use Dyrynda\Database\Support\CascadeSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Order extends BaseModel
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes, CascadeSoftDeletes;
     protected $guarded = ['id'];
+    private mixed $id;
+    protected $cascadeDeletes = ['orderSkus', 'discounts', 'logs', 'payments'];
 
     public function customer()
     {
         return $this->belongsTo(Customer::class, 'customer_id', 'id');
+    }
+
+    public function partner()
+    {
+        return $this->belongsTo(Partner::class, 'partner_id', 'id');
     }
 
     public function items()
@@ -26,6 +39,11 @@ class Order extends BaseModel
     public function channel()
     {
         return $this->belongsTo(Channel::class);
+    }
+
+    public function apiRequest()
+    {
+        return $this->belongsTo(ApiRequest::class);
     }
 
     public function orderDiscounts()
@@ -51,6 +69,11 @@ class Order extends BaseModel
     public function logs()
     {
         return $this->hasMany(OrderLog::class);
+    }
+
+    public function statusChangeLogs(): HasMany
+    {
+        return $this->logs()->where('type',OrderLogTypes::ORDER_STATUS);
     }
 
     public function paymentMethod()

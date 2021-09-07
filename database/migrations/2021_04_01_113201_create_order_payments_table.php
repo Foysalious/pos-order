@@ -23,7 +23,7 @@ class CreateOrderPaymentsTable extends Migration
             $table->enum('transaction_type', TransactionTypes::get())->nullable();
             $table->string('method')->nullable();
             $table->integer('emi_month')->nullable();
-            $table->decimal('interest', 11, 2);
+            $table->decimal('interest', 11, 2)->nullable();
 
             commonColumns($table);
         });

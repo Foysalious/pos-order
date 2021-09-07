@@ -26,13 +26,14 @@ class AccountingRepository extends BaseRepository
     }
 
     /**
-     * @param Request $request
-     * @param $sourceId
-     * @param $sourceType
+     * @param array $data
+     * @param int $order_id
+     * @param int $partner_id
+     * @param string $sourceType
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function updateEntryBySource(array $data, int $order_id, int $partner_id, $sourceType='pos')
+    public function updateEntryBySource(array $data, int $order_id, int $partner_id, string $sourceType='pos')
     {
 
         $url = "api/entries/source/" . $sourceType . '/' . $order_id;
@@ -43,4 +44,28 @@ class AccountingRepository extends BaseRepository
         }
     }
 
+    /**
+     * @param int $partnerId
+     * @param string|int $customerId
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
+    public function deleteCustomer(int $partnerId, string|int $customerId)
+    {
+        $url = "api/due-list/" . $customerId;
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($partnerId)->delete($url);
+    }
+
+    /**
+     * @throws AccountingEntryServerError
+     */
+    public function deleteEntryBySource(int $partner_id, $source_type, $source_id)
+    {
+        $url = "api/entries/source/" . $source_type . '/' . $source_id;
+        try {
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($partner_id)->delete($url);
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
 }

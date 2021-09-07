@@ -83,8 +83,7 @@ class DataMigrationCreator extends DataMigrationBase
     private function populateBoilerplate($name, $boilerplate): string
     {
         $boilerplate = str_replace('DummyNameSpace', $this->namespace, $boilerplate);
-        $boilerplate = str_replace('DummyClass', $this->getClassBaseName($name), $boilerplate);
-        return $boilerplate;
+        return str_replace('DummyClass', $this->getClassBaseName($name), $boilerplate);
     }
 
     /**

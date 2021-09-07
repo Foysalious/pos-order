@@ -19,3 +19,19 @@ if (!function_exists('getFileName')) {
         return end($extension);
     }
 }
+if (!function_exists('isAssoc')) {
+    /**
+     * @param $arr
+     * @return bool
+     */
+    function isAssoc($arr): bool
+    {
+        if (!is_array($arr)) {
+            return false;
+        }
+        if ([] === $arr) {
+            return false;
+        }
+        return array_keys($arr) !== range(0, count($arr) - 1);
+    }
+}

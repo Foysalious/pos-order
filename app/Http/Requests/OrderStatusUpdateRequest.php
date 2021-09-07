@@ -1,9 +1,12 @@
-<?php namespace App\Http\Requests;
+<?php
+
+
+namespace App\Http\Requests;
+
 
 use Illuminate\Foundation\Http\FormRequest;
 
-
-class CustomerOrderRequest extends FormRequest
+class OrderStatusUpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,8 +26,8 @@ class CustomerOrderRequest extends FormRequest
     public function rules()
     {
         return [
-            'offset' => 'numeric',
-            'limit' => 'numeric'
+            'emi' => 'sometimes|numeric',
+            'status' => 'required',
         ];
     }
 }

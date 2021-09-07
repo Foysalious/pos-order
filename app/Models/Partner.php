@@ -6,7 +6,6 @@ class Partner extends BaseModel
 {
     protected $guarded = ['id'];
     use HasFactory;
-
     public function orders()
     {
         return $this->hasMany(Order::class);

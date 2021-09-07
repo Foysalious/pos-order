@@ -1,44 +1,43 @@
 <?php namespace App\Services\OrderSms;
 
 use App\Jobs\Job;
-use App\Models\Order;
-use Exception;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Services\OrderSms\WebstoreOrderSmsHandler;
 
 class WebstoreOrderSms extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
+    const SMS_TYPE = 'web_store_order';
 
-    /**
-     * @var Order
-     */
-    private $order;
+    private $orderId;
     protected $tries = 1;
     protected $status;
+    private $partnerId;
 
-    /**
-     * Create a new job instance.
-     * @param Order $order
-     * @param $status
-     */
-    public function __construct(Order $order)
+
+
+    public function __construct($partnerId,$orderId)
     {
-        $this->order = $order;
+        $this->orderId = $orderId;
+        $this->partnerId = $partnerId;
     }
 
-    /**
-     * Execute the job.
-     * @param WebstoreOrderSmsHandler $handler
-     * @throws Exception
-     */
-    public function handle(WebstoreOrderSmsHandler $handler)
+    public function handle()
     {
-dd(1);
         if ($this->attempts() > 2) return;
-        $handler->setOrder($this->order)->handle();
+        $data = [
+            'type' => self::SMS_TYPE,
+            'type_id' => $this->orderId,
+            'partner_id' => $this->partnerId
+        ];
+        try {
+            $client = new Client();
+            $client->post(config('sheba.api_url') . '/pos/v1/send-sms', $data);
+        } catch (GuzzleException $e) {
+        }
     }
 
 }

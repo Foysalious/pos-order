@@ -7,6 +7,7 @@ use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\WarrantyUnits;
 use App\Services\Product\StockManager;
+use Illuminate\Support\Facades\App;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Creator
@@ -60,17 +61,20 @@ class Creator
 
     public function create()
     {
+        $created_skus = [];
         $skus = $this->skus;
         $sku_ids = array_column($skus, 'id');
         $sku_ids = array_filter($sku_ids, function ($value) {
             return !is_null($value);
         });
-        $sku_details = collect($this->getSkuDetails($sku_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
+        $sku_details = [];
+        if(count($sku_ids) > 0){
+            $sku_details = collect($this->getSkuDetails($sku_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
+        }
         $this->checkProductAndStockAvailability($skus,$sku_details);
         foreach ($skus as $sku) {
-
             $sku_data['order_id'] = $this->order->id;
-            $sku_data['name'] = $sku->product_name ?? $sku_details[$sku->id]['product_name'];
+            $sku_data['name'] = $sku->product_name ?? $sku_details[$sku->id]['product_name'] ?? 'Quick Sell Item';
             $sku_data['sku_id'] = $sku->id ?: null;
             $sku_data['details'] = $this->makeSkudetails($sku,$sku_details[$sku->id] ?? null);
             $sku_data['quantity'] = $sku->quantity;
@@ -83,6 +87,7 @@ class Creator
             $sku_data['discount']['is_discount_percentage'] = $sku->is_discount_percentage ?? null;
             $sku_data['discount']['cap'] = $sku->cap ?? null;
             $order_sku = $this->orderSkuRepository->create($sku_data);
+            $created_skus [] = $order_sku;
             $this->discountHandler->setType(DiscountTypes::SKU)->setOrder($this->order)->setSkuData($sku_data)->setOrderSkuId($order_sku->id);
             if ($this->discountHandler->hasDiscount()) {
                 $this->discountHandler->create();
@@ -92,6 +97,7 @@ class Creator
                 if ($is_stock_maintainable) $this->stockManager->decrease($sku->quantity);
             }
         }
+        return $created_skus;
     }
 
     private function getSkuDetails($sku_ids, $sales_channel_id)
@@ -113,13 +119,14 @@ class Creator
         }
     }
 
-    private function makeSkudetails($sku, $sku_details)
+    private function makeSkudetails(object $sku, ?array $sku_details)
     {
         if ( is_null($sku_details)) {
            return json_encode($sku);
         } else {
-            $mapper = new OrderSkuDetail();
-            $data = $mapper->mapData($sku, $sku_details)->getData();
+            /** @var OrderSkuDetailCreator $creator */
+            $creator = App::make(OrderSkuDetailCreator::class);
+            $data = $creator->setSku($sku)->setSkuDetails($sku_details)->create();
             return json_encode($data);
         }
     }

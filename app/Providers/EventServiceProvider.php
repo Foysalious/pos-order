@@ -1,15 +1,19 @@
-<?php
+<?php namespace App\Providers;
 
-namespace App\Providers;
-
-use App\Events\OrderCreated;
+use App\Events\OrderDeleted;
+use App\Events\OrderPlaceTransactionCompleted;
+use App\Events\OrderDueCleared;
 use App\Events\OrderUpdated;
 use App\Listeners\AccountingEntryOnOrderCreation;
+use App\Listeners\AccountingEntryOnOrderDelete;
+use App\Listeners\AccountingEntryOnOrderDueCleared;
 use App\Listeners\AccountingEntryOnOrderUpdating;
+use App\Listeners\GenerateInvoiceOnOrderCreate;
+use App\Listeners\RewardOnOrderCreate as RewardOnOrderCreateListener;
+use App\Listeners\UsageOnOrderCreate;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Event;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -22,12 +26,22 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
-        OrderCreated::class => [
+        OrderPlaceTransactionCompleted::class => [
             AccountingEntryOnOrderCreation::class,
+            RewardOnOrderCreateListener::class,
+            UsageOnOrderCreate::class,
+            GenerateInvoiceOnOrderCreate::class
         ],
         OrderUpdated::class => [
             AccountingEntryOnOrderUpdating::class,
+            GenerateInvoiceOnOrderCreate::class
         ],
+        OrderDueCleared::class => [
+            AccountingEntryOnOrderDueCleared::class,
+        ],
+        OrderDeleted::class => [
+            AccountingEntryOnOrderDelete::class,
+        ]
     ];
 
     /**

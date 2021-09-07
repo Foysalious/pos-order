@@ -11,7 +11,9 @@ Homestead.json
 Homestead.yaml
 npm-debug.log
 yarn-error.log
+horizon.log
 .idea/
 storage/api-docs
 composer-auth.json
+storage/clockwork
 

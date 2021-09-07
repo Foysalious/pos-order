@@ -2,11 +2,13 @@
 
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OrderPayment extends BaseModel
 {
-    use HasFactory;
+    use HasFactory,SoftDeletes;
 
+    protected $guarded = ['id'];
     protected $casts = ['amount' => 'double'];
 
     public function order()

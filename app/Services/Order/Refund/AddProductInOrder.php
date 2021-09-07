@@ -21,8 +21,8 @@ class AddProductInOrder extends ProductOrder
         if($sku_items) {
             /** @var Creator $creator */
             $creator = App::make(Creator::class);
-            $creator->setOrder($this->order)->setSkus($sku_items)->create();
-            $this->added_products = json_decode(json_encode(array_values($sku_items)),true);
+            $new_order_skus = $creator->setOrder($this->order)->setSkus($sku_items)->create();
+            $this->makeAddedProducts($new_order_skus);
         }
         if ($null_sku_items) {
             $this->addNullSkuItems($null_sku_items);
@@ -48,6 +48,18 @@ class AddProductInOrder extends ProductOrder
             $data['order_id'] = $this->order->id;
             $this->orderSkuRepository->create($data);
             $this->added_products [] = $data;
+        }
+    }
+
+    private function makeAddedProducts(array $new_order_skus)
+    {
+        foreach ($new_order_skus as $each) {
+            $this->added_products [] = [
+                'id' => $each->id,
+                'sku_id' => $each->sku_id,
+                'quantity' => $each->quantity,
+                'unit_price' => $each->unit_price
+            ];
         }
     }
 

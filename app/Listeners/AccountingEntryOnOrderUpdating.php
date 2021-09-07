@@ -1,6 +1,6 @@
 <?php namespace App\Listeners;
 
-use App\Events\OrderCreated;
+use App\Events\OrderPlaceTransactionCompleted;
 use App\Events\OrderUpdated;
 use App\Services\Accounting\UpdateEntry;
 use Illuminate\Contracts\Queue\ShouldQueue;
