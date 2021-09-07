@@ -8,10 +8,11 @@ use App\Services\Order\Constants\SalesChannelIds;
 class StockManager
 {
     /** @var InventoryServerClient */
-    private InventoryServerClient $client;
-    private $sku;
-    private Order $order;
-    private string $uri = 'api/v1/partners/{partner_id}/stock-update';
+    protected InventoryServerClient $client;
+    protected $sku;
+    protected Order $order;
+    protected string $uri = 'api/v1/partners/{partner_id}/stock-update';
+    protected array $data = [];
 
     const STOCK_INCREMENT = 'increment';
     const STOCK_DECREMENT = 'decrement';

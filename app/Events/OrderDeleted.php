@@ -4,7 +4,7 @@ use App\Models\Order;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class OrderTransactionCompleted
+class OrderDeleted
 {
     use Dispatchable, SerializesModels;
 
@@ -17,6 +17,7 @@ class OrderTransactionCompleted
     {
         return $this->order;
     }
+
     /**
      * Create a new event instance.
      *
@@ -26,5 +27,4 @@ class OrderTransactionCompleted
     {
         $this->order = $order;
     }
-
 }

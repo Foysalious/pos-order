@@ -1,38 +1,24 @@
 <?php namespace App\Listeners;
 
-use App\Events\OrderTransactionCompleted;
+use App\Events\OrderPlaceTransactionCompleted;
 use App\Jobs\Order\OrderInvoice;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\DispatchesJobs;
-use Illuminate\Queue\Jobs\Job;
-use Illuminate\Queue\SerializesModels;
 
-class GenerateInvoiceOnOrderCreate extends Job implements ShouldQueue
+class GenerateInvoiceOnOrderCreate
 {
-    protected $model;
-
-    use DispatchesJobs, SerializesModels;
+    use DispatchesJobs;
 
 
     /**
      * Handle the event.
      *
-     * @param OrderTransactionCompleted $event
+     * @param OrderPlaceTransactionCompleted $event
      * @return void
      */
 
-    public function handle(OrderTransactionCompleted $event)
+    public function handle(OrderPlaceTransactionCompleted $event)
     {
         $this->dispatch((new OrderInvoice($event->getOrder())));
     }
 
-    public function getJobId()
-    {
-        // TODO: Implement getJobId() method.
-    }
-
-    public function getRawBody()
-    {
-        // TODO: Implement getRawBody() method.
-    }
 }

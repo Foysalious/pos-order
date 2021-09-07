@@ -34,9 +34,9 @@ class RewardOnOrderCreate
                 'id' => $order->id,
                 'paymnet_status' => $order->status,
                 'net_bill' => $price_calculator->getOriginalPrice(),
-                'client_pos_order_id' => $client_pos_order_id ?? null,
+                'client_pos_order_id' => request()->client_pos_order_id ?? null,
                 'partner_wise_order_id' => $order->partner_wise_order_id,
-                //'portal_name' => 'manager-app'
+                'portal_name' => $order->apiRequest->portal_name
             ]
         ];
         try{

@@ -49,6 +49,7 @@ class InvoiceService extends BaseService
         $price_calculator = (App::make(PriceCalculation::class))->setOrder($order);
         $partner = $this->client->setBaseUrl()->get('v2/partners/' . $order->partner->sub_domain);
         $info = [
+            'order_id'=>$order->id,
             'amount' => $price_calculator->getOriginalPrice(),
             'created_at' => $order->created_at->format('jS M, Y, h:i A'),
             'payment_receiver' => [
@@ -57,8 +58,10 @@ class InvoiceService extends BaseService
                 'mobile' => $partner["info"]["mobile"],
                 'address' => $partner["info"]["address"],
             ],
+
             'pos_order' => $order ? [
                 'items' => $order->orderSkus,
+                'orderSkusCount'=>count($order->orderSkus),
                 'discount' => $price_calculator->getOrderDiscount(),
                 'total' => $price_calculator->getDiscountedPriceWithoutVat(),
                 'grand_total' => $price_calculator->getDiscountedPriceWithoutVat(),

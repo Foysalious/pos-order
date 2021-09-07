@@ -16,7 +16,7 @@ class BatchManipulator
     /**
      * @param mixed $orderSkuDetails
      */
-    public function setOrderSkuDetails($orderSkuDetails)
+    public function setOrderSkuDetails(string $orderSkuDetails)
     {
         $this->orderSkuDetails = json_decode($orderSkuDetails,true);
         $this->oldBatchDetails = $this->orderSkuDetails['batch_detail'];
@@ -25,6 +25,7 @@ class BatchManipulator
 
     /**
      * @param float $quantity
+     * @return BatchManipulator
      */
     public function setQuantity(float $quantity)
     {
@@ -83,6 +84,7 @@ class BatchManipulator
     {
         $batches = $this->skuBatch;
         $temp_quantity = $quantity;
+        $batch_detail = [];
         foreach ($batches as $key=>$batch) {
             $data ['batch_id'] = $batch['batch_id'];
             $data ['cost'] = $batch['cost'];
@@ -107,7 +109,7 @@ class BatchManipulator
         return $this->mergeBatchDetailIfSame($batch_detail, $this->oldBatchDetails);
     }
 
-    private function mergeBatchDetailIfSame(array $added_batch_detail, array $old_batch_details)
+    private function mergeBatchDetailIfSame(array $added_batch_detail, array $old_batch_details): array
     {
         $old_batch_details = collect($old_batch_details);
         $new_batch_details = [];

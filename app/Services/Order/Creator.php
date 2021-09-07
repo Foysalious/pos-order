@@ -1,6 +1,6 @@
 <?php namespace App\Services\Order;
 
-use App\Events\OrderTransactionCompleted;
+use App\Events\OrderPlaceTransactionCompleted;
 use App\Exceptions\OrderException;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkuRepositoryInterface;
@@ -250,9 +250,12 @@ class Creator
         $this->apiRequest= $apiRequest;
         return $this;
     }
+
+
     /**
-     * @return Order
-     * @throws ValidationException|OrderException
+     * @return mixed
+     * @throws OrderException
+     * @throws ValidationException
      */
     public function create()
     {
@@ -284,9 +287,10 @@ class Creator
         }
 
         try {
-            if ($order) event(new OrderTransactionCompleted($order));
+            if ($order) event(new OrderPlaceTransactionCompleted($order));
         } catch (\Exception $e){
             Log::error($e);
+//            throw $e;
         }
          return $order;
     }

@@ -87,14 +87,17 @@ class PdfHandler extends Handler
         $mPDF = $this->getMpdf();
         $mPDF->simpleTables = true;
         $mPDF->packTableData = true;
+        $mPDF->setFooter('{PAGENO}');
         $mPDF->shrink_tables_to_fit = 1;
         $data = view($this->viewFileName, $this->data)->render();
+        $stylesheet = file_get_contents('assets/CSS/style.css');
+        $mPDF->WriteHTML($stylesheet, 1);
         $mPDF->WriteHTML("$data", HTMLParserMode::DEFAULT_MODE);
 
         $folder = $this->folder ?: 'invoices/pdf/';
         $time = time();
         $file = $this->filename . "_$time." . $this->downloadFormat;
-        $path = public_path('temp') . '/' . $file;
+        $path = public_path() . '/' . $file;
         $mPDF->Output($path, "F");
         $cdn = $this->saveFileToCDN($path, $folder, $file);
         File::delete($path);
