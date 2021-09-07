@@ -1,7 +1,6 @@
 <?php namespace App\Services\OrderSms;
 
 use App\Jobs\Job;
-use App\Models\Order;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -13,17 +12,17 @@ class WebstoreOrderSms extends Job implements ShouldQueue
     use InteractsWithQueue, SerializesModels;
     const SMS_TYPE = 'WebStoreOrder';
 
-    /**
-     * @var Order
-     */
-    private $order;
+    private $orderId;
     protected $tries = 1;
     protected $status;
+    private $partnerId;
 
 
-    public function __construct($orderId)
+
+    public function __construct($partnerId,$orderId)
     {
         $this->orderId = $orderId;
+        $this->partnerId = $partnerId;
     }
 
     public function handle()
@@ -31,7 +30,8 @@ class WebstoreOrderSms extends Job implements ShouldQueue
         if ($this->attempts() > 2) return;
         $data = [
             'type' => self::SMS_TYPE,
-            'type_id' => $this->orderId
+            'type_id' => $this->orderId,
+            'partner_id' => $this->partnerId
         ];
         try {
             $client = new Client();

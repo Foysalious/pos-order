@@ -130,7 +130,7 @@ class OrderService extends BaseService
         if ($request->sales_channel_id == SalesChannelIds::WEBSTORE)
         {
             dispatch(new OrderPlacePushNotification($order));
-            dispatch(new WebstoreOrderSms($order->id));
+            dispatch(new WebstoreOrderSms($partner,$order->id));
         }
         return $this->success('Successful', ['order' => ['id' => $order->id]]);
     }
