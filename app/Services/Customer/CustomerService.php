@@ -78,7 +78,8 @@ class CustomerService extends BaseService
             $customer = $this->customerRepository->find($customer_id);
             if (!$customer) return $this->error('Customer Not Found', 404);
             DB::beginTransaction();
-            $this->accountingRepository->deleteCustomer($partner_id, $customer->id);
+            /** Turned OFF Accounting Hit for the time being as customer Id type string not supported in Accounting */
+            //$this->accountingRepository->deleteCustomer($partner_id, $customer->id);
             $customer->delete();
             DB::commit();
             return $this->success();
