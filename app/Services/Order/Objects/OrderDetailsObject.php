@@ -50,7 +50,7 @@ class OrderDetailsObject
     private function buildSkus(): void
     {
         $final = [];
-        foreach ($this->orderDetails->skus as $sku) {
+        foreach ($this->orderDetails->orderSkus as $sku) {
             /** @var OrderSkuObject $orderSkuObject */
             $orderSkuObject = app(OrderSkuObject::class);
             array_push($final, $orderSkuObject->setSkuDetails($sku)->build());
@@ -62,6 +62,7 @@ class OrderDetailsObject
     {
         /** @var OrderPriceObject $orderPriceObject */
         $orderPriceObject = app(OrderPriceObject::class);
+        dd($this->orderDetails);
         $price = $orderPriceObject->setPriceDetails($this->orderDetails->price)->build();
         $this->price = $price;
     }

@@ -14,7 +14,6 @@ class Order extends BaseModel
 {
     use HasFactory, SoftDeletes, CascadeSoftDeletes;
     protected $guarded = ['id'];
-    private mixed $id;
     protected $cascadeDeletes = ['orderSkus', 'discounts', 'logs', 'payments'];
 
     public function customer()

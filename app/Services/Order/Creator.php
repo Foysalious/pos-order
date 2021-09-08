@@ -8,6 +8,7 @@ use App\Interfaces\PartnerRepositoryInterface;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Partner;
+use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\SalesChannelIds;
@@ -19,6 +20,7 @@ use App\Services\OrderSku\Creator as OrderSkuCreator;
 use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ResponseAPI;
 
+use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -255,9 +257,9 @@ class Creator
     /**
      * @return mixed
      * @throws OrderException
-     * @throws ValidationException
+     * @throws ValidationException|BaseClientServerError
      */
-    public function create()
+    public function create(): Order
     {
         try {
             DB::beginTransaction();
@@ -280,15 +282,14 @@ class Creator
                 throw new OrderException("Can not make due order without customer", 421);
             }
             DB::commit();
-
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollback();
             throw $e;
         }
 
         try {
             if ($order) event(new OrderPlaceTransactionCompleted($order));
-        } catch (\Exception $e){
+        } catch (Exception $e){
             Log::error($e);
 //            throw $e;
         }

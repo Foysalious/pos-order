@@ -1,6 +1,8 @@
 <?php namespace App\Services\OrderSku;
 
 use App\Interfaces\OrderSkuRepositoryInterface;
+use App\Models\Order;
+use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\Inventory\InventoryServerClient;
@@ -8,42 +10,32 @@ use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\WarrantyUnits;
 use App\Services\Product\StockManager;
 use Illuminate\Support\Facades\App;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Creator
 {
-    private $order;
-    /** @var OrderSkuRepositoryInterface */
-    private OrderSkuRepositoryInterface $orderSkuRepository;
-    /** @var DiscountHandler */
-    private DiscountHandler $discountHandler;
+    private Order $order;
     private array $skus;
-    /** @var InventoryServerClient */
-    private InventoryServerClient $client;
-
-    /** @var StockManager $stockManager */
-    private StockManager $stockManager;
 
     /**
      * Creator constructor.
      * @param OrderSkuRepositoryInterface $orderSkuRepository
      * @param DiscountHandler $discountHandler
      * @param InventoryServerClient $client
+     * @param StockManager $stockManager
      */
-    public function __construct(OrderSkuRepositoryInterface $orderSkuRepository, DiscountHandler $discountHandler, InventoryServerClient $client, StockManager $stockManager)
-    {
-        $this->orderSkuRepository = $orderSkuRepository;
-        $this->discountHandler = $discountHandler;
-        $this->client = $client;
-        $this->stockManager = $stockManager;
-    }
-
+    public function __construct(
+        private OrderSkuRepositoryInterface $orderSkuRepository,
+        private DiscountHandler $discountHandler,
+        private InventoryServerClient $client,
+        private StockManager $stockManager){}
 
     /**
-     * @param mixed $order
-     * @return Creator
+     * @param Order $order
+     * @return $this
      */
-    public function setOrder($order)
+    public function setOrder(Order $order): Creator
     {
         $this->order = $order;
         return $this;
@@ -59,7 +51,12 @@ class Creator
         return $this;
     }
 
-    public function create()
+    /**
+     * @return array
+     * @throws BaseClientServerError
+     * @throws ValidationException
+     */
+    public function create(): array
     {
         $created_skus = [];
         $skus = $this->skus;
@@ -121,13 +118,10 @@ class Creator
 
     private function makeSkudetails(object $sku, ?array $sku_details)
     {
-        if ( is_null($sku_details)) {
-           return json_encode($sku);
-        } else {
-            /** @var OrderSkuDetailCreator $creator */
-            $creator = App::make(OrderSkuDetailCreator::class);
-            $data = $creator->setSku($sku)->setSkuDetails($sku_details)->create();
-            return json_encode($data);
-        }
+        if (is_null($sku_details)) return json_encode($sku);
+        /** @var OrderSkuDetailCreator $creator */
+        $creator = App::make(OrderSkuDetailCreator::class);
+        $data = $creator->setSku($sku)->setSkuDetails($sku_details)->create();
+        return json_encode($data);
     }
 }

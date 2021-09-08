@@ -3,29 +3,27 @@
 
 class OrderSkuObject
 {
-    public function __construct(
-        protected $skuDetails,
-        protected $id,
-        protected $name,
-        protected $product_id,
-        protected $product_name,
-        protected $note,
-        protected $unit,
-        protected $sku_id,
-        protected $original_price,
-        protected $quantity,
-        protected $batch_detail,
-        protected $discount,
-        protected $is_discount_percentage,
-        protected $cap,
-        protected $vat_percentage,
-        protected $warranty,
-        protected $warranty_unit,
-        protected $sku_channel_id,
-        protected $channel_id,
-        protected $channel_name,
-        protected $combination,
-    ){}
+    protected $skuDetails;
+    protected $id;
+    protected $name;
+    protected $product_id;
+    protected $product_name;
+    protected $note;
+    protected $unit;
+    protected $sku_id;
+    protected $original_price;
+    protected $quantity;
+    protected $batch_detail;
+    protected $discount;
+    protected $is_discount_percentage;
+    protected $cap;
+    protected $vat_percentage;
+    protected $warranty;
+    protected $warranty_unit;
+    protected $sku_channel_id;
+    protected $channel_id;
+    protected $channel_name;
+    protected $combination;
 
     public function setSkuDetails($skuDetails)
     {

@@ -1,6 +1,8 @@
 <?php namespace App\Services\OrderSku;
 
 
+use stdClass;
+
 class OrderSkuDetailCreator
 {
     protected $sku;
@@ -21,7 +23,6 @@ class OrderSkuDetailCreator
         $this->skuDetails = $skuDetails;
         return $this;
     }
-
 
     private function generateOrderedSkuBatchDetail(array $batches): array
     {
@@ -60,7 +61,17 @@ class OrderSkuDetailCreator
      */
     public function create(): array
     {
-        $batch_detail = $this->generateOrderedSkuBatchDetail($this->skuDetails['batches']);
-        return (array) $this->sku + [ 'batch_detail' => $batch_detail ];
+        dd($this->generateOrderSkuDetails());
+
+    }
+
+    private function generateOrderSkuDetails(): array
+    {
+        $sku = new stdClass();
+        $sku->id = $this->sku->id ?? null;
+        $sku->quantity = $this->sku->quantity;
+        $sku->combination = $this->skuDetails['combination'];
+        $sku->batch_detail = $this->generateOrderedSkuBatchDetail($this->skuDetails['batches']);
+        return (array) $sku;
     }
 }
