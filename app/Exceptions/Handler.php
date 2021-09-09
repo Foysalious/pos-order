@@ -46,6 +46,11 @@ class Handler extends ExceptionHandler
         $this->renderable(function (Throwable $e) {
             return $this->handleException($e);
         });
+        $this->reportable(function (Throwable $e) {
+            if ($this->shouldReport($e) && app()->bound('sentry')) {
+                app('sentry')->captureException($e);
+            }
+        });
     }
 
     public function handleException(Throwable $e)
