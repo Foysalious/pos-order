@@ -6,7 +6,7 @@ use App\Services\APIServerClient\ApiServerClient;
 use App\Services\Order\Constants\OrderTypes;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\Constants\Statuses;
-use App\Services\Order\OrderSearch;
+use App\Services\Order\OrderFilter;
 
 class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 {

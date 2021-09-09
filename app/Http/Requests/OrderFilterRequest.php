@@ -3,6 +3,7 @@
 use App\Services\Order\Constants\OrderTypes;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\Constants\Statuses;
+use App\Services\Order\OrderFilter;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -33,7 +34,9 @@ class OrderFilterRequest extends FormRequest
             'type'              => Rule::in(OrderTypes::COMPLETED, OrderTypes::NEW, OrderTypes::RUNNING),
             'offset'            => 'numeric',
             'limit'             => 'numeric',
-            'q'                 => 'sometimes|string'
+            'q'                 => 'sometimes|string',
+            'sort_by'           => Rule::in(OrderFilter::SORT_BY_CREATED_AT, OrderFilter::SORT_BY_PRICE, OrderFilter::SORT_BY_CUSTOMER_NAME),
+            'sort_by_order'     => Rule::in(OrderFilter::SORT_BY_ASC,OrderFilter::SORT_BY_DESC)
         ];
     }
 }

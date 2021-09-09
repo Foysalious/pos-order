@@ -5,8 +5,9 @@ use App\Services\Order\Constants\OrderTypes;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\Constants\Statuses;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
-class OrderSearch
+class OrderFilter
 {
     protected ?string $queryString;
     protected ?int $salesChannelId;
@@ -16,6 +17,14 @@ class OrderSearch
     protected ?string $type;
     protected ?int $offset;
     protected ?int $limit;
+    protected ?string $sort_by;
+    protected ?string $sort_by_order;
+
+    const SORT_BY_CREATED_AT = 'created_at';
+    const SORT_BY_PRICE = 'price';
+    const SORT_BY_CUSTOMER_NAME = 'customer_name';
+    const SORT_BY_ASC = 'asc';
+    const SORT_BY_DESC = 'desc';
 
     public function __construct(
         protected OrderRepositoryInterface $orderRepository
@@ -25,7 +34,7 @@ class OrderSearch
 
     /**
      * @param string|null $queryString
-     * @return OrderSearch
+     * @return OrderFilter
      */
     public function setQueryString(?string $queryString)
     {
@@ -35,7 +44,7 @@ class OrderSearch
 
     /**
      * @param int|null $salesChannelId
-     * @return OrderSearch
+     * @return OrderFilter
      */
     public function setSalesChannelId(?int $salesChannelId)
     {
@@ -45,7 +54,7 @@ class OrderSearch
 
     /**
      * @param string|null $paymentStatus
-     * @return OrderSearch
+     * @return OrderFilter
      */
     public function setPaymentStatus(?string $paymentStatus)
     {
@@ -55,7 +64,7 @@ class OrderSearch
 
     /**
      * @param int $partnerId
-     * @return OrderSearch
+     * @return OrderFilter
      */
     public function setPartnerId(int $partnerId)
     {
@@ -65,7 +74,7 @@ class OrderSearch
 
     /**
      * @param string|null $orderStatus
-     * @return OrderSearch
+     * @return OrderFilter
      */
     public function setOrderStatus(?string $orderStatus)
     {
@@ -75,7 +84,7 @@ class OrderSearch
 
     /**
      * @param string|null $type
-     * @return OrderSearch
+     * @return OrderFilter
      */
     public function setType(?string $type)
     {
@@ -85,7 +94,7 @@ class OrderSearch
 
     /**
      * @param int|null $offset
-     * @return OrderSearch
+     * @return OrderFilter
      */
     public function setOffset(?int $offset)
     {
@@ -95,7 +104,7 @@ class OrderSearch
 
     /**
      * @param int|null $limit
-     * @return OrderSearch
+     * @return OrderFilter
      */
     public function setLimit(?int $limit)
     {
@@ -103,6 +112,25 @@ class OrderSearch
         return $this;
     }
 
+    /**
+     * @param string|null $sort_by
+     * @return OrderFilter
+     */
+    public function setSortBy(?string $sort_by)
+    {
+        $this->sort_by = $sort_by;
+        return $this;
+    }
+
+    /**
+     * @param string|null $sort_by_order
+     * @return OrderFilter
+     */
+    public function setSortByOrder(?string $sort_by_order)
+    {
+        $this->sort_by_order = $sort_by_order;
+        return $this;
+    }
 
     public function getOrderListWithPagination()
     {
@@ -112,7 +140,14 @@ class OrderSearch
         $query = $this->filterByOrderStatus($query);
         $query = $this->filterByPaymentStatus($query);
         $query = $this->filterBySearchQuery($query);
-        return $query->offset($this->offset)->limit($this->limit)->latest()->get();
+        $query = $this->sortByCustomerName($query);
+        $query = $this->sortByCreatedAt($query);
+        /** @var Collection $search_result */
+        $search_result = $query->offset($this->offset)->limit($this->limit)->get();
+//        if($search_result->count() > 0) {
+//            $search_result = $this->sortSearchResult($search_result);
+//        }
+        return $search_result;
     }
 
     private function filterByType(Builder $query)
@@ -161,6 +196,35 @@ class OrderSearch
     {
         return $query->when($this->salesChannelId, function ($q) {
             return $q->where('sales_channel_id', $this->salesChannelId);
+        });
+    }
+
+    private function sortSearchResult(Collection $search_result)
+    {
+        if($this->sort_by == self::SORT_BY_CREATED_AT && $this->sort_by_order == self::SORT_BY_ASC) {
+            return $search_result->sortBy('created_at', SORT_REGULAR, false);
+        }
+        if($this->sort_by == self::SORT_BY_CUSTOMER_NAME) {
+            return $search_result->sortBy('delivery_name', SORT_REGULAR, $this->sort_by_order == self::SORT_BY_DESC);
+        }
+//        if($this->sort_by == self::SORT_BY_PRICE) {
+//            dd($search_result[0]);
+//            return $search_result->sortBy('delivery_name', SORT_REGULAR, $this->sort_by_order == self::SORT_BY_DESC);
+//        }
+//        dd('out');
+    }
+
+    private function sortByCustomerName(Builder $query)
+    {
+        return $query->when($this->sort_by == self::SORT_BY_CUSTOMER_NAME, function ($q) {
+            return $q->orderBy('delivery_name', $this->sort_by_order);
+        });
+    }
+
+    private function sortByCreatedAt(mixed $query)
+    {
+        return $query->when($this->sort_by == self::SORT_BY_CREATED_AT, function ($q) {
+            return $q->orderBy('created_at', $this->sort_by_order);
         });
     }
 

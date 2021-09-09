@@ -55,7 +55,7 @@ class OrderService extends BaseService
                                 protected InventoryServerClient $client,
                                 protected ApiServerClient       $apiServerClient,
                                 protected AccessManager         $accessManager,
-                                protected OrderSearch           $orderSearch,
+                                protected OrderFilter           $orderSearch,
                                 protected StatusChanger $orderStatusChanger,
                                 protected StockRefillerForCanceledOrder $stockRefillerForCanceledOrder,
                                 InvoiceService                  $invoiceService
@@ -81,6 +81,8 @@ class OrderService extends BaseService
             ->setOrderStatus($request->order_status)
             ->setOffset($offset)
             ->setLimit($limit)
+            ->setSortBy($request->sort_by ?? OrderFilter::SORT_BY_CREATED_AT)
+            ->setSortByOrder($request->sort_by_order ?? OrderFilter::SORT_BY_DESC)
             ->getOrderListWithPagination();
 
         $orderList = OrderResource::collection($search_result);
