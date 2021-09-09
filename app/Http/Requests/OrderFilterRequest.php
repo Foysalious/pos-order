@@ -35,7 +35,7 @@ class OrderFilterRequest extends FormRequest
             'offset'            => 'numeric',
             'limit'             => 'numeric',
             'q'                 => 'sometimes|string',
-            'sort_by'           => Rule::in(OrderFilter::SORT_BY_CREATED_AT, OrderFilter::SORT_BY_PRICE, OrderFilter::SORT_BY_CUSTOMER_NAME),
+            'sort_by'           => Rule::in(OrderFilter::SORT_BY_CREATED_AT, OrderFilter::SORT_BY_CUSTOMER_NAME),
             'sort_by_order'     => Rule::in(OrderFilter::SORT_BY_ASC,OrderFilter::SORT_BY_DESC)
         ];
     }
