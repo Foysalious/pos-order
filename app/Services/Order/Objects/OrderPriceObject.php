@@ -20,6 +20,7 @@ class OrderPriceObject
      */
     public function setPriceDetails($priceDetails)
     {
+        dd($this->priceDetails);
         $this->priceDetails = $priceDetails;
         return $this;
     }

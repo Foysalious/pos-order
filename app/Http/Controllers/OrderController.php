@@ -196,9 +196,9 @@ class OrderController extends Controller
      * @param $order_id
      * @return JsonResponse
      */
-    public function show($partner_id, $order_id)
+    public function show($partner_id, $order_id): JsonResponse
     {
-        return $this->orderService->getOrderDetails($partner_id, $order_id);
+        return $this->orderService->details($partner_id, $order_id);
     }
 
     /**

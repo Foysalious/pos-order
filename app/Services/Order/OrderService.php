@@ -30,6 +30,7 @@ use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\OrderSms\WebstoreOrderSms;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use App\Services\Order\Constants\Statuses;
@@ -105,10 +106,10 @@ class OrderService extends BaseService
      * @param $partner
      * @param OrderCreateRequest $request
      * @return JsonResponse
-     * @throws ValidationException
      * @throws OrderException
+     * @throws ValidationException
      */
-    public function store($partner, OrderCreateRequest $request)
+    public function store($partner, OrderCreateRequest $request): JsonResponse
     {
         $skus = is_array($request->skus) ? $request->skus : json_decode($request->skus);
         $order = $this->creator->setPartner($partner)
@@ -127,8 +128,7 @@ class OrderService extends BaseService
             ->setVoucherId($request->voucher_id)
             ->setApiRequest($request->api_request->id)
             ->create();
-        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE)
-        {
+        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) {
             dispatch(new OrderPlacePushNotification($order));
             dispatch(new WebstoreOrderSms($partner,$order->id));
         }
@@ -159,8 +159,7 @@ class OrderService extends BaseService
         return $this->success('Successful', ['invoice' => $order->invoice], 200);
     }
 
-
-    public function getOrderDetails($partner_id, $order_id)
+    public function details(int $partner_id, int $order_id): JsonResponse
     {
         $order = $this->orderRepository->getOrderDetailsByPartner($partner_id, $order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
@@ -202,8 +201,9 @@ class OrderService extends BaseService
      * @param $partner_id
      * @param $order_id
      * @return JsonResponse
+     * @throws Exception
      */
-    public function update(OrderUpdateRequest $orderUpdateRequest, $partner_id, $order_id)
+    public function update(OrderUpdateRequest $orderUpdateRequest, $partner_id, $order_id): JsonResponse
     {
         $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if (!$orderDetails) return $this->error("You're not authorized to access this order", 403);

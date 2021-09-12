@@ -16,6 +16,7 @@ use App\Services\Order\Refund\UpdateProductInOrder;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ModificationFields;
+use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -326,6 +327,9 @@ class Updater
     }
 
 
+    /**
+     * @throws Exception
+     */
     public function update()
     {
         try {
@@ -339,13 +343,13 @@ class Updater
             if (isset($this->discount)) $this->updateDiscount();
             $this->createLog($order);
             DB::commit();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollback();
             throw $e;
         }
         try {
             if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order, $this->orderProductChangeData));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error($e);
             throw $e;
         }
