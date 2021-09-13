@@ -17,7 +17,6 @@ class OrderInvoice extends Job implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private Order $order;
-    private InvoiceService $invoiceService;
 
     /**
      * Create a new job instance.

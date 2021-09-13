@@ -42,10 +42,6 @@ class Creator
     private $client;
     /** @var array */
     private array $skus;
-    /** @var Collection */
-    private $sku_details;
-    /** @var Order */
-    private $order;
     /** @var OrderSkuRepositoryInterface */
     private $orderSkuRepository;
     /** @var PaymentCreator */
@@ -227,7 +223,6 @@ class Creator
     public function setData(array $data)
     {
         $this->data = $data;
-        // $this->createValidator->setProducts(json_decode($this->data['services'], true));
         if (!isset($this->data['payment_method'])) $this->data['payment_method'] = 'cod';
         if (isset($this->data['customer_address'])) $this->setAddress($this->data['customer_address']);
         return $this;
@@ -280,17 +275,11 @@ class Creator
                 throw new OrderException("Can not make due order without customer", 421);
             }
             DB::commit();
+            if ($order) event(new OrderPlaceTransactionCompleted($order));
 
         } catch (\Exception $e) {
             DB::rollback();
             throw $e;
-        }
-
-        try {
-            if ($order) event(new OrderPlaceTransactionCompleted($order));
-        } catch (\Exception $e){
-            Log::error($e);
-//            throw $e;
         }
          return $order;
     }

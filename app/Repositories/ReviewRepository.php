@@ -51,12 +51,6 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         }
     }
 
-    private function getReviewIndexFromImageName($imageName): int
-    {
-        preg_match('#\[(.*?)\]#', $imageName, $match);
-        return (int)$match[1];
-    }
-
     private function insertReviewImages($reviewIndex, $imageFile, $reviewIndexFromSingleImage, $review_id)
     {
         $reviewImageUrl = $this->generateImageFrom64base($reviewIndex, $imageFile, $reviewIndexFromSingleImage) ?? '';

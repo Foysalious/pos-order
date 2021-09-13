@@ -22,6 +22,9 @@ class RewardOnOrderCreate
         $this->queue = 'reward';
     }
 
+    /**
+     * @throws GuzzleException
+     */
     public function handle()
     {
         $order =  $this->model;
@@ -42,7 +45,9 @@ class RewardOnOrderCreate
         try{
             $client = new Client();
             $client->post(config('sheba.api_url').'/pos/v1/reward/action',$data);
-        }catch (GuzzleException $e){}
+        }catch (GuzzleException $e){
+            throw $e;
+        }
 
     }
 

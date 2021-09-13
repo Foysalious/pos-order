@@ -8,17 +8,6 @@ use Illuminate\Support\Facades\App;
 
 class CustomerOrderDetailsResource extends JsonResource
 {
-    private $order;
-    private array $orderWithProductResource = [];
-    /**
-     * OrderWithProductResource constructor.
-     */
-    public function __construct($order)
-    {
-        $this->order = $order;
-        parent::__construct($order);
-    }
-
 
     /**
      * Transform the resource into an array.
@@ -28,14 +17,13 @@ class CustomerOrderDetailsResource extends JsonResource
      */
     public function toArray($request): array
     {
-        $this->orderWithProductResource = [
+        return [
             'id'                      => $this->id,
             'partner_wise_order_id'   => $this->partner_wise_order_id,
             'status'                  => $this->status,
             'items'                   => OrderSkuResource::collection($this->items),
             'price'                   => $this->getOrderPriceRelatedInfo(),
         ];
-        return $this->orderWithProductResource;
     }
 
     /**
@@ -44,7 +32,7 @@ class CustomerOrderDetailsResource extends JsonResource
     private function getOrderPriceRelatedInfo() : array
     {
         /** @var PriceCalculation $price_calculator */
-        $price_calculator = (App::make(PriceCalculation::class))->setOrder($this->order);
+        $price_calculator = (App::make(PriceCalculation::class))->setOrder($this->resource);
 
         return [
             'original_price' => $price_calculator->getOriginalPrice(),

@@ -1,7 +1,5 @@
 <?php namespace App\Models;
 
-use App\Events\OrderPlaceTransactionCompleted;
-use App\Events\RewardOnOrderCreate;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Transaction\Constants\TransactionTypes;
@@ -14,7 +12,6 @@ class Order extends BaseModel
 {
     use HasFactory, SoftDeletes, CascadeSoftDeletes;
     protected $guarded = ['id'];
-    private mixed $id;
     protected $cascadeDeletes = ['orderSkus', 'discounts', 'logs', 'payments'];
 
     public function customer()
