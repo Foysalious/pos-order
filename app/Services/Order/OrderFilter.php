@@ -174,11 +174,12 @@ class OrderFilter
     private function filterBySearchQuery(Builder $query)
     {
         return $query->when($this->queryString, function ($q) {
-            $q->orWhere('delivery_name', 'LIKE', '%' .$this->queryString .'%');
+            $q->Where('delivery_name', 'LIKE', '%' .$this->queryString .'%');
             $q->orWhere('delivery_mobile', 'LIKE', '%' .$this->queryString .'%');
-            $q->where('partner_wise_order_id', 'LIKE', '%' .$this->queryString .'%');
-        })->orWhereHas('customer', function ($q) {
-            $q->when( $this->queryString, function ($q) {
+            $q->orWhere('partner_wise_order_id', 'LIKE', '%' .$this->queryString .'%');
+        })->when( $this->queryString, function ($q) {
+            $q->whereHas( 'customer', function ($q) {
+                $q->where('partner_id', $this->partnerId);
                 $q->where('name', 'LIKE', '%' . $this->queryString . '%');
                 $q->orWhere('email', 'LIKE', '%' . $this->queryString . '%');
                 $q->orWhere('mobile', 'LIKE', '%' . $this->queryString . '%');
