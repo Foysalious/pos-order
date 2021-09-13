@@ -1,7 +1,6 @@
 <?php namespace App\Http\Controllers;
 
 use App\Http\Reports\InvoiceService;
-use App\Http\Requests\CustomerOrderRequest;
 use App\Http\Requests\OrderCreateRequest;
 use App\Http\Requests\OrderCustomerRequest;
 use App\Http\Requests\OrderFilterRequest;
@@ -10,8 +9,6 @@ use App\Http\Requests\OrderUpdateRequest;
 use App\Services\Order\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Models\Order;
-use App\Services\Order\StatusChanger;
 use App\Traits\ResponseAPI;
 use Illuminate\Validation\ValidationException;
 
@@ -42,12 +39,17 @@ class OrderController extends Controller
      *      tags={"ORDER API"},
      *      summary="Api to get all orders",
      *      description="Return all orders with searching and filtering parameters",
-     *      @OA\Parameter(name="payment_status",description="Payment Status",required=false,in="path", @OA\Schema(type="String")),
-     *      @OA\Parameter(name="order_status",description="Order Status",required=false,in="path", @OA\Schema(type="String")),
-     *      @OA\Parameter(name="customer_name",description="Customer Name",required=false,in="path", @OA\Schema(type="String")),
-     *      @OA\Parameter(name="order_id",description="Order ID",required=false,in="path", @OA\Schema(type="Integer")),
-     *      @OA\Parameter(name="sales_channel_id",description="Sales Channel ID",required=false,in="path", @OA\Schema(type="IntegerInteger")),
-     *      @OA\Parameter(name="type",description="Type",required=false,in="path", @OA\Schema(type="String", example={"new": "running", "pending": "Processing Shipped", "completed": "Completed Cancelled Declined"})),
+     *      @OA\Parameter(name="partner",description="partner ID",required=false,in="path", @OA\Schema(type="Integer")),
+     *      @OA\Parameter(name="payment_status",description="Payment Status query string either 'paid' or 'due'",required=false,in="query", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="order_status",description="Order Status query strings are (Pending | Processing | Declined | Shipped | Completed | Cancelled)",required=false,in="query", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="type",description="type query strings are (completed | new | running)",required=false,in="query", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="sales_channel_id",description="Sales Channel ID 1 or 2",required=false,in="query", @OA\Schema(type="Integer")),
+     *      @OA\Parameter(name="type",description="Type",required=false,in="query", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="q",description="search query customer_name or mobile or partner-wise order-id",required=false,in="query", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="limit",description="limit range",required=false,in="query", @OA\Schema(type="Integer")),
+     *      @OA\Parameter(name="offset",description="offset value",required=false,in="query", @OA\Schema(type="Integer")),
+     *      @OA\Parameter(name="sort_by",description="sort by variable either created_at or customer_name",required=false,in="query", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="sort_by_order",description="order of the sort by 'asc' or 'desc'",required=false,in="query", @OA\Schema(type="String")),
      *      @OA\Response(
      *          response=200,
      *          description="Successful operation",
