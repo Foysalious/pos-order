@@ -402,7 +402,7 @@
                     $sku_name=$sku_details['name'];
 
                 @endphp
-                <div class="item-sub-cotent">{{$sku_name}}</div>
+{{--                <div class="item-sub-cotent">{{$sku_name}}</div>--}}
 
             </td>
             <td>{{$skus->quantity}}</td>
