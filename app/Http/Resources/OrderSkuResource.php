@@ -26,6 +26,7 @@ class OrderSkuResource extends JsonResource
             'warranty' => $this->warranty,
             'warranty_unit' => $this->warranty_unit,
             'note' => $this->note,
+            'product_image' => $this->product_image,
         ];
     }
 }

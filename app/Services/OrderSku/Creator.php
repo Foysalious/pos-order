@@ -83,6 +83,8 @@ class Creator
             $sku_data['warranty'] = $sku->warranty ?? (isset($sku_details[$sku->id]) && $sku_details[$sku->id]['warranty'] ?: 0);
             $sku_data['warranty_unit'] = $sku->warranty_unit ?? (isset($sku_details[$sku->id]) && $sku_details[$sku->id]['warranty'] ?: WarrantyUnits::DAY);
             $sku_data['vat_percentage'] = $sku->vat_percentage ?? (isset($sku_details[$sku->id]) ? $sku_details[$sku->id]['vat_percentage'] : 0);
+            $sku_data['product_image'] = $sku_details[$sku->id]['app_thumb'] ?? null;
+            $sku_data['note'] = $sku->note ?? null;
             $sku_data['discount']['discount'] = $sku->discount ?? 0;
             $sku_data['discount']['is_discount_percentage'] = $sku->is_discount_percentage ?? null;
             $sku_data['discount']['cap'] = $sku->cap ?? null;
