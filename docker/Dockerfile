@@ -31,9 +31,6 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 RUN docker-php-ext-configure intl
 RUN docker-php-ext-install -j$(nproc) pdo_mysql zip calendar soap gd intl pcntl
 
-# Install mongodb extension
-RUN pecl install mongodb && docker-php-ext-enable mongodb
-
 # Install php-ext-apfd
 RUN pecl install apfd && docker-php-ext-enable apfd
 
