@@ -31,6 +31,8 @@ use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\OrderSms\WebstoreOrderSms;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Webstore\Order\Statuses as WebStoreStatuses;
@@ -337,5 +339,12 @@ class OrderService extends BaseService
         $order = $this->orderRepository->where('id', $order_id)->where('partner_id',$partner_id)->first();
         if (!$order) return $this->error("No Order Found", 404);
         $this->orderStatusChanger->setOrder($order)->setStatus($request->status)->changeStatus();
+    }
+
+    public function updateOrderStatusForIpn(int $partner_id, string $delivery_ref_id, Request $request)
+    {
+        $request->validate([
+           'status' => Rule::in(Statuses::COMPLETED)
+        ]);
     }
 }

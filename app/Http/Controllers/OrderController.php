@@ -377,4 +377,9 @@ class OrderController extends Controller
     {
         return $this->orderService->getOrderInvoice($order_id);
     }
+
+    public function updateOrderStatusForIpn(int $partner_id, string $delivery_ref_id, Request $request)
+    {
+        return $this->orderService->updateOrderStatusForIpn($partner_id, $delivery_ref_id, $request);
+    }
 }
