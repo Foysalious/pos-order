@@ -1,11 +1,8 @@
 <?php namespace App\Services\Customer;
 
-use App\Exceptions\CustomerNotFound;
-use App\Exceptions\OrderException;
 use App\Http\Requests\CustomerOrderListRequest;
 use App\Http\Resources\Webstore\Customer\NotRatedSkuResource;
 use App\Interfaces\CustomerRepositoryInterface;
-use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;
 use App\Models\Customer;
@@ -89,12 +86,10 @@ class CustomerService extends BaseService
         }
     }
 
-    /**
-     * @throws CustomerNotFound
-     */
     public function getPurchaseAmountAndPromoUsed(int $partner_id, string $customer_id): JsonResponse
     {
         $customer =  $this->findTheCustomer($partner_id,$customer_id);
+        if(!$customer) return $this->error('Customer Not Found', 404);
         $return_data = [
             'total_purchase_amount' => 0,
             'total_used_promo' => 0
@@ -112,12 +107,11 @@ class CustomerService extends BaseService
         return $this->success('Successful', [ 'data' => $return_data ]);
     }
 
-    /**
-     * @throws CustomerNotFound
-     */
+
     public function getOrdersByDateWise(CustomerOrderListRequest $request, int $partner_id, string $customer_id)
     {
         $customer = $this->findTheCustomer($partner_id,$customer_id);
+        if(!$customer) return $this->error('Customer Not Found', 404);
         $status = $request->status ?? null;
         list($offset, $limit) = calculatePagination($request);
         $order_list = [];
@@ -150,18 +144,10 @@ class CustomerService extends BaseService
 
     }
 
-
-    /**
-     * @throws CustomerNotFound
-     */
-    private function findTheCustomer(int $partner_id, string $customer_id)
+    private function findTheCustomer(int $partner_id, string $customer_id): bool | Customer
     {
         $customer = $this->customerRepository->where('id', $customer_id)->where('partner_id', $partner_id)->first();
-        if(!$customer) {
-            throw new CustomerNotFound();
-        } else {
-            return $customer;
-        }
+        return is_null($customer) ? false : $customer;
     }
 }
 

@@ -1,7 +1,5 @@
 <?php namespace App\Http\Controllers;
 
-use App\Exceptions\CustomerNotFound;
-use App\Exceptions\ProductNotFoundException;
 use App\Http\Requests\CustomerOrderListRequest;
 use App\Http\Requests\CustomerRequest;
 use App\Services\Customer\CustomerCreateDto;

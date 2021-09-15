@@ -275,7 +275,7 @@ class Creator
                 throw new OrderException("Can not make due order without customer", 421);
             }
             DB::commit();
-           // if ($order) event(new OrderPlaceTransactionCompleted($order));
+            if ($order) event(new OrderPlaceTransactionCompleted($order));
 
         } catch (\Exception $e) {
             DB::rollback();

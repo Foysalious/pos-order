@@ -51,7 +51,7 @@ class CreateEntry extends BaseEntry
         ];
 
         if(!is_null($customer)) {
-            $data['customer_id'] = $customer['id'];
+            $data['customer_id'] = is_string($customer['id']) ? 5 : $customer['id'];
             $data['customer_name'] = $customer['name'];
         }
         return $data;
