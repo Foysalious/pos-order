@@ -12,7 +12,8 @@ class RewardOnOrderCreate
 
     public function handle(OrderPlaceTransactionCompleted $event)
     {
-        $this->dispatch((new RewardOnOrderCreateJob($event->getOrder())));
+        //TODO: Reward Needs to turn ON
+        //$this->dispatch((new RewardOnOrderCreateJob($event->getOrder())));
     }
 
 }
