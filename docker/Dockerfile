@@ -51,6 +51,6 @@ RUN usermod -u 1000 www-data
 
 # Set working directory
 WORKDIR /var/www
-RUN php artisan horizon
+RUN php artisan horizon &
 
 EXPOSE 80 443
