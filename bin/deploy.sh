@@ -38,6 +38,7 @@ run_on_development() {
 
     ./bin/composer.sh install --no-interaction --ignore-platform-reqs
     ./bin/config_clear.sh
+    ./bin/start_horizon.sh
 }
 
 branch=$1
