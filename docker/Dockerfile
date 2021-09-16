@@ -53,4 +53,3 @@ RUN usermod -u 1000 www-data
 WORKDIR /var/www
 
 EXPOSE 80 443
-ENTRYPOINT ["/etc/entrypoint.sh"]
