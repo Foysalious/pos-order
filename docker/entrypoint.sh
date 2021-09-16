@@ -2,5 +2,4 @@
 
 supervisord
 service nginx start
-php-fpm &
-php artisan horizon &
+php-fpm
