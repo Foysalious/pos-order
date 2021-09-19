@@ -1,12 +1,14 @@
 <?php namespace App\Services\Order\Refund;
 
 use App\Services\OrderSku\Creator;
+use App\Traits\ModificationFields;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 
 class AddProductInOrder extends ProductOrder
 {
-    private $added_products = [];
+    use ModificationFields;
+    private array $added_products = [];
 
     public function update()
     {
@@ -22,10 +24,10 @@ class AddProductInOrder extends ProductOrder
             /** @var Creator $creator */
             $creator = App::make(Creator::class);
             $new_order_skus = $creator->setOrder($this->order)->setSkus($sku_items)->create();
-            $this->makeAddedProducts($new_order_skus);
+            $this->makeInventorySkus($new_order_skus);
         }
         if ($null_sku_items) {
-            $this->addNullSkuItems($null_sku_items);
+            $this->addNullSkuItemsInOrderSkus($null_sku_items);
         }
 
         return $this->added_products;
@@ -39,27 +41,22 @@ class AddProductInOrder extends ProductOrder
         return $this->skus->whereIn('id',$items);
     }
 
-    private function addNullSkuItems(Collection $items)
+    private function addNullSkuItemsInOrderSkus(Collection $items)
     {
         foreach ($items as $item) {
             $data['sku_id'] = null;
             $data['quantity'] = $item->quantity;
             $data['unit_price'] = $item->price;
             $data['order_id'] = $this->order->id;
-            $this->orderSkuRepository->create($data);
-            $this->added_products [] = $data;
+            $order_sku = $this->orderSkuRepository->create($this->withCreateModificationField($data));
+            $this->added_products [] = $order_sku;
         }
     }
 
-    private function makeAddedProducts(array $new_order_skus)
+    private function makeInventorySkus(array $new_order_skus)
     {
         foreach ($new_order_skus as $each) {
-            $this->added_products [] = [
-                'id' => $each->id,
-                'sku_id' => $each->sku_id,
-                'quantity' => $each->quantity,
-                'unit_price' => $each->unit_price
-            ];
+            $this->added_products [] = $each;
         }
     }
 

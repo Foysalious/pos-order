@@ -6,6 +6,7 @@ use App\Interfaces\OrderDiscountRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
+use App\Models\Order;
 use App\Services\Discount\Handler;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
@@ -346,12 +347,7 @@ class Updater
             DB::rollback();
             throw $e;
         }
-        try {
-            if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order, $this->orderProductChangeData));
-        } catch (\Exception $e) {
-            Log::error($e);
-            throw $e;
-        }
+        if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order, $this->orderProductChangeData));
     }
 
     public function makeData(): array

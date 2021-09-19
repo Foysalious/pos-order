@@ -140,8 +140,8 @@ class UpdateEntry extends BaseEntry
     private function makeRefundExchangedProductsData(\Illuminate\Database\Eloquent\Collection $order_skus, Collection $sku_details): array
     {
         $data = [];
-        $added_items = $this->orderProductChangeData['refund_exchanged']['added_products'];
-        $refunded_items = $this->orderProductChangeData['refund_exchanged']['refunded_products'];
+        $added_items = $this->orderProductChangeData['refund_exchanged']['added_products'] ?? [];
+        $refunded_items = $this->orderProductChangeData['refund_exchanged']['refunded_products'] ?? [];
         if(count($added_items) > 0) {
             $data = array_merge_recursive($this->makeAddedRefundedProductsData($added_items,$order_skus, $sku_details),$data);
         }
@@ -181,11 +181,11 @@ class UpdateEntry extends BaseEntry
     {
         $sku_ids [] = array_column($this->orderProductChangeData['new'] ?? [], 'sku_id');
         $sku_ids [] = array_column($this->orderProductChangeData['deleted']['refunded_products'] ?? [], 'sku_id');
-        $quantity_added = $this->orderProductChangeData['refund_exchanged']['added_products'];
+        $quantity_added = $this->orderProductChangeData['refund_exchanged']['added_products'] ?? [];
         array_walk($quantity_added, function ($item) use (&$sku_ids){
            $sku_ids [] = $item->getSkuId();
         });
-        $refunded = $this->orderProductChangeData['refund_exchanged']['refunded_products'];
+        $refunded = $this->orderProductChangeData['refund_exchanged']['refunded_products'] ?? [];
         array_walk($refunded, function ($item) use (&$sku_ids){
             $sku_ids [] = $item->getSkuId();
         });
@@ -278,7 +278,7 @@ class UpdateEntry extends BaseEntry
                         'sku_id' => $sku_details[$sku_id]['id'],
                         'name' => $sku_details[$sku_id]['name'] ?? '',
                         "unit_price" => (double) $batch['unit_price'],
-                        "selling_price" => (double) $each_product->getCurrentUnitPrice(),
+                        "selling_price" => $each_product->isQuantityIncreased() ? $each_product->getCurrentUnitPrice() : $each_product->getOldUnitPrice(),
                         "quantity" => (double) $batch['quantity'],
                         "type" => $each_product->isQuantityIncreased() ? OrderChangingTypes::QUANTITY_INCREASE : OrderChangingTypes::REFUND
                     ];
