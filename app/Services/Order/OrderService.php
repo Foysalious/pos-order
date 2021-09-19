@@ -339,12 +339,17 @@ class OrderService extends BaseService
         $order = $this->orderRepository->where('id', $order_id)->where('partner_id',$partner_id)->first();
         if (!$order) return $this->error("No Order Found", 404);
         $this->orderStatusChanger->setOrder($order)->setStatus($request->status)->changeStatus();
+        return $this->success('Successful', [], 200);
     }
 
-    public function updateOrderStatusForIpn(int $partner_id, string $delivery_ref_id, Request $request)
+    public function updateOrderStatusForIpn(int $partner_id, string $delivery_req_id, Request $request)
     {
         $request->validate([
            'status' => Rule::in(Statuses::COMPLETED)
         ]);
+        $order = $this->orderRepository->where('delivery_request_id', $delivery_req_id)->where('partner_id', $partner_id)->first();
+        if (!$order) return $this->error("No Order Found", 404);
+        $this->orderStatusChanger->setDeliveryRequestId($delivery_req_id)->setStatus(Statuses::COMPLETED)->setOrder($order)->updateStatusForIpn();
+        return $this->success('Successful', []);
     }
 }
