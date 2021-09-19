@@ -351,35 +351,35 @@ class OrderService extends BaseService
                 'created_by_name' => 'Resource - Abdullah Arnab'
             ],
             [
-                'log_type' => 'cash_collection',
+                'log_type' => 'payments',
                 'log_type_show_name' => ['bn' => 'নগদ  গ্রহণ', 'en' => 'Cash Collection'],
                 'old_value' => null,
                 'new_value' => 500.00,
-                'created_at' => '2020-01-05 12:45:05',
+                'created_at' => '2020-01-05 12:46:05',
                 'created_by_name' => 'Resource - Abdullah Arnab'
             ],
             [
-                'log_type' => 'online_collection',
-                'log_type_show_name' => ['bn' => 'অর্ডার আপডেট', 'en' => 'Order Update'],
-                'old_value' => null,
-                'new_value' => 500.00,
-                'created_at' => '2020-01-05 12:45:05',
-                'created_by_name' => 'Resource - Abdullah Arnab'
-            ],
-            [
-                'log_type' => 'order_update_increase',
+                'log_type' => 'payments',
                 'log_type_show_name' => ['bn' => 'অনলাইন গ্রহন', 'en' => 'Online Collection'],
                 'old_value' => null,
                 'new_value' => 500.00,
-                'created_at' => '2020-01-05 12:45:05',
+                'created_at' => '2020-01-05 12:47:05',
                 'created_by_name' => 'Resource - Abdullah Arnab'
             ],
             [
-                'log_type' => 'order_update_decrease',
-                'log_type_show_name' => ['bn' => 'অনলাইন গ্রহন', 'en' => 'Online Collection'],
+                'log_type' => 'payable',
+                'log_type_show_name' => ['bn' => 'অর্ডার আপডেট (Increase)', 'en' => 'Order Update (Increase)'],
                 'old_value' => null,
                 'new_value' => 500.00,
-                'created_at' => '2020-01-05 12:45:05',
+                'created_at' => '2020-01-05 12:48:05',
+                'created_by_name' => 'Resource - Abdullah Arnab'
+            ],
+            [
+                'log_type' => 'payable',
+                'log_type_show_name' => ['bn' => 'অর্ডার আপডেট (Decrease)', 'en' => 'Order Update (Decrease)'],
+                'old_value' => null,
+                'new_value' => 500.00,
+                'created_at' => '2020-01-05 12:49:05',
                 'created_by_name' => 'Resource - Abdullah Arnab'
             ],
             [
@@ -395,7 +395,7 @@ class OrderService extends BaseService
                 'log_type_show_name' => ['bn' => 'স্ট্যাটাস আপডেট ', 'en' => 'Status Update'],
                 'old_value' => Statuses::PROCESSING,
                 'new_value' => Statuses::SHIPPED,
-                'created_at' => '2020-01-05 12:45:05',
+                'created_at' => '2020-01-05 12:50:05',
                 'created_by_name' => 'Resource - Abdullah Arnab'
             ]
         ];
