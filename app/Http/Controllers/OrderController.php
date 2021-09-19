@@ -377,4 +377,9 @@ class OrderController extends Controller
     {
         return $this->orderService->getOrderInvoice($order_id);
     }
+
+    public function logs(int $order_id)
+    {
+        return $this->orderService->logs($order_id);
+    }
 }

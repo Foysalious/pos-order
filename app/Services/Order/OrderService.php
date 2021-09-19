@@ -338,4 +338,67 @@ class OrderService extends BaseService
         if (!$order) return $this->error("No Order Found", 404);
         $this->orderStatusChanger->setOrder($order)->setStatus($request->status)->changeStatus();
     }
+
+    public function logs(int $order_id)
+    {
+        $logs = [
+            [
+                'log_type' => 'due_bill',
+                'log_type_show_name' => ['bn' => 'বাকি বিল', 'en' => 'Due Bill'],
+                'old_value' => null,
+                'new_value' => 500.00,
+                'created_at' => '2020-01-05 12:45:05',
+                'created_by_name' => 'Resource - Abdullah Arnab'
+            ],
+            [
+                'log_type' => 'cash_collection',
+                'log_type_show_name' => ['bn' => 'নগদ  গ্রহণ', 'en' => 'Cash Collection'],
+                'old_value' => null,
+                'new_value' => 500.00,
+                'created_at' => '2020-01-05 12:45:05',
+                'created_by_name' => 'Resource - Abdullah Arnab'
+            ],
+            [
+                'log_type' => 'online_collection',
+                'log_type_show_name' => ['bn' => 'অর্ডার আপডেট', 'en' => 'Order Update'],
+                'old_value' => null,
+                'new_value' => 500.00,
+                'created_at' => '2020-01-05 12:45:05',
+                'created_by_name' => 'Resource - Abdullah Arnab'
+            ],
+            [
+                'log_type' => 'order_update_increase',
+                'log_type_show_name' => ['bn' => 'অনলাইন গ্রহন', 'en' => 'Online Collection'],
+                'old_value' => null,
+                'new_value' => 500.00,
+                'created_at' => '2020-01-05 12:45:05',
+                'created_by_name' => 'Resource - Abdullah Arnab'
+            ],
+            [
+                'log_type' => 'order_update_decrease',
+                'log_type_show_name' => ['bn' => 'অনলাইন গ্রহন', 'en' => 'Online Collection'],
+                'old_value' => null,
+                'new_value' => 500.00,
+                'created_at' => '2020-01-05 12:45:05',
+                'created_by_name' => 'Resource - Abdullah Arnab'
+            ],
+            [
+                'log_type' => 'emi',
+                'log_type_show_name' => ['bn' => 'কিস্তি - ৩ মাস', 'en' => 'Emi - 3 Months'],
+                'old_value' => null,
+                'new_value' => 5000.00,
+                'created_at' => '2020-01-05 12:45:05',
+                'created_by_name' => 'Resource - Abdullah Arnab'
+            ],
+            [
+                'log_type' => 'status_update',
+                'log_type_show_name' => ['bn' => 'স্ট্যাটাস আপডেট ', 'en' => 'Status Update'],
+                'old_value' => Statuses::PROCESSING,
+                'new_value' => Statuses::SHIPPED,
+                'created_at' => '2020-01-05 12:45:05',
+                'created_by_name' => 'Resource - Abdullah Arnab'
+            ]
+        ];
+        return $this->success('Successful', ['logs' => $logs], 200);
+    }
 }
