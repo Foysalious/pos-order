@@ -11,16 +11,17 @@ use App\Services\Order\Constants\Statuses;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Transaction\Constants\TransactionTypes;
 use App\Services\Usage\UsageService;
+use App\Traits\ModificationFields;
 use App\Traits\ResponseAPI;
 use Illuminate\Support\Facades\App;
 
 class StatusChanger
 {
-    use ResponseAPI;
-    protected $status;
+    use ModificationFields;
+    protected string $status;
     /** @var Order */
-    protected $order;
-    protected $modifier;
+    protected Order $order;
+    protected string $delivery_request_id;
 
 
     public function __construct(
@@ -44,9 +45,12 @@ class StatusChanger
         return $this;
     }
 
-    public function setModifier($modifier)
+    /**
+     * @param string $delivery_request_id
+     */
+    public function setDeliveryRequestId(string $delivery_request_id)
     {
-        $this->modifier = $modifier;
+        $this->delivery_request_id = $delivery_request_id;
         return $this;
     }
 
@@ -65,7 +69,6 @@ class StatusChanger
                   $this->collectPayment($this->order, $order_calculator );
               }
           }
-        return $this->success('Successful', [], 200);
     }
 
 
@@ -84,5 +87,9 @@ class StatusChanger
         event(new OrderDueCleared($order));
     }
 
+    public function updateStatusForIpn()
+    {
+        $this->order->update($this->withUpdateModificationField(['status' => Statuses::COMPLETED]));
+    }
 
 }
