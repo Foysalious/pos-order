@@ -407,4 +407,9 @@ class OrderController extends Controller
     {
         return $this->orderService->updateOrderStatusForIpn($partner_id, $delivery_req_id, $request);
     }
+    
+    public function logs(int $order_id)
+    {
+        return $this->orderService->logs($order_id);
+    }
 }
