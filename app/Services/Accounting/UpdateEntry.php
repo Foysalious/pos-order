@@ -33,6 +33,9 @@ class UpdateEntry extends BaseEntry
         parent::__construct($accountingRepository, $client);
     }
 
+    /**
+     * @throws Exceptions\AccountingEntryServerError
+     */
     public function update()
     {
         $data = $this->makeData();
@@ -70,7 +73,7 @@ class UpdateEntry extends BaseEntry
             'total_vat'          => $order_price_details->getVat(),
             'entry_at' => convertTimezone($this->order->created_at)->format('Y-m-d H:i:s'),
             'inventory_products' => json_encode($inventory_products),
-            'customer_id' => $customer['id'],
+            'customer_id' => is_string($customer['id']) ? 5 : $customer['id'],
             'customer_name' => $customer['name'],
         ];
         return $data;

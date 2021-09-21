@@ -14,9 +14,6 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class UpdateProductInOrder extends ProductOrder
 {
-    const QUANTITY_INCREASED = 'increment';
-    const QUANTITY_DECREASED = 'decrement';
-
     private array $refunded_items_obj = [];
     private array $added_items_obj = [];
     private float $refunded_amount = 0;
@@ -30,12 +27,12 @@ class UpdateProductInOrder extends ProductOrder
             /** @var $product ProductChangeTracker */
             if($product->getSkuId() == null)
                 $this->handleNullSkuItemInOrder($product);
-            elseif ($product->isQuantityChanged() && $product->getSkuId() != null ) {
+            elseif ($product->isQuantityChanged()) {
                 $this->handleQuantityUpdateForOrderSku($product, $skus_details->where('id', $product->getSkuId())->first());
             }
         }
         $this->updateStockForProductsChanges($updated_products,$skus_details);
-        $this->calculateAndRefundForUpdatedOrder();
+        $this->calculateRefundedAmountOfReturnedProducts();
         return [
             'refunded_amount' => $this->refunded_amount,
             'added_products' =>  $this->added_items_obj,
@@ -118,20 +115,6 @@ class UpdateProductInOrder extends ProductOrder
             return false;
         }
 
-    }
-
-    private function getQuantityChangingDetails($current_product, array $updating_product): array
-    {
-        $data = [];
-        if ($updating_product['quantity'] > $current_product['quantity']) {
-            $data['type'] = self::QUANTITY_INCREASED;
-            $data['value'] = $updating_product['quantity'] - $current_product['quantity'];
-        }
-        else if ($current_product['quantity'] > $updating_product['quantity']) {
-            $data['type'] = self::QUANTITY_DECREASED;
-            $data['value'] = $current_product['quantity'] - $updating_product['quantity'];
-        }
-        return $data;
     }
 
     private function createOrderSkuForNewPriceQuantity(ProductChangeTracker $product)
@@ -246,7 +229,7 @@ class UpdateProductInOrder extends ProductOrder
         }
     }
 
-    private function calculateAndRefundForUpdatedOrder()
+    private function calculateRefundedAmountOfReturnedProducts()
     {
         if(count($this->refunded_items_obj) == 0) return;
         $total_refund = 0;
@@ -256,11 +239,6 @@ class UpdateProductInOrder extends ProductOrder
                 $total_refund = $total_refund + ($item->getOldUnitPrice() * $item->getQuantityDecreasedValue());
             }
         }
-        $this->paymentCreator->setOrderId($this->order->id);
-        $this->paymentCreator->setAmount($total_refund);
-        $this->paymentCreator->setMethod(PaymentMethods::CASH_ON_DELIVERY);
-        $this->paymentCreator->setTransactionType(TransactionTypes::DEBIT);
-        $this->paymentCreator->create();
         $this->refunded_amount = $total_refund;
     }
 
