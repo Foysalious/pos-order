@@ -9,7 +9,9 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Services\Discount\Constants\DiscountTypes;
+use App\Services\EMI\Calculations;
 use App\Services\Inventory\InventoryServerClient;
+use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Order\Validators\OrderCreateValidator;
@@ -18,11 +20,9 @@ use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\OrderSku\Creator as OrderSkuCreator;
 use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ResponseAPI;
-
-use Illuminate\Support\Collection;
+use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -161,12 +161,12 @@ class Creator
     }
 
     /**
-     * @param array $skus
+     * @param string $skus
      * @return Creator
      */
-    public function setSkus(array $skus): Creator
+    public function setSkus(string $skus): Creator
     {
-        $this->skus = $skus;
+        $this->skus = json_decode($skus);
         return $this;
     }
 
@@ -258,7 +258,8 @@ class Creator
             DB::beginTransaction();
             $order_data = $this->makeOrderData();
             $order = $this->orderRepositoryInterface->create($order_data);
-            $this->orderSkuCreator->setOrder($order)->setSkus($this->skus)->create();
+            $this->orderSkuCreator->setOrder($order)->setIsPaymentMethodEmi($this->paymentMethod == PaymentMethods::EMI)
+                ->setSkus($this->skus)->create();
             $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($order_data);
             if ($this->discountHandler->hasDiscount()) {
                 $this->discountHandler->create();
@@ -274,10 +275,13 @@ class Creator
             if($this->hasDueError($order)){
                 throw new OrderException("Can not make due order without customer", 421);
             }
+            if($this->paymentMethod == PaymentMethods::EMI) {
+                $this->calculateEmiChargesAndSave($order, new PriceCalculation());
+            }
             DB::commit();
             if ($order) event(new OrderPlaceTransactionCompleted($order));
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollback();
             throw $e;
         }
@@ -341,7 +345,7 @@ class Creator
         $order_data['delivery_address']         = $this->resolveDeliveryAddress();
         $order_data['sales_channel_id']         = $this->salesChannelId ?: SalesChannelIds::POS;
         $order_data['delivery_charge']          = $this->deliveryCharge ?: 0;
-        $order_data['emi_month']                = $this->emiMonth ?? null;
+        $order_data['emi_month']                = ($this->paymentMethod == PaymentMethods::EMI && !is_null($this->emiMonth)) ? $this->emiMonth : null;
         $order_data['status']                   = $this->salesChannelId == SalesChannelIds::POS ? Statuses::COMPLETED : Statuses::PENDING;
         $order_data['discount']                 = json_decode($this->discount)->original_amount ?? 0;
         $order_data['is_discount_percentage']   = json_decode($this->discount)->is_percentage ?? 0;
@@ -359,5 +363,14 @@ class Creator
             return true;
         }
         return false;
+    }
+
+    private function calculateEmiChargesAndSave($order, PriceCalculation $price_calculator)
+    {
+        $total_amount = $price_calculator->setOrder($order)->getDiscountedPrice();
+        $data = Calculations::getMonthData($total_amount, (int)$order->emi_month, false);
+        $order->interest = $data['total_interest'];
+        $order->bank_transaction_charge = $data['bank_transaction_fee'];
+        $order->save();
     }
 }

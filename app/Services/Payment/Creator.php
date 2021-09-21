@@ -63,7 +63,7 @@ class Creator
      */
     public function setMethod($method)
     {
-        $this->method = $method;
+        $this->method = is_null($method) ? PaymentMethods::CASH_ON_DELIVERY : $method;
         return $this;
     }
 

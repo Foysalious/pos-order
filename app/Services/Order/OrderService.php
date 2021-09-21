@@ -115,7 +115,6 @@ class OrderService extends BaseService
      */
     public function store($partner, OrderCreateRequest $request): JsonResponse
     {
-        $skus = is_array($request->skus) ? $request->skus : json_decode($request->skus);
         $order = $this->creator->setPartner($partner)
             ->setCustomerId($request->customer_id)
             ->setDeliveryName($request->delivery_name)
@@ -125,7 +124,7 @@ class OrderService extends BaseService
             ->setSalesChannelId($request->sales_channel_id)
             ->setDeliveryCharge($request->delivery_charge)
             ->setEmiMonth($request->emi_month)
-            ->setSkus($skus)
+            ->setSkus($request->skus)
             ->setDiscount($request->discount)
             ->setPaidAmount($request->paid_amount)
             ->setPaymentMethod($request->payment_method)
