@@ -7,6 +7,7 @@ use App\Services\Order\Constants\OrderTypes;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Order\OrderFilter;
+use Illuminate\Support\Facades\DB;
 
 class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 {
@@ -39,5 +40,12 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
         return $this->model->where('partner_id', $partnerId)->with(['orderSkus' => function($q) {
             $q->with('discount');
         }, 'discounts', 'payments'])->find($orderId);
+    }
+
+    public function getOrderStatusStatByPartner(int $partnerId)
+    {
+        return $this->model->where('partner_id', $partnerId)
+            ->select(DB::raw('count(*) as count, status'))
+            ->groupBy('status')->get();
     }
 }

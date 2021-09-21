@@ -3,6 +3,7 @@
 use App\Http\Controllers\DataMigrationController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\Webstore\ReviewController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -47,6 +48,7 @@ Route::group(['prefix' => 'v1'], function () {
         Route::apiResource('partners.migrate', DataMigrationController::class)->only('store');
         Route::group(['prefix' => 'partners'], function () {
             Route::group(['prefix' => '{partner}'], function () {
+                Route::get('statistics', [StatisticsController::class, 'index']);
                 Route::group(['prefix' => 'orders'], function () {
                     Route::group(['prefix' => '{order}'], function () {
                         Route::get('delivery-info', [OrderController::class, 'getDeliveryInfo']);

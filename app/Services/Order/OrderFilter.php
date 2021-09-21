@@ -6,6 +6,7 @@ use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\Constants\Statuses;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use function Clue\StreamFilter\fun;
 
 class OrderFilter
 {
@@ -134,11 +135,12 @@ class OrderFilter
     public function getOrderListWithPagination()
     {
         $query = $this->orderRepository->where('partner_id', $this->partnerId)->with(['orderSkus','payments','discounts','customer']);
-        $query = $this->filterBySalesChannelId($query);
         $query = $this->filterByType($query);
-        $query = $this->filterByOrderStatus($query);
         $query = $this->filterByPaymentStatus($query);
-        $query = $this->filterBySearchQuery($query);
+        $query = $this->filterBySalesChannelId($query);
+        $query = $this->filterByOrderStatus($query);
+        $query = $this->filterBySearchQueryInOrder($query);
+        $query = $this->filterBySearchQueryInCustomer($query);
         $query = $this->sortByCustomerName($query);
         $query = $this->sortByCreatedAt($query);
         return $query->offset($this->offset)->limit($this->limit)->get();
@@ -171,22 +173,6 @@ class OrderFilter
         });
     }
 
-    private function filterBySearchQuery(Builder $query)
-    {
-        return $query->when($this->queryString, function ($q) {
-            $q->Where('delivery_name', 'LIKE', '%' .$this->queryString .'%');
-            $q->orWhere('delivery_mobile', 'LIKE', '%' .$this->queryString .'%');
-            $q->orWhere('partner_wise_order_id', 'LIKE', '%' .$this->queryString .'%');
-        })->when( $this->queryString, function ($q) {
-            $q->whereHas( 'customer', function ($q) {
-                $q->where('partner_id', $this->partnerId);
-                $q->where('name', 'LIKE', '%' . $this->queryString . '%');
-                $q->orWhere('email', 'LIKE', '%' . $this->queryString . '%');
-                $q->orWhere('mobile', 'LIKE', '%' . $this->queryString . '%');
-            });
-        });
-    }
-
     private function filterBySalesChannelId(Builder $query)
     {
         return $query->when($this->salesChannelId, function ($q) {
@@ -205,6 +191,31 @@ class OrderFilter
     {
         return $query->when($this->sort_by == self::SORT_BY_CREATED_AT, function ($q) {
             return $q->orderBy('created_at', $this->sort_by_order);
+        });
+    }
+
+    private function filterBySearchQueryInOrder(Builder $query)
+    {
+        return $query->when($this->queryString, function ($q) {
+            $q->where(function($q) {
+                $q->orWhere('partner_wise_order_id', 'LIKE', '%' . $this->queryString . '%' );
+                $q->orWhere('delivery_name', 'LIKE', '%' .$this->queryString .'%');
+                $q->orWhere('delivery_mobile', 'LIKE', '%' .$this->queryString .'%');
+            });
+        });
+    }
+
+    private function filterBySearchQueryInCustomer(mixed $query)
+    {
+        return $query->when( $this->queryString, function ($q) {
+            $q->whereHas( 'customer', function ($q) {
+                $q->where('partner_id', $this->partnerId);
+                $q->orWhere(function ($q){
+                    $q->orWhere('name', 'LIKE', '%' . $this->queryString . '%');
+                    $q->orWhere('email', 'LIKE', '%' . $this->queryString . '%');
+                    $q->orWhere('mobile', 'LIKE', '%' . $this->queryString . '%');
+                });
+            });
         });
     }
 
