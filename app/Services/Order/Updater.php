@@ -17,6 +17,7 @@ use App\Services\Order\Refund\UpdateProductInOrder;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ModificationFields;
+use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -48,7 +49,8 @@ class Updater
                                 OrderPaymentRepositoryInterface $orderPaymentRepository,
                                 protected Handler $discountHandler,
                                 protected PaymentCreator $paymentCreator,
-                                protected CustomerRepositoryInterface $customerRepository
+                                protected CustomerRepositoryInterface $customerRepository,
+                                protected PriceCalculation $orderCalculator
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -327,6 +329,9 @@ class Updater
     }
 
 
+    /**
+     * @throws Exception
+     */
     public function update()
     {
         try {
@@ -341,13 +346,14 @@ class Updater
             if (isset($this->voucher_id)) $this->updateVoucherDiscount();
             $this->updateOrderPayments();
             if (isset($this->discount)) $this->updateDiscount();
+            $this->refundIfEligible();
             $this->createLog($order);
+            if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order, $this->orderProductChangeData));
             DB::commit();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollback();
             throw $e;
         }
-        if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order, $this->orderProductChangeData));
     }
 
     public function makeData(): array
@@ -524,5 +530,20 @@ class Updater
         $customer = $this->customerRepository->where('id',$this->customer_id)->first();
         $this->delivery_name = $customer->name;
         $this->delivery_mobile = $customer->mobile;
+    }
+
+    private function refundIfEligible()
+    {
+        $this->orderCalculator->setOrder($this->order->refresh());
+        $total_paid = $this->orderCalculator->getPaid();
+        $total_amount = $this->orderCalculator->getDiscountedPrice();
+        if( $total_paid > $total_amount) {
+            $refund_amount = $total_paid - $total_amount;
+            $this->paymentCreator->setOrderId($this->order->id);
+            $this->paymentCreator->setAmount($refund_amount);
+            $this->paymentCreator->setMethod(PaymentMethods::CASH_ON_DELIVERY);
+            $this->paymentCreator->setTransactionType(TransactionTypes::DEBIT);
+            $this->paymentCreator->create();
+        }
     }
 }
