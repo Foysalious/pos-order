@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Exceptions\OrderException;
 use App\Http\Reports\InvoiceService;
 use App\Http\Requests\OrderCreateRequest;
 use App\Http\Requests\OrderCustomerRequest;
@@ -163,9 +164,9 @@ class OrderController extends Controller
      * @param $partner
      * @param OrderCreateRequest $request
      * @return JsonResponse
-     * @throws ValidationException
+     * @throws ValidationException|OrderException
      */
-    public function store($partner, OrderCreateRequest $request)
+    public function store($partner, OrderCreateRequest $request): JsonResponse
     {
         return $this->orderService->store($partner, $request);
     }
@@ -407,7 +408,7 @@ class OrderController extends Controller
     {
         return $this->orderService->updateOrderStatusForIpn($partner_id, $delivery_req_id, $request);
     }
-    
+
     public function logs(int $order_id)
     {
         return $this->orderService->logs($order_id);

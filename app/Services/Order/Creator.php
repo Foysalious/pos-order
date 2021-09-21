@@ -2,12 +2,16 @@
 
 use App\Events\OrderPlaceTransactionCompleted;
 use App\Exceptions\OrderException;
+use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Interfaces\PartnerRepositoryInterface;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Partner;
+use App\Services\ClientServer\SmanagerUser\SmanagerUserServerClient;
+use App\Services\Customer\CustomerCreateDto;
+use App\Services\Customer\CustomerService;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\SalesChannelIds;
@@ -24,6 +28,8 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Spatie\DataTransferObject\DataTransferObject;
+use Spatie\DataTransferObject\Exceptions\UnknownProperties;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Creator
@@ -68,9 +74,18 @@ class Creator
     private OrderSkuCreator $orderSkuCreator;
 
 
-    public function __construct(OrderCreateValidator $createValidator,
-                                OrderRepositoryInterface $orderRepositoryInterface, PartnerRepositoryInterface $partnerRepositoryInterface, InventoryServerClient $client,
-                                OrderSkuRepositoryInterface $orderSkuRepository, PaymentCreator $paymentCreator, DiscountHandler $discountHandler, OrderSkuCreator $orderSkuCreator)
+    public function __construct(
+        OrderCreateValidator $createValidator,
+        OrderRepositoryInterface $orderRepositoryInterface,
+        PartnerRepositoryInterface $partnerRepositoryInterface,
+        InventoryServerClient $client,
+        OrderSkuRepositoryInterface $orderSkuRepository,
+        PaymentCreator $paymentCreator,
+        DiscountHandler $discountHandler,
+        OrderSkuCreator $orderSkuCreator,
+        protected CustomerRepositoryInterface $customerRepository,
+        protected SmanagerUserServerClient $smanagerUserServerClient,
+    )
     {
         $this->createValidator = $createValidator;
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -90,13 +105,23 @@ class Creator
     }
 
     /**
-     * @param int|null $customerId
+     * @param string|null $customerId
      * @return Creator
      */
     public function setCustomerId(?string $customerId): Creator
     {
         $this->customerId = $customerId;
-        $this->customer = Customer::find($customerId);
+        $this->resolveCustomer();
+        return $this;
+    }
+
+    /**
+     * @param Customer|null $customer
+     * @return Creator
+     */
+    private function setCustomer(?Customer $customer): Creator
+    {
+        $this->customer = $customer;
         return $this;
     }
 
@@ -284,22 +309,27 @@ class Creator
          return $order;
     }
 
-    private function resolveCustomerId()
+    private function resolveCustomer(): Creator
     {
-        if ($this->customer) {
-            return $this->customer->id;
-        }
-        if (!isset($this->customerId) || !$this->customerId) {
-            return null;
-        }
-        $customer = Customer::find($this->customerId);
+        if (!isset($this->customerId)) return $this->setCustomer(null);
+        $customer = $this->customerRepository->find($this->customerId);
         if (!$customer) {
-            throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Exists.");
+            $customer = $this->smanagerUserServerClient->setBaseUrl()->get('/api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId);
+            if (!$customer) throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Exists.");
+            $data = [
+                'id' => $customer['_id'],
+                'name' => $customer['name'],
+                'email' => $customer['email'],
+                'partner_id' => $customer['partner_id'],
+                'mobile' => $customer['mobile'],
+                'pro_pic' => $customer['pro_pic'],
+            ];
+            $customer = $this->customerRepository->create($data);
         }
         if ($customer->partner_id != $this->partner->id) {
             throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Belong To Partner #" . $this->partner->id);
         }
-        return $this->customerId;
+        return $this->setCustomer($customer);
     }
 
     private function resolvePartnerWiseOrderId(Partner $partner)
@@ -330,12 +360,12 @@ class Creator
         return null;
     }
 
-    private function makeOrderData()
+    private function makeOrderData(): array
     {
         $order_data = [];
         $order_data['partner_id']               = $this->partner->id;
         $order_data['partner_wise_order_id']    = $this->resolvePartnerWiseOrderId($this->partner);
-        $order_data['customer_id']              = $this->resolveCustomerId();
+        $order_data['customer_id']              = $this->customer->id ?? null;
         $order_data['delivery_name']            = $this->resolveDeliveryName();
         $order_data['delivery_mobile']          = $this->resolveDeliveryMobile();
         $order_data['delivery_address']         = $this->resolveDeliveryAddress();

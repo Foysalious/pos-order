@@ -112,7 +112,7 @@ class OrderService extends BaseService
      * @throws ValidationException
      * @throws OrderException
      */
-    public function store($partner, OrderCreateRequest $request)
+    public function store($partner, OrderCreateRequest $request): JsonResponse
     {
         $skus = is_array($request->skus) ? $request->skus : json_decode($request->skus);
         $order = $this->creator->setPartner($partner)
