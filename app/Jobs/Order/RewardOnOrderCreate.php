@@ -21,7 +21,7 @@ class RewardOnOrderCreate implements ShouldQueue
     private const ORDER_CREATE_REWARD_EVENT_NAME = 'pos_order_create';
     private const ORDER_CREATE_REWARDABLE_TYPE = 'partner';
 
-    public function __construct($model, protected ApiServerClient $apiServerClient)
+    public function __construct($model)
     {
         $this->model = $model;
     }
