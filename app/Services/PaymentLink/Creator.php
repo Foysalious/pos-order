@@ -220,7 +220,7 @@ class Creator
                     ];
                 }
             } catch (\Throwable $e) {
-                app('sentry')->captureException($e);
+                throw $e;
             }
         }
         return $payerInfo;
