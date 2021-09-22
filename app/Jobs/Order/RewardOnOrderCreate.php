@@ -2,6 +2,7 @@
 
 use App\Services\APIServerClient\ApiServerClient;
 use App\Services\Order\PriceCalculation;
+use App\Services\Reward\RewardService;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Bus\Queueable;
@@ -43,7 +44,9 @@ class RewardOnOrderCreate implements ShouldQueue
                 'portal_name' => $order->apiRequest->portal_name
             ]
         ];
-        $this->apiServerClient->setBaseUrl()->post( 'pos/v1/usages', $data);
+        /** @var RewardService $rewardService */
+        $rewardService = app(RewardService::class);
+        $rewardService->setData($data)->store();
     }
 
     public function getJobId()
