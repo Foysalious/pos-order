@@ -28,11 +28,13 @@ class CustomerService extends BaseService
         private Updater $updater,
         private OrderSkuRepositoryInterface $orderSkuRepositoryInterface,
         private AccountingRepository $accountingRepository
-    ){}
-
-    public function update(string $customer_id, CustomerUpdateDto $updateDto,$partner_id): JsonResponse
+    )
     {
-        $customerDetails = $this->customerRepository->where('partner_id',$partner_id)->find($customer_id);
+    }
+
+    public function update(string $customer_id, CustomerUpdateDto $updateDto, $partner_id): JsonResponse
+    {
+        $customerDetails = $this->customerRepository->where('partner_id', $partner_id)->find($customer_id);
         if (!$customerDetails) return $this->error('Customer Not Found', 404);
         $this->customerRepository->update($customerDetails, $this->makeData($updateDto));
         return $this->success();
@@ -54,16 +56,17 @@ class CustomerService extends BaseService
         return $this->success();
     }
 
-    public function getNotRatedOrderSkuList($partner_id, $customerId,$request): JsonResponse
+    public function getNotRatedOrderSkuList($partner_id, $customerId, $request): JsonResponse
     {
         list($offset, $limit) = calculatePagination($request);
-        if(!$request->order)
+        if (!$request->order)
             $request->order = 'desc';
-        $not_rated_skus = $this->orderSkuRepositoryInterface->getNotRatedOrderSkuListOfCustomer($partner_id,$customerId,$offset, $limit,$request->order);
+        $not_rated_skus_count = count($this->orderSkuRepositoryInterface->getNotRatedOrderSkuListOfCustomerCount($partner_id, $customerId, $request->order));
+        $not_rated_skus = $this->orderSkuRepositoryInterface->getNotRatedOrderSkuListOfCustomer($partner_id, $customerId, $offset, $limit, $request->order);
         if ($not_rated_skus->isEmpty())
             throw new NotFoundHttpException("No SKUS Found");
         $not_rated_skus = NotRatedSkuResource::collection($not_rated_skus);
-        return $this->success('Successful', ['total_count' => count($not_rated_skus),'not_rated_order_skus' => $not_rated_skus]);
+        return $this->success('Successful', ['total_count' => $not_rated_skus_count, 'not_rated_order_skus' => $not_rated_skus]);
     }
 
     /**
@@ -88,34 +91,34 @@ class CustomerService extends BaseService
 
     public function getPurchaseAmountAndPromoUsed(int $partner_id, string $customer_id): JsonResponse
     {
-        $customer =  $this->findTheCustomer($partner_id,$customer_id);
-        if(!$customer) return $this->error('Customer Not Found', 404);
+        $customer = $this->findTheCustomer($partner_id, $customer_id);
+        if (!$customer) return $this->error('Customer Not Found', 404);
         $return_data = [
             'total_purchase_amount' => 0,
             'total_used_promo' => 0
         ];
-        $all_orders = Order::with('orderSkus','payments','discounts')->where('partner_id', $partner_id)->where('customer_id', $customer->id)->get();
+        $all_orders = Order::with('orderSkus', 'payments', 'discounts')->where('partner_id', $partner_id)->where('customer_id', $customer->id)->get();
         /** @var PriceCalculation $order_calculator */
         $order_calculator = App::make(PriceCalculation::class);
-        $all_orders->each(function ($order) use (&$return_data, $order_calculator){
+        $all_orders->each(function ($order) use (&$return_data, $order_calculator) {
             $order_calculator->setOrder($order);
             $return_data['total_purchase_amount'] += $order_calculator->getDiscountedPrice();
             $return_data['total_used_promo'] += $order_calculator->getPromoDiscount();
         });
-        $return_data['total_purchase_amount'] = round($return_data['total_purchase_amount'],2);
-        $return_data['total_used_promo'] = round($return_data['total_used_promo'],2);
-        return $this->success('Successful', [ 'data' => $return_data ]);
+        $return_data['total_purchase_amount'] = round($return_data['total_purchase_amount'], 2);
+        $return_data['total_used_promo'] = round($return_data['total_used_promo'], 2);
+        return $this->success('Successful', ['data' => $return_data]);
     }
 
 
     public function getOrdersByDateWise(CustomerOrderListRequest $request, int $partner_id, string $customer_id)
     {
-        $customer = $this->findTheCustomer($partner_id,$customer_id);
-        if(!$customer) return $this->error('Customer Not Found', 404);
+        $customer = $this->findTheCustomer($partner_id, $customer_id);
+        if (!$customer) return $this->error('Customer Not Found', 404);
         $status = $request->status ?? null;
         list($offset, $limit) = calculatePagination($request);
         $order_list = [];
-        $all_orders = Order::with('orderSkus','payments','discounts')
+        $all_orders = Order::with('orderSkus', 'payments', 'discounts')
             ->where('customer_id', $customer->id)
             ->where('partner_id', $partner_id)
             ->orderBy('created_at', 'desc')
@@ -132,19 +135,19 @@ class CustomerService extends BaseService
 
             $order_list[$date]['total_sale'] += $order->discounted_price;
             $order_list[$date]['total_due'] += $order->due;
-            if (!is_null($status) && ($status == PaymentStatuses::DUE || $status == 'Due' )) {
-                if($order->due > 0) {
-                    $order_list[$date]['orders'][] = $order->only(['id','partner_wise_order_id','status', 'discounted_price', 'due', 'created_at']);
+            if (!is_null($status) && ($status == PaymentStatuses::DUE || $status == 'Due')) {
+                if ($order->due > 0) {
+                    $order_list[$date]['orders'][] = $order->only(['id', 'partner_wise_order_id', 'status', 'discounted_price', 'due', 'created_at']);
                 }
             } else {
-                $order_list[$date]['orders'][] = $order->only(['id','partner_wise_order_id','status', 'discounted_price', 'due', 'created_at']);
+                $order_list[$date]['orders'][] = $order->only(['id', 'partner_wise_order_id', 'status', 'discounted_price', 'due', 'created_at']);
             }
         }
-        return $this->success('Successful', [ 'data' => $order_list ]);
+        return $this->success('Successful', ['data' => $order_list]);
 
     }
 
-    private function findTheCustomer(int $partner_id, string $customer_id): bool | Customer
+    private function findTheCustomer(int $partner_id, string $customer_id): bool|Customer
     {
         $customer = $this->customerRepository->where('id', $customer_id)->where('partner_id', $partner_id)->first();
         return is_null($customer) ? false : $customer;
