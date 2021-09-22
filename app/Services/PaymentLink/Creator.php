@@ -28,6 +28,8 @@ class Creator
     private $paidBy;
     private $partnerProfit;
     private mixed $realAmount;
+    private $linkId;
+    private $status;
 
     /**
      * Creator constructor.

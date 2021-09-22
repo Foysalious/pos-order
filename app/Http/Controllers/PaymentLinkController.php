@@ -5,6 +5,11 @@ use Illuminate\Http\Request;
 
 class PaymentLinkController extends Controller
 {
+    /**
+     * @var PaymentLinkService
+     */
+    private PaymentLinkService $paymentLinkService;
+
     public function __construct(PaymentLinkService $paymentLinkService)
     {
         $this->paymentLinkService = $paymentLinkService;

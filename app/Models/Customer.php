@@ -20,4 +20,15 @@ class Customer extends BaseModel
     {
         return $this->hasMany(Order::class);
     }
+
+    public function details()
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'phone' => $this->mobile,
+            'email' => $this->email,
+            'image' => $this->pro_pic
+        ];
+    }
 }

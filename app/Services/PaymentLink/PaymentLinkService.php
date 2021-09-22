@@ -18,7 +18,6 @@ class PaymentLinkService extends BaseService
     private function userStatusCheck($request)
     {
         if (!$request->user) return $this->error('User not found', 404);
-
         if ($request->user instanceof Partner && in_array($request->user->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED])) {
             return $this->error($request, 401);
         }
@@ -46,7 +45,6 @@ class PaymentLinkService extends BaseService
         if ($userStatusCheck !== true) return $userStatusCheck;
         $emi_month_invalidity = Creator::validateEmiMonth($request->all());
         if ($emi_month_invalidity !== false) return $this->error($emi_month_invalidity, 404);
-
         $this->creator
             ->setIsDefault($request->isDefault)
             ->setAmount($request->amount)
