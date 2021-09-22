@@ -3,15 +3,18 @@
 use App\Services\Order\PriceCalculation;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\App;
 
-class RewardOnOrderCreate
+class RewardOnOrderCreate implements ShouldQueue
 {
     protected $model;
 
-    use InteractsWithQueue, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private const ORDER_CREATE_REWARD_EVENT_NAME = 'pos_order_create';
     private const ORDER_CREATE_REWARDABLE_TYPE = 'partner';
@@ -19,7 +22,6 @@ class RewardOnOrderCreate
     public function __construct($model)
     {
         $this->model = $model;
-        $this->queue = 'reward';
     }
 
     /**
