@@ -1,5 +1,6 @@
 <?php namespace App\Jobs\Order;
 
+use App\Services\APIServerClient\ApiServerClient;
 use App\Services\Order\PriceCalculation;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -19,14 +20,12 @@ class RewardOnOrderCreate implements ShouldQueue
     private const ORDER_CREATE_REWARD_EVENT_NAME = 'pos_order_create';
     private const ORDER_CREATE_REWARDABLE_TYPE = 'partner';
 
-    public function __construct($model)
+    public function __construct($model, protected ApiServerClient $apiServerClient)
     {
         $this->model = $model;
     }
 
-    /**
-     * @throws GuzzleException
-     */
+
     public function handle()
     {
         $order =  $this->model;
@@ -44,13 +43,7 @@ class RewardOnOrderCreate implements ShouldQueue
                 'portal_name' => $order->apiRequest->portal_name
             ]
         ];
-        try{
-            $client = new Client();
-            $client->post(config('sheba.api_url').'/pos/v1/reward/action',$data);
-        }catch (GuzzleException $e){
-            throw $e;
-        }
-
+        $this->apiServerClient->setBaseUrl()->post( 'pos/v1/usages', $data);
     }
 
     public function getJobId()
