@@ -148,7 +148,7 @@ class TimeFrame
         return $this;
     }
 
-    public function forSomeWeekFromNow($week = 1, $week_start = null, $week_end = null)
+    public function forSomeWeekFromNow($week = 1, $week_start = null)
     {
         if ($week == 0) return $this->forCurrentWeek($week_start);
         else if ($week > 0) $date = Carbon::today()->addWeeks($week);
