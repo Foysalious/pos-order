@@ -23,6 +23,7 @@ class ProductIdAndName extends BaseService
         $response = $this->client->setBaseUrl()->get($url);
         $product_name = $response['skus'][0]['product_name'];
         $product_id = $response['skus'][0]['product_id'];
-        return [$product_name, $product_id];
+        $combination= $response['skus'][0]['combination'];
+        return [$product_name, $product_id,$combination];
     }
 }
