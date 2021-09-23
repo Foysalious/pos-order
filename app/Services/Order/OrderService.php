@@ -286,7 +286,7 @@ class OrderService extends BaseService
                 ->setCustomerId($customer_id)
                 ->setOrderLogType(OrderLogTypes::CUSTOMER)
                 ->update();
-        $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         return $this->success();
     }
 

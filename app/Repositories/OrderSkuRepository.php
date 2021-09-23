@@ -18,5 +18,12 @@ class OrderSkuRepository extends BaseRepository implements OrderSkuRepositoryInt
         })->doesntHave('review')->offset($offset)->limit($limit)->orderBy('created_at',$order)->get();
     }
 
+    public function getNotRatedOrderSkuListOfCustomerCount($partner_id,$customerId, string $order)
+    {
+        return  $this->model->whereHas('order',function($q)use($customerId){
+            $q->where('customer_id',$customerId);
+        })->doesntHave('review')->orderBy('created_at',$order)->get();
+    }
+
 
 }

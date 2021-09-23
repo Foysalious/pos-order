@@ -19,7 +19,7 @@ class DeleteProductFromOrder extends ProductOrder
         $order_skus_details = $this->order->orderSkus()->whereIn('id', $deleted_skus_ids)->get();
         $deleted = $this->order->orderSkus()->whereIn('id', $deleted_skus_ids)->delete();
         if($deleted) $this->stockRefillForDeletedItems($order_skus_details);
-        $this->calculateAndRefundForDeletedProducts($deleted_skus_ids,$order_skus_details);
+        $this->calculateRefundAmountOfDeletedProducts($deleted_skus_ids,$order_skus_details);
         return [
             'refunded_amount' => $this->refunded_amount,
             'refunded_products' => $order_skus_details->map->only(['id','order_id','sku_id','quantity','unit_price'])->all(),
@@ -48,14 +48,12 @@ class DeleteProductFromOrder extends ProductOrder
         }
     }
 
-    private function calculateAndRefundForDeletedProducts(array $deleted_skus_ids, Collection $order_skus_details)
+    private function calculateRefundAmountOfDeletedProducts(array $deleted_skus_ids, Collection $order_skus_details)
     {
         $total_refund = 0;
         foreach ($order_skus_details as $each) {
             if(in_array($each->id,$deleted_skus_ids)) $total_refund = $total_refund + ($each->unit_price * $each->quantity);
         }
-        $this->paymentCreator->setOrderId($this->order->id)->setAmount($total_refund)->setMethod(PaymentMethods::CASH_ON_DELIVERY)
-            ->setTransactionType(TransactionTypes::DEBIT)->create();
         $this->refunded_amount = $total_refund;
     }
 }

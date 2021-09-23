@@ -1,14 +1,12 @@
 <?php namespace App\Services\Order;
 
 use App\Events\OrderUpdated;
-use App\Exceptions\OrderException;
 use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderDiscountRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Models\Order;
-use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Discount\Handler;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
@@ -23,7 +21,6 @@ use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException;
 
 class Updater
 {
@@ -52,7 +49,8 @@ class Updater
                                 OrderPaymentRepositoryInterface $orderPaymentRepository,
                                 protected Handler $discountHandler,
                                 protected PaymentCreator $paymentCreator,
-                                protected CustomerRepositoryInterface $customerRepository
+                                protected CustomerRepositoryInterface $customerRepository,
+                                protected PriceCalculation $orderCalculator
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -348,9 +346,10 @@ class Updater
             if (isset($this->voucher_id)) $this->updateVoucherDiscount();
             $this->updateOrderPayments();
             if (isset($this->discount)) $this->updateDiscount();
+            $this->refundIfEligible();
             $this->createLog($order);
-            DB::commit();
             if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order, $this->orderProductChangeData));
+            DB::commit();
         } catch (Exception $e) {
             DB::rollback();
             throw $e;
@@ -419,11 +418,6 @@ class Updater
         $this->orderLogCreator->setChangedOrderData($this->orderRepositoryInterface->find($this->order->id))->setType($this->getTypeOfChangeLog());
     }
 
-    /**
-     * @throws BaseClientServerError
-     * @throws OrderException
-     * @throws ValidationException
-     */
     private function calculateOrderChangesAndUpdateSkus()
     {
         if ($this->skus === null) {
@@ -536,5 +530,20 @@ class Updater
         $customer = $this->customerRepository->where('id',$this->customer_id)->first();
         $this->delivery_name = $customer->name;
         $this->delivery_mobile = $customer->mobile;
+    }
+
+    private function refundIfEligible()
+    {
+        $this->orderCalculator->setOrder($this->order->refresh());
+        $total_paid = $this->orderCalculator->getPaid();
+        $total_amount = $this->orderCalculator->getDiscountedPrice();
+        if( $total_paid > $total_amount) {
+            $refund_amount = $total_paid - $total_amount;
+            $this->paymentCreator->setOrderId($this->order->id);
+            $this->paymentCreator->setAmount($refund_amount);
+            $this->paymentCreator->setMethod(PaymentMethods::CASH_ON_DELIVERY);
+            $this->paymentCreator->setTransactionType(TransactionTypes::DEBIT);
+            $this->paymentCreator->create();
+        }
     }
 }
