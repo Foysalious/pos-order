@@ -9,9 +9,8 @@ use App\Interfaces\PartnerRepositoryInterface;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Partner;
+use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\ClientServer\SmanagerUser\SmanagerUserServerClient;
-use App\Services\Customer\CustomerCreateDto;
-use App\Services\Customer\CustomerService;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\EMI\Calculations;
 use App\Services\Inventory\InventoryServerClient;
@@ -28,8 +27,6 @@ use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use Spatie\DataTransferObject\DataTransferObject;
-use Spatie\DataTransferObject\Exceptions\UnknownProperties;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Creator
@@ -199,7 +196,7 @@ class Creator
      * @param mixed $discount
      * @return Creator
      */
-    public function setDiscount($discount)
+    public function setDiscount($discount) : Creator
     {
         $this->discount = $discount;
         return $this;
@@ -209,7 +206,7 @@ class Creator
      * @param mixed $isDiscountPercentage
      * @return Creator
      */
-    public function setIsDiscountPercentage($isDiscountPercentage)
+    public function setIsDiscountPercentage($isDiscountPercentage) : Creator
     {
         $this->isDiscountPercentage = $isDiscountPercentage;
         return $this;
@@ -219,7 +216,7 @@ class Creator
      * @param mixed $paidAmount
      * @return Creator
      */
-    public function setPaidAmount($paidAmount)
+    public function setPaidAmount($paidAmount) : Creator
     {
         $this->paidAmount = $paidAmount;
         return $this;
@@ -229,7 +226,7 @@ class Creator
      * @param mixed $paymentMethod
      * @return Creator
      */
-    public function setPaymentMethod($paymentMethod)
+    public function setPaymentMethod($paymentMethod) : Creator
     {
         $this->paymentMethod = $paymentMethod;
         return $this;
@@ -245,7 +242,7 @@ class Creator
         return $this;
     }
 
-    public function setData(array $data)
+    public function setData(array $data) : Creator
     {
         $this->data = $data;
         if (!isset($this->data['payment_method'])) $this->data['payment_method'] = 'cod';
@@ -253,7 +250,7 @@ class Creator
         return $this;
     }
 
-    public function setAddress($address)
+    public function setAddress($address) : Creator
     {
         $this->address = $address;
         return $this;
@@ -275,7 +272,7 @@ class Creator
     /**
      * @return mixed
      * @throws OrderException
-     * @throws ValidationException
+     * @throws ValidationException|BaseClientServerError
      */
     public function create()
     {
@@ -376,7 +373,7 @@ class Creator
         $order_data['sales_channel_id']         = $this->salesChannelId ?: SalesChannelIds::POS;
         $order_data['delivery_charge']          = $this->deliveryCharge ?: 0;
         $order_data['emi_month']                = ($this->paymentMethod == PaymentMethods::EMI && !is_null($this->emiMonth)) ? $this->emiMonth : null;
-        $order_data['status']                   = $this->salesChannelId == SalesChannelIds::POS ? Statuses::COMPLETED : Statuses::PENDING;
+        $order_data['status']                   = ($this->salesChannelId == SalesChannelIds::POS || is_null($this->salesChannelId)) ? Statuses::COMPLETED : Statuses::PENDING;
         $order_data['discount']                 = json_decode($this->discount)->original_amount ?? 0;
         $order_data['is_discount_percentage']   = json_decode($this->discount)->is_percentage ?? 0;
         $order_data['voucher_id']               = $this->voucher_id;
