@@ -2,6 +2,7 @@
 
 use App\Exceptions\OrderException;
 use App\Interfaces\OrderSkuRepositoryInterface;
+use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\Inventory\InventoryServerClient;
@@ -9,7 +10,7 @@ use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\WarrantyUnits;
 use App\Services\Product\StockManager;
 use Illuminate\Support\Facades\App;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Illuminate\Validation\ValidationException;
 
 class Creator
 {
@@ -72,6 +73,11 @@ class Creator
         return $this;
     }
 
+    /**
+     * @throws BaseClientServerError
+     * @throws OrderException
+     * @throws ValidationException
+     */
     public function create()
     {
         $created_skus = [];

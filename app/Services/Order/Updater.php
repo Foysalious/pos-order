@@ -1,12 +1,14 @@
 <?php namespace App\Services\Order;
 
 use App\Events\OrderUpdated;
+use App\Exceptions\OrderException;
 use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderDiscountRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Models\Order;
+use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Discount\Handler;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
@@ -21,6 +23,7 @@ use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class Updater
 {
@@ -416,6 +419,11 @@ class Updater
         $this->orderLogCreator->setChangedOrderData($this->orderRepositoryInterface->find($this->order->id))->setType($this->getTypeOfChangeLog());
     }
 
+    /**
+     * @throws BaseClientServerError
+     * @throws OrderException
+     * @throws ValidationException
+     */
     private function calculateOrderChangesAndUpdateSkus()
     {
         if ($this->skus === null) {

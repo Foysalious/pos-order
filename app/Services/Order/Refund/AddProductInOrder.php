@@ -1,59 +1,39 @@
 <?php namespace App\Services\Order\Refund;
 
-use App\Services\OrderSku\Creator;
+use App\Exceptions\OrderException;
+use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Traits\ModificationFields;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\App;
+use Illuminate\Validation\ValidationException;
 
 class AddProductInOrder extends ProductOrder
 {
     use ModificationFields;
     private array $added_products = [];
 
-    public function update()
-    {
-        return $this->addItemsInOrderSku();
-    }
-
-    private function addItemsInOrderSku()
+    /**
+     * @throws BaseClientServerError
+     * @throws OrderException
+     * @throws ValidationException
+     */
+    public function update(): array
     {
         $all_items = $this->getAddedItems();
-        $null_sku_items = $all_items->where('id','=', null);
-        $sku_items = $all_items->where('id','<>', null)->toArray();
-        if($sku_items) {
-            /** @var Creator $creator */
-            $creator = App::make(Creator::class);
-            $new_order_skus = $creator->setOrder($this->order)->setSkus($sku_items)->create();
-            $this->makeInventorySkus($new_order_skus);
-        }
-        if ($null_sku_items) {
-            $this->addNullSkuItemsInOrderSkus($null_sku_items);
-        }
-
+        $new_order_skus = $this->orderSkuCreator->setOrder($this->order)->setIsPaymentMethodEmi($this->isPaymentMethodEmi)
+            ->setSkus($all_items)->create();
+        $this->addOrderSkusInReturnData($new_order_skus);
         return $this->added_products;
     }
 
-    private function getAddedItems()
+    private function getAddedItems(): array
     {
         $current_products = $this->order->items()->pluck('id');
         $request_products = $this->skus->pluck('id');
         $items = $request_products->diff($current_products);
-        return $this->skus->whereIn('id',$items);
+        return $this->skus->whereIn('id',$items)->toArray();
     }
 
-    private function addNullSkuItemsInOrderSkus(Collection $items)
-    {
-        foreach ($items as $item) {
-            $data['sku_id'] = null;
-            $data['quantity'] = $item->quantity;
-            $data['unit_price'] = $item->price;
-            $data['order_id'] = $this->order->id;
-            $order_sku = $this->orderSkuRepository->create($this->withCreateModificationField($data));
-            $this->added_products [] = $order_sku;
-        }
-    }
-
-    private function makeInventorySkus(array $new_order_skus)
+    private function addOrderSkusInReturnData(array $new_order_skus)
     {
         foreach ($new_order_skus as $each) {
             $this->added_products [] = $each;

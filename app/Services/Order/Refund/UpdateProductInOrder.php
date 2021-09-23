@@ -1,6 +1,7 @@
 <?php namespace App\Services\Order\Refund;
 
 use App\Models\OrderSku;
+use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Refund\Objects\AddRefundTracker;
@@ -92,7 +93,7 @@ class UpdateProductInOrder extends ProductOrder
         $sku_channel = collect($sku_details['sku_channel'])->where('channel_id', $this->order->sales_channel_id)->first();
         $product->setCurrentUnitPrice($sku_channel['price']);
         //handle when price same and quantity does not matter
-        if ($product->isPriceChanged() == false || ($product->isPriceChanged() && $product->isQuantityDecreased())) { //price is same so we are changing the quantity in order_skus
+        if (($product->isPriceChanged() == false) || $product->isQuantityDecreased()) { //price is same so we are changing the quantity in order_skus
             $this->updateOrderSkuQuantityForSamePrice($product, $sku_details);
         }
         //handle when price changed and quantity increased
@@ -120,29 +121,13 @@ class UpdateProductInOrder extends ProductOrder
 
     }
 
-    private function getQuantityChangingDetails($current_product, array $updating_product): array
-    {
-        $data = [];
-        if ($updating_product['quantity'] > $current_product['quantity']) {
-            $data['type'] = self::QUANTITY_INCREASED;
-            $data['value'] = $updating_product['quantity'] - $current_product['quantity'];
-        }
-        else if ($current_product['quantity'] > $updating_product['quantity']) {
-            $data['type'] = self::QUANTITY_DECREASED;
-            $data['value'] = $current_product['quantity'] - $updating_product['quantity'];
-        }
-        return $data;
-    }
-
     private function createOrderSkuForNewPriceQuantity(ProductChangeTracker $product)
     {
         $new_sku['id'] = $product->getSkuId();
         $new_sku['quantity'] = $product->getQuantityChangedValue();
         $new_sku['price'] = $product->getCurrentUnitPrice();
         $new_sku = (object) $new_sku;
-        /** @var Creator $creator */
-        $creator = App::make(Creator::class);
-        $new_order_sku = $creator->setOrder($this->order)->setSkus([$new_sku])->create();
+        $new_order_sku = $this->orderSkuCreator->setIsPaymentMethodEmi($this->isPaymentMethodEmi)->setOrder($this->order)->setSkus([$new_sku])->create();
         $this->added_items_obj[] = $this->makeObject($product,$new_order_sku[0],$new_order_sku[0]);
     }
 
@@ -228,6 +213,9 @@ class UpdateProductInOrder extends ProductOrder
         }
     }
 
+    /**
+     * @throws BaseClientServerError
+     */
     private function updateStockForProductsChanges(array $updated_products, bool|Collection $skus_details)
     {
 
