@@ -81,5 +81,6 @@ class PaymentLinkService extends BaseService
 
             return $this->success('success', $payment_link, 200);
         }
+        return 1;
     }
 }
