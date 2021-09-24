@@ -122,7 +122,7 @@ class OrderService extends BaseService
             ->setDeliveryAddress($request->delivery_address)
             ->setCustomerId($request->customer_id)
             ->setSalesChannelId($request->sales_channel_id)
-            ->setDeliveryCharge($request->delivery_charge)
+            ->setDeliveryCharge($this->calculateDeliveryCharge($request,$partner))
             ->setEmiMonth($request->emi_month)
             ->setSkus($request->skus)
             ->setDiscount($request->discount)
@@ -137,6 +137,17 @@ class OrderService extends BaseService
             dispatch(new WebstoreOrderSms($partner,$order->id));
         }
         return $this->success('Successful', ['order' => ['id' => $order->id]]);
+    }
+
+    private function calculateDeliveryCharge($request, $partner_id)
+    {
+        $data = [
+            'weight' => $request->weight,
+            'delivery_district' => $request->delivery_district,
+            'delivery_thana' => $request->delivery_thana,
+            'partner_id' => $partner_id
+        ];
+        return $this->apiServerClient->setBaseUrl()->post('v2/pos/delivery/delivery-charge',$data)['delivery_charge'];
     }
 
     /**
