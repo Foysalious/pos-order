@@ -20,7 +20,7 @@ class CustomerReviewResource extends JsonResource
             'review_title'          => $this->review_title,
             'review_details'        => $this->review_details,
             'images'                => $this->images,
-            'variation'             => $this->variation(),
+            'variation'             => $this->variation()??null,
             'rating'                => $this->rating,
             'created_at'            => convertTimezone($this->created_at)->format('Y-m-d H:i:s'),
             'product_name'          => 'Floral Embroydary',
