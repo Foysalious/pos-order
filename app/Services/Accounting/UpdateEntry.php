@@ -59,7 +59,7 @@ class UpdateEntry extends BaseEntry
 
         $customer = $this->order->customer->only('id','name');
         $inventory_products = $this->makeInventoryProducts();
-        $data = [
+        return [
             'created_from' => json_encode($this->withBothModificationFields((new RequestIdentification())->get())),
             'credit_account_key' => Sales::SALES_FROM_POS,
             'debit_account_key'  => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ? Accounts::SHEBA_ACCOUNT : Cash::CASH,
@@ -76,7 +76,6 @@ class UpdateEntry extends BaseEntry
             'customer_id' => is_string($customer['id']) ? 5 : $customer['id'],
             'customer_name' => $customer['name'],
         ];
-        return $data;
     }
 
     private function makeInventoryProducts()
@@ -94,8 +93,7 @@ class UpdateEntry extends BaseEntry
         if(isset($this->orderProductChangeData['deleted']['refunded_products'])) {
             $data = array_merge_recursive($this->makeNewAndDeletedProductsData($order_skus,$sku_details, self::FULLY_DELETED_PRODUCT), $data);
         }
-        $data = array_merge_recursive($this->makeRefundExchangedProductsData($order_skus,$sku_details), $data);
-        return $data;
+        return array_merge_recursive($this->makeRefundExchangedProductsData($order_skus,$sku_details), $data);
 
     }
 
@@ -180,7 +178,7 @@ class UpdateEntry extends BaseEntry
         return $note;
     }
 
-    private function getSkuIdsFromProductChangeData()
+    private function getSkuIdsFromProductChangeData(): array
     {
         $sku_ids [] = array_column($this->orderProductChangeData['new'] ?? [], 'sku_id');
         $sku_ids [] = array_column($this->orderProductChangeData['deleted']['refunded_products'] ?? [], 'sku_id');
@@ -195,7 +193,7 @@ class UpdateEntry extends BaseEntry
         return $sku_ids;
     }
 
-    private function splitSkuByBatch($order_sku)
+    private function splitSkuByBatch($order_sku): array
     {
         $order_details = json_decode($order_sku->details, true);
         $batch_detail = $order_details['batch_detail'] ?? [];
@@ -217,7 +215,7 @@ class UpdateEntry extends BaseEntry
 
     }
 
-    private function getBatchWiseCost(AddRefundTracker $item, string $quantity_change_type)
+    private function getBatchWiseCost(AddRefundTracker $item, string $quantity_change_type): array
     {
         $batch_detail = $item->getUpdatedBatchDetail();
         if($quantity_change_type == self::QUANTITY_DECREASED){
@@ -244,7 +242,7 @@ class UpdateEntry extends BaseEntry
 
     }
 
-    private function takeOutFromBatchDetail($quantity, $batch_detail)
+    private function takeOutFromBatchDetail($quantity, $batch_detail): array
     {
         foreach ($batch_detail as $batch) {
             if($batch['quantity'] >= $quantity){
@@ -253,7 +251,7 @@ class UpdateEntry extends BaseEntry
                     'unit_price' => $batch['cost'],
                 ];
                 break;
-            } elseif ($batch['quantity'] < $quantity) {
+            } else {
                 $data [] = [
                     'quantity' => $batch['quantity'],
                     'unit_price' => $batch['cost'],
@@ -265,7 +263,7 @@ class UpdateEntry extends BaseEntry
 
     }
 
-    public function makeAddedRefundedProductsData(array $products, \Illuminate\Database\Eloquent\Collection $order_skus, Collection $sku_details)
+    public function makeAddedRefundedProductsData(array $products, \Illuminate\Database\Eloquent\Collection $order_skus, Collection $sku_details): array
     {
         $data = [];
         /** @var AddRefundTracker $each_product */
