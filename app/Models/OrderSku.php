@@ -29,8 +29,11 @@ class OrderSku extends BaseModel
 
     public function getProductIdAndName($channel_id, $partner_id)
     {
-        /** @var ProductIdAndName $this*/
-        return app(ProductIdAndName::class)->getProductRatingReview($this, $channel_id, $partner_id);
-    }
+
+        /** @var ProductIdAndName $productIdAndName */
+        $productIdAndName =  app(ProductIdAndName::class);
+
+        $productIdAndName = $productIdAndName->getProductRatingReview($this, $channel_id, $partner_id);
+}
 
 }
