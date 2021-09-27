@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class OrderSkuResource extends JsonResource
@@ -9,7 +10,7 @@ class OrderSkuResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @return array
      */
     public function toArray($request)
@@ -24,6 +25,7 @@ class OrderSkuResource extends JsonResource
             'combination' => $sku_details->combination ?? null,
             'quantity' => $this->quantity,
             'unit_price' => $this->unit_price,
+            'is_emi_available' => $this->is_emi_available,
             'unit' => $this->unit,
             'vat_percentage' => $this->vat_percentage,
             'warranty' => $this->warranty,

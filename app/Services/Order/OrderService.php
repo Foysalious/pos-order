@@ -30,6 +30,7 @@ use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\OrderSms\WebstoreOrderSms;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -92,7 +93,7 @@ class OrderService extends BaseService
         else return $this->success('Success', ['orders' => $orderList], 200);
     }
 
-    public function getCustomerOrderList(string $customer_id, $request)
+    public function getCustomerOrderList(string $customer_id, $request): JsonResponse
     {
         $orderBy = $request->filter;
         $order = $request->order;
@@ -114,7 +115,6 @@ class OrderService extends BaseService
      */
     public function store($partner, OrderCreateRequest $request): JsonResponse
     {
-        $skus = is_array($request->skus) ? $request->skus : json_decode($request->skus);
         $order = $this->creator->setPartner($partner)
             ->setCustomerId($request->customer_id)
             ->setDeliveryName($request->delivery_name)
@@ -124,7 +124,7 @@ class OrderService extends BaseService
             ->setSalesChannelId($request->sales_channel_id)
             ->setDeliveryCharge($request->delivery_charge)
             ->setEmiMonth($request->emi_month)
-            ->setSkus($skus)
+            ->setSkus($request->skus)
             ->setDiscount($request->discount)
             ->setPaidAmount($request->paid_amount)
             ->setPaymentMethod($request->payment_method)
@@ -140,7 +140,8 @@ class OrderService extends BaseService
     }
 
     /**
-     * @throws AuthorizationException
+     * @param int $order_id
+     * @return JsonResponse
      */
     public function getWebsotreOrderInvoice(int $order_id): JsonResponse
     {
@@ -164,7 +165,7 @@ class OrderService extends BaseService
     }
 
 
-    public function getOrderDetails($partner_id, $order_id)
+    public function getOrderDetails($partner_id, $order_id): JsonResponse
     {
         $order = $this->orderRepository->getOrderDetailsByPartner($partner_id, $order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
@@ -206,8 +207,9 @@ class OrderService extends BaseService
      * @param $partner_id
      * @param $order_id
      * @return JsonResponse
+     * @throws Exception
      */
-    public function update(OrderUpdateRequest $orderUpdateRequest, $partner_id, $order_id)
+    public function update(OrderUpdateRequest $orderUpdateRequest, $partner_id, $order_id): JsonResponse
     {
         $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if (!$orderDetails) return $this->error("You're not authorized to access this order", 403);
@@ -238,7 +240,7 @@ class OrderService extends BaseService
         return $this->success('Successful', [], 200);
     }
 
-    public function delete($partner_id, $order_id)
+    public function delete($partner_id, $order_id): JsonResponse
     {
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
@@ -266,10 +268,14 @@ class OrderService extends BaseService
                 'sub_domain' => $orderDetails?->partner?->sub_domain
             ]
         ];
-        return $this->success('Success', ['order' => $order], 200);
+        return $this->success('Successful', ['order' => $order]);
     }
 
-    public function updateCustomer($customer_id, $partner_id, $order_id)
+    /**
+     * @throws OrderException
+     * @throws Exception
+     */
+    public function updateCustomer($customer_id, $partner_id, $order_id): JsonResponse
     {
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if (!$order) return $this->error(trans('order.order_not_found'), 404);
@@ -280,7 +286,7 @@ class OrderService extends BaseService
                 ->setCustomerId($customer_id)
                 ->setOrderLogType(OrderLogTypes::CUSTOMER)
                 ->update();
-        $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         return $this->success();
     }
 

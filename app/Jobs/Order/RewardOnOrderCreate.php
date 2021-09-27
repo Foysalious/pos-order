@@ -1,6 +1,8 @@
 <?php namespace App\Jobs\Order;
 
+use App\Services\APIServerClient\ApiServerClient;
 use App\Services\Order\PriceCalculation;
+use App\Services\Reward\RewardService;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Bus\Queueable;
@@ -24,9 +26,7 @@ class RewardOnOrderCreate implements ShouldQueue
         $this->model = $model;
     }
 
-    /**
-     * @throws GuzzleException
-     */
+
     public function handle()
     {
         $order =  $this->model;
@@ -44,13 +44,9 @@ class RewardOnOrderCreate implements ShouldQueue
                 'portal_name' => $order->apiRequest->portal_name
             ]
         ];
-        try{
-            $client = new Client();
-            $client->post(config('sheba.api_url').'/pos/v1/reward/action',$data);
-        }catch (GuzzleException $e){
-            throw $e;
-        }
-
+        /** @var RewardService $rewardService */
+        $rewardService = app(RewardService::class);
+        $rewardService->setData($data)->store();
     }
 
     public function getJobId()

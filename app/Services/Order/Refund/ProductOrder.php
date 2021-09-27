@@ -5,6 +5,7 @@ use App\Models\Order;
 use App\Repositories\OrderSkuRepository;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Updater;
+use App\Services\OrderSku\Creator;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Product\StockManager;
 use Illuminate\Support\Collection;
@@ -33,12 +34,18 @@ abstract class ProductOrder
     /** @var StockManager $stockManager */
     protected StockManager $stockManager;
 
+    protected bool $isPaymentMethodEmi;
+
 
     /**
      * RefundProduct constructor.
      * @param Updater $updater
      */
-    public function __construct(Updater $updater, OrderSkuRepositoryInterface $orderSkuRepository, InventoryServerClient $client, StockManager $stockManager, PaymentCreator $paymentCreator)
+    public function __construct(Updater $updater, OrderSkuRepositoryInterface $orderSkuRepository,
+                                InventoryServerClient $client, StockManager $stockManager,
+                                PaymentCreator $paymentCreator,
+                                protected Creator $orderSkuCreator
+    )
     {
         $this->updater = $updater;
         $this->orderSkuRepository = $orderSkuRepository;
@@ -54,6 +61,7 @@ abstract class ProductOrder
     public function setOrder(Order $order)
     {
         $this->order = $order;
+        $this->isPaymentMethodEmi = !is_null($this->order->emi_month);
         return $this;
     }
 
@@ -78,6 +86,14 @@ abstract class ProductOrder
         $url = 'api/v1/partners/' . $this->order->partner_id . '/skus?skus=' . json_encode($sku_ids) . '&channel_id='.$sales_channel_id;
         $response = $this->client->setBaseUrl()->get($url);
         return $response['skus'];
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPaymentMethodEmi() : bool
+    {
+        return $this->isPaymentMethodEmi;
     }
 
     public abstract function update();

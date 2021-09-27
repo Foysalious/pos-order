@@ -14,7 +14,8 @@ class OrderSkuDetailCreator
     }
 
     /**
-     * @param mixed $skuDetail
+     * @param $skuDetails
+     * @return OrderSkuDetailCreator
      */
     public function setSkuDetails($skuDetails)
     {
@@ -28,27 +29,27 @@ class OrderSkuDetailCreator
         if (empty($batches)) {
             $batch_detail = [];
         }else {
-            $temp_quantity = $this->sku->quantity;
+            $quantity = $this->sku->quantity;
 
             foreach ($batches as $key=>$batch) {
-                $data ['batch_id'] = $batch['batch_id'];
-                $data ['cost'] = $batch['cost'];
+                $batch_data ['batch_id'] = $batch['batch_id'];
+                $batch_data ['cost'] = $batch['cost'];
 
                 $is_last_batch = ($key+1) == count($batches);
-                if($batch['stock'] >= $temp_quantity) { //quantity less than batch size then substitute and break the loop
-                    $data['quantity'] = $temp_quantity;
-                    $batch_detail [] = $data;
-                    break;
-                }
-                if ($temp_quantity > $batch['stock']  && !$is_last_batch ) { //quantity greater than batch size and not last batch then batch zero, quantity decrease from batch size
-                    $data['quantity'] = $batch['stock'];
-                    $temp_quantity = $temp_quantity - $batch['stock'];
-                    $batch_detail [] = $data;
+                if ($quantity > $batch['stock']  && !$is_last_batch ) { //quantity greater than batch size and not last batch then batch zero, quantity decrease from batch size
+                    $batch_data['quantity'] = $batch['stock'];
+                    $quantity = $quantity - $batch['stock'];
+                    $batch_detail [] = $batch_data;
                     continue;
                 }
+                if($batch['stock'] >= $quantity) { //quantity less than batch size then substitute and break the loop
+                    $batch_data['quantity'] = $quantity;
+                    $batch_detail [] = $batch_data;
+                    break;
+                }
                 if ($is_last_batch) { // last batch then stock go negative
-                    $data['quantity'] = $temp_quantity;
-                    $batch_detail [] = $data;
+                    $batch_data['quantity'] = $quantity;
+                    $batch_detail [] = $batch_data;
                 }
             }
         }
