@@ -14,11 +14,12 @@ class OrderSkuResource extends JsonResource
      */
     public function toArray($request)
     {
+        $sku_details = json_decode($this->details);
         return [
             'id' => $this->id,
             'name' => $this->name,
             'sku_id' => $this->sku_id,
-            'details' => json_decode($this->details),
+            'combination' => $sku_details->combination ?? null,
             'quantity' => $this->quantity,
             'unit_price' => $this->unit_price,
             'unit' => $this->unit,

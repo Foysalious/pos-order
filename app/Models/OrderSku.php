@@ -4,13 +4,13 @@ use App\Http\Resources\ProductIdAndName;
 use App\Services\OrderSku\OrderSkuTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use function App\Helper\Formatters\formatTakaToDecimal;
 
 class OrderSku extends BaseModel
 {
     use HasFactory, OrderSkuTrait, SoftDeletes;
 
     protected $guarded = ['id'];
+    protected $casts = ['unit_price' => 'double', 'quantity' => 'double', 'vat_percentage' => 'double'];
 
     public function order()
     {
