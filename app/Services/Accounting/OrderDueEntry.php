@@ -39,8 +39,7 @@ class OrderDueEntry extends BaseEntry
             'entry_at'           => $this->order->updated_at->format('Y-m-d H:i:s'),
         ];
         if(!is_null($customer)) {
-            $data['customer_id'] = $customer['id'];
-            $data['customer_name'] = $customer['name'];
+            $data = array_merge($data,$this->makeCustomerData($customer));
         }
         return $data;
     }
