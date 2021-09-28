@@ -318,14 +318,15 @@ class OrderService extends BaseService
                 $sku = $sku_details->where('id', $item['sku_id'])->first();
                 if ($sku['sku_channel'][0]['price'] != $item['unit_price']) {
                     $flag = false;
-                } else {
-                    $channels_discount = collect($sku['sku_channel'])->where('channel_id', $order->sales_channel_id)->pluck('discounts')->first()[0] ?? [];
-                    $sku_discount = $order_sku_discounts->where('item_id', $item['id'])->first();
-                    if (($channels_discount && $sku_discount) && ($sku_discount->amount != $channels_discount['amount'] || $sku_discount->is_percentage !== $channels_discount['is_amount_percentage'])) {
-                        $flag = false;
-                    }
                 }
-
+                $channels_discount = collect($sku['sku_channel'])->where('channel_id', $order->sales_channel_id)->pluck('discounts')->first()[0] ?? [];
+                $sku_discount = $order_sku_discounts->where('item_id', $item['id'])->first();
+                if (($channels_discount && $sku_discount) && ($sku_discount->amount != $channels_discount['amount'] || $sku_discount->is_percentage !== $channels_discount['is_amount_percentage'])) {
+                    $flag = false;
+                }
+                if ($sku['vat_percentage'] != $item['vat_percentage']) {
+                    $flag = false;
+                }
             }
             $item['is_updatable'] = $flag;
         }
