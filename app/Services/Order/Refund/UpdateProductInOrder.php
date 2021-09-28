@@ -54,10 +54,8 @@ class UpdateProductInOrder extends ProductOrder
                 ->setSkuId($current_product['sku_id'])
                 ->setOldUnitPrice($current_product['unit_price'])
                 ->setCurrentUnitPrice($current_product['unit_price']);
-
-            if ($request_products->contains('id', $current_product['id'])) {
-                $updating_product = $request_products->where('id', $current_product['id'])->first();
-
+            if ($request_products->contains('order_sku_id', $current_product['id'])) {
+                $updating_product = $request_products->where('order_sku_id', $current_product['id'])->first();
                 if ($updating_product['quantity'] != $current_product['quantity']) {
                     $updatedFlag = true;
                     $product_obj->setCurrentQuantity($updating_product['quantity']);
