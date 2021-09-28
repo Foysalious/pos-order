@@ -1,17 +1,22 @@
 <?php namespace App\Jobs\Order;
 
+use App\Services\APIServerClient\ApiServerClient;
 use App\Services\Order\PriceCalculation;
+use App\Services\Reward\RewardService;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\App;
 
-class RewardOnOrderCreate
+class RewardOnOrderCreate implements ShouldQueue
 {
     protected $model;
 
-    use InteractsWithQueue, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private const ORDER_CREATE_REWARD_EVENT_NAME = 'pos_order_create';
     private const ORDER_CREATE_REWARDABLE_TYPE = 'partner';
@@ -19,12 +24,9 @@ class RewardOnOrderCreate
     public function __construct($model)
     {
         $this->model = $model;
-        $this->queue = 'reward';
     }
 
-    /**
-     * @throws GuzzleException
-     */
+
     public function handle()
     {
         $order =  $this->model;
@@ -42,13 +44,9 @@ class RewardOnOrderCreate
                 'portal_name' => $order->apiRequest->portal_name
             ]
         ];
-        try{
-            $client = new Client();
-            $client->post(config('sheba.api_url').'/pos/v1/reward/action',$data);
-        }catch (GuzzleException $e){
-            throw $e;
-        }
-
+        /** @var RewardService $rewardService */
+        $rewardService = app(RewardService::class);
+        $rewardService->setData($data)->store();
     }
 
     public function getJobId()

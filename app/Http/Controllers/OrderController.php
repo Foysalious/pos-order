@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Exceptions\OrderException;
 use App\Http\Reports\InvoiceService;
 use App\Http\Requests\OrderCreateRequest;
 use App\Http\Requests\OrderCustomerRequest;
@@ -163,9 +164,9 @@ class OrderController extends Controller
      * @param $partner
      * @param OrderCreateRequest $request
      * @return JsonResponse
-     * @throws ValidationException
+     * @throws ValidationException|OrderException
      */
-    public function store($partner, OrderCreateRequest $request)
+    public function store($partner, OrderCreateRequest $request): JsonResponse
     {
         return $this->orderService->store($partner, $request);
     }
@@ -376,5 +377,40 @@ class OrderController extends Controller
     public function getOrderinvoice(int $order_id)
     {
         return $this->orderService->getOrderInvoice($order_id);
+    }
+
+
+    /**
+     * @OA\Put(
+     *     path="/api/v1/partners/{partner}/delivery_req_id/{delivery_req_id}/update-status",
+     *     tags={"ORDER API"},
+     *     summary="Order status update by IPN",
+     *     description="Order update under a specific partner",
+     *     @OA\Parameter(name="partner", description="partner id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="delivery_req_id", description="order delivery request id", required=true, in="path", @OA\Schema(type="string")),
+     *     @OA\RequestBody(
+     *          @OA\MediaType(mediaType="application/json",
+     *              @OA\Schema(
+     *                  @OA\Property(property="status", type="string", example="Completed"),
+     *                  )
+     *         )
+     *      ),
+     *     @OA\Response(response="200", description="Successful"),
+     *     @OA\Response(response="404", description="No Order Found"),
+     * )
+     *
+     * @param int $partner_id
+     * @param string $delivery_req_id
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function updateOrderStatusForIpn(int $partner_id, string $delivery_req_id, Request $request)
+    {
+        return $this->orderService->updateOrderStatusForIpn($partner_id, $delivery_req_id, $request);
+    }
+
+    public function logs(int $order_id)
+    {
+        return $this->orderService->logs($order_id);
     }
 }

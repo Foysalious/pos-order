@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Order extends BaseModel
 {
     use HasFactory, SoftDeletes, CascadeSoftDeletes;
-
     protected $guarded = ['id'];
     protected $cascadeDeletes = ['orderSkus', 'discounts', 'logs', 'payments'];
 
@@ -31,7 +30,6 @@ class Order extends BaseModel
     {
         return $this->hasMany(OrderSku::class);
     }
-
     public function payments()
     {
         return $this->hasMany(OrderPayment::class);
@@ -74,7 +72,7 @@ class Order extends BaseModel
 
     public function statusChangeLogs(): HasMany
     {
-        return $this->logs()->where('type', OrderLogTypes::ORDER_STATUS);
+        return $this->logs()->where('type',OrderLogTypes::ORDER_STATUS);
     }
 
     public function paymentMethod()
@@ -83,13 +81,13 @@ class Order extends BaseModel
         return $lastPayment ? $lastPayment->method : 'cod';
     }
 
-    public function isUpdated(): bool
+    public function isUpdated() : bool
     {
         $type = $this->logs->where('type', 'products_and_prices')->first();
         return !empty($type);
     }
 
-    public function getPaymentLinkTarget()
+    public function getPaymentLinkTarget(): Target
     {
         return new Target(TargetType::POS_ORDER, $this->id);
     }

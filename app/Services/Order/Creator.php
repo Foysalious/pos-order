@@ -2,14 +2,19 @@
 
 use App\Events\OrderPlaceTransactionCompleted;
 use App\Exceptions\OrderException;
+use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Interfaces\PartnerRepositoryInterface;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Partner;
+use App\Services\ClientServer\Exceptions\BaseClientServerError;
+use App\Services\ClientServer\SmanagerUser\SmanagerUserServerClient;
 use App\Services\Discount\Constants\DiscountTypes;
+use App\Services\EMI\Calculations;
 use App\Services\Inventory\InventoryServerClient;
+use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Order\Validators\OrderCreateValidator;
@@ -18,11 +23,9 @@ use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\OrderSku\Creator as OrderSkuCreator;
 use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ResponseAPI;
-
-use Illuminate\Support\Collection;
+use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -68,9 +71,18 @@ class Creator
     private OrderSkuCreator $orderSkuCreator;
 
 
-    public function __construct(OrderCreateValidator $createValidator,
-                                OrderRepositoryInterface $orderRepositoryInterface, PartnerRepositoryInterface $partnerRepositoryInterface, InventoryServerClient $client,
-                                OrderSkuRepositoryInterface $orderSkuRepository, PaymentCreator $paymentCreator, DiscountHandler $discountHandler, OrderSkuCreator $orderSkuCreator)
+    public function __construct(
+        OrderCreateValidator $createValidator,
+        OrderRepositoryInterface $orderRepositoryInterface,
+        PartnerRepositoryInterface $partnerRepositoryInterface,
+        InventoryServerClient $client,
+        OrderSkuRepositoryInterface $orderSkuRepository,
+        PaymentCreator $paymentCreator,
+        DiscountHandler $discountHandler,
+        OrderSkuCreator $orderSkuCreator,
+        protected CustomerRepositoryInterface $customerRepository,
+        protected SmanagerUserServerClient $smanagerUserServerClient,
+    )
     {
         $this->createValidator = $createValidator;
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -90,13 +102,23 @@ class Creator
     }
 
     /**
-     * @param int|null $customerId
+     * @param string|null $customerId
      * @return Creator
      */
     public function setCustomerId(?string $customerId): Creator
     {
         $this->customerId = $customerId;
-        $this->customer = Customer::find($customerId);
+        $this->resolveCustomer();
+        return $this;
+    }
+
+    /**
+     * @param Customer|null $customer
+     * @return Creator
+     */
+    private function setCustomer(?Customer $customer): Creator
+    {
+        $this->customer = $customer;
         return $this;
     }
 
@@ -161,12 +183,12 @@ class Creator
     }
 
     /**
-     * @param array $skus
+     * @param string $skus
      * @return Creator
      */
-    public function setSkus(array $skus): Creator
+    public function setSkus(string $skus): Creator
     {
-        $this->skus = $skus;
+        $this->skus = json_decode($skus);
         return $this;
     }
 
@@ -174,7 +196,7 @@ class Creator
      * @param mixed $discount
      * @return Creator
      */
-    public function setDiscount($discount)
+    public function setDiscount($discount) : Creator
     {
         $this->discount = $discount;
         return $this;
@@ -184,7 +206,7 @@ class Creator
      * @param mixed $isDiscountPercentage
      * @return Creator
      */
-    public function setIsDiscountPercentage($isDiscountPercentage)
+    public function setIsDiscountPercentage($isDiscountPercentage) : Creator
     {
         $this->isDiscountPercentage = $isDiscountPercentage;
         return $this;
@@ -194,7 +216,7 @@ class Creator
      * @param mixed $paidAmount
      * @return Creator
      */
-    public function setPaidAmount($paidAmount)
+    public function setPaidAmount($paidAmount) : Creator
     {
         $this->paidAmount = $paidAmount;
         return $this;
@@ -204,7 +226,7 @@ class Creator
      * @param mixed $paymentMethod
      * @return Creator
      */
-    public function setPaymentMethod($paymentMethod)
+    public function setPaymentMethod($paymentMethod) : Creator
     {
         $this->paymentMethod = $paymentMethod;
         return $this;
@@ -220,7 +242,7 @@ class Creator
         return $this;
     }
 
-    public function setData(array $data)
+    public function setData(array $data) : Creator
     {
         $this->data = $data;
         if (!isset($this->data['payment_method'])) $this->data['payment_method'] = 'cod';
@@ -228,7 +250,7 @@ class Creator
         return $this;
     }
 
-    public function setAddress($address)
+    public function setAddress($address) : Creator
     {
         $this->address = $address;
         return $this;
@@ -250,7 +272,7 @@ class Creator
     /**
      * @return mixed
      * @throws OrderException
-     * @throws ValidationException
+     * @throws ValidationException|BaseClientServerError
      */
     public function create()
     {
@@ -258,7 +280,8 @@ class Creator
             DB::beginTransaction();
             $order_data = $this->makeOrderData();
             $order = $this->orderRepositoryInterface->create($order_data);
-            $this->orderSkuCreator->setOrder($order)->setSkus($this->skus)->create();
+            $this->orderSkuCreator->setOrder($order)->setIsPaymentMethodEmi($this->paymentMethod == PaymentMethods::EMI)
+                ->setSkus($this->skus)->create();
             $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($order_data);
             if ($this->discountHandler->hasDiscount()) {
                 $this->discountHandler->create();
@@ -274,32 +297,40 @@ class Creator
             if($this->hasDueError($order)){
                 throw new OrderException("Can not make due order without customer", 421);
             }
+            if($this->paymentMethod == PaymentMethods::EMI) {
+                $this->calculateEmiChargesAndSave($order, new PriceCalculation());
+            }
             DB::commit();
             if ($order) event(new OrderPlaceTransactionCompleted($order));
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollback();
             throw $e;
         }
          return $order;
     }
 
-    private function resolveCustomerId()
+    private function resolveCustomer(): Creator
     {
-        if ($this->customer) {
-            return $this->customer->id;
-        }
-        if (!isset($this->customerId) || !$this->customerId) {
-            return null;
-        }
-        $customer = Customer::find($this->customerId);
+        if (!isset($this->customerId)) return $this->setCustomer(null);
+        $customer = $this->customerRepository->find($this->customerId);
         if (!$customer) {
-            throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Exists.");
+            $customer = $this->smanagerUserServerClient->setBaseUrl()->get('/api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId);
+            if (!$customer) throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Exists.");
+            $data = [
+                'id' => $customer['_id'],
+                'name' => $customer['name'],
+                'email' => $customer['email'],
+                'partner_id' => $customer['partner_id'],
+                'mobile' => $customer['mobile'],
+                'pro_pic' => $customer['pro_pic'],
+            ];
+            $customer = $this->customerRepository->create($data);
         }
         if ($customer->partner_id != $this->partner->id) {
             throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Belong To Partner #" . $this->partner->id);
         }
-        return $this->customerId;
+        return $this->setCustomer($customer);
     }
 
     private function resolvePartnerWiseOrderId(Partner $partner)
@@ -330,19 +361,19 @@ class Creator
         return null;
     }
 
-    private function makeOrderData()
+    private function makeOrderData(): array
     {
         $order_data = [];
         $order_data['partner_id']               = $this->partner->id;
         $order_data['partner_wise_order_id']    = $this->resolvePartnerWiseOrderId($this->partner);
-        $order_data['customer_id']              = $this->resolveCustomerId();
+        $order_data['customer_id']              = $this->customer->id ?? null;
         $order_data['delivery_name']            = $this->resolveDeliveryName();
         $order_data['delivery_mobile']          = $this->resolveDeliveryMobile();
         $order_data['delivery_address']         = $this->resolveDeliveryAddress();
         $order_data['sales_channel_id']         = $this->salesChannelId ?: SalesChannelIds::POS;
         $order_data['delivery_charge']          = $this->deliveryCharge ?: 0;
-        $order_data['emi_month']                = $this->emiMonth ?? null;
-        $order_data['status']                   = $this->salesChannelId == SalesChannelIds::POS ? Statuses::COMPLETED : Statuses::PENDING;
+        $order_data['emi_month']                = ($this->paymentMethod == PaymentMethods::EMI && !is_null($this->emiMonth)) ? $this->emiMonth : null;
+        $order_data['status']                   = ($this->salesChannelId == SalesChannelIds::POS || is_null($this->salesChannelId)) ? Statuses::COMPLETED : Statuses::PENDING;
         $order_data['discount']                 = json_decode($this->discount)->original_amount ?? 0;
         $order_data['is_discount_percentage']   = json_decode($this->discount)->is_percentage ?? 0;
         $order_data['voucher_id']               = $this->voucher_id;
@@ -359,5 +390,14 @@ class Creator
             return true;
         }
         return false;
+    }
+
+    private function calculateEmiChargesAndSave($order, PriceCalculation $price_calculator)
+    {
+        $total_amount = $price_calculator->setOrder($order)->getDiscountedPrice();
+        $data = Calculations::getMonthData($total_amount, (int)$order->emi_month, false);
+        $order->interest = $data['total_interest'];
+        $order->bank_transaction_charge = $data['bank_transaction_fee'];
+        $order->save();
     }
 }

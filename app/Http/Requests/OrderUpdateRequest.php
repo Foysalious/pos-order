@@ -22,7 +22,7 @@ class OrderUpdateRequest extends FormRequest
     public function rules()
     {
         return [
-            'skus' => 'sometimes|string',
+            'skus' => 'sometimes|string|json',
             'sales_channel_id' => 'sometimes|string',
             'interest' => 'sometimes|string',
             'delivery_charge' => 'sometimes|numeric',

@@ -1,12 +1,11 @@
 <?php namespace App\Repositories;
 
+use App\Helper\TimeFrame;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Order;
 use App\Services\APIServerClient\ApiServerClient;
-use App\Services\Order\Constants\OrderTypes;
-use App\Services\Order\Constants\PaymentStatuses;
-use App\Services\Order\Constants\Statuses;
-use App\Services\Order\OrderFilter;
+use App\Services\Order\Constants\SalesChannelIds;
+use Illuminate\Support\Facades\DB;
 
 class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 {
@@ -39,5 +38,20 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
         return $this->model->where('partner_id', $partnerId)->with(['orderSkus' => function($q) {
             $q->with('discount');
         }, 'discounts', 'payments'])->find($orderId);
+    }
+
+    public function getOrderStatusStatByPartner(int $partnerId)
+    {
+        return $this->model->where('partner_id', $partnerId)
+            ->select(DB::raw('count(*) as count, status'))
+            ->groupBy('status')->get();
+    }
+
+    public function getOrdersBetweenDatesByPartner(int $partnerId, TimeFrame $time_frame, $salesChannelIds = [SalesChannelIds::POS, SalesChannelIds::WEBSTORE])
+    {
+        return $this->model->where('partner_id', $partnerId)->whereIn('sales_channel_id', $salesChannelIds)
+            ->whereBetween('created_at', $time_frame->getArray())
+            ->with('orderSkus', 'payments', 'discounts')
+            ->get();
     }
 }

@@ -29,3 +29,4 @@ return [
         'valid_months'        => array_map(function ($item) { return $item['month']; }, $breakdowns)
     ]
 ];
+

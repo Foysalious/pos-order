@@ -1,6 +1,8 @@
 <?php namespace App\Services\OrderSku;
 
+use App\Exceptions\OrderException;
 use App\Interfaces\OrderSkuRepositoryInterface;
+use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\Inventory\InventoryServerClient;
@@ -8,7 +10,7 @@ use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\WarrantyUnits;
 use App\Services\Product\StockManager;
 use Illuminate\Support\Facades\App;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Illuminate\Validation\ValidationException;
 
 class Creator
 {
@@ -23,6 +25,8 @@ class Creator
 
     /** @var StockManager $stockManager */
     private StockManager $stockManager;
+
+    private bool $isPaymentMethodEmi;
 
     /**
      * Creator constructor.
@@ -59,6 +63,21 @@ class Creator
         return $this;
     }
 
+    /**
+     * @param bool $isPaymentMethodEmi
+     * @return Creator
+     */
+    public function setIsPaymentMethodEmi(bool $isPaymentMethodEmi): Creator
+    {
+        $this->isPaymentMethodEmi = $isPaymentMethodEmi;
+        return $this;
+    }
+
+    /**
+     * @throws BaseClientServerError
+     * @throws OrderException
+     * @throws ValidationException
+     */
     public function create()
     {
         $created_skus = [];
@@ -71,6 +90,7 @@ class Creator
         if(count($sku_ids) > 0){
             $sku_details = collect($this->getSkuDetails($sku_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
         }
+        if($this->isPaymentMethodEmi) $this->checkEmiAvailabilityForProducts($skus, $sku_details);
         $this->checkProductAndStockAvailability($skus,$sku_details);
         foreach ($skus as $sku) {
             $sku_data['order_id'] = $this->order->id;
@@ -88,6 +108,7 @@ class Creator
             $sku_data['discount']['discount'] = $sku->discount ?? 0;
             $sku_data['discount']['is_discount_percentage'] = $sku->is_discount_percentage ?? null;
             $sku_data['discount']['cap'] = $sku->cap ?? null;
+            $sku_data['is_emi_available'] = $this->isPaymentMethodEmi;
             $order_sku = $this->orderSkuRepository->create($sku_data);
             $created_skus [] = $order_sku;
             $this->discountHandler->setType(DiscountTypes::SKU)->setOrder($this->order)->setSkuData($sku_data)->setOrderSkuId($order_sku->id);
@@ -102,22 +123,25 @@ class Creator
         return $created_skus;
     }
 
-    private function getSkuDetails($sku_ids, $sales_channel_id)
+    public function getSkuDetails($sku_ids, $sales_channel_id)
     {
         $url = 'api/v1/partners/' . $this->order->partner_id . '/skus?skus=' . json_encode($sku_ids) . '&channel_id='.$sales_channel_id;
         $response = $this->client->setBaseUrl()->get($url);
         return $response['skus'];
     }
 
+    /**
+     * @throws OrderException
+     */
     private function checkProductAndStockAvailability($skus, $sku_details)
     {
         foreach ($skus as $sku) {
             if ($sku->id != null && !isset($sku_details[$sku->id]))
-                throw new NotFoundHttpException("Product #" . $sku->id . " Doesn't Exists.");
+                throw new OrderException("Product #" . $sku->id . " Doesn't Exists.");
             if($sku->id == null || ($this->order->sales_channel_id == SalesChannelIds::POS))
                 continue;
             if ($sku_details[$sku->id]['stock'] < $sku->quantity)
-                throw new NotFoundHttpException("Product #" . $sku->id . " Not Enough Stock");
+                throw new OrderException("Product #" . $sku->id . " Not Enough Stock");
         }
     }
 
@@ -130,6 +154,26 @@ class Creator
             $creator = App::make(OrderSkuDetailCreator::class);
             $data = $creator->setSku($sku)->setSkuDetails($sku_details)->create();
             return json_encode($data);
+        }
+    }
+
+    /**
+     * @throws OrderException
+     */
+    private function checkEmiAvailabilityForProducts(array $skus, array $sku_details)
+    {
+        foreach ($skus as $sku) {
+            if(!is_null($sku->id)) {
+                $sku_detail = $sku_details[$sku->id];
+                $emi_availability = $sku_detail['sku_channel'][0]['is_emi_available'] ?? false;
+                if ($emi_availability == false) {
+                    throw new OrderException("Emi is not available for Product #" . $sku->id);
+                }
+            } else {
+                if($sku->price < config('emi.minimum_emi_amount')) {
+                    throw new OrderException("Emi is not available for quick sell amount " . $sku->price);
+                }
+            }
         }
     }
 }

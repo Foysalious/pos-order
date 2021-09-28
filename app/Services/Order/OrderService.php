@@ -30,7 +30,10 @@ use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\OrderSms\WebstoreOrderSms;
+use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Webstore\Order\Statuses as WebStoreStatuses;
@@ -47,18 +50,19 @@ class OrderService extends BaseService
      */
     private InvoiceService $invoiceService;
 
-    public function __construct(OrderRepositoryInterface        $orderRepository,
-                                OrderSkusRepositoryInterface    $orderSkusRepositoryInterface,
-                                CustomerRepositoryInterface     $customerRepository,
-                                Updater                         $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
-                                Creator                         $creator,
-                                protected InventoryServerClient $client,
-                                protected ApiServerClient       $apiServerClient,
-                                protected AccessManager         $accessManager,
-                                protected OrderFilter           $orderSearch,
-                                protected StatusChanger $orderStatusChanger,
-                                protected StockRefillerForCanceledOrder $stockRefillerForCanceledOrder,
-                                InvoiceService                  $invoiceService
+    public function __construct(
+        OrderRepositoryInterface $orderRepository,
+        OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
+        CustomerRepositoryInterface $customerRepository,
+        Updater $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
+        Creator $creator,
+        protected InventoryServerClient $client,
+        protected ApiServerClient $apiServerClient,
+        protected AccessManager $accessManager,
+        protected OrderFilter $orderSearch,
+        protected StatusChanger $orderStatusChanger,
+        protected StockRefillerForCanceledOrder $stockRefillerForCanceledOrder,
+        InvoiceService $invoiceService
     )
     {
         $this->orderRepository = $orderRepository;
@@ -90,7 +94,7 @@ class OrderService extends BaseService
         else return $this->success('Success', ['orders' => $orderList], 200);
     }
 
-    public function getCustomerOrderList(string $customer_id, $request)
+    public function getCustomerOrderList(string $customer_id, $request): JsonResponse
     {
         $orderBy = $request->filter;
         $order = $request->order;
@@ -102,7 +106,6 @@ class OrderService extends BaseService
         return $this->success('Successful', ['order_count' => $orderCount, 'orders' => $orderList], 200);
     }
 
-
     /**
      * @param $partner
      * @param OrderCreateRequest $request
@@ -110,9 +113,8 @@ class OrderService extends BaseService
      * @throws ValidationException
      * @throws OrderException
      */
-    public function store($partner, OrderCreateRequest $request)
+    public function store($partner, OrderCreateRequest $request): JsonResponse
     {
-        $skus = is_array($request->skus) ? $request->skus : json_decode($request->skus);
         $order = $this->creator->setPartner($partner)
             ->setCustomerId($request->customer_id)
             ->setDeliveryName($request->delivery_name)
@@ -122,28 +124,28 @@ class OrderService extends BaseService
             ->setSalesChannelId($request->sales_channel_id)
             ->setDeliveryCharge($request->delivery_charge)
             ->setEmiMonth($request->emi_month)
-            ->setSkus($skus)
+            ->setSkus($request->skus)
             ->setDiscount($request->discount)
             ->setPaidAmount($request->paid_amount)
             ->setPaymentMethod($request->payment_method)
             ->setVoucherId($request->voucher_id)
             ->setApiRequest($request->api_request->id)
             ->create();
-        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE)
-        {
+        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) {
             //dispatch(new OrderPlacePushNotification($order));
-            dispatch(new WebstoreOrderSms($partner,$order->id));
+            dispatch(new WebstoreOrderSms($partner, $order->id));
         }
         return $this->success('Successful', ['order' => ['id' => $order->id]]);
     }
 
     /**
-     * @throws AuthorizationException
+     * @param int $order_id
+     * @return JsonResponse
      */
     public function getWebsotreOrderInvoice(int $order_id): JsonResponse
     {
         $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::WEBSTORE)->find($order_id);
-        if (!$order) return $this->error('No Order Found',404);
+        if (!$order) return $this->error('No Order Found', 404);
         if ($order->invoice == null) {
             return $this->invoiceService->setOrder($order_id)->generateInvoice();
         }
@@ -153,7 +155,7 @@ class OrderService extends BaseService
     public function getOrderInvoice(int $order_id): JsonResponse
     {
         $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::POS)->find($order_id);
-        if (!$order) return $this->error('No Order Found',404);
+        if (!$order) return $this->error('No Order Found', 404);
         if ($order->invoice == null) {
             return $this->invoiceService->setOrder($order_id)->generateInvoice();
         }
@@ -162,7 +164,7 @@ class OrderService extends BaseService
     }
 
 
-    public function getOrderDetails($partner_id, $order_id)
+    public function getOrderDetails($partner_id, $order_id): JsonResponse
     {
         $order = $this->orderRepository->getOrderDetailsByPartner($partner_id, $order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
@@ -177,7 +179,7 @@ class OrderService extends BaseService
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new CustomerOrderDetailsResource($order);
         $statusHistory = $this->getStatusHistory($order);
-        return $this->success('Successful', ['order' => $resource,'status_history' => $statusHistory]);
+        return $this->success('Successful', ['order' => $resource, 'status_history' => $statusHistory]);
     }
 
     private function getStatusHistory($order): array
@@ -190,9 +192,9 @@ class OrderService extends BaseService
         $mapped_status = config('mapped_status');
         $logs->each(function ($log) use (&$statusHistory, $order, $mapped_status) {
             $toStatus = json_decode($log->new_value, true)['to'];
-            if (in_array($toStatus, [Statuses::PROCESSING, Statuses::SHIPPED, Statuses::COMPLETED])){
+            if (in_array($toStatus, [Statuses::PROCESSING, Statuses::SHIPPED, Statuses::COMPLETED])) {
                 $temp['status'] = $mapped_status[$toStatus];
-                $temp['time_stamp'] =  convertTimezone($log->created_at)->format('Y-m-d H:i:s');
+                $temp['time_stamp'] = convertTimezone($log->created_at)->format('Y-m-d H:i:s');
                 array_push($statusHistory, $temp);
             }
         });
@@ -204,8 +206,9 @@ class OrderService extends BaseService
      * @param $partner_id
      * @param $order_id
      * @return JsonResponse
+     * @throws Exception
      */
-    public function update(OrderUpdateRequest $orderUpdateRequest, $partner_id, $order_id)
+    public function update(OrderUpdateRequest $orderUpdateRequest, $partner_id, $order_id): JsonResponse
     {
         $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if (!$orderDetails) return $this->error("You're not authorized to access this order", 403);
@@ -236,7 +239,7 @@ class OrderService extends BaseService
         return $this->success('Successful', [], 200);
     }
 
-    public function delete($partner_id, $order_id)
+    public function delete($partner_id, $order_id): JsonResponse
     {
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
@@ -264,10 +267,14 @@ class OrderService extends BaseService
                 'sub_domain' => $orderDetails?->partner?->sub_domain
             ]
         ];
-        return $this->success('Success', ['order' => $order], 200);
+        return $this->success('Successful', ['order' => $order]);
     }
 
-    public function updateCustomer($customer_id, $partner_id, $order_id)
+    /**
+     * @throws OrderException
+     * @throws Exception
+     */
+    public function updateCustomer($customer_id, $partner_id, $order_id): JsonResponse
     {
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if (!$order) return $this->error(trans('order.order_not_found'), 404);
@@ -278,7 +285,7 @@ class OrderService extends BaseService
                 ->setCustomerId($customer_id)
                 ->setOrderLogType(OrderLogTypes::CUSTOMER)
                 ->update();
-        $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         return $this->success();
     }
 
@@ -307,19 +314,19 @@ class OrderService extends BaseService
         $order_sku_discounts = $order->discounts->where('type', DiscountTypes::SKU);
         foreach ($order_resource['items'] as &$item) {
             $flag = true;
-           if ($item['sku_id'] !== null) {
+            if ($item['sku_id'] !== null) {
                 $sku = $sku_details->where('id', $item['sku_id'])->first();
-                if ($sku['sku_channel'][0]['price'] != $item['unit_price']){
+                if ($sku['sku_channel'][0]['price'] != $item['unit_price']) {
                     $flag = false;
                 } else {
                     $channels_discount = collect($sku['sku_channel'])->where('channel_id', $order->sales_channel_id)->pluck('discounts')->first()[0] ?? [];
                     $sku_discount = $order_sku_discounts->where('item_id', $item['id'])->first();
-                    if(($channels_discount && $sku_discount) && ($sku_discount->amount != $channels_discount['amount'] || $sku_discount->is_percentage !== $channels_discount['is_amount_percentage'])) {
+                    if (($channels_discount && $sku_discount) && ($sku_discount->amount != $channels_discount['amount'] || $sku_discount->is_percentage !== $channels_discount['is_amount_percentage'])) {
                         $flag = false;
                     }
                 }
 
-           }
+            }
             $item['is_updatable'] = $flag;
         }
         return $order_resource;
@@ -327,15 +334,90 @@ class OrderService extends BaseService
 
     private function getSkuDetails($sku_ids, $order)
     {
-        $url = 'api/v1/partners/' . $order->partner_id . '/skus?skus=' . json_encode($sku_ids->toArray()) . '&channel_id='.$order->sales_channel_id;
+        $url = 'api/v1/partners/' . $order->partner_id . '/skus?skus=' . json_encode($sku_ids->toArray()) . '&channel_id=' . $order->sales_channel_id;
         $sku_details = $this->client->setBaseUrl()->get($url)['skus'] ?? [];
         return collect($sku_details);
     }
 
     public function updateOrderStatus($partner_id, $order_id, OrderStatusUpdateRequest $request)
     {
-        $order = $this->orderRepository->where('id', $order_id)->where('partner_id',$partner_id)->first();
+        $order = $this->orderRepository->where('id', $order_id)->where('partner_id', $partner_id)->first();
         if (!$order) return $this->error("No Order Found", 404);
         $this->orderStatusChanger->setOrder($order)->setStatus($request->status)->changeStatus();
+        return $this->success('Successful', [], 200);
+    }
+
+    public function updateOrderStatusForIpn(int $partner_id, string $delivery_req_id, Request $request)
+    {
+        $request->validate([
+            'status' => Rule::in(Statuses::COMPLETED)
+        ]);
+        $order = $this->orderRepository->where('delivery_request_id', $delivery_req_id)->where('partner_id', $partner_id)->first();
+        if (!$order) return $this->error("No Order Found", 404);
+        $this->orderStatusChanger->setDeliveryRequestId($delivery_req_id)->setStatus(Statuses::COMPLETED)->setOrder($order)->updateStatusForIpn();
+        return $this->success('Successful', []);
+    }
+
+    public function logs(int $order_id)
+    {
+        $logs = [
+            [
+                'log_type' => 'due_bill',
+                'log_type_show_name' => ['bn' => 'বাকি বিল', 'en' => 'Due Bill'],
+                'old_value' => null,
+                'new_value' => 500.00,
+                'created_at' => '2020-01-05 12:45:05',
+                'created_by_name' => 'Resource - Abdullah Arnab'
+            ],
+            [
+                'log_type' => 'payments',
+                'log_type_show_name' => ['bn' => 'নগদ  গ্রহণ', 'en' => 'Cash Collection'],
+                'old_value' => null,
+                'new_value' => 500.00,
+                'created_at' => '2020-01-05 12:46:05',
+                'created_by_name' => 'Resource - Abdullah Arnab'
+            ],
+            [
+                'log_type' => 'payments',
+                'log_type_show_name' => ['bn' => 'অনলাইন গ্রহন', 'en' => 'Online Collection'],
+                'old_value' => null,
+                'new_value' => 500.00,
+                'created_at' => '2020-01-05 12:47:05',
+                'created_by_name' => 'Resource - Abdullah Arnab'
+            ],
+            [
+                'log_type' => 'payable',
+                'log_type_show_name' => ['bn' => 'অর্ডার আপডেট (Increase)', 'en' => 'Order Update (Increase)'],
+                'old_value' => null,
+                'new_value' => 500.00,
+                'created_at' => '2020-01-05 12:48:05',
+                'created_by_name' => 'Resource - Abdullah Arnab'
+            ],
+            [
+                'log_type' => 'payable',
+                'log_type_show_name' => ['bn' => 'অর্ডার আপডেট (Decrease)', 'en' => 'Order Update (Decrease)'],
+                'old_value' => null,
+                'new_value' => 500.00,
+                'created_at' => '2020-01-05 12:49:05',
+                'created_by_name' => 'Resource - Abdullah Arnab'
+            ],
+            [
+                'log_type' => 'emi',
+                'log_type_show_name' => ['bn' => 'কিস্তি - ৩ মাস', 'en' => 'Emi - 3 Months'],
+                'old_value' => null,
+                'new_value' => 5000.00,
+                'created_at' => '2020-01-05 12:45:05',
+                'created_by_name' => 'Resource - Abdullah Arnab'
+            ],
+            [
+                'log_type' => 'status_update',
+                'log_type_show_name' => ['bn' => 'স্ট্যাটাস আপডেট ', 'en' => 'Status Update'],
+                'old_value' => Statuses::PROCESSING,
+                'new_value' => Statuses::SHIPPED,
+                'created_at' => '2020-01-05 12:50:05',
+                'created_by_name' => 'Resource - Abdullah Arnab'
+            ]
+        ];
+        return $this->success('Successful', ['logs' => $logs], 200);
     }
 }

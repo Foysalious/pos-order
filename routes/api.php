@@ -3,6 +3,7 @@
 use App\Http\Controllers\DataMigrationController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\Webstore\ReviewController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -49,10 +50,12 @@ Route::group(['prefix' => 'v1'], function () {
         Route::apiResource('partners.migrate', DataMigrationController::class)->only('store');
         Route::group(['prefix' => 'partners'], function () {
             Route::group(['prefix' => '{partner}'], function () {
+                Route::get('statistics', [StatisticsController::class, 'index']);
                 Route::group(['prefix' => 'orders'], function () {
                     Route::group(['prefix' => '{order}'], function () {
                         Route::get('delivery-info', [OrderController::class, 'getDeliveryInfo']);
                         Route::put('update-customer', [OrderController::class, 'updateCustomer']);
+                        Route::get('logs', [OrderController::class, 'logs']);
                     });
                 });
             });
@@ -70,5 +73,6 @@ Route::group(['prefix' => 'v1'], function () {
         Route::get('/partners/{partner_id}/customers/{customer_id}/orders', [CustomerController::class, 'getOrdersByDateWise']);
         Route::get('partners/{partner_id}/reports/product-wise', [ReportController::class, 'getProductWise']);
         Route::get('partners/{partner_id}/reports/customer-wise', [ReportController::class, 'getCustomerWise']);
+        Route::put('partners/{partner_id}/delivery_req_id/{delivery_req_id}/update-status', [OrderController::class, 'updateOrderStatusForIpn']);
     });
 });

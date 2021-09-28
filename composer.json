@@ -23,7 +23,8 @@
         "mpdf/mpdf": "^8.0",
         "predis/predis": "^1.1",
         "sentry/sentry-laravel": "^2.8",
-        "spatie/data-transfer-object": "^3.3"
+        "spatie/data-transfer-object": "^3.3",
+        "ext-calendar": "*"
     },
     "require-dev": {
         "facade/ignition": "^2.5",
