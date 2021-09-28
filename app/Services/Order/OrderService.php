@@ -341,7 +341,7 @@ class OrderService extends BaseService
         return collect($sku_details);
     }
 
-    public function updateOrderStatus($partner_id, $order_id, OrderStatusUpdateRequest $request)
+    public function updateOrderStatus($partner_id, $order_id, OrderStatusUpdateRequest $request): JsonResponse
     {
         $order = $this->orderRepository->where('id', $order_id)->where('partner_id', $partner_id)->first();
         if (!$order) return $this->error("No Order Found", 404);
@@ -349,7 +349,7 @@ class OrderService extends BaseService
         return $this->success('Successful', [], 200);
     }
 
-    public function updateOrderStatusForIpn(int $partner_id, string $delivery_req_id, Request $request)
+    public function updateOrderStatusForIpn(int $partner_id, string $delivery_req_id, Request $request): JsonResponse
     {
         $request->validate([
             'status' => Rule::in(Statuses::COMPLETED)
@@ -423,7 +423,7 @@ class OrderService extends BaseService
         return $this->success('Successful', ['logs' => $logs], 200);
     }
 
-    private function addOrderUpdatableFlag($order)
+    private function addOrderUpdatableFlag($order): bool
     {
         $delivery_integrated = !is_null($order->delivery_request_id);
         if($order->sales_channel_id == SalesChannelIds::POS) {
