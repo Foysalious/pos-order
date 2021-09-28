@@ -50,18 +50,19 @@ class OrderService extends BaseService
      */
     private InvoiceService $invoiceService;
 
-    public function __construct(OrderRepositoryInterface        $orderRepository,
-                                OrderSkusRepositoryInterface    $orderSkusRepositoryInterface,
-                                CustomerRepositoryInterface     $customerRepository,
-                                Updater                         $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
-                                Creator                         $creator,
-                                protected InventoryServerClient $client,
-                                protected ApiServerClient       $apiServerClient,
-                                protected AccessManager         $accessManager,
-                                protected OrderFilter           $orderSearch,
-                                protected StatusChanger $orderStatusChanger,
-                                protected StockRefillerForCanceledOrder $stockRefillerForCanceledOrder,
-                                InvoiceService                  $invoiceService
+    public function __construct(
+        OrderRepositoryInterface $orderRepository,
+        OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
+        CustomerRepositoryInterface $customerRepository,
+        Updater $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
+        Creator $creator,
+        protected InventoryServerClient $client,
+        protected ApiServerClient $apiServerClient,
+        protected AccessManager $accessManager,
+        protected OrderFilter $orderSearch,
+        protected StatusChanger $orderStatusChanger,
+        protected StockRefillerForCanceledOrder $stockRefillerForCanceledOrder,
+        InvoiceService $invoiceService
     )
     {
         $this->orderRepository = $orderRepository;
@@ -105,7 +106,6 @@ class OrderService extends BaseService
         return $this->success('Successful', ['order_count' => $orderCount, 'orders' => $orderList], 200);
     }
 
-
     /**
      * @param $partner
      * @param OrderCreateRequest $request
@@ -131,10 +131,9 @@ class OrderService extends BaseService
             ->setVoucherId($request->voucher_id)
             ->setApiRequest($request->api_request->id)
             ->create();
-        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE)
-        {
+        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) {
             //dispatch(new OrderPlacePushNotification($order));
-            dispatch(new WebstoreOrderSms($partner,$order->id));
+            dispatch(new WebstoreOrderSms($partner, $order->id));
         }
         return $this->success('Successful', ['order' => ['id' => $order->id]]);
     }
@@ -146,7 +145,7 @@ class OrderService extends BaseService
     public function getWebsotreOrderInvoice(int $order_id): JsonResponse
     {
         $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::WEBSTORE)->find($order_id);
-        if (!$order) return $this->error('No Order Found',404);
+        if (!$order) return $this->error('No Order Found', 404);
         if ($order->invoice == null) {
             return $this->invoiceService->setOrder($order_id)->generateInvoice();
         }
@@ -156,7 +155,7 @@ class OrderService extends BaseService
     public function getOrderInvoice(int $order_id): JsonResponse
     {
         $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::POS)->find($order_id);
-        if (!$order) return $this->error('No Order Found',404);
+        if (!$order) return $this->error('No Order Found', 404);
         if ($order->invoice == null) {
             return $this->invoiceService->setOrder($order_id)->generateInvoice();
         }
@@ -180,7 +179,7 @@ class OrderService extends BaseService
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new CustomerOrderDetailsResource($order);
         $statusHistory = $this->getStatusHistory($order);
-        return $this->success('Successful', ['order' => $resource,'status_history' => $statusHistory]);
+        return $this->success('Successful', ['order' => $resource, 'status_history' => $statusHistory]);
     }
 
     private function getStatusHistory($order): array
@@ -193,9 +192,9 @@ class OrderService extends BaseService
         $mapped_status = config('mapped_status');
         $logs->each(function ($log) use (&$statusHistory, $order, $mapped_status) {
             $toStatus = json_decode($log->new_value, true)['to'];
-            if (in_array($toStatus, [Statuses::PROCESSING, Statuses::SHIPPED, Statuses::COMPLETED])){
+            if (in_array($toStatus, [Statuses::PROCESSING, Statuses::SHIPPED, Statuses::COMPLETED])) {
                 $temp['status'] = $mapped_status[$toStatus];
-                $temp['time_stamp'] =  convertTimezone($log->created_at)->format('Y-m-d H:i:s');
+                $temp['time_stamp'] = convertTimezone($log->created_at)->format('Y-m-d H:i:s');
                 array_push($statusHistory, $temp);
             }
         });
@@ -315,19 +314,19 @@ class OrderService extends BaseService
         $order_sku_discounts = $order->discounts->where('type', DiscountTypes::SKU);
         foreach ($order_resource['items'] as &$item) {
             $flag = true;
-           if ($item['sku_id'] !== null) {
+            if ($item['sku_id'] !== null) {
                 $sku = $sku_details->where('id', $item['sku_id'])->first();
-                if ($sku['sku_channel'][0]['price'] != $item['unit_price']){
+                if ($sku['sku_channel'][0]['price'] != $item['unit_price']) {
                     $flag = false;
                 } else {
                     $channels_discount = collect($sku['sku_channel'])->where('channel_id', $order->sales_channel_id)->pluck('discounts')->first()[0] ?? [];
                     $sku_discount = $order_sku_discounts->where('item_id', $item['id'])->first();
-                    if(($channels_discount && $sku_discount) && ($sku_discount->amount != $channels_discount['amount'] || $sku_discount->is_percentage !== $channels_discount['is_amount_percentage'])) {
+                    if (($channels_discount && $sku_discount) && ($sku_discount->amount != $channels_discount['amount'] || $sku_discount->is_percentage !== $channels_discount['is_amount_percentage'])) {
                         $flag = false;
                     }
                 }
 
-           }
+            }
             $item['is_updatable'] = $flag;
         }
         return $order_resource;
@@ -335,14 +334,14 @@ class OrderService extends BaseService
 
     private function getSkuDetails($sku_ids, $order)
     {
-        $url = 'api/v1/partners/' . $order->partner_id . '/skus?skus=' . json_encode($sku_ids->toArray()) . '&channel_id='.$order->sales_channel_id;
+        $url = 'api/v1/partners/' . $order->partner_id . '/skus?skus=' . json_encode($sku_ids->toArray()) . '&channel_id=' . $order->sales_channel_id;
         $sku_details = $this->client->setBaseUrl()->get($url)['skus'] ?? [];
         return collect($sku_details);
     }
 
     public function updateOrderStatus($partner_id, $order_id, OrderStatusUpdateRequest $request)
     {
-        $order = $this->orderRepository->where('id', $order_id)->where('partner_id',$partner_id)->first();
+        $order = $this->orderRepository->where('id', $order_id)->where('partner_id', $partner_id)->first();
         if (!$order) return $this->error("No Order Found", 404);
         $this->orderStatusChanger->setOrder($order)->setStatus($request->status)->changeStatus();
         return $this->success('Successful', [], 200);
@@ -351,7 +350,7 @@ class OrderService extends BaseService
     public function updateOrderStatusForIpn(int $partner_id, string $delivery_req_id, Request $request)
     {
         $request->validate([
-           'status' => Rule::in(Statuses::COMPLETED)
+            'status' => Rule::in(Statuses::COMPLETED)
         ]);
         $order = $this->orderRepository->where('delivery_request_id', $delivery_req_id)->where('partner_id', $partner_id)->first();
         if (!$order) return $this->error("No Order Found", 404);
