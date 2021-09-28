@@ -170,6 +170,7 @@ class OrderService extends BaseService
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new OrderWithProductResource($order);
         $resource = $this->addUpdatableFlagForItems($resource, $order);
+        $resource['is_updatable'] = $this->addOrderUpdatableFlag($order);
         return $this->success('Successful', ['order' => $resource], 200);
     }
 
@@ -420,5 +421,16 @@ class OrderService extends BaseService
             ]
         ];
         return $this->success('Successful', ['logs' => $logs], 200);
+    }
+
+    private function addOrderUpdatableFlag($order)
+    {
+        $delivery_integrated = !is_null($order->delivery_request_id);
+        if($order->sales_channel_id == SalesChannelIds::POS) {
+            if(($delivery_integrated && in_array($order->status, [Statuses::PENDING, Statuses::PROCESSING])) || !$delivery_integrated) return true;
+        } else {
+            if (in_array($order->status, [Statuses::PENDING, Statuses::PROCESSING])) return true;
+        }
+        return false;
     }
 }
