@@ -43,9 +43,6 @@ class OrderWithProductResource extends JsonResource
             'status' => $this->status,
             'payment_status' => $this->closed_and_paid_at ? PaymentStatuses::PAID : PaymentStatuses::DUE,
             'sales_channel_id' => $this->sales_channel_id,
-            'delivery_name' => $this->delivery_name,
-            'delivery_mobile' => $this->delivery_mobile,
-            'delivery_address' => $this->delivery_address,
             'note' => $this->note,
             'invoice' => $this->invoice,
             'items' => OrderSkuResource::collection($this->orderSkus),
@@ -97,10 +94,11 @@ class OrderWithProductResource extends JsonResource
                     'status' => $payment_link_transformer->getIsActive() ? 'active' : 'inactive',
                     'link' => $payment_link_transformer->getLink(),
                     'amount' => $payment_link_transformer->getAmount(),
-                    'created_at' => $payment_link_transformer->getCreatedAt()->format('d-m-Y h:s A')
+                    'created_at' => $payment_link_transformer->getCreatedAt()->format('Y-m-d H:i:s')
                 ];
             }
         }
+        if (empty($payment_link)) return null;
         return $payment_link;
     }
 
@@ -127,6 +125,7 @@ class OrderWithProductResource extends JsonResource
                 'name' => $this->delivery_name,
                 'mobile' => $this->delivery_mobile,
                 'pro_pic' => $this->customer->pro_pic,
+                'address' => $this->delivery_address,
             ];
         }
     }
