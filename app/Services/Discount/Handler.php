@@ -152,7 +152,8 @@ class Handler
         $order_discount->setOrder($this->order)
             ->setType($this->type)
             ->setTotalAmount($this->data['voucher']['amount'])
-            ->setIsPercentage($this->data['voucher']['is_amount_percentage']);
+            ->setIsPercentage($this->data['voucher']['is_amount_percentage'])
+            ->setDiscountDetails([ 'promo_code' => $this->data['voucher']['code'] ]);
         return $order_discount;
     }
 }

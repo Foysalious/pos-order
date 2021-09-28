@@ -52,6 +52,7 @@ class OrderWithProductResource extends JsonResource
             'price' => $this->getOrderPriceRelatedInfo(),
             'customer' => $this->getOrderCustomer(),
             'payments' => $this->getPayments(),
+            'promo_code' => $this->getPromoCode(),
         ];
         $this->orderWithProductResource['payment_link'] = $this->getOrderDetailsWithPaymentLink();
         return $this->orderWithProductResource;
@@ -128,5 +129,13 @@ class OrderWithProductResource extends JsonResource
                 'pro_pic' => $this->customer->pro_pic,
             ];
         }
+    }
+
+    private function getPromoCode()
+    {
+        $voucher = $this->voucherDiscounts->first();
+        if(!$voucher) return null;
+        $details = json_decode($voucher->discount_details);
+        return !is_null($details) ? $details->promo_code : null;
     }
 }
