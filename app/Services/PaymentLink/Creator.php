@@ -190,20 +190,20 @@ class Creator
         if (isset($data['emi_month']) && $data['emi_month'] && (double)$data['amount'] < config('emi.' . $type . '.minimum_emi_amount')) return 'Amount must be greater then or equal BDT ' . config('emi.' . $type . '.minimum_emi_amount');
         return false;
     }
+
     public function sentSms()
     {
         if (!$this->getPayerInfo()) return;
         /** @var PaymentLinkClient $paymentLinkClient */
         $paymentLinkClient = app(PaymentLinkClient::class);
-        $paymentLink       = $paymentLinkClient->createShortUrl($this->paymentLinkCreated->link);
-        $link              = null;
+        $paymentLink = $paymentLinkClient->createShortUrl($this->paymentLinkCreated->link);
+        $link = null;
         if ($paymentLink) {
             $link = $paymentLink->url->shortUrl;
         }
         $extra_message = $this->targetType == 'pos_order' ? 'করুন। ' : 'করে বাকি পরিশোধ করুন। ';
-        $message       = 'প্রিয় গ্রাহক, দয়া করে পেমেন্ট লিংকের মাধ্যমে ' . $this->userName . ' কে ' . $this->amount . ' টাকা পে ' . $extra_message . $link . ' Powered by sManager.';
-        $mobile        = $this->getPayerInfo()['payer']['mobile'];
-
+        $message = 'প্রিয় গ্রাহক, দয়া করে পেমেন্ট লিংকের মাধ্যমে ' . $this->userName . ' কে ' . $this->amount . ' টাকা পে ' . $extra_message . $link . ' Powered by sManager.';
+        $mobile = $this->getPayerInfo()['payer']['mobile'];
 
     }
 
