@@ -79,6 +79,9 @@ class PaymentLinkService extends BaseService
         $payment_link_store = $this->creator->create();
         if ($payment_link_store) {
             $payment_link = $this->creator->getPaymentLinkData();
+            if (!$request->has('emi_month')) {
+                $this->creator->sentSms();
+            }
             return $this->success('success', $payment_link, 200);
         }
         return 1;

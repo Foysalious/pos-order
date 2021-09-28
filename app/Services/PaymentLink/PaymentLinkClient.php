@@ -256,7 +256,7 @@ class PaymentLinkClient
     public function createShortUrl($url)
     {
         try {
-            $response = $this->client->request('POST', config('sheba.payment_link_url') . '/api/v1/urls', ['form_params' => ['originalUrl' => $url]]);
+            $response = $this->client->request('POST', config('payment_link.payment_link_url') . '/api/v1/urls', ['form_params' => ['originalUrl' => $url]]);
             return json_decode($response->getBody());
         } catch (\Throwable $e) {
             return null;
