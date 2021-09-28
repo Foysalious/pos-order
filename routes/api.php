@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\PaymentLinkController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,6 +34,7 @@ Route::group(['prefix' => 'v1'], function () {
             Route::get('/{customer_id}/reviews', [ReviewController::class, 'getCustomerReviewList']);
             Route::delete('/{customer_id}', [CustomerController::class, 'destroy']);
         });
+        Route::post('payment-links', [PaymentLinkController::class, 'store']);
         Route::get('orders/{order_id}/generate-invoice', [OrderController::class, 'getOrderinvoice']);
         Route::group(['prefix' => 'webstore'], function () {
             Route::get('orders/{order_id}/generate-invoice', [OrderController::class, 'getWebstoreOrderinvoice']);

@@ -93,6 +93,7 @@ class PaymentLinkClient
     {
         $response = $this->client->request('POST', $this->baseUrl, ['form_params' => $data]);
         $response = json_decode($response->getBody());
+        dd($response);
         if ($response->code == 200)
             return $response->link;
         throw new Exception(json_encode($response));

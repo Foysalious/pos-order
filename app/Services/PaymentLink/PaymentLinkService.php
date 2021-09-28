@@ -45,12 +45,13 @@ class PaymentLinkService extends BaseService
         if ($userStatusCheck !== true) return $userStatusCheck;
         $emi_month_invalidity = Creator::validateEmiMonth($request->all());
         if ($emi_month_invalidity !== false) return $this->error($emi_month_invalidity, 404);
+        $partner = Partner::find($request->user);
         $this->creator
             ->setIsDefault($request->isDefault)
             ->setAmount($request->amount)
             ->setReason($request->purpose)
-            ->setUserName($request->user->name)
-            ->setUserId($request->user->id)
+            ->setUserName($partner->name)
+            ->setUserId($partner->id)
             ->setUserType($request->type)
             ->setTargetId($request->pos_order_id)
             ->setTargetType('pos_order')
@@ -62,7 +63,7 @@ class PaymentLinkService extends BaseService
         if ($request->has('pos_order_id')) {
             $pos_order = Order::find($request->pos_order_id);
             $this->deActivatePreviousLink($pos_order);
-            $customer = Order::find($pos_order->customer_id);
+            $customer = Customer::find($pos_order->customer_id);
             if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
             if ($this->creator->getPaidBy() == 'customer') {
                 $pos_order->update(['interest' => $this->creator->getInterest(), 'bank_transaction_charge' => $this->creator->getBankTransactionCharge()]);

@@ -176,7 +176,7 @@ class Creator
     public function setBankTransactionCharge($bankTransactionCharge)
     {
         $this->bankTransactionCharge = round($bankTransactionCharge, 2);
-        return $this;
+        return 2;
     }
 
     public function setInterest($interest)
@@ -248,24 +248,26 @@ class Creator
     private function makeData()
     {
         $this->data = [
-            'amount' => $this->amount,
-            'reason' => $this->reason,
-            'isDefault' => $this->isDefault,
-            'userId' => $this->userId,
-            'userName' => $this->userName,
-            'userType' => $this->userType,
-            'targetId' => (int)$this->targetId,
-            'targetType' => $this->targetType,
-            'payerId' => $this->payerId,
-            'payerType' => $this->payerType,
-            'emiMonth' => $this->emiMonth,
-            'interest' => $this->interest,
+            'amount'                => $this->amount,
+            'reason'                => $this->reason,
+            'isDefault'             => $this->isDefault,
+            'userId'                => $this->userId,
+            'userName'              => $this->userName,
+            'userType'              => 'partner',
+            'targetId'              => (int)$this->targetId,
+            'targetType'            => $this->targetType,
+            'payerId'               => $this->payerId,
+            'payerType'             => $this->payerType,
+            'emiMonth'              => $this->emiMonth,
+            'interest'              => $this->interest,
             'bankTransactionCharge' => $this->bankTransactionCharge,
-            'paidBy' => $this->paidBy,
-            'partnerProfit' => $this->partnerProfit
+            'paidBy'                => $this->paidBy,
+            'partnerProfit'         => $this->partnerProfit,
+            'realAmount'            => $this->realAmount
         ];
         if ($this->isDefault) unset($this->data['reason']);
         if (!$this->targetId) unset($this->data['targetId'], $this->data['targetType']);
+        return $this->data;
     }
 
     public function calculate()
@@ -276,7 +278,7 @@ class Creator
                 $data = Calculations::getMonthData($amount, $this->emiMonth, false, $this->transaction_charge);
                 $this->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'] + config('payment_link.payment_link_tax'))->setAmount($data['total_amount'] + config('payment_link.payment_link_tax'))->setPartnerProfit($data['partner_profit']);
             } else {
-                $this->setAmount($amount + round($amount * $this->transaction_charge / 100, 2) + config('payment_link.payment_link_tax'))
+                $this->setAmount($amount + round($amount * 2 / 100, 2) + config('payment_link.payment_link_tax'))
                     ->setPartnerProfit($this->amount - ($amount + round($amount * config('payment_link.payment_link_commission') / 100, 2) + config('payment_link.payment_link_tax')))
                     ->setRealAmount($amount);
             }
