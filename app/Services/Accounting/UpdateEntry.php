@@ -1,8 +1,6 @@
 <?php namespace App\Services\Accounting;
 
 use App\Helper\Miscellaneous\RequestIdentification;
-use App\Models\Order;
-use App\Models\OrderSku;
 use App\Repositories\Accounting\AccountingRepository;
 use App\Repositories\Accounting\Constants\EntryTypes;
 use App\Services\Accounting\Constants\Accounts;
@@ -10,13 +8,10 @@ use App\Services\Accounting\Constants\Cash;
 use App\Services\Accounting\Constants\OrderChangingTypes;
 use App\Services\Accounting\Constants\Sales;
 use App\Services\Inventory\InventoryServerClient;
-use App\Services\Order\Constants\SalesChannel;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\PriceCalculation;
-
 use App\Services\Order\Refund\Objects\AddRefundTracker;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\App;
 
 class UpdateEntry extends BaseEntry
 {
@@ -57,9 +52,9 @@ class UpdateEntry extends BaseEntry
         /** @var PriceCalculation $order_price_details */
         $order_price_details = $this->getOrderPriceDetails();
 
-        $customer = $this->order->customer->only('id','name');
+        $customer = $this->order->customer ?? null;
         $inventory_products = $this->makeInventoryProducts();
-        return [
+        $data =  [
             'created_from' => json_encode($this->withBothModificationFields((new RequestIdentification())->get())),
             'credit_account_key' => Sales::SALES_FROM_POS,
             'debit_account_key'  => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ? Accounts::SHEBA_ACCOUNT : Cash::CASH,
@@ -73,9 +68,11 @@ class UpdateEntry extends BaseEntry
             'total_vat'          => $order_price_details->getVat(),
             'entry_at' => convertTimezone($this->order->created_at)->format('Y-m-d H:i:s'),
             'inventory_products' => json_encode($inventory_products),
-            'customer_id' => is_string($customer['id']) ? 5 : $customer['id'],
-            'customer_name' => $customer['name'],
         ];
+        if(!is_null($customer)) {
+            $data = array_merge($data,$this->makeCustomerData($customer));
+        }
+        return $data;
     }
 
     private function makeInventoryProducts()
