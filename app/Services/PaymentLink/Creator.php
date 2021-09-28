@@ -215,7 +215,7 @@ class Creator
                         'payer' => [
                             'id' => $payer->id,
                             'name' => $payer->id,
-                            'mobile' => $payer->phone
+                            'mobile' => $payer->mobile
                         ]
                     ];
                 }
