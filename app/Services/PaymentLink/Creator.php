@@ -3,6 +3,7 @@
 
 use App\Interfaces\PaymentLinkRepositoryInterface;
 use App\Models\Customer;
+use App\Services\OrderSms\WebstoreOrderSms;
 use App\Services\PaymentLink\Exceptions\Calculations;
 use GuzzleHttp\Exception\GuzzleException;
 use stdClass;
@@ -14,22 +15,21 @@ class Creator
     private $reason;
     private $userId;
     private $userName;
-    private $userType;
     private $isDefault;
     private $targetId;
     private $targetType;
     private $data;
     private $paymentLinkCreated;
-    private $emiMonth;
     private $payerId;
     private $payerType;
     private $interest;
     private $bankTransactionCharge;
-    private $paidBy;
     private $partnerProfit;
     private mixed $realAmount;
     private $linkId;
     private $status;
+    private $paidBy;
+    private $emiMonth;
 
     /**
      * Creator constructor.
@@ -204,7 +204,7 @@ class Creator
         $extra_message = $this->targetType == 'pos_order' ? 'করুন। ' : 'করে বাকি পরিশোধ করুন। ';
         $message = 'প্রিয় গ্রাহক, দয়া করে পেমেন্ট লিংকের মাধ্যমে ' . $this->userName . ' কে ' . $this->amount . ' টাকা পে ' . $extra_message . $link . ' Powered by sManager.';
         $mobile = $this->getPayerInfo()['payer']['mobile'];
-
+        dispatch(new PaymentLinkSms($message,$mobile,$this->targetId));
     }
 
     /**
