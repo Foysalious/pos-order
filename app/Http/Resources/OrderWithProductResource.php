@@ -96,10 +96,11 @@ class OrderWithProductResource extends JsonResource
                     'status' => $payment_link_transformer->getIsActive() ? 'active' : 'inactive',
                     'link' => $payment_link_transformer->getLink(),
                     'amount' => $payment_link_transformer->getAmount(),
-                    'created_at' => $payment_link_transformer->getCreatedAt()->format('d-m-Y h:s A')
+                    'created_at' => $payment_link_transformer->getCreatedAt()->format('Y-m-d H:i:s')
                 ];
             }
         }
+        if (empty($payment_link)) return null;
         return $payment_link;
     }
 
