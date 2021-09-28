@@ -43,9 +43,6 @@ class OrderWithProductResource extends JsonResource
             'status' => $this->status,
             'payment_status' => $this->closed_and_paid_at ? PaymentStatuses::PAID : PaymentStatuses::DUE,
             'sales_channel_id' => $this->sales_channel_id,
-            'delivery_name' => $this->delivery_name,
-            'delivery_mobile' => $this->delivery_mobile,
-            'delivery_address' => $this->delivery_address,
             'note' => $this->note,
             'invoice' => $this->invoice,
             'items' => OrderSkuResource::collection($this->orderSkus),
@@ -127,6 +124,7 @@ class OrderWithProductResource extends JsonResource
                 'name' => $this->delivery_name,
                 'mobile' => $this->delivery_mobile,
                 'pro_pic' => $this->customer->pro_pic,
+                'address' => $this->delivery_address,
             ];
         }
     }
