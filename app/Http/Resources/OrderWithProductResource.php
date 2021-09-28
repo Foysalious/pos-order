@@ -1,5 +1,6 @@
 <?php namespace App\Http\Resources;
 
+use App\Models\Order;
 use App\Repositories\PaymentLinkRepository;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\PriceCalculation;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\App;
 
 class OrderWithProductResource extends JsonResource
 {
-    private $order;
+    private Order $order;
     private array $orderWithProductResource = [];
 
     /**
@@ -83,7 +84,7 @@ class OrderWithProductResource extends JsonResource
     private function getOrderDetailsWithPaymentLink(): ?array
     {
         $payment_link = [];
-        if (isset($this->orderWithProductResource['price_info']['due_amount']) && $this->orderWithProductResource['price_info']['due_amount'] > 0) {
+        if (isset($this->orderWithProductResource['price']['due']) && $this->orderWithProductResource['price']['due'] > 0) {
             $payment_link_target = $this->order->getPaymentLinkTarget();
             /** @var PaymentLinkRepository $paymentLinkRepository */
             $paymentLinkRepository = App::make(PaymentLinkRepository::class);

@@ -2,6 +2,8 @@
 
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Order\Constants\OrderLogTypes;
+use App\Services\PaymentLink\Constants\TargetType;
+use App\Services\PaymentLink\Target;
 use App\Services\Transaction\Constants\TransactionTypes;
 use Dyrynda\Database\Support\CascadeSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -83,5 +85,10 @@ class Order extends BaseModel
     {
         $type = $this->logs->where('type', 'products_and_prices')->first();
         return !empty($type);
+    }
+
+    public function getPaymentLinkTarget(): Target
+    {
+        return new Target(TargetType::POS_ORDER, $this->id);
     }
 }
