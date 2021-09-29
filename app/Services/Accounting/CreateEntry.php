@@ -29,9 +29,7 @@ class CreateEntry extends BaseEntry
 
     private function makeData(): array
     {
-        /** @var PriceCalculation $order_price_details */
-        $order_price_details = $this->getOrderPriceDetails();
-
+        $order_price_details = $this->getOrderPriceDetails(new PriceCalculation());
         $customer = $this->order->customer ?? null;
         $data = [
             'created_from' => json_encode($this->withBothModificationFields((new RequestIdentification())->get())),

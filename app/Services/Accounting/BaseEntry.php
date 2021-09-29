@@ -6,7 +6,6 @@ use App\Repositories\Accounting\AccountingRepository;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\PriceCalculation;
 use App\Traits\ModificationFields;
-use Illuminate\Support\Facades\App;
 
 abstract class BaseEntry
 {
@@ -40,9 +39,9 @@ abstract class BaseEntry
         return $response['skus'];
     }
 
-    protected function getOrderPriceDetails()
+    protected function getOrderPriceDetails(PriceCalculation $priceCalculation): PriceCalculation
     {
-        return  (App::make(PriceCalculation::class))->setOrder($this->order);
+        return  $priceCalculation->setOrder($this->order);
     }
 
     protected function makeCustomerData(Customer|null $customer) : array

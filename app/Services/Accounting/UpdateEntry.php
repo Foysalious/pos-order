@@ -49,8 +49,7 @@ class UpdateEntry extends BaseEntry
 
     private function makeData()
     {
-        /** @var PriceCalculation $order_price_details */
-        $order_price_details = $this->getOrderPriceDetails();
+        $order_price_details = $this->getOrderPriceDetails(new PriceCalculation());
 
         $customer = $this->order->customer ?? null;
         $inventory_products = $this->makeInventoryProducts();

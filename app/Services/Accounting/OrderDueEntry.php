@@ -23,8 +23,7 @@ class OrderDueEntry extends BaseEntry
 
     private function makeData(): array
     {
-        /** @var PriceCalculation $order_price_details */
-        $order_price_details = $this->getOrderPriceDetails();
+        $order_price_details = $this->getOrderPriceDetails(new PriceCalculation());
         $customer = $this->order->customer ?? null;
 
         $data = [
