@@ -16,4 +16,8 @@ interface PaymentLinkRepositoryInterface
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function create(array $attributes);
+    /**
+     * @param $target Target
+     */
+    public function getPaymentLinksByPosOrders(array $targets);
 }
