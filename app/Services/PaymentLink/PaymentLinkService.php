@@ -56,7 +56,7 @@ class PaymentLinkService extends BaseService
             ->setTargetId($request->pos_order_id)
             ->setTargetType('pos_order')
             ->setEmiMonth((int)$request->emi_month)
-            ->setPaidBy($request->interest_paid_by)
+            ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatistics::paidByTypes()[($request->has("emi_month") ? 1 : 0)])
             ->setTransactionFeePercentage($request->transaction_charge)
             ->calculate();
 
@@ -65,7 +65,7 @@ class PaymentLinkService extends BaseService
             $this->deActivatePreviousLink($pos_order);
             $customer = Customer::find($pos_order->customer_id);
             if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
-            if ($this->creator->getPaidBy() == 'customer') {
+            if ($this->creator->getPaidBy() == PaymentLinkStatistics::paidByTypes()[1]) {
                 $pos_order->update(['interest' => $this->creator->getInterest(), 'bank_transaction_charge' => $this->creator->getBankTransactionCharge()]);
             } else {
                 $pos_order->update(['interest' => 0, 'bank_transaction_charge' => 0]);

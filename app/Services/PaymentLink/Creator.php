@@ -119,9 +119,9 @@ class Creator
         return $this;
     }
 
-    public function setEmiMonth($emi_month)
+    public function setEmiMonth($emiMonth)
     {
-        $this->emi_month = $emi_month;
+        $this->emiMonth = $emiMonth;
         return $this;
     }
 
@@ -204,7 +204,7 @@ class Creator
         $extra_message = $this->targetType == 'pos_order' ? 'করুন। ' : 'করে বাকি পরিশোধ করুন। ';
         $message = 'প্রিয় গ্রাহক, দয়া করে পেমেন্ট লিংকের মাধ্যমে ' . $this->userName . ' কে ' . $this->amount . ' টাকা পে ' . $extra_message . $link . ' Powered by sManager.';
         $mobile = $this->getPayerInfo()['payer']['mobile'];
-        dispatch(new PaymentLinkSms($message,$mobile,$this->targetId));
+        dispatch(new PaymentLinkSms($message, $mobile, $this->targetId));
     }
 
     /**
@@ -259,6 +259,7 @@ class Creator
             'paid_by' => $this->paymentLinkCreated->paidBy,
             'partner_profit' => $this->paymentLinkCreated->partnerProfit
         ], $payerInfo);
+
     }
 
     private function makeData()
