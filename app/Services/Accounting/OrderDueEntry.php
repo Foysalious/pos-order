@@ -25,7 +25,7 @@ class OrderDueEntry extends BaseEntry
     {
         /** @var PriceCalculation $order_price_details */
         $order_price_details = $this->getOrderPriceDetails();
-        $customer = $this->order->customer ? $this->order->customer->only('id','name') : null;
+        $customer = $this->order->customer ?? null;
 
         $data = [
             'created_from' => json_encode($this->withBothModificationFields((new RequestIdentification())->get())),
@@ -38,9 +38,7 @@ class OrderDueEntry extends BaseEntry
             'note'               => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ?  SalesChannel::WEBSTORE : SalesChannel::POS,
             'entry_at'           => $this->order->updated_at->format('Y-m-d H:i:s'),
         ];
-        if(!is_null($customer)) {
-            $data = array_merge($data,$this->makeCustomerData($customer));
-        }
-        return $data;
+
+        return array_merge($data,$this->makeCustomerData($customer));
     }
 }

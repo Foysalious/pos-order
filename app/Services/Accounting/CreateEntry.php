@@ -48,10 +48,7 @@ class CreateEntry extends BaseEntry
             'inventory_products' => $this->getOrderedItemsData(),
         ];
 
-        if(!is_null($customer)) {
-           $data = array_merge($data,$this->makeCustomerData($customer));
-        }
-        return $data;
+        return array_merge($data,$this->makeCustomerData($customer));
     }
 
     private function getOrderedItemsData(): bool|string|null

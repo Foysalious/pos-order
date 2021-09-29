@@ -349,8 +349,7 @@ class Updater
             $this->refundIfEligible();
             $this->createLog($order);
             if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order, $this->orderProductChangeData));
-            dd($order->orderSkus);
-//            DB::commit();
+            DB::commit();
         } catch (Exception $e) {
             DB::rollback();
             throw $e;

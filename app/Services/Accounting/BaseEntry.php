@@ -45,14 +45,24 @@ abstract class BaseEntry
         return  (App::make(PriceCalculation::class))->setOrder($this->order);
     }
 
-    protected function makeCustomerData(Customer $customer) : array
+    protected function makeCustomerData(Customer|null $customer) : array
     {
-        return [
-            'customer_id' => is_string($customer->id) ? 5 : $customer->id,
-            'customer_name' => $customer->name,
-            'customer_mobile' => $customer->mobile,
-            'customer_pro_pic' => $customer->pro_pic,
-            'customer_is_supplier' => $customer->is_supplier,
-        ];
+        if(!is_null($customer)){
+            return [
+                'customer_id' => is_string($customer->id) ? 5 : $customer->id,
+                'customer_name' => $customer->name,
+                'customer_mobile' => $customer->mobile,
+                'customer_pro_pic' => $customer->pro_pic,
+                'customer_is_supplier' => $customer->is_supplier,
+            ];
+        } else {
+            return [
+                'customer_id' => null,
+                'customer_name' => null,
+                'customer_mobile' => null,
+                'customer_pro_pic' => null,
+                'customer_is_supplier' => null,
+            ];
+        }
     }
 }
