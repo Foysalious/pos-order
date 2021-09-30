@@ -118,7 +118,7 @@ class OrderService extends BaseService
             ->setDeliveryAddress($request->delivery_address)
             ->setCustomerId($request->customer_id)
             ->setSalesChannelId($request->sales_channel_id)
-            ->setDeliveryCharge($this->calculateDeliveryCharge($request,$partner))
+            ->setDeliveryCharge($request->delivery_charge)
             ->setCodAmount($request->cod_amount)
             ->setEmiMonth($request->emi_month)
             ->setSkus($request->skus)

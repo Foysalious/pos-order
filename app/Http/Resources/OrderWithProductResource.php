@@ -110,6 +110,7 @@ class OrderWithProductResource extends JsonResource
             return [
                 'amount' => $each->amount,
                 'method' => $each->method,
+                'icon' => config('s3.url') . 'pos/payment/cash_v2.png', //TODO: Need to work on payment link (ROS)
                 'created_at' => convertTimezone($each->created_at)->format('Y-m-d H:i:s'),
             ];
         });
