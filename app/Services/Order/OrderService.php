@@ -1,10 +1,7 @@
 <?php namespace App\Services\Order;
 
 use App\Events\OrderDeleted;
-use App\Events\OrderPlaceTransactionCompleted;
-use App\Events\OrderUpdated;
 use App\Http\Reports\InvoiceService;
-use App\Exceptions\AuthorizationException;
 use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
 use App\Http\Requests\OrderFilterRequest;
@@ -19,7 +16,6 @@ use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
-use App\Jobs\Order\OrderPlacePushNotification;
 use App\Models\Order;
 use App\Services\AccessManager\AccessManager;
 use App\Services\AccessManager\Features;
@@ -123,6 +119,7 @@ class OrderService extends BaseService
             ->setCustomerId($request->customer_id)
             ->setSalesChannelId($request->sales_channel_id)
             ->setDeliveryCharge($this->calculateDeliveryCharge($request,$partner))
+            ->setCodAmount($request->cod_amount)
             ->setEmiMonth($request->emi_month)
             ->setSkus($request->skus)
             ->setDiscount($request->discount)
@@ -145,9 +142,10 @@ class OrderService extends BaseService
             'weight' => $request->weight,
             'delivery_district' => $request->delivery_district,
             'delivery_thana' => $request->delivery_thana,
-            'partner_id' => $partner_id
+            'partner_id' => $partner_id,
+            'cod_amount' => $request->cod_amount
         ];
-        return $this->apiServerClient->setBaseUrl()->post('v2/pos/delivery/delivery-charge',$data)['delivery_charge'];
+        return $this->apiServerClient->setBaseUrl()->post('v2/pos/delivery/delivery-charge', $data)['delivery_charge'];
     }
 
     /**
