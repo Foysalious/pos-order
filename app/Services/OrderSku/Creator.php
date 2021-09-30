@@ -96,9 +96,9 @@ class Creator
         $this->checkProductAndStockAvailability($skus,$sku_details);
         foreach ($skus as $sku) {
             $sku_data['order_id'] = $this->order->id;
-            $sku_data['name'] = $sku->product_name ?? $sku_details[$sku->id]['product_name'] ?? 'Quick Sell Item';
+            $sku_data['name'] = $sku->product_name ?? $sku_details[$sku->id]['product_name'] ?? 'Custom Item';
             $sku_data['sku_id'] = $sku->id ?: null;
-            $sku_data['details'] = json_encode($sku_details[$sku->id]['combination']);
+            $sku_data['details'] = isset($sku_details[$sku->id]) ? json_encode($sku_details[$sku->id]['combination']) : null;
             $sku_data['batch_detail'] = $this->makeBatchDetail($sku,$sku_details[$sku->id] ?? null);
             $sku_data['quantity'] = $sku->quantity;
             $sku_data['unit_price'] = $sku->price ?? $sku_details[$sku->id]['sku_channel'][0]['price'];
