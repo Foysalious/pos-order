@@ -42,16 +42,12 @@ class OrderComparator
         $this->checkForProductAdditionAndDeletion();
         $this->checkUpdatesInProduct();
         return $this;
-//        dump('added',$this->productAddedFlag, $this->addedProducts);
-//        dump('deleted',$this->productDeletedFlag, $this->deletedProducts);
-//        dump('updated',$this->productUpdatedFlag, $this->updatedProducts);
-//        die;
     }
 
     private function checkForProductAdditionAndDeletion()
     {
         $current_products = $this->order->items()->pluck('id');
-        $request_products = collect(json_decode($this->skus, true))->pluck('id');
+        $request_products = collect(json_decode($this->skus, true))->pluck('order_sku_id');
 
         if ($current_products->diff($request_products)->isEmpty() && $request_products->diff($current_products)->isEmpty()) {
             $this->productAddedFlag = FALSE;
@@ -90,17 +86,16 @@ class OrderComparator
         $current_products = collect($this->order->items()->get(['id','quantity','unit_price'])->toArray());
         $request_products = collect(json_decode($this->skus, true));
         $current_products->each(function ($current_product) use ($request_products){
-            if ($request_products->contains('id',$current_product['id'])) {
-                $updating_product = $request_products->where('id', $current_product['id'])->first();
-
+            if ($request_products->contains('order_sku_id',$current_product['id'])) {
+                $updating_product = $request_products->where('order_sku_id', $current_product['id'])->first();
                 if ($updating_product['quantity'] != $current_product['quantity']){
                     $this->productUpdatedFlag = true;
-                    $this->updatedProducts [] = $updating_product['id'];
+                    $this->updatedProducts [] = $updating_product['order_sku_id'];
                 }
                 if (isset($updating_product['price']) && ($updating_product['price'] != $current_product['unit_price'])){
                     $this->productUpdatedFlag = true;
-                    if (array_search($updating_product['id'],$this->updatedProducts) === FALSE ) {
-                        $this->updatedProducts [] = $updating_product['id'];
+                    if (array_search($updating_product['order_sku_id'],$this->updatedProducts) === FALSE ) {
+                        $this->updatedProducts [] = $updating_product['order_sku_id'];
                     }
                 }
             }

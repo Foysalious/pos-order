@@ -27,10 +27,7 @@ class AddProductInOrder extends ProductOrder
 
     private function getAddedItems(): array
     {
-        $current_products = $this->order->items()->pluck('id');
-        $request_products = $this->skus->pluck('id');
-        $items = $request_products->diff($current_products);
-        return $this->skus->whereIn('id',$items)->toArray();
+        return $this->skus->whereNull('order_sku_id')->toArray();
     }
 
     private function addOrderSkusInReturnData(array $new_order_skus)

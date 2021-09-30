@@ -2,13 +2,10 @@
 
 use App\Models\OrderSku;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
-use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Refund\Objects\AddRefundTracker;
 use App\Services\Order\Refund\Objects\ProductChangeTracker;
 use App\Services\OrderSku\BatchManipulator;
-use App\Services\OrderSku\Creator;
-use App\Services\Transaction\Constants\TransactionTypes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -19,7 +16,10 @@ class UpdateProductInOrder extends ProductOrder
     private array $added_items_obj = [];
     private float $refunded_amount = 0;
 
-    public function update()
+    /**
+     * @throws BaseClientServerError
+     */
+    public function update() : array
     {
         $updated_products = $this->getUpdatedProducts();
         $skus_details = $this->getUpdatedProductsSkuDetails($updated_products);
@@ -41,7 +41,7 @@ class UpdateProductInOrder extends ProductOrder
         ];
     }
 
-    private function getUpdatedProducts()
+    private function getUpdatedProducts() : array
     {
         $current_products = collect($this->order->items()->get(['id', 'quantity', 'unit_price', 'sku_id'])->toArray());
         $request_products = collect(json_decode($this->skus, true));
@@ -54,10 +54,8 @@ class UpdateProductInOrder extends ProductOrder
                 ->setSkuId($current_product['sku_id'])
                 ->setOldUnitPrice($current_product['unit_price'])
                 ->setCurrentUnitPrice($current_product['unit_price']);
-
-            if ($request_products->contains('id', $current_product['id'])) {
-                $updating_product = $request_products->where('id', $current_product['id'])->first();
-
+            if ($request_products->contains('order_sku_id', $current_product['id'])) {
+                $updating_product = $request_products->where('order_sku_id', $current_product['id'])->first();
                 if ($updating_product['quantity'] != $current_product['quantity']) {
                     $updatedFlag = true;
                     $product_obj->setCurrentQuantity($updating_product['quantity']);
