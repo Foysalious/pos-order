@@ -49,8 +49,7 @@ class UpdateEntry extends BaseEntry
 
     private function makeData()
     {
-        /** @var PriceCalculation $order_price_details */
-        $order_price_details = $this->getOrderPriceDetails();
+        $order_price_details = $this->getOrderPriceDetails(new PriceCalculation());
 
         $customer = $this->order->customer ?? null;
         $inventory_products = $this->makeInventoryProducts();
@@ -69,10 +68,7 @@ class UpdateEntry extends BaseEntry
             'entry_at' => convertTimezone($this->order->created_at)->format('Y-m-d H:i:s'),
             'inventory_products' => json_encode($inventory_products),
         ];
-        if(!is_null($customer)) {
-            $data = array_merge($data,$this->makeCustomerData($customer));
-        }
-        return $data;
+        return array_merge($data,$this->makeCustomerData($customer));
     }
 
     private function makeInventoryProducts()

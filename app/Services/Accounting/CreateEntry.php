@@ -29,9 +29,7 @@ class CreateEntry extends BaseEntry
 
     private function makeData(): array
     {
-        /** @var PriceCalculation $order_price_details */
-        $order_price_details = $this->getOrderPriceDetails();
-
+        $order_price_details = $this->getOrderPriceDetails(new PriceCalculation());
         $customer = $this->order->customer ?? null;
         $data = [
             'created_from' => json_encode($this->withBothModificationFields((new RequestIdentification())->get())),
@@ -48,10 +46,7 @@ class CreateEntry extends BaseEntry
             'inventory_products' => $this->getOrderedItemsData(),
         ];
 
-        if(!is_null($customer)) {
-           $data = array_merge($data,$this->makeCustomerData($customer));
-        }
-        return $data;
+        return array_merge($data,$this->makeCustomerData($customer));
     }
 
     private function getOrderedItemsData(): bool|string|null

@@ -1,7 +1,6 @@
 <?php namespace App\Services\Order\Refund;
 
-use App\Services\Order\Constants\PaymentMethods;
-use App\Services\Transaction\Constants\TransactionTypes;
+use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use Illuminate\Support\Collection;
 
 class DeleteProductFromOrder extends ProductOrder
@@ -13,7 +12,10 @@ class DeleteProductFromOrder extends ProductOrder
         return $this->deleteItemsFromOrderSku();
     }
 
-    private function deleteItemsFromOrderSku()
+    /**
+     * @throws BaseClientServerError
+     */
+    private function deleteItemsFromOrderSku() : array
     {
         $deleted_skus_ids = array_values($this->getDeletedItems()->toArray());
         $order_skus_details = $this->order->orderSkus()->whereIn('id', $deleted_skus_ids)->get();
@@ -29,12 +31,13 @@ class DeleteProductFromOrder extends ProductOrder
     private function getDeletedItems()
     {
         $current_products = $this->order->items()->pluck('id');
-        $request_products = $this->skus->pluck('id');
+        $request_products = $this->skus->pluck('order_sku_id');
         return $current_products->diff($request_products);
     }
 
     /**
      * @param Collection $skus
+     * @throws BaseClientServerError
      */
     private function stockRefillForDeletedItems(Collection $skus)
     {
