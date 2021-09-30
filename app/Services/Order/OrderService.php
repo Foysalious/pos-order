@@ -21,6 +21,7 @@ use App\Services\AccessManager\AccessManager;
 use App\Services\AccessManager\Features;
 use App\Services\APIServerClient\ApiServerClient;
 use App\Services\BaseService;
+use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
@@ -107,7 +108,7 @@ class OrderService extends BaseService
      * @param OrderCreateRequest $request
      * @return JsonResponse
      * @throws ValidationException
-     * @throws OrderException
+     * @throws OrderException|BaseClientServerError
      */
     public function store($partner, OrderCreateRequest $request): JsonResponse
     {
