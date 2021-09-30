@@ -69,19 +69,20 @@ class Creator
      * @var OrderSkuCreator
      */
     private OrderSkuCreator $orderSkuCreator;
+    private $codAmount;
 
 
     public function __construct(
-        OrderCreateValidator $createValidator,
-        OrderRepositoryInterface $orderRepositoryInterface,
-        PartnerRepositoryInterface $partnerRepositoryInterface,
-        InventoryServerClient $client,
-        OrderSkuRepositoryInterface $orderSkuRepository,
-        PaymentCreator $paymentCreator,
-        DiscountHandler $discountHandler,
-        OrderSkuCreator $orderSkuCreator,
+        OrderCreateValidator                  $createValidator,
+        OrderRepositoryInterface              $orderRepositoryInterface,
+        PartnerRepositoryInterface            $partnerRepositoryInterface,
+        InventoryServerClient                 $client,
+        OrderSkuRepositoryInterface           $orderSkuRepository,
+        PaymentCreator                        $paymentCreator,
+        DiscountHandler                       $discountHandler,
+        OrderSkuCreator                       $orderSkuCreator,
         protected CustomerRepositoryInterface $customerRepository,
-        protected SmanagerUserServerClient $smanagerUserServerClient,
+        protected SmanagerUserServerClient    $smanagerUserServerClient,
     )
     {
         $this->createValidator = $createValidator;
@@ -196,7 +197,7 @@ class Creator
      * @param mixed $discount
      * @return Creator
      */
-    public function setDiscount($discount) : Creator
+    public function setDiscount($discount): Creator
     {
         $this->discount = $discount;
         return $this;
@@ -206,7 +207,7 @@ class Creator
      * @param mixed $isDiscountPercentage
      * @return Creator
      */
-    public function setIsDiscountPercentage($isDiscountPercentage) : Creator
+    public function setIsDiscountPercentage($isDiscountPercentage): Creator
     {
         $this->isDiscountPercentage = $isDiscountPercentage;
         return $this;
@@ -216,7 +217,7 @@ class Creator
      * @param mixed $paidAmount
      * @return Creator
      */
-    public function setPaidAmount($paidAmount) : Creator
+    public function setPaidAmount($paidAmount): Creator
     {
         $this->paidAmount = $paidAmount;
         return $this;
@@ -226,7 +227,7 @@ class Creator
      * @param mixed $paymentMethod
      * @return Creator
      */
-    public function setPaymentMethod($paymentMethod) : Creator
+    public function setPaymentMethod($paymentMethod): Creator
     {
         $this->paymentMethod = $paymentMethod;
         return $this;
@@ -242,7 +243,7 @@ class Creator
         return $this;
     }
 
-    public function setData(array $data) : Creator
+    public function setData(array $data): Creator
     {
         $this->data = $data;
         if (!isset($this->data['payment_method'])) $this->data['payment_method'] = 'cod';
@@ -250,7 +251,7 @@ class Creator
         return $this;
     }
 
-    public function setAddress($address) : Creator
+    public function setAddress($address): Creator
     {
         $this->address = $address;
         return $this;
@@ -263,8 +264,19 @@ class Creator
     }
 
 
-    public function setApiRequest($apiRequest){
-        $this->apiRequest= $apiRequest;
+    public function setApiRequest($apiRequest)
+    {
+        $this->apiRequest = $apiRequest;
+        return $this;
+    }
+
+    /**
+     * @param mixed $codAmount
+     * @return Creator
+     */
+    public function setCodAmount($codAmount)
+    {
+        $this->codAmount = $codAmount;
         return $this;
     }
 
@@ -294,10 +306,10 @@ class Creator
                     ->setTransactionType(TransactionTypes::CREDIT)->setEmiMonth($order->emi_month)
                     ->setInterest($order->interest)->create();
             }
-            if($this->hasDueError($order)){
+            if ($this->hasDueError($order)) {
                 throw new OrderException("Can not make due order without customer", 421);
             }
-            if($this->paymentMethod == PaymentMethods::EMI) {
+            if ($this->paymentMethod == PaymentMethods::EMI) {
                 $this->calculateEmiChargesAndSave($order, new PriceCalculation());
             }
             DB::commit();
@@ -307,7 +319,7 @@ class Creator
             DB::rollback();
             throw $e;
         }
-         return $order;
+        return $order;
     }
 
     private function resolveCustomer(): Creator
@@ -364,20 +376,20 @@ class Creator
     private function makeOrderData(): array
     {
         $order_data = [];
-        $order_data['partner_id']               = $this->partner->id;
-        $order_data['partner_wise_order_id']    = $this->resolvePartnerWiseOrderId($this->partner);
-        $order_data['customer_id']              = $this->customer->id ?? null;
-        $order_data['delivery_name']            = $this->resolveDeliveryName();
-        $order_data['delivery_mobile']          = $this->resolveDeliveryMobile();
-        $order_data['delivery_address']         = $this->resolveDeliveryAddress();
-        $order_data['sales_channel_id']         = $this->salesChannelId ?: SalesChannelIds::POS;
-        $order_data['delivery_charge']          = $this->deliveryCharge ?: 0;
-        $order_data['emi_month']                = ($this->paymentMethod == PaymentMethods::EMI && !is_null($this->emiMonth)) ? $this->emiMonth : null;
-        $order_data['status']                   = ($this->salesChannelId == SalesChannelIds::POS || is_null($this->salesChannelId)) ? Statuses::COMPLETED : Statuses::PENDING;
-        $order_data['discount']                 = json_decode($this->discount)->original_amount ?? 0;
-        $order_data['is_discount_percentage']   = json_decode($this->discount)->is_percentage ?? 0;
-        $order_data['voucher_id']               = $this->voucher_id;
-        $order_data['api_request_id']           = $this->apiRequest;
+        $order_data['partner_id'] = $this->partner->id;
+        $order_data['partner_wise_order_id'] = $this->resolvePartnerWiseOrderId($this->partner);
+        $order_data['customer_id'] = $this->customer->id ?? null;
+        $order_data['delivery_name'] = $this->resolveDeliveryName();
+        $order_data['delivery_mobile'] = $this->resolveDeliveryMobile();
+        $order_data['delivery_address'] = $this->resolveDeliveryAddress();
+        $order_data['sales_channel_id'] = $this->salesChannelId ?: SalesChannelIds::POS;
+        $order_data['delivery_charge'] = $this->deliveryCharge ?: 0;
+        $order_data['emi_month'] = ($this->paymentMethod == PaymentMethods::EMI && !is_null($this->emiMonth)) ? $this->emiMonth : null;
+        $order_data['status'] = ($this->salesChannelId == SalesChannelIds::POS || is_null($this->salesChannelId)) ? Statuses::COMPLETED : Statuses::PENDING;
+        $order_data['discount'] = json_decode($this->discount)->original_amount ?? 0;
+        $order_data['is_discount_percentage'] = json_decode($this->discount)->is_percentage ?? 0;
+        $order_data['voucher_id'] = $this->voucher_id;
+        $order_data['api_request_id'] = $this->apiRequest;
         return $order_data;
     }
 
@@ -386,7 +398,7 @@ class Creator
         /** @var PriceCalculation $order_bill */
         $order_bill = App::make(PriceCalculation::class);
         $order_bill = $order_bill->setOrder($order);
-        if ($order_bill->getDue() > 0 && is_null($this->customer)){
+        if ($order_bill->getDue() > 0 && is_null($this->customer)) {
             return true;
         }
         return false;
@@ -401,3 +413,5 @@ class Creator
         $order->save();
     }
 }
+
+

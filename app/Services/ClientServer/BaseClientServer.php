@@ -17,11 +17,17 @@ abstract class BaseClientServer implements BaseClientServerInterface
 
     abstract public function setBaseUrl();
 
+    /**
+     * @throws BaseClientServerError
+     */
     public function get($uri)
     {
         return $this->call('get', $uri);
     }
 
+    /**
+     * @throws BaseClientServerError
+     */
     public function call($method, $uri, $data = null, $multipart = false)
     {
         try {
