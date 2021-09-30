@@ -47,7 +47,7 @@ class UpdateEntry extends BaseEntry
         return $this;
     }
 
-    private function makeData()
+    private function makeData() : array
     {
         $order_price_details = $this->getOrderPriceDetails(new PriceCalculation());
 
@@ -71,7 +71,7 @@ class UpdateEntry extends BaseEntry
         return array_merge($data,$this->makeCustomerData($customer));
     }
 
-    private function makeInventoryProducts()
+    private function makeInventoryProducts() : array
     {
         $data = [];
         $sku_ids = $this->getSkuIdsFromProductChangeData();
@@ -90,7 +90,7 @@ class UpdateEntry extends BaseEntry
 
     }
 
-    private function makeNewAndDeletedProductsData($order_skus, $sku_details, $product_type)
+    private function makeNewAndDeletedProductsData($order_skus, $sku_details, $product_type) : array
     {
         $data = [];
         if($product_type == self::NEWLY_ADDED_PRODUCT) {
@@ -156,7 +156,7 @@ class UpdateEntry extends BaseEntry
         return $amount;
     }
 
-    private function getNote()
+    private function getNote() : string
     {
         $note = '';
         if(count($this->orderProductChangeData['new'] ?? []) > 0) {
@@ -188,8 +188,7 @@ class UpdateEntry extends BaseEntry
 
     private function splitSkuByBatch($order_sku): array
     {
-        $order_details = json_decode($order_sku->details, true);
-        $batch_detail = $order_details['batch_detail'] ?? [];
+        $batch_detail = json_decode($order_sku->batch_detail, true);
         $data = [];
         if (empty($batch_detail)) {
             $data [] = [
@@ -237,6 +236,7 @@ class UpdateEntry extends BaseEntry
 
     private function takeOutFromBatchDetail($quantity, $batch_detail): array
     {
+        $data = [];
         foreach ($batch_detail as $batch) {
             if($batch['quantity'] >= $quantity){
                 $data [] = [

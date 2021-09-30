@@ -1,12 +1,13 @@
 <?php namespace App\Services\Order;
 
 use App\Events\OrderUpdated;
+use App\Exceptions\OrderException;
 use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderDiscountRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
-use App\Models\Order;
+use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Discount\Handler;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
@@ -20,7 +21,7 @@ use App\Traits\ModificationFields;
 use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class Updater
 {
@@ -36,7 +37,7 @@ class Updater
     protected $paymentMethod;
     protected $paidAmount;
     protected $paymentLinkAmount;
-    protected $orderProductChangeData;
+    protected array $orderProductChangeData;
     protected string $orderLogType = OrderLogTypes::OTHERS;
     protected ?string $delivery_vendor_name;
     protected ?string $delivery_request_id;
@@ -94,7 +95,7 @@ class Updater
 
     /**
      * @param mixed $header
-     * @return Creator
+     * @return Updater
      */
     public function setHeader($header): Updater
     {
@@ -348,7 +349,7 @@ class Updater
             if (isset($this->discount)) $this->updateDiscount();
             $this->refundIfEligible();
             $this->createLog($order);
-            if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order, $this->orderProductChangeData));
+            if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();
@@ -418,6 +419,11 @@ class Updater
         $this->orderLogCreator->setChangedOrderData($this->orderRepositoryInterface->find($this->order->id))->setType($this->getTypeOfChangeLog());
     }
 
+    /**
+     * @throws BaseClientServerError
+     * @throws OrderException
+     * @throws ValidationException
+     */
     private function calculateOrderChangesAndUpdateSkus()
     {
         if ($this->skus === null) {

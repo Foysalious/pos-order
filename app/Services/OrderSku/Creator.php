@@ -34,7 +34,9 @@ class Creator
      * @param DiscountHandler $discountHandler
      * @param InventoryServerClient $client
      */
-    public function __construct(OrderSkuRepositoryInterface $orderSkuRepository, DiscountHandler $discountHandler, InventoryServerClient $client, StockManager $stockManager)
+    public function __construct(OrderSkuRepositoryInterface $orderSkuRepository, DiscountHandler $discountHandler,
+                                InventoryServerClient $client, StockManager $stockManager,
+                                protected BatchDetailCreator $batchDetailCreator)
     {
         $this->orderSkuRepository = $orderSkuRepository;
         $this->discountHandler = $discountHandler;
@@ -96,7 +98,8 @@ class Creator
             $sku_data['order_id'] = $this->order->id;
             $sku_data['name'] = $sku->product_name ?? $sku_details[$sku->id]['product_name'] ?? 'Quick Sell Item';
             $sku_data['sku_id'] = $sku->id ?: null;
-            $sku_data['details'] = $this->makeSkudetails($sku,$sku_details[$sku->id] ?? null);
+            $sku_data['details'] = json_encode($sku);
+            $sku_data['batch_detail'] = $this->makeBatchDetail($sku,$sku_details[$sku->id] ?? null);
             $sku_data['quantity'] = $sku->quantity;
             $sku_data['unit_price'] = $sku->price ?? $sku_details[$sku->id]['sku_channel'][0]['price'];
             $sku_data['unit'] = $sku->unit ?? (isset($sku_details[$sku->id]) ? ($sku_details[$sku->id]['unit']['name_en'] ?? null) : null);
@@ -145,14 +148,12 @@ class Creator
         }
     }
 
-    private function makeSkudetails(object $sku, ?array $sku_details)
+    private function makeBatchDetail(object $sku, ?array $sku_details) : null | string
     {
         if ( is_null($sku_details)) {
-           return json_encode($sku);
+           return null;
         } else {
-            /** @var OrderSkuDetailCreator $creator */
-            $creator = App::make(OrderSkuDetailCreator::class);
-            $data = $creator->setSku($sku)->setSkuDetails($sku_details)->create();
+            $data = $this->batchDetailCreator->setSku($sku)->setSkuDetails($sku_details)->create();
             return json_encode($data);
         }
     }

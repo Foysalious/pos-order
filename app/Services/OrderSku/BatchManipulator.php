@@ -6,45 +6,53 @@ namespace App\Services\OrderSku;
 
 class BatchManipulator
 {
-    protected $orderSkuDetails;
+    protected array $batchDetail;
     protected array $oldBatchDetails;
-    protected float $quantity;
+    protected float $updatedQuantity;
+    protected float $previousQuantity;
     protected array $skuBatch;
 
     protected array $updatedBatchDetail;
 
     /**
-     * @param mixed $orderSkuDetails
+     * @param mixed $batch_detail
      */
-    public function setOrderSkuDetails(string $orderSkuDetails)
+    public function setBatchDetail(string $batch_detail) : BatchManipulator
     {
-        $this->orderSkuDetails = json_decode($orderSkuDetails,true);
-        $this->oldBatchDetails = $this->orderSkuDetails['batch_detail'];
+        $this->batchDetail = json_decode($batch_detail,true);
+        $this->oldBatchDetails = $this->batchDetail;
         return $this;
     }
 
     /**
-     * @param float $quantity
+     * @param float $updatedQuantity
      * @return BatchManipulator
      */
-    public function setQuantity(float $quantity)
+    public function setUpdatedQuantity(float $updatedQuantity)
     {
-        $this->quantity = $quantity;
+        $this->updatedQuantity = $updatedQuantity;
         return $this;
     }
 
-    public function getUpdatedSkuDetails()
+    public function getUpdatedBatchDetail(): bool|string
     {
-       $sku_details = $this->orderSkuDetails;
-       $sku_details['quantity'] = $this->quantity;
-       $sku_details['batch_detail'] = $this->updatedBatchDetail;
-       return json_encode($sku_details);
+       return json_encode($this->updatedBatchDetail);
     }
 
-    public function updateBatchDetail()
+    /**
+     * @param float $previousQuantity
+     * @return BatchManipulator
+     */
+    public function setPreviousQuantity(float $previousQuantity) : BatchManipulator
     {
-        $new_quantity = $this->quantity;
-        $old_quantity = $this->orderSkuDetails['quantity'];
+        $this->previousQuantity = $previousQuantity;
+        return $this;
+    }
+
+    public function updateBatchDetail() : BatchManipulator
+    {
+        $new_quantity = $this->updatedQuantity;
+        $old_quantity = $this->previousQuantity;
 
         if($new_quantity > $old_quantity) {
             $quantity_added = $new_quantity - $old_quantity;
@@ -56,7 +64,7 @@ class BatchManipulator
         return $this;
     }
 
-    public function setSkuBatch($sku_batch)
+    public function setSkuBatch($sku_batch) : BatchManipulator
     {
         $this->skuBatch = $sku_batch;
         return $this;

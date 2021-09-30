@@ -137,6 +137,7 @@ class OrderService extends BaseService
 
     private function calculateDeliveryCharge($request, $partner_id)
     {
+        return 0;
         $data = [
             'weight' => $request->weight,
             'delivery_district' => $request->delivery_district,

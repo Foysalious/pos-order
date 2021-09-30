@@ -45,7 +45,6 @@ class CreateEntry extends BaseEntry
             'entry_at' => convertTimezone($this->order->created_at)->format('Y-m-d H:i:s'),
             'inventory_products' => $this->getOrderedItemsData(),
         ];
-
         return array_merge($data,$this->makeCustomerData($customer));
     }
 
@@ -61,7 +60,7 @@ class CreateEntry extends BaseEntry
         $mapper = App::make(BatchManipulator::class);
         foreach ($ordered_skus as $sku) {
             if (!is_null($sku->sku_id)) {
-                $batches = $mapper->setOrderSkuDetails($sku->details)->getBatchDetails();
+                $batches = $mapper->setBatchDetail($sku->batch_detail)->getBatchDetails();
                 foreach ($batches as $batch) {
                     $data [] = [
                         'id' => $sku_details[$sku->sku_id]['product_id'],
