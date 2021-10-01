@@ -34,6 +34,8 @@ class OrderCreateRequest extends FormRequest
             'discount'          => 'sometimes|JSON',
             'voucher_id'        => 'sometimes|numeric',
             'skus'              => 'required|json',
+            'sdelivery_cod_amount' => 'sometimes|required',
+            'delivery_method'   => 'sometimes|required'
         ];
     }
 }
