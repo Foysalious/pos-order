@@ -1,7 +1,4 @@
-<?php
-
-
-namespace App\Services\Order\Refund\Objects;
+<?php namespace App\Services\Order\Refund\Objects;
 
 
 class AddRefundTracker
@@ -15,14 +12,12 @@ class AddRefundTracker
     protected float $currentUnitPrice;
     protected ?array $oldBatchDetail;
     protected ?array $updatedBatchDetail;
-    protected ?array $oldOrderSkuDetails;
-    protected ?array $updatedOrderSkuDetails;
 
     /**
      * @param int $orderSkuId
      * @return $this
      */
-    public function setOrderSkuId(int $orderSkuId)
+    public function setOrderSkuId(int $orderSkuId) : AddRefundTracker
     {
         $this->orderSkuId = $orderSkuId;
         return $this;
@@ -30,8 +25,9 @@ class AddRefundTracker
 
     /**
      * @param int|null $skuId
+     * @return AddRefundTracker
      */
-    public function setSkuId(?int $skuId)
+    public function setSkuId(?int $skuId) : AddRefundTracker
     {
         $this->skuId = $skuId;
         return $this;
@@ -48,24 +44,22 @@ class AddRefundTracker
     }
 
     /**
-     * @param string $oldSkuDetail
+     * @param string $oldBatchDetail
      * @return $this
      */
-    public function setOldBatchDetail(string $oldSkuDetail)
+    public function setOldBatchDetail(string $oldBatchDetail) : AddRefundTracker
     {
-        $this->oldOrderSkuDetails = json_decode($oldSkuDetail,true);
-        $this->oldBatchDetail = $this->oldOrderSkuDetails['batch_detail'] ?? null;
+        $this->oldBatchDetail =json_decode($oldBatchDetail,true);
         return $this;
     }
 
     /**
-     * @param string $updatedSkuDetail
+     * @param string $updatedBatchDetail
      * @return $this
      */
-    public function setUpdatedBatchDetail(string $updatedSkuDetail)
+    public function setUpdatedBatchDetail(string $updatedBatchDetail) : AddRefundTracker
     {
-        $this->updatedOrderSkuDetails = json_decode($updatedSkuDetail,true);
-        $this->updatedBatchDetail = $this->updatedOrderSkuDetails['batch_detail'] ?? null;
+        $this->updatedBatchDetail = json_decode($updatedBatchDetail,true);
         return $this;
     }
 
@@ -73,7 +67,7 @@ class AddRefundTracker
      * @param float $currentUnitPrice
      * @return $this
      */
-    public function setCurrentUnitPrice(float $currentUnitPrice)
+    public function setCurrentUnitPrice(float $currentUnitPrice) : AddRefundTracker
     {
         $this->currentUnitPrice = $currentUnitPrice;
         return $this;
@@ -149,7 +143,7 @@ class AddRefundTracker
      * @param float $currentQuantity
      * @return $this
      */
-    public function setCurrentQuantity(float $currentQuantity)
+    public function setCurrentQuantity(float $currentQuantity) : AddRefundTracker
     {
         $this->currentQuantity = $currentQuantity;
         return $this;
@@ -159,7 +153,7 @@ class AddRefundTracker
      * @param float $previousQuantity
      * @return $this
      */
-    public function setPreviousQuantity(float $previousQuantity)
+    public function setPreviousQuantity(float $previousQuantity) : AddRefundTracker
     {
         $this->previousQuantity = $previousQuantity;
         return $this;

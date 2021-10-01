@@ -31,7 +31,7 @@ class OrderResource extends JsonResource
             'delivery_address' => $this->delivery_address,
             'note' => $this->note,
             'voucher_id' => $this->voucher_id,
-            'payment_status' => $this->closed_and_paid_at ? PaymentStatuses::PAID : PaymentStatuses::DUE,
+            'payment_status' => $this->paid_at ? PaymentStatuses::PAID : PaymentStatuses::DUE,
             'order_update_message' => $this->isUpdated() ? trans('order.update.updated') : null,
             'original_price' => $price_calculator->getOriginalPrice(),
             'discounted_price_without_vat' => $price_calculator->getDiscountedPriceWithoutVat(),

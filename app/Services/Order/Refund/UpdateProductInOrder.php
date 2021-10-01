@@ -133,7 +133,7 @@ class UpdateProductInOrder extends ProductOrder
         $order_sku->quantity = $product->getCurrentQuantity();
         $old_order_sku = clone $order_sku;
         if($sku_details){
-            $order_sku->details = $this->calculateUpdatedOrderSkuDetails($product,$sku_details['batches'],$order_sku);
+            $order_sku->batch_detail = $this->calculateUpdatedBatchDetail($product,$sku_details['batches'],$order_sku);
         }
         $order_sku->save();
         if ($product->isQuantityDecreased()) {
@@ -242,12 +242,12 @@ class UpdateProductInOrder extends ProductOrder
         $this->refunded_amount = $total_refund;
     }
 
-    private function calculateUpdatedOrderSkuDetails(ProductChangeTracker $product, array $sku_batch, OrderSku $order_sku): bool|string
+    private function calculateUpdatedBatchDetail(ProductChangeTracker $product, array $sku_batch, OrderSku $order_sku): bool|string
     {
         /** @var BatchManipulator $manipulator */
         $manipulator = App::make(BatchManipulator::class);
-        return $manipulator->setOrderSkuDetails($order_sku->details)
-            ->setQuantity($product->getCurrentQuantity())->setSkuBatch($sku_batch)->updateBatchDetail()->getUpdatedSkuDetails();
+        return $manipulator->setBatchDetail($order_sku->batch_detail)
+            ->setUpdatedQuantity($product->getCurrentQuantity())->setPreviousQuantity($product->getPreviousQuantity())->setSkuBatch($sku_batch)->updateBatchDetail()->getUpdatedBatchDetail();
     }
 
     /**
@@ -266,8 +266,8 @@ class UpdateProductInOrder extends ProductOrder
             ->setOldUnitPrice($product->getOldUnitPrice())
             ->setCurrentUnitPrice($product->getCurrentUnitPrice())
             ->setOrderSkuId($product->getOrderSkuId())
-            ->setOldBatchDetail($old_order_sku->details)
-            ->setUpdatedBatchDetail($new_order_sku->details);
+            ->setOldBatchDetail($old_order_sku->batch_detail)
+            ->setUpdatedBatchDetail($new_order_sku->batch_detail);
 
     }
 
