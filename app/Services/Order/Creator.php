@@ -310,10 +310,10 @@ class Creator
                 throw new OrderException("Can not make due order without customer", 421);
             }
             if ($this->paymentMethod == PaymentMethods::EMI) {
-                $this->calculateEmiChargesAndSave($order, new PriceCalculation());
+                $this->validateEmiAndCalculateChargesForOrder($order, new PriceCalculation());
             }
-            DB::commit();
             if ($order) event(new OrderPlaceTransactionCompleted($order));
+            DB::commit();
 
         } catch (Exception $e) {
             DB::rollback();
@@ -404,9 +404,16 @@ class Creator
         return false;
     }
 
-    private function calculateEmiChargesAndSave($order, PriceCalculation $price_calculator)
+    /**
+     * @throws OrderException
+     */
+    private function validateEmiAndCalculateChargesForOrder($order, PriceCalculation $price_calculator)
     {
         $total_amount = $price_calculator->setOrder($order)->getDiscountedPrice();
+        $min_emi_amount = config('emi.minimum_emi_amount');
+        if($total_amount < $min_emi_amount) {
+            throw new OrderException("Emi is not available for order amount < " .$min_emi_amount);
+        }
         $data = Calculations::getMonthData($total_amount, (int)$order->emi_month, false);
         $order->interest = $data['total_interest'];
         $order->bank_transaction_charge = $data['bank_transaction_fee'];

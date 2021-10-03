@@ -44,20 +44,20 @@ class AddRefundTracker
     }
 
     /**
-     * @param string $oldBatchDetail
+     * @param string|null $oldBatchDetail
      * @return $this
      */
-    public function setOldBatchDetail(string $oldBatchDetail) : AddRefundTracker
+    public function setOldBatchDetail(?string $oldBatchDetail) : AddRefundTracker
     {
         $this->oldBatchDetail =json_decode($oldBatchDetail,true);
         return $this;
     }
 
     /**
-     * @param string $updatedBatchDetail
+     * @param string|null $updatedBatchDetail
      * @return $this
      */
-    public function setUpdatedBatchDetail(string $updatedBatchDetail) : AddRefundTracker
+    public function setUpdatedBatchDetail(?string $updatedBatchDetail) : AddRefundTracker
     {
         $this->updatedBatchDetail = json_decode($updatedBatchDetail,true);
         return $this;

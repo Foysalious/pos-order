@@ -48,7 +48,7 @@ abstract class BaseEntry
     {
         if(!is_null($customer)){
             return [
-                'customer_id' => is_string($customer->id) ? 5 : $customer->id,
+                'customer_id' =>  $customer->id,
                 'customer_name' => $customer->name,
                 'customer_mobile' => $customer->mobile,
                 'customer_pro_pic' => $customer->pro_pic,

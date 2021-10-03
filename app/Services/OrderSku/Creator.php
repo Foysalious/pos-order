@@ -163,6 +163,7 @@ class Creator
      */
     private function checkEmiAvailabilityForProducts(array $skus, array $sku_details)
     {
+        if($this->order->sales_channel_id == SalesChannelIds::POS) return;
         foreach ($skus as $sku) {
             if(!is_null($sku->id)) {
                 $sku_detail = $sku_details[$sku->id];

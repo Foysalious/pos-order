@@ -19,6 +19,8 @@ class AddProductInOrder extends ProductOrder
     public function update(): array
     {
         $all_items = $this->getAddedItems();
+        // false for no check in backend for updating emi order by POS
+        $this->isPaymentMethodEmi = false;
         $new_order_skus = $this->orderSkuCreator->setOrder($this->order)->setIsPaymentMethodEmi($this->isPaymentMethodEmi)
             ->setSkus($all_items)->create();
         $this->addOrderSkusInReturnData($new_order_skus);

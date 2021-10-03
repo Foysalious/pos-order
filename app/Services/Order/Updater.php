@@ -7,8 +7,10 @@ use App\Interfaces\OrderDiscountRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
+use App\Models\Order;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Discount\Handler;
+use App\Services\EMI\Calculations;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Refund\AddProductInOrder;
@@ -349,6 +351,9 @@ class Updater
             if (isset($this->discount)) $this->updateDiscount();
             $this->refundIfEligible();
             $this->createLog($order);
+            if ($this->paymentMethod == PaymentMethods::EMI) {
+                $this->validateEmiAndCalculateChargesForOrder($order->refresh());
+            }
             if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
             DB::commit();
         } catch (Exception $e) {
@@ -557,5 +562,21 @@ class Updater
             $this->order->paid_at = null;
             $this->order->save();
         }
+    }
+
+    /**
+     * @throws OrderException
+     */
+    private function validateEmiAndCalculateChargesForOrder(Order $order)
+    {
+        $total_amount = $this->orderCalculator->setOrder($order)->getDiscountedPrice();
+        $min_emi_amount = config('emi.minimum_emi_amount');
+        if($total_amount < $min_emi_amount) {
+            throw new OrderException("Emi is not available for order amount < " .$min_emi_amount);
+        }
+        $data = Calculations::getMonthData($total_amount, (int)$order->emi_month, false);
+        $emi_data['interest'] = $data['total_interest'];
+        $emi_data['bank_transaction_charge'] = $data['bank_transaction_fee'];
+        $order->update($this->withUpdateModificationField($emi_data));
     }
 }
