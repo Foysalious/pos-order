@@ -543,6 +543,7 @@ class Updater
         $this->orderCalculator->setOrder($this->order->refresh());
         $total_paid = $this->orderCalculator->getPaid();
         $total_amount = $this->orderCalculator->getDiscountedPrice();
+        $refunded = false;
         if( $total_paid > $total_amount) {
             $refund_amount = $total_paid - $total_amount;
             $this->paymentCreator->setOrderId($this->order->id);
@@ -550,6 +551,11 @@ class Updater
             $this->paymentCreator->setMethod(PaymentMethods::CASH_ON_DELIVERY);
             $this->paymentCreator->setTransactionType(TransactionTypes::DEBIT);
             $this->paymentCreator->create();
+            $refunded = true;
+        }
+        if(($refunded == false && $this->orderCalculator->getDue() > 0)) {
+            $this->order->paid_at = null;
+            $this->order->save();
         }
     }
 }

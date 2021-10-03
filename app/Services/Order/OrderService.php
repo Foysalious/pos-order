@@ -21,6 +21,8 @@ use App\Services\AccessManager\AccessManager;
 use App\Services\AccessManager\Features;
 use App\Services\APIServerClient\ApiServerClient;
 use App\Services\BaseService;
+use App\Services\ClientServer\Exceptions\BaseClientServerError;
+use App\Services\Delivery\Methods;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
@@ -107,7 +109,7 @@ class OrderService extends BaseService
      * @param OrderCreateRequest $request
      * @return JsonResponse
      * @throws ValidationException
-     * @throws OrderException
+     * @throws OrderException|BaseClientServerError
      */
     public function store($partner, OrderCreateRequest $request): JsonResponse
     {
@@ -118,7 +120,7 @@ class OrderService extends BaseService
             ->setDeliveryAddress($request->delivery_address)
             ->setCustomerId($request->customer_id)
             ->setSalesChannelId($request->sales_channel_id)
-            ->setDeliveryCharge($request->delivery_charge)
+            ->setDeliveryCharge($request->has('delivery_charge') ? ($request->delivery_method == Methods::OWN_DELIVERY ? $request->delivery_charge :  $this->calculateDeliveryCharge($request,$partner)) : 0)
             ->setCodAmount($request->cod_amount)
             ->setEmiMonth($request->emi_month)
             ->setSkus($request->skus)
@@ -142,7 +144,7 @@ class OrderService extends BaseService
             'delivery_district' => $request->delivery_district,
             'delivery_thana' => $request->delivery_thana,
             'partner_id' => $partner_id,
-            'cod_amount' => $request->cod_amount
+            'cod_amount' => $request->sdelivery_cod_amount
         ];
         return $this->apiServerClient->setBaseUrl()->post('v2/pos/delivery/delivery-charge', $data)['delivery_charge'];
     }

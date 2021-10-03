@@ -93,9 +93,9 @@ class Creator
         $order = $this->orderRepository->find($this->orderId);
         /** @var PriceCalculation $priceCalculation */
         $priceCalculation = app(PriceCalculation::class);
-        $closed_and_paid_at = $payment->created_at ?: Carbon::now();
-        if (! $priceCalculation->setOrder($order)->getDue() && !$order->closed_and_paid_at)
-            $this->orderRepository->update($order, ['closed_and_paid_at' => $closed_and_paid_at]);
+        $paid_at = $payment->created_at ?: Carbon::now();
+        if (! $priceCalculation->setOrder($order)->getDue() && !$order->paid_at)
+            $this->orderRepository->update($order, ['paid_at' => $paid_at]);
         return $payment;
     }
 

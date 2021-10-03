@@ -41,7 +41,7 @@ class OrderWithProductResource extends JsonResource
             'previous_order_id' => $this->previous_order_id,
             'partner_wise_order_id' => $this->partner_wise_order_id,
             'status' => $this->status,
-            'payment_status' => $this->closed_and_paid_at ? PaymentStatuses::PAID : PaymentStatuses::DUE,
+            'payment_status' => $this->paid_at ? PaymentStatuses::PAID : PaymentStatuses::DUE,
             'sales_channel_id' => $this->sales_channel_id,
             'note' => $this->note,
             'invoice' => $this->invoice,
