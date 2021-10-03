@@ -64,6 +64,8 @@ COPY ./docker/php/conf.d/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 COPY ./docker/php/conf.d/www.production.conf /usr/local/etc/php-fpm.d/www.conf
 # Nginx configuration
 COPY ./docker/nginx/conf.d/nginx-prod.conf /etc/nginx/sites-enabled/default
+# Supervisor configuration
+COPY ./docker/supervisor/conf.d/horizon.conf /etc/supervisor/conf.d/horizon.conf
 
 COPY ./docker/entrypoint.sh /etc/entrypoint.sh
 RUN chmod +x /etc/entrypoint.sh
