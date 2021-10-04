@@ -339,8 +339,11 @@ class OrderService extends BaseService
                 if ($sku['vat_percentage'] != $item['vat_percentage']) {
                     $flag = false;
                 }
+                $item['stock'] = rand(4,10);
+                $item['is_published'] = (bool) rand(0,1);
             }
             $item['is_updatable'] = $flag;
+
         }
         return $order_resource;
     }
