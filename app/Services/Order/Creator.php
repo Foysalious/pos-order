@@ -362,14 +362,7 @@ class Creator
     private function resolveDeliveryMobile()
     {
         if ($this->deliveryMobile) return $this->deliveryMobile;
-        if ($this->customer) return $this->customer->phone;
-        return null;
-    }
-
-    private function resolveDeliveryAddress()
-    {
-        if ($this->deliveryAddress) return $this->deliveryAddress;
-        if ($this->customer) return $this->customer->address;
+        if ($this->customer) return $this->customer->mobile;
         return null;
     }
 
@@ -381,7 +374,7 @@ class Creator
         $order_data['customer_id'] = $this->customer->id ?? null;
         $order_data['delivery_name'] = $this->resolveDeliveryName();
         $order_data['delivery_mobile'] = $this->resolveDeliveryMobile();
-        $order_data['delivery_address'] = $this->resolveDeliveryAddress();
+        $order_data['delivery_address'] = $this->deliveryAddress;
         $order_data['sales_channel_id'] = $this->salesChannelId ?: SalesChannelIds::POS;
         $order_data['delivery_charge'] = $this->deliveryCharge ?: 0;
         $order_data['emi_month'] = ($this->paymentMethod == PaymentMethods::EMI && !is_null($this->emiMonth)) ? $this->emiMonth : null;
