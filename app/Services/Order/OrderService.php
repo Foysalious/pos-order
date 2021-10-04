@@ -16,6 +16,7 @@ use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
+use App\Jobs\WebStoreSettingsSyncJob;
 use App\Models\Order;
 use App\Services\AccessManager\AccessManager;
 use App\Services\AccessManager\Features;
@@ -28,6 +29,7 @@ use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\OrderSms\WebstoreOrderSms;
+use App\Services\Webstore\SettingsSync\WebStoreSettingsSyncTypes;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -130,6 +132,8 @@ class OrderService extends BaseService
             ->setVoucherId($request->voucher_id)
             ->setApiRequest($request->api_request->id)
             ->create();
+
+        if($order) dispatch(new WebStoreSettingsSyncJob($partner,WebStoreSettingsSyncTypes::Order,$order->id));
         if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) {
             //dispatch(new OrderPlacePushNotification($order));
             dispatch(new WebstoreOrderSms($partner, $order->id));
@@ -248,6 +252,8 @@ class OrderService extends BaseService
             ->setDeliveryThana($orderUpdateRequest->delivery_thana ?? null)
             ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
             ->update();
+
+        dispatch(new WebStoreSettingsSyncJob($partner_id,WebStoreSettingsSyncTypes::Order,$orderDetails->id));
         return $this->success('Successful', [], 200);
     }
 
