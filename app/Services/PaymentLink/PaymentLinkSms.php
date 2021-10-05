@@ -11,12 +11,14 @@ class PaymentLinkSms extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
-    const SMS_TYPE = 'payment_link';
+    const SMS_TYPE = 'payment_link_created';
 
     private $orderId;
     protected $tries = 1;
     protected $status;
     private $partnerId;
+    private $message;
+    private $mobile;
 
 
     public function __construct($message, $mobile, $orderId)
@@ -31,8 +33,8 @@ class PaymentLinkSms extends Job implements ShouldQueue
         if ($this->attempts() > 2) return;
         $data = [
             'type' => self::SMS_TYPE,
-            'type_id' => $this->orderId,
-            'partner_id' => $this->partnerId
+            'mobile'=>$this->mobile,
+            'message'=>$this->message
         ];
         try {
             $client = new Client();
