@@ -91,7 +91,7 @@ class OrderService extends BaseService
 
         $orderList = OrderResource::collection($search_result);
         if (!$orderList) return $this->error("You're not authorized to access this order", 403);
-        else return $this->success('Success', ['orders' => $orderList], 200);
+        else return $this->success('Successful', ['orders' => $orderList], 200);
     }
 
     public function getCustomerOrderList(string $customer_id, $request): JsonResponse
@@ -345,8 +345,11 @@ class OrderService extends BaseService
                 if ($sku['vat_percentage'] != $item['vat_percentage']) {
                     $flag = false;
                 }
+                $item['stock'] = rand(4,10);
+                $item['is_published'] = (bool) rand(0,1);
             }
             $item['is_updatable'] = $flag;
+
         }
         return $order_resource;
     }
