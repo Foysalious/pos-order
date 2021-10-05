@@ -66,7 +66,7 @@ class PaymentLinkService extends BaseService
             $customer = Customer::find($pos_order->customer_id);
             if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
             if ($this->creator->getPaidBy() == PaymentLinkStatistics::paidByTypes()[1]) {
-                $pos_order->update(['interest' => $this->creator->getInterest(), 'bank_transaction_charge' => $this->creator->getBankTransactionCharge()]);
+                 $pos_order->update(['interest' => $this->creator->getInterest(), 'bank_transaction_charge' => $this->creator->getBankTransactionCharge()]);
             } else {
                 $pos_order->update(['interest' => 0, 'bank_transaction_charge' => 0]);
             }

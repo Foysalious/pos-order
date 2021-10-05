@@ -25,7 +25,7 @@ class Creator
     private $interest;
     private $bankTransactionCharge;
     private $partnerProfit;
-    private mixed $realAmount;
+    private $realAmount;
     private $linkId;
     private $status;
     private $paidBy;
@@ -113,9 +113,9 @@ class Creator
         return $this;
     }
 
-    public function setPaidBy($interest_paid_by)
+    public function setPaidBy($paidBy)
     {
-        $this->interest_paid_by = $interest_paid_by;
+        $this->paidBy = $paidBy;
         return $this;
     }
 
@@ -176,7 +176,7 @@ class Creator
     public function setBankTransactionCharge($bankTransactionCharge)
     {
         $this->bankTransactionCharge = round($bankTransactionCharge, 2);
-        return 2;
+        return $this;
     }
 
     public function setInterest($interest)
