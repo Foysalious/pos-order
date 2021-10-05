@@ -123,8 +123,8 @@ class OrderWithProductResource extends JsonResource
         } else {
             return [
                 'id' => $this->customer->id,
-                'name' => $this->delivery_name,
-                'mobile' => $this->delivery_mobile,
+                'name' => $this->delivery_name ?? $this->customer->name,
+                'mobile' => $this->delivery_mobile ?? $this->customer->mobile,
                 'pro_pic' => $this->customer->pro_pic,
                 'address' => $this->delivery_address,
             ];

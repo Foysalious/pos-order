@@ -53,7 +53,7 @@ class WebStoreSettingsSyncService
 
     private function getUri() : string
     {
-        return 'partner-settings/partners/' . $this->partnerId . '/theme-synchronization';
+        return 'api/v1/partners/' . $this->partnerId . '/theme-synchronization';
     }
 
     private function makeData()
