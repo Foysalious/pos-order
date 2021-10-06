@@ -53,20 +53,22 @@ class UpdateProductInOrder extends ProductOrder
             $product_obj->setOrderSkuId($current_product['id'])
                 ->setSkuId($current_product['sku_id'])
                 ->setOldUnitPrice($current_product['unit_price'])
-                ->setCurrentUnitPrice($current_product['unit_price']);
+                ->setPreviousQuantity($current_product['quantity']);
             if ($request_products->contains('order_sku_id', $current_product['id'])) {
                 $updating_product = $request_products->where('order_sku_id', $current_product['id'])->first();
                 if ($updating_product['quantity'] != $current_product['quantity']) {
                     $updatedFlag = true;
-                    $product_obj->setCurrentQuantity($updating_product['quantity']);
-                    $product_obj->setPreviousQuantity($current_product['quantity']);
                 }
-                if (isset($updating_product['price']) && ($updating_product['price'] != $current_product['unit_price'])) {
-                    $updatedFlag = true;
+                if (isset($updating_product['price'])) {
                     $product_obj->setCurrentUnitPrice($updating_product['price']);
+                    $updatedFlag = true;
+                }
+                if(!isset($updating_product['price']) && $updating_product['id'] == null) {
+                    $product_obj->setCurrentUnitPrice($current_product['unit_price']);
                 }
             }
             if ($updatedFlag) {
+                $product_obj->setCurrentQuantity($updating_product['quantity']);
                 $updatedProducts [] = $product_obj;
             }
         });
@@ -86,7 +88,7 @@ class UpdateProductInOrder extends ProductOrder
     private function handleQuantityUpdateForOrderSku(ProductChangeTracker $product, array|null $sku_details)
     {
         $sku_channel = collect($sku_details['sku_channel'])->where('channel_id', $this->order->sales_channel_id)->first();
-        $product->setCurrentUnitPrice($sku_channel['price']);
+        if(!$product->isCurrentUnitPriceSet()) $product->setCurrentUnitPrice($sku_channel['price']);
         //handle when price same and quantity does not matter
         if (($product->isPriceChanged() == false) || $product->isQuantityDecreased()) { //price is same so we are changing the quantity in order_skus
             $this->updateOrderSkuQuantityForSamePrice($product, $sku_details);
@@ -265,7 +267,7 @@ class UpdateProductInOrder extends ProductOrder
             ->setPreviousQuantity($product->getPreviousQuantity())
             ->setOldUnitPrice($product->getOldUnitPrice())
             ->setCurrentUnitPrice($product->getCurrentUnitPrice())
-            ->setOrderSkuId($product->getOrderSkuId())
+            ->setOrderSkuId($new_order_sku->id)
             ->setOldBatchDetail($old_order_sku->batch_detail)
             ->setUpdatedBatchDetail($new_order_sku->batch_detail);
 
