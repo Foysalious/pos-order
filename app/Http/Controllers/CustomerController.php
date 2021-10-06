@@ -84,7 +84,7 @@ class CustomerController extends Controller
      * @return JsonResponse
      * @throws UnknownProperties
      * @OA\Post(
-     *      path="/api/v1/customers/{customer_id}",
+     *      path="/api/v1/partners/{partner_id}/customers/{customer_id}",
      *      operationId="updatingcustomer",
      *      tags={"Customer API"},
      *      summary="To update a Customer ",
