@@ -1,5 +1,6 @@
 <?php namespace App\Traits;
 
+use App\Constants\ResponseMessages;
 use Illuminate\Http\JsonResponse;
 
 trait ResponseAPI
@@ -33,7 +34,7 @@ trait ResponseAPI
      * @param integer $statusCode
      * @return JsonResponse
      */
-    public function success(string $message = "Successful", array $data = [], int $statusCode = 200): JsonResponse
+    public function success(string $message = ResponseMessages::SUCCESS, array $data = [], int $statusCode = 200): JsonResponse
     {
         return $this->coreResponse($message, $statusCode, true, $data);
     }

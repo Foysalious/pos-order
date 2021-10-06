@@ -1,5 +1,6 @@
 <?php namespace App\Services\Order;
 
+use App\Constants\ResponseMessages;
 use App\Events\OrderDeleted;
 use App\Http\Reports\InvoiceService;
 use App\Http\Requests\OrderCreateRequest;
@@ -91,7 +92,7 @@ class OrderService extends BaseService
 
         $orderList = OrderResource::collection($search_result);
         if (!$orderList) return $this->error("You're not authorized to access this order", 403);
-        else return $this->success('Successful', ['orders' => $orderList], 200);
+        else return $this->success(ResponseMessages::SUCCESS, ['orders' => $orderList]);
     }
 
     public function getCustomerOrderList(string $customer_id, $request): JsonResponse
@@ -103,7 +104,7 @@ class OrderService extends BaseService
         $orderCount = count($this->orderRepository->getCustomerOrderCount($customer_id));
         if (count($orderList) == 0) return $this->error("You don't have any order", 404);
         $orderList = CustomerOrderResource::collection($orderList);
-        return $this->success('Successful', ['order_count' => $orderCount, 'orders' => $orderList], 200);
+        return $this->success(ResponseMessages::SUCCESS, ['order_count' => $orderCount, 'orders' => $orderList]);
     }
 
     /**
@@ -138,7 +139,7 @@ class OrderService extends BaseService
             //dispatch(new OrderPlacePushNotification($order));
             dispatch(new WebstoreOrderSms($partner, $order->id));
         }
-        return $this->success('Successful', ['order' => ['id' => $order->id]]);
+        return $this->success(ResponseMessages::SUCCESS, ['order' => ['id' => $order->id]]);
     }
 
     private function calculateDeliveryCharge($request, $partner_id)
@@ -164,7 +165,7 @@ class OrderService extends BaseService
         if ($order->invoice == null) {
             return $this->invoiceService->setOrder($order_id)->generateInvoice();
         }
-        return $this->success('Successful', ['invoice' => $order->invoice], 200);
+        return $this->success(ResponseMessages::SUCCESS, ['invoice' => $order->invoice]);
     }
 
     public function getOrderInvoice(int $order_id): JsonResponse
@@ -175,7 +176,7 @@ class OrderService extends BaseService
             return $this->invoiceService->setOrder($order_id)->generateInvoice();
         }
         $this->accessManager->setPartnerId($order->partner_id)->setFeature(Features::INVOICE_DOWNLOAD)->checkAccess();
-        return $this->success('Successful', ['invoice' => $order->invoice], 200);
+        return $this->success(ResponseMessages::SUCCESS, ['invoice' => $order->invoice]);
     }
 
 
@@ -186,7 +187,7 @@ class OrderService extends BaseService
         $resource = new OrderWithProductResource($order);
         $resource = $this->addUpdatableFlagForItems($resource, $order);
         $resource['is_updatable'] = $this->addOrderUpdatableFlag($order);
-        return $this->success('Successful', ['order' => $resource], 200);
+        return $this->success(ResponseMessages::SUCCESS, ['order' => $resource]);
     }
 
     public function getWebStoreOrderDetails(int $partner_id, int $order_id, string $customer_id): JsonResponse
@@ -195,7 +196,7 @@ class OrderService extends BaseService
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new CustomerOrderDetailsResource($order);
         $statusHistory = $this->getStatusHistory($order);
-        return $this->success('Successful', ['order' => $resource, 'status_history' => $statusHistory]);
+        return $this->success(ResponseMessages::SUCCESS, ['order' => $resource, 'status_history' => $statusHistory]);
     }
 
     private function getStatusHistory($order): array
@@ -254,7 +255,7 @@ class OrderService extends BaseService
             ->update();
 
         dispatch(new WebStoreSettingsSyncJob($partner_id,WebStoreSettingsSyncTypes::Order,$orderDetails->id));
-        return $this->success('Successful', [], 200);
+        return $this->success();
     }
 
     public function delete($partner_id, $order_id): JsonResponse
@@ -285,7 +286,7 @@ class OrderService extends BaseService
                 'sub_domain' => $orderDetails?->partner?->sub_domain
             ]
         ];
-        return $this->success('Successful', ['order' => $order]);
+        return $this->success(ResponseMessages::SUCCESS, ['order' => $order]);
     }
 
     /**
@@ -312,7 +313,7 @@ class OrderService extends BaseService
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new DeliveryResource($order);
-        return $this->success('Successful', ['order' => $resource], 200);
+        return $this->success(ResponseMessages::SUCCESS, ['order' => $resource]);
 
     }
 
@@ -366,7 +367,7 @@ class OrderService extends BaseService
         $order = $this->orderRepository->where('id', $order_id)->where('partner_id', $partner_id)->first();
         if (!$order) return $this->error("No Order Found", 404);
         $this->orderStatusChanger->setOrder($order)->setStatus($request->status)->changeStatus();
-        return $this->success('Successful', [], 200);
+        return $this->success();
     }
 
     public function updateOrderStatusForIpn(int $partner_id, string $delivery_req_id, Request $request): JsonResponse
@@ -377,7 +378,7 @@ class OrderService extends BaseService
         $order = $this->orderRepository->where('delivery_request_id', $delivery_req_id)->where('partner_id', $partner_id)->first();
         if (!$order) return $this->error("No Order Found", 404);
         $this->orderStatusChanger->setDeliveryRequestId($delivery_req_id)->setStatus(Statuses::COMPLETED)->setOrder($order)->updateStatusForIpn();
-        return $this->success('Successful', []);
+        return $this->success();
     }
 
     public function logs(int $order_id)
@@ -440,7 +441,7 @@ class OrderService extends BaseService
                 'created_by_name' => 'Resource - Abdullah Arnab'
             ]
         ];
-        return $this->success('Successful', ['logs' => $logs], 200);
+        return $this->success(ResponseMessages::SUCCESS, ['logs' => $logs]);
     }
 
     private function addOrderUpdatableFlag($order): bool
