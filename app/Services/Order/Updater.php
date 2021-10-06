@@ -31,7 +31,8 @@ class Updater
 
     protected $partner_id, $order_id, $customer_id, $status, $sales_channel_id, $emi_month, $interest, $delivery_charge, $header;
     protected $bank_transaction_charge, $delivery_name, $delivery_mobile, $delivery_address, $note, $voucher_id, $discount;
-    protected $skus, $order, $existingOrder;
+    protected $skus, $existingOrder;
+    protected Order $order;
     protected $orderLogCreator;
     protected $orderRepositoryInterface, $orderSkusRepositoryInterface, $orderPaymentRepository;
     protected $orderDiscountRepository;

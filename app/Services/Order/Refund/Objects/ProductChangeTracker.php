@@ -8,7 +8,7 @@ class ProductChangeTracker
     protected float $currentQuantity;
     protected float $previousQuantity;
     protected float $oldUnitPrice;
-    protected float $currentUnitPrice;
+    protected ?float $currentUnitPrice = null;
     protected bool $priceChanged = false;
     protected ?int $skuId;
     protected string $name;
@@ -45,10 +45,10 @@ class ProductChangeTracker
     }
 
     /**
-     * @param float $currentUnitPrice
+     * @param float|null $currentUnitPrice
      * @return $this
      */
-    public function setCurrentUnitPrice(float $currentUnitPrice)
+    public function setCurrentUnitPrice(?float $currentUnitPrice)
     {
         $this->currentUnitPrice = $currentUnitPrice;
         $this->priceChanged = !($this->currentUnitPrice == $this->oldUnitPrice);
@@ -221,6 +221,14 @@ class ProductChangeTracker
     public function getPreviousQuantity(): float
     {
         return $this->previousQuantity;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isCurrentUnitPriceSet() : bool
+    {
+        return !is_null($this->currentUnitPrice);
     }
 
 }
