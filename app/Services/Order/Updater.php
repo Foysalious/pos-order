@@ -467,11 +467,11 @@ class Updater
 
     private function updateOrderPayments()
     {
-        if (isset($this->paymentMethod) && $this->paymentMethod == PaymentMethods::CASH_ON_DELIVERY && isset($this->paidAmount)) {
+        if (isset($this->paymentMethod) && $this->paymentMethod == PaymentMethods::CASH_ON_DELIVERY && $this->paidAmount > 0) {
             $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod(PaymentMethods::CASH_ON_DELIVERY)
                 ->setTransactionType(TransactionTypes::CREDIT)->create();
             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
-        } elseif (isset($this->paymentMethod) && $this->paymentMethod == PaymentMethods::PAYMENT_LINK && isset($this->paymentLinkAmount)) {
+        } elseif ($this->paidAmount > 0 && $this->paymentMethod == PaymentMethods::PAYMENT_LINK && isset($this->paymentLinkAmount)) {
             $order_payment_link = $this->orderPaymentRepository->where('order_id', $this->order->id)->where('method', PaymentMethods::PAYMENT_LINK)->first();
             if ($order_payment_link) {
                 $order_payment_link->amount = $this->paymentLinkAmount;
