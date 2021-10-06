@@ -14,7 +14,7 @@ trait ResponseAPI
      * @param boolean $isSuccess
      * @return JsonResponse
      */
-    public function coreResponse(string $message, int $statusCode, bool $isSuccess = true, $data = null): JsonResponse
+    private function coreResponse(string $message, int $statusCode, bool $isSuccess = true, $data = null): JsonResponse
     {
         if (!$message) return response()->json(['message' => 'Message is required'], 500);
         if ($data != null) $public_response = array_merge(['message' => $message], $data);
