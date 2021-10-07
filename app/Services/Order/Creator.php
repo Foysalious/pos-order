@@ -83,6 +83,7 @@ class Creator
         OrderSkuCreator                       $orderSkuCreator,
         protected CustomerRepositoryInterface $customerRepository,
         protected SmanagerUserServerClient    $smanagerUserServerClient,
+        protected PriceCalculation $priceCalculation
     )
     {
         $this->createValidator = $createValidator;
@@ -302,6 +303,11 @@ class Creator
                 $this->discountHandler->setVoucherId($this->voucher_id)->voucherDiscountCalculate($order);
             }
             if ($this->paidAmount > 0) {
+                $this->priceCalculation->setOrder($order->refresh());
+                $net_bill = $this->priceCalculation->setOrder($order->refresh())->getDiscountedPrice();
+                if($this->paidAmount > $net_bill ) {
+                    $this->paidAmount = $net_bill;
+                }
                 $this->paymentCreator->setOrderId($order->id)->setAmount($this->paidAmount)->setMethod($this->paymentMethod)
                     ->setTransactionType(TransactionTypes::CREDIT)->setEmiMonth($order->emi_month)
                     ->setInterest($order->interest)->create();
