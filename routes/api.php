@@ -26,8 +26,9 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::group(['prefix' => 'v1'], function () {
-    Route::group(['middleware' => 'ip.whitelist'], function () {
+Route::group(['middleware' => 'ip.whitelist'], function () {
+    Route::group(['prefix' => 'v1'], function () {
+        Route::group([], __DIR__.'/api/order/OrderRoutes.php');
         Route::group(['prefix' => 'partners/{partner_id}/customers'], function () {
             Route::post('', [CustomerController::class, 'store']);
             Route::post('/{customer_id}', [CustomerController::class, 'update']);
