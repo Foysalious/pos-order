@@ -1,5 +1,6 @@
 <?php namespace App\Services\PaymentLink;
 
+use App\Constants\ResponseMessages;
 use App\Interfaces\PaymentLinkRepositoryInterface;
 use App\Models\Customer;
 use App\Models\Order;
@@ -82,7 +83,7 @@ class PaymentLinkService extends BaseService
             if (!$request->has('emi_month')) {
                 $this->creator->sentSms();
             }
-            return $this->success('success', $payment_link, 200);
+            return $this->success(ResponseMessages::SUCCESS, $payment_link);
         }
         return 1;
     }

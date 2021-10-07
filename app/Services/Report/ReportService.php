@@ -1,6 +1,7 @@
 <?php namespace App\Services\Report;
 
 
+use App\Constants\ResponseMessages;
 use App\Http\Requests\CustomerWiseReportRequest;
 use App\Http\Requests\ProductWiseReportRequest;
 use App\Services\BaseService;
@@ -23,7 +24,7 @@ class ReportService extends  BaseService
             ->setOrder($request->order ?? 'ASC')
             ->create();
 
-        return $this->success('Successful', [ 'data' => $report ]);
+        return $this->success(ResponseMessages::SUCCESS, [ 'data' => $report ]);
     }
 
     public function getCustomerReport(int $partner_id, CustomerWiseReportRequest $request)
@@ -33,6 +34,6 @@ class ReportService extends  BaseService
             ->setTo($request->to)
             ->create();
 
-        return $this->success('Successful', [ 'data' => $report ]);
+        return $this->success(ResponseMessages::SUCCESS, [ 'data' => $report ]);
     }
 }

@@ -1,5 +1,6 @@
 <?php namespace App\Services\Customer;
 
+use App\Constants\ResponseMessages;
 use App\Http\Requests\CustomerOrderListRequest;
 use App\Http\Resources\Webstore\Customer\NotRatedSkuResource;
 use App\Interfaces\CustomerRepositoryInterface;
@@ -66,7 +67,7 @@ class CustomerService extends BaseService
         if ($not_rated_skus->isEmpty())
             throw new NotFoundHttpException("No SKUS Found");
         $not_rated_skus = NotRatedSkuResource::collection($not_rated_skus);
-        return $this->success('Successful', ['total_count' => $not_rated_skus_count, 'not_rated_order_skus' => $not_rated_skus]);
+        return $this->success(ResponseMessages::SUCCESS, ['total_count' => $not_rated_skus_count, 'not_rated_order_skus' => $not_rated_skus]);
     }
 
     /**
@@ -107,7 +108,7 @@ class CustomerService extends BaseService
         });
         $return_data['total_purchase_amount'] = round($return_data['total_purchase_amount'], 2);
         $return_data['total_used_promo'] = round($return_data['total_used_promo'], 2);
-        return $this->success('Successful', ['data' => $return_data]);
+        return $this->success(ResponseMessages::SUCCESS, ['data' => $return_data]);
     }
 
 
@@ -143,7 +144,7 @@ class CustomerService extends BaseService
                 $order_list[$date]['orders'][] = $order->only(['id', 'partner_wise_order_id', 'status', 'discounted_price', 'due', 'created_at']);
             }
         }
-        return $this->success('Successful', ['data' => $order_list]);
+        return $this->success(ResponseMessages::SUCCESS, ['data' => $order_list]);
 
     }
 

@@ -36,6 +36,6 @@ class PartnerService extends  BaseService
                 ->update();
         }
 
-        return $this->success('successful', [], 200);
+        return $this->success();
     }
 }
