@@ -5,12 +5,9 @@ use App\Services\ClientServer\BaseClientServer;
 
 class SmanagerUserServerClient extends BaseClientServer
 {
-    /**
-     * @return SmanagerUserServerClient
-     */
-    public function setBaseUrl()
+
+    public function getBaseUrl()
     {
-        $this->baseUrl = rtrim(config('smanager_user.api_url'), '/');
-        return $this;
+       return rtrim(config('smanager_user.api_url'), '/');
     }
 }

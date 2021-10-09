@@ -28,7 +28,6 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 Route::group(['middleware' => 'ip.whitelist'], function () {
     Route::group(['prefix' => 'v1'], function () {
-        Route::group([], __DIR__.'/api/order/OrderRoutes.php');
         Route::group(['prefix' => 'partners/{partner_id}/customers'], function () {
             Route::post('', [CustomerController::class, 'store']);
             Route::post('/{customer_id}', [CustomerController::class, 'update']);
@@ -52,13 +51,7 @@ Route::group(['middleware' => 'ip.whitelist'], function () {
         Route::group(['prefix' => 'partners'], function () {
             Route::group(['prefix' => '{partner}'], function () {
                 Route::get('statistics', [StatisticsController::class, 'index']);
-                Route::group(['prefix' => 'orders'], function () {
-                    Route::group(['prefix' => '{order}'], function () {
-                        Route::get('delivery-info', [OrderController::class, 'getDeliveryInfo']);
-                        Route::put('update-customer', [OrderController::class, 'updateCustomer']);
-                        Route::get('logs', [OrderController::class, 'logs']);
-                    });
-                });
+                Route::group([], __DIR__ . '/api/order/OrderRoutes.php');
             });
         });
         Route::get('order-info-for-payment-link/{order_id}', [OrderController::class, 'getOrderInfoForPaymentLink']);

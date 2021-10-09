@@ -16,7 +16,7 @@ class OrderPaymentController extends Controller
      * @throws UnknownProperties
      * @throws ValidationException
      */
-    public function create(Order $order, Request $request, PriceCalculation $priceCalculation,)
+    public function create($partner, Order $order, Request $request, Creator $creator)
     {
         $this->validate($request, [
             'purpose' => 'required',
@@ -24,13 +24,14 @@ class OrderPaymentController extends Controller
             'interest_paid_by' => 'sometimes|string',
             'transaction_charge' => 'sometimes|numeric'
         ]);
-        $creator = new Creator (new CreatorDto ([
-            'due' => $priceCalculation->setOrder($order)->getDue(),
+        $creator->setCreatorDto(new CreatorDto ([
+            'order' => $order,
             'emi_month' => $request->emi_month,
             'interest_paid_by' => $request->interest_paid_by,
             'transaction_charge' => $request->transaction_charge,
             'purpose' => $request->purpose,
         ]));
-        $creator->initiate();
+        $data = $creator->initiate();
+        return response($data, $data['code']);
     }
 }

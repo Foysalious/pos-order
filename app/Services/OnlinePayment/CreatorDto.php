@@ -1,13 +1,14 @@
 <?php namespace App\Services\OnlinePayment;
 
 
+use App\Models\Order;
 use Spatie\DataTransferObject\DataTransferObject;
 
 class CreatorDto extends DataTransferObject
 {
-    public float $amount;
+    public Order $order;
     public ?int $emi_month;
-    public ?int $interest_paid_by;
+    public string $purpose;
+    public ?string $interest_paid_by;
     public ?int $transaction_charge;
-    public int|string $customer_id;
 }
