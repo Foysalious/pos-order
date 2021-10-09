@@ -1,23 +1,27 @@
 <?php namespace App\Services\Order\Refund;
 
+use App\Exceptions\OrderException;
 use App\Models\OrderSku;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Refund\Objects\AddRefundTracker;
 use App\Services\Order\Refund\Objects\ProductChangeTracker;
 use App\Services\OrderSku\BatchManipulator;
+use App\Traits\ResponseAPI;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class UpdateProductInOrder extends ProductOrder
 {
+    use ResponseAPI;
     private array $refunded_items_obj = [];
     private array $added_items_obj = [];
     private float $refunded_amount = 0;
 
     /**
      * @throws BaseClientServerError
+     * @throws OrderException
      */
     public function update() : array
     {
@@ -26,7 +30,7 @@ class UpdateProductInOrder extends ProductOrder
         $this->checkStockAvailability($updated_products, $skus_details);
         foreach ($updated_products as $product) {
             /** @var $product ProductChangeTracker */
-            if($product->getSkuId() == null)
+            if($product->getSkuId() == null && $product->isQuantityChanged())
                 $this->handleNullSkuItemInOrder($product);
             elseif ($product->isQuantityChanged()) {
                 $this->handleQuantityUpdateForOrderSku($product, $skus_details->where('id', $product->getSkuId())->first());
@@ -75,27 +79,23 @@ class UpdateProductInOrder extends ProductOrder
         return $updatedProducts;
     }
 
-
-    private function updateOrderSkuPriceOnly(ProductChangeTracker $product)
-    {
-        $order_sku = $this->order->orderSkus()->where('id', $product->getOrderSkuId())->first();
-        if ($order_sku) {
-            $order_sku->unit_price = $product->getCurrentUnitPrice();
-            $order_sku->save();
-        }
-    }
-
+    /**
+     * @throws OrderException
+     */
     private function handleQuantityUpdateForOrderSku(ProductChangeTracker $product, array|null $sku_details)
     {
         $sku_channel = collect($sku_details['sku_channel'])->where('channel_id', $this->order->sales_channel_id)->first();
         if(!$product->isCurrentUnitPriceSet()) $product->setCurrentUnitPrice($sku_channel['price']);
+
         //handle when price same and quantity does not matter
-        if (($product->isPriceChanged() == false) || $product->isQuantityDecreased()) { //price is same so we are changing the quantity in order_skus
+        if ( !$product->isPriceChanged()) {
             $this->updateOrderSkuQuantityForSamePrice($product, $sku_details);
         }
         //handle when price changed and quantity increased
         elseif ( $product->isPriceChanged() && $product->isQuantityIncreased()) {
             $this->createOrderSkuForNewPriceQuantity($product);
+        } else {
+            throw new OrderException('Can not update item by price changing and quantity same or decreasing', 400);
         }
     }
 
@@ -145,26 +145,20 @@ class UpdateProductInOrder extends ProductOrder
         }
     }
 
+    /**
+     * @throws OrderException
+     */
     private function handleNullSkuItemInOrder(ProductChangeTracker $product)
     {
-        //price not set or if set than if equal to previous price then update the quantity only
-        if ( $product->isPriceChanged() == false ) {
+        //price not changed, only quantity changed
+        if (!$product->isPriceChanged()) {
             $this->updateOrderSkuQuantityForSamePrice($product);
         }
-        //price set but no quantity change only update the price
-        elseif ( !$product->isQuantityChanged() && $product->isPriceChanged() ) {
-            $this->updateOrderSkuPriceOnly($product);
-        }
-        //price and quantity both changed
-        elseif ($product->isPriceChanged() && $product->isQuantityChanged()) {
-            //price changed and quantity increased then create new order sku
-            if ($product->isQuantityIncreased()) {
-                $this->createOrderSkuForNullSkuItem($product);
-            }
-            //price not same but quantity decreased then order sku update
-            elseif ($product->isQuantityDecreased()){
-                $this->updateOrderSkuPriceAndQuantity($product);
-            }
+        //price updated and quantity increased
+        elseif ($product->isQuantityIncreased() && $product->isPriceChanged()) {
+            $this->createOrderSkuForNullSkuItem($product);
+        } else {
+            throw new OrderException('Can not update quick sell item by price changing and quantity same or decreasing', 400);
         }
     }
 
@@ -178,22 +172,6 @@ class UpdateProductInOrder extends ProductOrder
         $new_sku['details'] = json_encode(["id"=> null, "price" => $product->getCurrentUnitPrice(), "quantity" => $product->getQuantityChangedValue()]);
         $new_order_sku = $this->orderSkuRepository->create($new_sku);
         $this->added_items_obj [] = $this->makeObject($product, $order_sku, $new_order_sku);
-    }
-
-    private function updateOrderSkuPriceAndQuantity(ProductChangeTracker $product)
-    {
-        /** @var OrderSku $order_sku */
-        $order_sku = $this->order->orderSkus()->where('id', $product->getOrderSkuId())->first();
-        $old_order_sku = clone $order_sku;
-        $order_sku->quantity = $product->getCurrentQuantity();
-        $order_sku->unit_price = $product->getCurrentUnitPrice();
-        $order_sku->details = json_encode(["id"=> null, "price" => $product->getCurrentUnitPrice(), "quantity" => $product->getCurrentQuantity() ]);
-        $updated = $order_sku->save();
-        if ($updated && $product->isQuantityDecreased()) {
-            $this->refunded_items_obj [] = $this->makeObject($product, $old_order_sku, $order_sku);
-        } else {
-            $this->added_items_obj [] = $this->makeObject($product, $old_order_sku, $order_sku);
-        }
     }
 
     private function checkStockAvailability(array $updated_products, bool|Collection $skus_details)
