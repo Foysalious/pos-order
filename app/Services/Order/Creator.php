@@ -83,6 +83,7 @@ class Creator
         OrderSkuCreator                       $orderSkuCreator,
         protected CustomerRepositoryInterface $customerRepository,
         protected SmanagerUserServerClient    $smanagerUserServerClient,
+        protected PriceCalculation $priceCalculation
     )
     {
         $this->createValidator = $createValidator;
@@ -302,11 +303,16 @@ class Creator
                 $this->discountHandler->setVoucherId($this->voucher_id)->voucherDiscountCalculate($order);
             }
             if ($this->paidAmount > 0) {
+                $this->priceCalculation->setOrder($order->refresh());
+                $net_bill = $this->priceCalculation->setOrder($order->refresh())->getDiscountedPrice();
+                if($this->paidAmount > $net_bill ) {
+                    $this->paidAmount = $net_bill;
+                }
                 $this->paymentCreator->setOrderId($order->id)->setAmount($this->paidAmount)->setMethod($this->paymentMethod)
                     ->setTransactionType(TransactionTypes::CREDIT)->setEmiMonth($order->emi_month)
                     ->setInterest($order->interest)->create();
             }
-            if ($this->hasDueError($order)) {
+            if ($this->hasDueError($order->refresh())) {
                 throw new OrderException("Can not make due order without customer", 421);
             }
             if ($this->paymentMethod == PaymentMethods::EMI) {
@@ -327,7 +333,7 @@ class Creator
         if (!isset($this->customerId)) return $this->setCustomer(null);
         $customer = $this->customerRepository->find($this->customerId);
         if (!$customer) {
-            $customer = $this->smanagerUserServerClient->setBaseUrl()->get('/api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId);
+            $customer = $this->smanagerUserServerClient->get('/api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId);
             if (!$customer) throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Exists.");
             $data = [
                 'id' => $customer['_id'],

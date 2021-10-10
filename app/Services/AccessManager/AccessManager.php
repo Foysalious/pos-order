@@ -59,7 +59,7 @@ class AccessManager
     public function checkAccess(): bool
     {
         try {
-            $this->apiServerClient->setBaseUrl()->post( 'pos/v1/check-access', $this->makeData());
+            $this->apiServerClient->post( 'pos/v1/check-access', $this->makeData());
         } catch (Exception $e) {
             $message = json_decode($e->getMessage())->message;
             throw new AuthorizationException($message, $e->getCode());

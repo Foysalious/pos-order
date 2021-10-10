@@ -96,7 +96,7 @@ class ProductReport
             return [];
         } else {
             $url = 'api/v1/partners/' . $this->partner_id . '/skus?skus=' . json_encode($sku_ids) . '&with_deleted=1';
-            $response = $this->client->setBaseUrl()->get($url);
+            $response = $this->client->get($url);
             return $response['skus'];
         }
     }

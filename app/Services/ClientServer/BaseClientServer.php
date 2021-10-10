@@ -8,14 +8,13 @@ use GuzzleHttp\Exception\GuzzleException;
 abstract class BaseClientServer implements BaseClientServerInterface
 {
     protected Client $client;
-    protected string $baseUrl;
 
     public function __construct(Client $client)
     {
         $this->client = $client;
     }
 
-    abstract public function setBaseUrl();
+    abstract public function getBaseUrl();
 
     /**
      * @throws BaseClientServerError
@@ -43,7 +42,7 @@ abstract class BaseClientServer implements BaseClientServerInterface
 
     private function makeUrl($uri) : string
     {
-        return $this->baseUrl . "/" . $uri;
+        return $this->getBaseUrl() . "/" . $uri;
     }
 
     private function getOptions($data = null, $multipart = false)

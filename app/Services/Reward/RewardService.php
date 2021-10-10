@@ -22,7 +22,7 @@ class RewardService
 
     public function store()
     {
-        $this->apiServerClient->setBaseUrl()->post( 'pos/v1/reward/action', $this->data);
+        $this->apiServerClient->post( 'pos/v1/reward/action', $this->data);
     }
 
 }

@@ -152,7 +152,7 @@ class OrderService extends BaseService
             'partner_id' => $partner_id,
             'cod_amount' => $request->sdelivery_cod_amount
         ];
-        return $this->apiServerClient->setBaseUrl()->post('v2/pos/delivery/delivery-charge', $data)['delivery_charge'];
+        return $this->apiServerClient->post('v2/pos/delivery/delivery-charge', $data)['delivery_charge'];
     }
 
     /**
@@ -340,6 +340,12 @@ class OrderService extends BaseService
             $flag = true;
             if ($item['sku_id'] !== null) {
                 $sku = $sku_details->where('id', $item['sku_id'])->first();
+                if(is_null($sku)) {
+                    $item['is_updatable'] = false;
+                    $item['stock'] = 0;
+                    $item['is_published'] = false;
+                    continue;
+                }
                 if ($sku['sku_channel'][0]['price'] != $item['unit_price']) {
                     $flag = false;
                 }
@@ -363,7 +369,7 @@ class OrderService extends BaseService
     private function getSkuDetails($sku_ids, $order)
     {
         $url = 'api/v1/partners/' . $order->partner_id . '/skus?skus=' . json_encode($sku_ids->toArray()) . '&channel_id=' . $order->sales_channel_id;
-        $sku_details = $this->client->setBaseUrl()->get($url)['skus'] ?? [];
+        $sku_details = $this->client->get($url)['skus'] ?? [];
         return collect($sku_details);
     }
 
