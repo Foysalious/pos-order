@@ -312,11 +312,11 @@ class Creator
                     ->setTransactionType(TransactionTypes::CREDIT)->setEmiMonth($order->emi_month)
                     ->setInterest($order->interest)->create();
             }
-            if ($this->hasDueError($order->refresh())) {
-                throw new OrderException("Can not make due order without customer", 421);
-            }
             if ($this->paymentMethod == PaymentMethods::EMI) {
                 $this->validateEmiAndCalculateChargesForOrder($order, new PriceCalculation());
+            }
+            if ($this->hasDueError($order->refresh())) {
+                throw new OrderException("Can not make due order without customer", 421);
             }
             if ($order) event(new OrderPlaceTransactionCompleted($order));
             DB::commit();
