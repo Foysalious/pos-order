@@ -302,6 +302,9 @@ class Creator
             if (isset($this->voucher_id)) {
                 $this->discountHandler->setVoucherId($this->voucher_id)->voucherDiscountCalculate($order);
             }
+            if ($this->paymentMethod == PaymentMethods::EMI) {
+                $this->validateEmiAndCalculateChargesForOrder($order, new PriceCalculation());
+            }
             if ($this->paidAmount > 0) {
                 $this->priceCalculation->setOrder($order->refresh());
                 $net_bill = $this->priceCalculation->setOrder($order->refresh())->getDiscountedPrice();
@@ -311,9 +314,6 @@ class Creator
                 $this->paymentCreator->setOrderId($order->id)->setAmount($this->paidAmount)->setMethod($this->paymentMethod)
                     ->setTransactionType(TransactionTypes::CREDIT)->setEmiMonth($order->emi_month)
                     ->setInterest($order->interest)->create();
-            }
-            if ($this->paymentMethod == PaymentMethods::EMI) {
-                $this->validateEmiAndCalculateChargesForOrder($order, new PriceCalculation());
             }
             if ($this->hasDueError($order->refresh())) {
                 throw new OrderException("Can not make due order without customer", 421);
