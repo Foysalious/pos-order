@@ -34,6 +34,7 @@ use App\Services\Webstore\SettingsSync\WebStoreSettingsSyncTypes;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use App\Services\Order\Constants\Statuses;
@@ -271,6 +272,9 @@ class OrderService extends BaseService
     public function getOrderInfoForPaymentLink($order_id): JsonResponse
     {
         $orderDetails = $this->orderRepository->find($order_id);
+        /** @var PriceCalculation $price_calculator */
+        $price_calculator = app(PriceCalculation::class);
+        $due = $price_calculator->setOrder($orderDetails)->getDue();
         if (!$orderDetails) return $this->error("Order Not Found", 404);
         $order = [
             'id' => $orderDetails->id,
@@ -284,7 +288,8 @@ class OrderService extends BaseService
             'partner' => [
                 'id' => $orderDetails?->partner?->id,
                 'sub_domain' => $orderDetails?->partner?->sub_domain
-            ]
+            ],
+            'due' => $due
         ];
         return $this->success(ResponseMessages::SUCCESS, ['order' => $order]);
     }

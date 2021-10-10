@@ -60,7 +60,7 @@ Route::group(['prefix' => 'v1'], function () {
                 });
             });
         });
-        Route::get('order-info-for-payment-link/{order_id}', [OrderController::class, 'getOrderInfoForPaymentLink']);
+        Route::get('orders/{order_id}', [OrderController::class, 'getOrderInfoForPaymentLink']);
         Route::group(['prefix' => 'partners/{partner}/orders/{order}'], function () {
             Route::post('update-status', [OrderController::class, 'updateStatus']);
         });
