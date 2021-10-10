@@ -335,6 +335,12 @@ class OrderService extends BaseService
             $flag = true;
             if ($item['sku_id'] !== null) {
                 $sku = $sku_details->where('id', $item['sku_id'])->first();
+                if(is_null($sku)) {
+                    $item['is_updatable'] = false;
+                    $item['stock'] = 0;
+                    $item['is_published'] = false;
+                    continue;
+                }
                 if ($sku['sku_channel'][0]['price'] != $item['unit_price']) {
                     $flag = false;
                 }
