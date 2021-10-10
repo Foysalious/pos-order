@@ -4,10 +4,8 @@ use App\Services\ClientServer\BaseClientServer;
 
 class SmanagerSettingsServerClient extends BaseClientServer
 {
-
-    public function setBaseUrl()
+    public function getBaseUrl()
     {
-        $this->baseUrl = rtrim(config('sheba.smanager_settings_api_url'), '/');
-        return $this;
+        return rtrim(config('sheba.smanager_settings_api_url'), '/');
     }
 }

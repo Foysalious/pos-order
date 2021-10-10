@@ -5,9 +5,8 @@ use App\Services\ClientServer\BaseClientServer;
 
 class ApiServerClient extends BaseClientServer
 {
-    public function setBaseUrl()
+    public function getBaseUrl()
     {
-        $this->baseUrl = rtrim(config('api.api_url'), '/');
-        return $this;
+        return rtrim(config('api.api_url'), '/');
     }
 }
