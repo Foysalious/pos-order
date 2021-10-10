@@ -280,6 +280,8 @@ class OrderService extends BaseService
             'id' => $orderDetails->id,
             'sales_channel' => $orderDetails->sales_channel_id == 1 ? 'pos' : 'webstore',
             'created_at' => $orderDetails->created_at,
+            'partner_id' => $orderDetails->partner_id,
+            'customer_id' => $orderDetails->customer_id,
             'customer' => [
                 'id' => $orderDetails->customer_id,
                 'name' => $orderDetails?->customer?->name,
