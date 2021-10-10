@@ -302,6 +302,9 @@ class Creator
             if (isset($this->voucher_id)) {
                 $this->discountHandler->setVoucherId($this->voucher_id)->voucherDiscountCalculate($order);
             }
+            if ($this->paymentMethod == PaymentMethods::EMI) {
+                $this->validateEmiAndCalculateChargesForOrder($order, new PriceCalculation());
+            }
             if ($this->paidAmount > 0) {
                 $this->priceCalculation->setOrder($order->refresh());
                 $net_bill = $this->priceCalculation->setOrder($order->refresh())->getDiscountedPrice();
@@ -314,9 +317,6 @@ class Creator
             }
             if ($this->hasDueError($order->refresh())) {
                 throw new OrderException("Can not make due order without customer", 421);
-            }
-            if ($this->paymentMethod == PaymentMethods::EMI) {
-                $this->validateEmiAndCalculateChargesForOrder($order, new PriceCalculation());
             }
             if ($order) event(new OrderPlaceTransactionCompleted($order));
             DB::commit();
