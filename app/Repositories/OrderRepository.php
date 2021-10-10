@@ -30,7 +30,7 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 
     public function getVoucherInformation($voucher_id)
     {
-        return $this->client->setBaseUrl()->get('pos/v1/voucher-details/'. $voucher_id);
+        return $this->client->get('pos/v1/voucher-details/'. $voucher_id);
     }
 
     public function getOrderDetailsByPartner(int $partnerId, int $orderId)

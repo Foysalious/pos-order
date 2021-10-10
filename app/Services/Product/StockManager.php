@@ -67,7 +67,7 @@ class StockManager
             'operation' => self::STOCK_INCREMENT,
             'quantity' => $quantity
         ];
-        $this->client->setBaseUrl()->put($this->uri,$data);
+        $this->client->put($this->uri,$data);
     }
 
     /**
@@ -83,6 +83,6 @@ class StockManager
             'operation' => self::STOCK_DECREMENT,
             'quantity' => $quantity
         ];
-        $this->client->setBaseUrl()->put($this->uri,$data);
+        $this->client->put($this->uri,$data);
     }
 }

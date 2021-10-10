@@ -333,7 +333,7 @@ class Creator
         if (!isset($this->customerId)) return $this->setCustomer(null);
         $customer = $this->customerRepository->find($this->customerId);
         if (!$customer) {
-            $customer = $this->smanagerUserServerClient->setBaseUrl()->get('/api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId);
+            $customer = $this->smanagerUserServerClient->get('/api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId);
             if (!$customer) throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Exists.");
             $data = [
                 'id' => $customer['_id'],

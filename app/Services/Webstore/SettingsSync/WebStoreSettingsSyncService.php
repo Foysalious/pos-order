@@ -48,7 +48,7 @@ class WebStoreSettingsSyncService
     public function sync() {
         $uri = $this->getUri();
         $data = $this->makeData();
-        $this->client->setBaseUrl()->post($uri,$data);
+        $this->client->post($uri,$data);
     }
 
     private function getUri() : string

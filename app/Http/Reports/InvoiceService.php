@@ -48,7 +48,7 @@ class InvoiceService extends BaseService
         $order = $this->order;
         /** @var PriceCalculation $price_calculator */
         $price_calculator = (App::make(PriceCalculation::class))->setOrder($order);
-        $partner = $this->client->setBaseUrl()->get('v2/partners/' . $order->partner->sub_domain);
+        $partner = $this->client->get('v2/partners/' . $order->partner->sub_domain);
         $info = [
             'order_id'=>$order->id,
             'amount' => $price_calculator->getOriginalPrice(),

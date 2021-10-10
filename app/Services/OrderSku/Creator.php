@@ -129,7 +129,7 @@ class Creator
     public function getSkuDetails($sku_ids, $sales_channel_id)
     {
         $url = 'api/v1/partners/' . $this->order->partner_id . '/skus?skus=' . json_encode($sku_ids) . '&channel_id='.$sales_channel_id;
-        $response = $this->client->setBaseUrl()->get($url);
+        $response = $this->client->get($url);
         return $response['skus'];
     }
 

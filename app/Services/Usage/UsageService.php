@@ -40,6 +40,6 @@ class UsageService
 
     public function store()
     {
-        $this->apiServerClient->setBaseUrl()->post( 'pos/v1/usages', $this->makeData());
+        $this->apiServerClient->post( 'pos/v1/usages', $this->makeData());
     }
 }
