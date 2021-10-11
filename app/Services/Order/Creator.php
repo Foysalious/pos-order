@@ -12,7 +12,7 @@ use App\Models\Partner;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\ClientServer\SmanagerUser\SmanagerUserServerClient;
 use App\Services\Discount\Constants\DiscountTypes;
-use App\Services\EMI\Calculations;
+use App\Services\EMI\Calculations as EmiCalculation;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\SalesChannelIds;
@@ -83,7 +83,8 @@ class Creator
         OrderSkuCreator                       $orderSkuCreator,
         protected CustomerRepositoryInterface $customerRepository,
         protected SmanagerUserServerClient    $smanagerUserServerClient,
-        protected PriceCalculation $priceCalculation
+        protected PriceCalculation $priceCalculation,
+        protected EmiCalculation $emiCalculation,
     )
     {
         $this->createValidator = $createValidator;
@@ -413,7 +414,7 @@ class Creator
         if($total_amount < $min_emi_amount) {
             throw new OrderException("Emi is not available for order amount < " .$min_emi_amount);
         }
-        $data = Calculations::getMonthData($total_amount, (int)$order->emi_month, false);
+        $data = $this->emiCalculation->setEmiMonth($this->emiMonth)->setAmount($total_amount)->getEmiCharges();
         $order->interest = $data['total_interest'];
         $order->bank_transaction_charge = $data['bank_transaction_fee'];
         $order->save();

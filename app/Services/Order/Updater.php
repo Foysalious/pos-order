@@ -10,7 +10,7 @@ use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Models\Order;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Discount\Handler;
-use App\Services\EMI\Calculations;
+use App\Services\EMI\Calculations as EmiCalculation;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Refund\AddProductInOrder;
@@ -54,7 +54,8 @@ class Updater
                                 protected Handler $discountHandler,
                                 protected PaymentCreator $paymentCreator,
                                 protected CustomerRepositoryInterface $customerRepository,
-                                protected PriceCalculation $orderCalculator
+                                protected PriceCalculation $orderCalculator,
+                                protected EmiCalculation $emiCalculation,
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -566,18 +567,18 @@ class Updater
     }
 
     /**
-     * @throws OrderException
+     * @throws OrderException|BaseClientServerError
      */
     private function validateEmiAndCalculateChargesForOrder(Order $order)
     {
-        $total_amount = $this->orderCalculator->setOrder($order)->getDiscountedPrice();
+        $amount = $this->orderCalculator->setOrder($order)->getDue();
         $min_emi_amount = config('emi.minimum_emi_amount');
-        if($total_amount < $min_emi_amount) {
+        if($amount < $min_emi_amount) {
             throw new OrderException("Emi is not available for order amount < " .$min_emi_amount);
         }
-        $data = Calculations::getMonthData($total_amount, (int)$order->emi_month, false);
-        $emi_data['interest'] = $data['total_interest'];
-        $emi_data['bank_transaction_charge'] = $data['bank_transaction_fee'];
+        $data = $this->emiCalculation->setEmiMonth((int)$order->emi_month)->setAmount($amount)->getEmiCharges();
+        $emi_data['interest'] = !is_null($order->interest) ? ( $order->interest + $data['total_interest']) :  $data['total_interest'];
+        $emi_data['bank_transaction_charge'] = !is_null($order->bank_transaction_charge) ? ( $order->bank_transaction_charge + $data['bank_transaction_fee']) : $data['bank_transaction_fee'];
         $order->update($this->withUpdateModificationField($emi_data));
     }
 }
