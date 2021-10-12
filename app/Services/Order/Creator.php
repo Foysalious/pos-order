@@ -85,6 +85,7 @@ class Creator
         protected SmanagerUserServerClient    $smanagerUserServerClient,
         protected PriceCalculation $priceCalculation,
         protected EmiCalculation $emiCalculation,
+        protected StockRefillerForCanceledOrder $stockRefill
     )
     {
         $this->createValidator = $createValidator;
@@ -323,6 +324,7 @@ class Creator
             DB::commit();
 
         } catch (Exception $e) {
+            $this->stockRefill->setOrder($order)->refillStock();
             DB::rollback();
             throw $e;
         }

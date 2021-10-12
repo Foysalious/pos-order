@@ -56,6 +56,7 @@ class Updater
                                 protected CustomerRepositoryInterface $customerRepository,
                                 protected PriceCalculation $orderCalculator,
                                 protected EmiCalculation $emiCalculation,
+                                protected StockRefillerForFailedUpdate $stockRefiller
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -359,6 +360,7 @@ class Updater
             if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
             DB::commit();
         } catch (Exception $e) {
+            $this->stockRefiller->setOrder($this->order)->setOrderProductChangeData($this->orderProductChangeData)->refillStock();
             DB::rollback();
             throw $e;
         }
