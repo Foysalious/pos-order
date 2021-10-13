@@ -169,9 +169,9 @@ class OrderService extends BaseService
         return $this->success(ResponseMessages::SUCCESS, ['invoice' => $order->invoice]);
     }
 
-    public function getOrderInvoice(int $order_id): JsonResponse
+    public function getOrderInvoice(int $partner_id,int $order_id): JsonResponse
     {
-        $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::POS)->find($order_id);
+        $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::POS)->where('partner_id',$partner_id)->find($order_id);
         if (!$order) return $this->error('No Order Found', 404);
         if ($order->invoice == null) {
             return $this->invoiceService->setOrder($order_id)->generateInvoice();
@@ -359,8 +359,8 @@ class OrderService extends BaseService
                 if ($sku['vat_percentage'] != $item['vat_percentage']) {
                     $flag = false;
                 }
-                $item['stock'] = rand(4,10);
-                $item['is_published'] = (bool) rand(0,1);
+                $item['stock'] = $sku['stock'];
+                $item['is_published'] = (bool) $sku['is_published'];
             }
             $item['is_updatable'] = $flag;
 

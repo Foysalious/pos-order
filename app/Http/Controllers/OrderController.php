@@ -374,9 +374,9 @@ class OrderController extends Controller
      * @param int $order_id
      * @return JsonResponse
      */
-    public function getOrderinvoice(int $order_id)
+    public function getOrderinvoice(int $partner_id,int $order_id)
     {
-        return $this->orderService->getOrderInvoice($order_id);
+        return $this->orderService->getOrderInvoice($partner_id,$order_id);
     }
 
 
