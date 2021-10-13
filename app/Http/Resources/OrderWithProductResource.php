@@ -108,10 +108,12 @@ class OrderWithProductResource extends JsonResource
         /** @var Collection $payments */
         $payments = $this->payments->where('transaction_type', TransactionTypes::CREDIT)->sortByDesc('created_at')->values();
         return $payments->map(function ($each) {
+            $details = $each->method_details ? json_decode($each->method_details) : null;
             return [
                 'amount' => $each->amount,
                 'method' => $each->method,
-                'icon' => config('s3.url') . 'pos/payment/cash_v2.png', //TODO: Need to work on payment link (ROS)
+                'method_bn' => $details ? $details->payment_method_bn : null,
+                'method_icon' => $details ? $details->payment_method_icon : null,
                 'created_at' => convertTimezone($each->created_at)->format('Y-m-d H:i:s'),
             ];
         });
