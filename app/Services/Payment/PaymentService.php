@@ -30,6 +30,7 @@ class PaymentService extends BaseService
             ->setAmount($request->amount)
             ->setTransactionType($request->transaction_type)
             ->setMethod($request->payment_method)
+            ->setMethodDetails($request->method_details)
             ->setEmiMonth($request->emi_month)
             ->setInterest($request->interest)
             ->create();
