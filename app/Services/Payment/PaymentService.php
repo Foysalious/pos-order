@@ -6,6 +6,7 @@ use App\Interfaces\PaymentRepositoryInterface;
 use App\Services\BaseService;
 use App\Services\Order\PriceCalculation;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class PaymentService extends BaseService
 {
@@ -34,6 +35,7 @@ class PaymentService extends BaseService
             ->setEmiMonth($request->emi_month)
             ->setInterest($request->interest)
             ->create();
+        Log::info('payment', $request->all());
         return true;
     }
 
