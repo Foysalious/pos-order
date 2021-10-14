@@ -14,6 +14,7 @@ class Creator
     private $amount;
     private $transactionType;
     private $method;
+    private $method_details;
     private $emiMonth;
     private $interest;
 
@@ -68,6 +69,16 @@ class Creator
     }
 
     /**
+     * @param mixed $method_details
+     * @return Creator
+     */
+    public function setMethodDetails($method_details)
+    {
+        $this->method_details = $method_details;
+        return $this;
+    }
+
+    /**
      * @param mixed $emiMonth
      * @return Creator
      */
@@ -106,6 +117,7 @@ class Creator
         $data['amount'] = $this->amount;
         $data['transaction_type'] = $this->transactionType;
         $data['method'] = $this->method;
+        $data['method_details'] = $this->method_details;
         $data['emi_month'] = $this->emiMonth;
         $data['interest'] = $this->interest;
         return $data;
