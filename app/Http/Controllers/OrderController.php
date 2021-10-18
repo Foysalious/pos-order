@@ -413,4 +413,9 @@ class OrderController extends Controller
     {
         return $this->orderService->logs($order_id);
     }
+
+    public function generateLogInvoice(int $order, int $log): JsonResponse
+    {
+        return $this->orderService->generateLogInvoice($order, $log);
+    }
 }

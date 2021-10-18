@@ -398,6 +398,7 @@ class OrderService extends BaseService
     {
         $logs = [
             [
+                'id' => 1,
                 'log_type' => 'due_bill',
                 'log_type_show_name' => ['bn' => 'বাকি বিল', 'en' => 'Due Bill'],
                 'old_value' => null,
@@ -406,6 +407,7 @@ class OrderService extends BaseService
                 'created_by_name' => 'Resource - Abdullah Arnab'
             ],
             [
+                'id' => 2,
                 'log_type' => 'payments',
                 'log_type_show_name' => ['bn' => 'নগদ  গ্রহণ', 'en' => 'Cash Collection'],
                 'old_value' => null,
@@ -414,6 +416,7 @@ class OrderService extends BaseService
                 'created_by_name' => 'Resource - Abdullah Arnab'
             ],
             [
+                'id' => 3,
                 'log_type' => 'payments',
                 'log_type_show_name' => ['bn' => 'অনলাইন গ্রহন', 'en' => 'Online Collection'],
                 'old_value' => null,
@@ -422,6 +425,7 @@ class OrderService extends BaseService
                 'created_by_name' => 'Resource - Abdullah Arnab'
             ],
             [
+                'id' => 4,
                 'log_type' => 'payable',
                 'log_type_show_name' => ['bn' => 'অর্ডার আপডেট (Increase)', 'en' => 'Order Update (Increase)'],
                 'old_value' => null,
@@ -430,6 +434,7 @@ class OrderService extends BaseService
                 'created_by_name' => 'Resource - Abdullah Arnab'
             ],
             [
+                'id' => 5,
                 'log_type' => 'payable',
                 'log_type_show_name' => ['bn' => 'অর্ডার আপডেট (Decrease)', 'en' => 'Order Update (Decrease)'],
                 'old_value' => null,
@@ -438,6 +443,7 @@ class OrderService extends BaseService
                 'created_by_name' => 'Resource - Abdullah Arnab'
             ],
             [
+                'id' => 6,
                 'log_type' => 'emi',
                 'log_type_show_name' => ['bn' => 'কিস্তি - ৩ মাস', 'en' => 'Emi - 3 Months'],
                 'old_value' => null,
@@ -446,6 +452,7 @@ class OrderService extends BaseService
                 'created_by_name' => 'Resource - Abdullah Arnab'
             ],
             [
+                'id' => 7,
                 'log_type' => 'status_update',
                 'log_type_show_name' => ['bn' => 'স্ট্যাটাস আপডেট ', 'en' => 'Status Update'],
                 'old_value' => Statuses::PROCESSING,
@@ -466,5 +473,10 @@ class OrderService extends BaseService
             if (in_array($order->status, [Statuses::PENDING, Statuses::PROCESSING])) return true;
         }
         return false;
+    }
+
+    public function generateLogInvoice(int $order_id, int $log_id): JsonResponse
+    {
+        return $this->success(ResponseMessages::SUCCESS, ['link' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20211018_pos_order_invoice_18234_report_1634557351.pdf']);
     }
 }

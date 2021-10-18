@@ -9,6 +9,7 @@ Route::group(['prefix' => 'orders'], function () {
         Route::get('delivery-info', [OrderController::class, 'getDeliveryInfo']);
         Route::put('update-customer', [OrderController::class, 'updateCustomer']);
         Route::get('logs', [OrderController::class, 'logs']);
+        Route::get('logs/{log}/invoice', [OrderController::class, 'generateLogInvoice']);
         Route::post('payments/create', [OrderPaymentController::class, 'create']);
     });
 });
