@@ -423,6 +423,24 @@ class OrderController extends Controller
         return $this->orderService->generateLogInvoice($order, $log);
     }
 
+    /**
+     * * @OA\Get(
+     *      path="/api/v1/filters",
+     *      operationId="filters",
+     *      tags={"ORDER API"},
+     *      summary="Get all filters",
+     *      description="Return filters",
+     *      @OA\Response(response=200, description="Successful",
+     *          @OA\JsonContent(
+     *          type="object",
+     *          example={"message":"Successful",  "invoice": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20210810_pos_order_invoice_2001022_report_1628597035.pdf"}
+     *          ),
+     *     ),
+     *      @OA\Response(response=404, description="message: Order Not Found")
+     *  )
+     *
+     * @return JsonResponse
+     */
     public function getFilteringOptions() : JsonResponse
     {
         return $this->orderService->getAllFilteringOptions();
