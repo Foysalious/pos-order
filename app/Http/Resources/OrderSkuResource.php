@@ -17,7 +17,7 @@ class OrderSkuResource extends JsonResource
     {
         $sku_details = json_decode($this->details);
         $default_product_app_thumb = config('s3.url') . "images/pos/services/thumbs/default.jpg";
-        $unit_discount = $this->discount->amount / $this->quantity;
+        $unit_discount = $this->discount ? $this->discount->amount / $this->quantity : 0.0;
         $unit_discounted_price_without_vat = $this->unit_price - $unit_discount;
         $vat = ($unit_discounted_price_without_vat * $this->vat_percentage) / 100;
         $this->resource->calculate();
