@@ -404,7 +404,8 @@ class OrderService extends BaseService
                 'old_value' => null,
                 'new_value' => 500.00,
                 'created_at' => '2020-01-05 12:45:05',
-                'created_by_name' => 'Resource - Abdullah Arnab'
+                'created_by_name' => 'Resource - Abdullah Arnab',
+                'is_invoice_downloadable' => $this->isInvoiceDownloadable('due_bill'),
             ],
             [
                 'id' => 2,
@@ -413,7 +414,8 @@ class OrderService extends BaseService
                 'old_value' => null,
                 'new_value' => 500.00,
                 'created_at' => '2020-01-05 12:46:05',
-                'created_by_name' => 'Resource - Abdullah Arnab'
+                'created_by_name' => 'Resource - Abdullah Arnab',
+                'is_invoice_downloadable' => $this->isInvoiceDownloadable('payments')
             ],
             [
                 'id' => 3,
@@ -422,7 +424,8 @@ class OrderService extends BaseService
                 'old_value' => null,
                 'new_value' => 500.00,
                 'created_at' => '2020-01-05 12:47:05',
-                'created_by_name' => 'Resource - Abdullah Arnab'
+                'created_by_name' => 'Resource - Abdullah Arnab',
+                'is_invoice_downloadable' => $this->isInvoiceDownloadable('payments'),
             ],
             [
                 'id' => 4,
@@ -431,7 +434,8 @@ class OrderService extends BaseService
                 'old_value' => null,
                 'new_value' => 500.00,
                 'created_at' => '2020-01-05 12:48:05',
-                'created_by_name' => 'Resource - Abdullah Arnab'
+                'created_by_name' => 'Resource - Abdullah Arnab',
+                'is_invoice_downloadable' => $this->isInvoiceDownloadable('payable'),
             ],
             [
                 'id' => 5,
@@ -440,7 +444,8 @@ class OrderService extends BaseService
                 'old_value' => null,
                 'new_value' => 500.00,
                 'created_at' => '2020-01-05 12:49:05',
-                'created_by_name' => 'Resource - Abdullah Arnab'
+                'created_by_name' => 'Resource - Abdullah Arnab',
+                'is_invoice_downloadable' => $this->isInvoiceDownloadable('payable'),
             ],
             [
                 'id' => 6,
@@ -449,7 +454,8 @@ class OrderService extends BaseService
                 'old_value' => null,
                 'new_value' => 5000.00,
                 'created_at' => '2020-01-05 12:45:05',
-                'created_by_name' => 'Resource - Abdullah Arnab'
+                'created_by_name' => 'Resource - Abdullah Arnab',
+                'is_invoice_downloadable' => $this->isInvoiceDownloadable('emi'),
             ],
             [
                 'id' => 7,
@@ -458,7 +464,8 @@ class OrderService extends BaseService
                 'old_value' => Statuses::PROCESSING,
                 'new_value' => Statuses::SHIPPED,
                 'created_at' => '2020-01-05 12:50:05',
-                'created_by_name' => 'Resource - Abdullah Arnab'
+                'created_by_name' => 'Resource - Abdullah Arnab',
+                'is_invoice_downloadable' => $this->isInvoiceDownloadable('status_update'),
             ]
         ];
         return $this->success(ResponseMessages::SUCCESS, ['logs' => $logs]);
@@ -478,5 +485,11 @@ class OrderService extends BaseService
     public function generateLogInvoice(int $order_id, int $log_id): JsonResponse
     {
         return $this->success(ResponseMessages::SUCCESS, ['link' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20211018_pos_order_invoice_18234_report_1634557351.pdf']);
+    }
+
+    private function isInvoiceDownloadable($log_type): bool
+    {
+        if ($log_type == 'status_update') return false;
+        return true;
     }
 }
