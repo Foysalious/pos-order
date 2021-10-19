@@ -349,7 +349,7 @@ class OrderService extends BaseService
                     $item['is_published'] = false;
                     continue;
                 }
-                if ($sku['sku_channel'][0]['price'] != $item['unit_price']) {
+                if ($sku['sku_channel'][0]['price'] != $item['unit_original_price']) {
                     $flag = false;
                 }
                 $channels_discount = collect($sku['sku_channel'])->where('channel_id', $order->sales_channel_id)->pluck('discounts')->first()[0] ?? [];
