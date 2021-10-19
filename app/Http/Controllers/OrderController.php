@@ -16,6 +16,10 @@ use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
+    /**
+     * @OA\Info(title="POS-ORDER PROJECTS API", version="1")
+     * It's required to generate swagger doc
+     */
     use ResponseAPI;
 
     protected $orderService;
