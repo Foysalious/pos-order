@@ -28,6 +28,7 @@ use App\Services\Delivery\Methods;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
+use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\OrderSms\WebstoreOrderSms;
 use App\Services\Webstore\SettingsSync\WebStoreSettingsSyncTypes;
@@ -478,5 +479,12 @@ class OrderService extends BaseService
     public function generateLogInvoice(int $order_id, int $log_id): JsonResponse
     {
         return $this->success(ResponseMessages::SUCCESS, ['link' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20211018_pos_order_invoice_18234_report_1634557351.pdf']);
+    }
+
+    public function getAllFilteringOptions(): JsonResponse
+    {
+        $data['statuses'] = Statuses::get();
+        $data['payment_statuses'] = PaymentStatuses::get();
+        return $this->success(ResponseMessages::SUCCESS, [ 'filters' => $data ]);
     }
 }

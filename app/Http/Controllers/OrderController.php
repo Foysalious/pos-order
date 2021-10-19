@@ -418,4 +418,9 @@ class OrderController extends Controller
     {
         return $this->orderService->generateLogInvoice($order, $log);
     }
+
+    public function getFilteringOptions() : JsonResponse
+    {
+        return $this->orderService->getAllFilteringOptions();
+    }
 }
