@@ -37,6 +37,7 @@ class CustomerOrderDetailsResource extends JsonResource
         return [
             'original_price' => $price_calculator->getOriginalPrice(),
             'discounted_price_without_vat' => $price_calculator->getDiscountedPriceWithoutVat(),
+            'product_discount' => $price_calculator->getProductDiscount(),
             'promo_discount' => $price_calculator->getPromoDiscount(),
             'order_discount' => $price_calculator->getOrderDiscount(),
             'vat' => $price_calculator->getVat(),
