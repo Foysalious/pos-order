@@ -21,6 +21,7 @@ use App\Services\Order\Validators\OrderCreateValidator;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\OrderSku\Creator as OrderSkuCreator;
+use App\Services\Product\StockManageByChunk;
 use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ResponseAPI;
 use Exception;
@@ -85,7 +86,8 @@ class Creator
         protected SmanagerUserServerClient    $smanagerUserServerClient,
         protected PriceCalculation $priceCalculation,
         protected EmiCalculation $emiCalculation,
-        protected StockRefillerForCanceledOrder $stockRefill
+        protected StockRefillerForCanceledOrder $stockRefill,
+        protected StockManageByChunk $stockManager
     )
     {
         $this->createValidator = $createValidator;
@@ -321,10 +323,10 @@ class Creator
                 throw new OrderException("Can not make due order without customer", 421);
             }
             if ($order) event(new OrderPlaceTransactionCompleted($order));
+            $this->updateStock($this->orderSkuCreator->getStockDecreasingData());
             DB::commit();
 
         } catch (Exception $e) {
-            if (isset($order) && $order)$this->stockRefill->setOrder($order)->refillStock();
             DB::rollback();
             throw $e;
         }
@@ -407,7 +409,7 @@ class Creator
     }
 
     /**
-     * @throws OrderException
+     * @throws OrderException|BaseClientServerError
      */
     private function validateEmiAndCalculateChargesForOrder($order, PriceCalculation $price_calculator)
     {
@@ -420,6 +422,16 @@ class Creator
         $order->interest = $data['total_interest'];
         $order->bank_transaction_charge = $data['bank_transaction_fee'];
         $order->save();
+    }
+
+    private function updateStock(array $stockDecreasingData)
+    {
+       if(count($stockDecreasingData) > 0) {
+           foreach ($stockDecreasingData as $each_data) {
+               $this->stockManager->setSku($each_data['sku_detail'])->decreaseAndInsertInChunk($each_data['quantity']);
+           }
+           $this->stockManager->updateStock();
+       }
     }
 }
 

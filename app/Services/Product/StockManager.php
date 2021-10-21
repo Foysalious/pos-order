@@ -72,7 +72,7 @@ class StockManager
 
     /**
      * @param $quantity
-     * @return false|mixed
+     * @return void
      * @throws BaseClientServerError
      */
     public function decrease($quantity)
