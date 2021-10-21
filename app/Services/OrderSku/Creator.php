@@ -34,6 +34,8 @@ class Creator
      * @param OrderSkuRepositoryInterface $orderSkuRepository
      * @param DiscountHandler $discountHandler
      * @param InventoryServerClient $client
+     * @param StockManager $stockManager
+     * @param BatchDetailCreator $batchDetailCreator
      */
     public function __construct(OrderSkuRepositoryInterface $orderSkuRepository, DiscountHandler $discountHandler,
                                 InventoryServerClient $client, StockManager $stockManager,
@@ -132,6 +134,7 @@ class Creator
                     $this->stockDecreasingData [] = [
                         'sku_detail' => $sku_details[$sku->id],
                         'quantity' => (float) $sku->quantity,
+                        'operation' => StockManager::STOCK_DECREMENT
                     ];
                 }
             }

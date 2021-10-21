@@ -10,9 +10,9 @@ class AddProductInOrder extends ProductOrder
 {
     use ModificationFields;
     private array $added_products = [];
+    private array $stockUpdateData = [];
 
     /**
-     * @throws BaseClientServerError
      * @throws OrderException
      * @throws ValidationException
      */
@@ -23,6 +23,7 @@ class AddProductInOrder extends ProductOrder
         $this->isPaymentMethodEmi = false;
         $new_order_skus = $this->orderSkuCreator->setOrder($this->order)->setIsPaymentMethodEmi($this->isPaymentMethodEmi)
             ->setSkus($all_items)->create();
+        $this->stockUpdateData = $this->orderSkuCreator->getStockDecreasingData();
         $this->addOrderSkusInReturnData($new_order_skus);
         return $this->added_products;
     }
@@ -37,6 +38,14 @@ class AddProductInOrder extends ProductOrder
         foreach ($new_order_skus as $each) {
             $this->added_products [] = $each;
         }
+    }
+
+    /**
+     * @return array
+     */
+    public function getStockUpdateData(): array
+    {
+        return $this->stockUpdateData;
     }
 
 }
