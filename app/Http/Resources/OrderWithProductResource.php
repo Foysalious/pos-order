@@ -3,6 +3,8 @@
 use App\Models\Order;
 use App\Repositories\PaymentLinkRepository;
 use App\Services\Order\Constants\PaymentStatuses;
+use App\Services\Order\Constants\SalesChannelIds;
+use App\Services\Order\Constants\Statuses;
 use App\Services\Order\PriceCalculation;
 use App\Services\PaymentLink\PaymentLinkTransformer;
 use App\Services\Transaction\Constants\TransactionTypes;
@@ -15,14 +17,18 @@ class OrderWithProductResource extends JsonResource
 {
     private Order $order;
     private array $orderWithProductResource = [];
+    private bool $addOrderUpdatableFlag;
 
     /**
      * OrderWithProductResource constructor.
      */
-    public function __construct($order)
+    public function __construct($order,$add_order_updatable_flag = false)
     {
         parent::__construct($order);
         $this->order = $order;
+        $this->addOrderUpdatableFlag = $add_order_updatable_flag;
+
+
     }
 
 
@@ -52,6 +58,7 @@ class OrderWithProductResource extends JsonResource
             'promo_code' => $this->getPromoCode(),
         ];
         $this->orderWithProductResource['payment_link'] = $this->getOrderDetailsWithPaymentLink();
+        if ($this->addOrderUpdatableFlag) $this->orderWithProductResource['is_updatable'] = $this->isOrderUpdatable();
         return $this->orderWithProductResource;
     }
 
@@ -140,5 +147,16 @@ class OrderWithProductResource extends JsonResource
         if(!$voucher) return null;
         $details = json_decode($voucher->discount_details);
         return !is_null($details) ? $details->promo_code : null;
+    }
+
+    private function isOrderUpdatable(): bool
+    {
+        $delivery_integrated = !is_null($this->delivery_request_id);
+        if($this->sales_channel_id == SalesChannelIds::POS) {
+            if(($delivery_integrated && in_array($this->status, [Statuses::PENDING, Statuses::PROCESSING])) || !$delivery_integrated) return true;
+        } else {
+            if (in_array($this->status, [Statuses::PENDING, Statuses::PROCESSING])) return true;
+        }
+        return false;
     }
 }
