@@ -36,7 +36,7 @@ class OrderWithProductResource extends JsonResource
     {
         $this->orderWithProductResource = [
             'id' => $this->id,
-            'created_at' => convertTimezone($this->created_at)->format('Y-m-d H:i:s'),
+            'created_at' => convertTimezone($this->created_at)?->format('Y-m-d H:i:s'),
             'created_by_name' => $this->created_by_name,
             'previous_order_id' => $this->previous_order_id,
             'partner_wise_order_id' => $this->partner_wise_order_id,
@@ -114,7 +114,7 @@ class OrderWithProductResource extends JsonResource
                 'method' => $each->method,
                 'method_bn' => $details ? $details->payment_method_bn : null,
                 'method_icon' => $details ? $details->payment_method_icon : null,
-                'created_at' => convertTimezone($each->created_at)->format('Y-m-d H:i:s'),
+                'created_at' => convertTimezone($each->created_at)?->format('Y-m-d H:i:s'),
             ];
         });
     }

@@ -125,7 +125,7 @@ class CustomerService extends BaseService
             ->orderBy('created_at', 'desc')
             ->skip($offset)->take($limit)->get();
         foreach ($all_orders as $order) {
-            $date = convertTimezone($order->created_at)->format('Y-m-d');
+            $date = convertTimezone($order->created_at)?->format('Y-m-d');
             $order_list[$date]['total_sale'] = $order_list[$date]['total_sale'] ?? 0;
             $order_list[$date]['total_due'] = $order_list[$date]['total_due'] ?? 0;
             /** @var PriceCalculation $order_calculator */

@@ -22,7 +22,7 @@ class CustomerReviewResource extends JsonResource
             'images'                => $this->images,
             'variation'             => $this->variation()??null,
             'rating'                => $this->rating,
-            'created_at'            => convertTimezone($this->created_at)->format('Y-m-d H:i:s'),
+            'created_at'            => convertTimezone($this->created_at)?->format('Y-m-d H:i:s'),
             'product_name'          => 'Floral Embroydary',
             'product_image'         =>'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/20210611_233930.jpg'
         ];

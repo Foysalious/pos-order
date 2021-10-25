@@ -65,7 +65,7 @@ class UpdateEntry extends BaseEntry
             'reconcile_amount'   => (float) $this->calculateAmountChange($inventory_products),
             'total_discount'     => $order_price_details->getDiscount(),
             'total_vat'          => $order_price_details->getVat(),
-            'entry_at' => convertTimezone($this->order->created_at)->format('Y-m-d H:i:s'),
+            'entry_at' => convertTimezone($this->order->created_at)?->format('Y-m-d H:i:s'),
             'delivery_charge'    => (double) $this->order->delivery_charge ??  0,
             'bank_transaction_charge' => (double) $this->order->bank_transaction_charge ??  0,
             'interest'           => (double) $this->order->interest ??  0,
