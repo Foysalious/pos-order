@@ -27,12 +27,15 @@ class Creator
     private StockManager $stockManager;
 
     private bool $isPaymentMethodEmi;
+    private array $stockDecreasingData = [];
 
     /**
      * Creator constructor.
      * @param OrderSkuRepositoryInterface $orderSkuRepository
      * @param DiscountHandler $discountHandler
      * @param InventoryServerClient $client
+     * @param StockManager $stockManager
+     * @param BatchDetailCreator $batchDetailCreator
      */
     public function __construct(OrderSkuRepositoryInterface $orderSkuRepository, DiscountHandler $discountHandler,
                                 InventoryServerClient $client, StockManager $stockManager,
@@ -76,7 +79,14 @@ class Creator
     }
 
     /**
-     * @throws BaseClientServerError
+     * @return array
+     */
+    public function getStockDecreasingData(): array
+    {
+        return $this->stockDecreasingData;
+    }
+
+    /**
      * @throws OrderException
      * @throws ValidationException
      */
@@ -120,13 +130,19 @@ class Creator
             }
             if(isset($sku_details[$sku->id])) {
                 $is_stock_maintainable = $this->stockManager->setSku($sku_details[$sku->id])->setOrder($this->order)->isStockMaintainable();
-                if ($is_stock_maintainable) $this->stockManager->decrease($sku->quantity);
+                if ($is_stock_maintainable) {
+                    $this->stockDecreasingData [] = [
+                        'sku_detail' => $sku_details[$sku->id],
+                        'quantity' => (float) $sku->quantity,
+                        'operation' => StockManager::STOCK_DECREMENT
+                    ];
+                }
             }
         }
         return $created_skus;
     }
 
-    public function getSkuDetails($sku_ids, $sales_channel_id)
+    private function getSkuDetails($sku_ids, $sales_channel_id)
     {
         $url = 'api/v1/partners/' . $this->order->partner_id . '/skus?skus=' . json_encode($sku_ids) . '&channel_id='.$sales_channel_id;
         $response = $this->client->get($url);

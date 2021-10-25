@@ -85,7 +85,7 @@ class OrderService extends BaseService
             ->setType($request->type)
             ->setSalesChannelId($request->sales_channel_id)
             ->setPaymentStatus($request->payment_status)
-            ->setOrderStatus($request->order_status)
+            ->setOrderStatus($request->order_status == 'All' ? null : $request->order_status)
             ->setOffset($offset)
             ->setLimit($limit)
             ->setSortBy($request->sort_by ?? OrderFilter::SORT_BY_CREATED_AT)

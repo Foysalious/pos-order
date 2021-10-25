@@ -2,11 +2,11 @@
 
 use App\Exceptions\OrderException;
 use App\Models\OrderSku;
-use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Refund\Objects\AddRefundTracker;
 use App\Services\Order\Refund\Objects\ProductChangeTracker;
 use App\Services\OrderSku\BatchManipulator;
+use App\Services\Product\StockManager;
 use App\Traits\ResponseAPI;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
@@ -18,9 +18,9 @@ class UpdateProductInOrder extends ProductOrder
     private array $refunded_items_obj = [];
     private array $added_items_obj = [];
     private float $refunded_amount = 0;
+    private array $stockUpdateData = [];
 
     /**
-     * @throws BaseClientServerError
      * @throws OrderException
      */
     public function update() : array
@@ -36,7 +36,7 @@ class UpdateProductInOrder extends ProductOrder
                 $this->handleQuantityUpdateForOrderSku($product, $skus_details->where('id', $product->getSkuId())->first());
             }
         }
-        $this->updateStockForProductsChanges($updated_products,$skus_details);
+        $this->makeStockUpdateDataForProductsChanges($updated_products,$skus_details);
         $this->calculateRefundedAmountOfReturnedProducts();
         return [
             'refunded_amount' => $this->refunded_amount,
@@ -189,11 +189,11 @@ class UpdateProductInOrder extends ProductOrder
     }
 
     /**
-     * @throws BaseClientServerError
+     * @param array $updated_products
+     * @param bool|Collection $skus_details
      */
-    private function updateStockForProductsChanges(array $updated_products, bool|Collection $skus_details)
+    private function makeStockUpdateDataForProductsChanges(array $updated_products, bool|Collection $skus_details)
     {
-
         if (!$skus_details) return;
         foreach ($updated_products as $product) {
             /** @var $product ProductChangeTracker */
@@ -201,10 +201,18 @@ class UpdateProductInOrder extends ProductOrder
             $product_detail = $skus_details->where('id', $product->getSkuId())->first();
             $this->stockManager->setOrder($this->order)->setSku($product_detail);
             if ($product->isQuantityIncreased()) {
-                if ($this->stockManager->isStockMaintainable()) $this->stockManager->decrease($product->getQuantityIncreasedValue());
+                $this->stockUpdateData [] = [
+                    'sku_detail' => $product_detail,
+                    'quantity' => $product->getQuantityIncreasedValue(),
+                    'operation' => StockManager::STOCK_DECREMENT,
+                ];
             }
             if ($product->isQuantityDecreased()) {
-                $this->stockManager->increase($product->getQuantityDecreasedValue());
+                $this->stockUpdateData [] = [
+                    'sku_detail' => $product_detail,
+                    'quantity' => $product->getQuantityDecreasedValue(),
+                    'operation' => StockManager::STOCK_INCREMENT,
+                ];
             }
         }
     }
@@ -249,6 +257,14 @@ class UpdateProductInOrder extends ProductOrder
             ->setOldBatchDetail($old_order_sku->batch_detail)
             ->setUpdatedBatchDetail($new_order_sku->batch_detail);
 
+    }
+
+    /**
+     * @return array
+     */
+    public function getStockUpdateData(): array
+    {
+        return $this->stockUpdateData;
     }
 
 

@@ -18,6 +18,8 @@ use App\Services\Order\Refund\DeleteProductFromOrder;
 use App\Services\Order\Refund\OrderUpdateFactory;
 use App\Services\Order\Refund\UpdateProductInOrder;
 use App\Services\Payment\Creator as PaymentCreator;
+use App\Services\Product\StockManageByChunk;
+use App\Services\Product\StockManager;
 use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ModificationFields;
 use Exception;
@@ -46,6 +48,7 @@ class Updater
     protected ?string $delivery_request_id;
     protected ?string $delivery_thana;
     protected ?string $delivery_district;
+    private array $stockUpdateEntry = [];
 
     public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
@@ -56,7 +59,7 @@ class Updater
                                 protected CustomerRepositoryInterface $customerRepository,
                                 protected PriceCalculation $orderCalculator,
                                 protected EmiCalculation $emiCalculation,
-                                protected StockRefillerForFailedUpdate $stockRefiller
+                                protected StockManageByChunk $stockManager
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -358,9 +361,9 @@ class Updater
                 $this->validateEmiAndCalculateChargesForOrder($order->refresh());
             }
             if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
+            $this->updateStock();
             DB::commit();
         } catch (Exception $e) {
-            $this->stockRefiller->setOrder($this->order)->setOrderProductChangeData($this->orderProductChangeData)->refillStock();
             DB::rollback();
             throw $e;
         }
@@ -429,7 +432,6 @@ class Updater
     }
 
     /**
-     * @throws BaseClientServerError
      * @throws OrderException
      * @throws ValidationException
      */
@@ -445,23 +447,26 @@ class Updater
         if ($comparator->isProductDeleted()) {
             /** @var DeleteProductFromOrder $updater */
             $updater = OrderUpdateFactory::getProductDeletionUpdater($this->order, $this->skus);
-            $updated_flag = $updater->update();
-            $this->orderProductChangeData['deleted'] = $updated_flag;
+            $return_data = $updater->update();
+            $this->orderProductChangeData['deleted'] = $return_data;
+            $this->stockUpdateEntry = array_merge($this->stockUpdateEntry, $updater->getStockUpdateData());
         }
         if ($comparator->isProductAdded()) {
             /** @var AddProductInOrder $updater */
             $updater = OrderUpdateFactory::getProductAddingUpdater($this->order, $this->skus);
-            $updated_flag = $updater->update();
-            $this->orderProductChangeData['new'] = $updated_flag;
+            $return_data = $updater->update();
+            $this->orderProductChangeData['new'] = $return_data;
+            $this->stockUpdateEntry = array_merge($this->stockUpdateEntry, $updater->getStockUpdateData());
         }
         if ($comparator->isProductUpdated()) {
             /** @var UpdateProductInOrder $updater */
             $updater = OrderUpdateFactory::getOrderProductUpdater($this->order, $this->skus);
-            $updated_flag = $updater->update();
-            $this->orderProductChangeData['refund_exchanged'] = $updated_flag;
+            $return_data = $updater->update();
+            $this->orderProductChangeData['refund_exchanged'] = $return_data;
+            $this->stockUpdateEntry = array_merge($this->stockUpdateEntry, $updater->getStockUpdateData());
         }
 
-        if (isset($updated_flag)) {
+        if (isset($return_data)) {
             $this->orderProductChangeData['paid_amount'] = is_null($this->paidAmount) ? 0 : $this->paidAmount ;
             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
         }
@@ -582,5 +587,18 @@ class Updater
         $emi_data['interest'] = !is_null($order->interest) ? ( $order->interest + $data['total_interest']) :  $data['total_interest'];
         $emi_data['bank_transaction_charge'] = !is_null($order->bank_transaction_charge) ? ( $order->bank_transaction_charge + $data['bank_transaction_fee']) : $data['bank_transaction_fee'];
         $order->update($this->withUpdateModificationField($emi_data));
+    }
+
+    public function updateStock()
+    {
+        if(count($this->stockUpdateEntry) > 0) {
+            foreach ($this->stockUpdateEntry as $each_data) {
+                if($each_data['operation'] == StockManager::STOCK_INCREMENT)
+                    $this->stockManager->setSku($each_data['sku_detail'])->increaseAndInsertInChunk($each_data['quantity']);
+                if($each_data['operation'] == StockManager::STOCK_DECREMENT)
+                    $this->stockManager->setSku($each_data['sku_detail'])->decreaseAndInsertInChunk($each_data['quantity']);
+            }
+            $this->stockManager->updateStock();
+        }
     }
 }

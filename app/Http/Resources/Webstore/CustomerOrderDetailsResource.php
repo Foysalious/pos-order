@@ -29,10 +29,10 @@ class CustomerOrderDetailsResource extends JsonResource
     /**
      * @return array
      */
-    private function getOrderPriceRelatedInfo(): array
+    private function getOrderPriceRelatedInfo() : array
     {
         /** @var PriceCalculation $price_calculator */
-        $price_calculator = (App::make(PriceCalculation::class))->setOrder($this->order);
+        $price_calculator = (App::make(PriceCalculation::class))->setOrder($this->resource);
 
         return [
             'original_price' => $price_calculator->getOriginalPrice(),

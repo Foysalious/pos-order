@@ -18,7 +18,7 @@ class NotRatedSkuResource extends JsonResource
             'product_name' => $product_name ?? null,
             'product_image' => $this->product_image ?? null,
             'order_id' => $this->order_id,
-            'variation' => $details ? ($details['combination'] ?? null): null,
+            'variation' => $details ?? null,
         ];
     }
 }
