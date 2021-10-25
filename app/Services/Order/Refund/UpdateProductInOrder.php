@@ -169,7 +169,7 @@ class UpdateProductInOrder extends ProductOrder
         $order_sku->quantity = $product->getQuantityChangedValue();
         $order_sku->unit_price = $product->getCurrentUnitPrice();
         $new_sku = $order_sku->toArray();
-        $new_sku['details'] = json_encode(["id"=> null, "price" => $product->getCurrentUnitPrice(), "quantity" => $product->getQuantityChangedValue()]);
+        $new_sku['batch_detail'] = json_encode(["id"=> null, "price" => $product->getCurrentUnitPrice(), "quantity" => $product->getQuantityChangedValue()]);
         $new_order_sku = $this->orderSkuRepository->create($new_sku);
         $this->added_items_obj [] = $this->makeObject($product, $order_sku, $new_order_sku);
     }
