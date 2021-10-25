@@ -187,7 +187,8 @@ class OrderService extends BaseService
         $order = $this->orderRepository->getOrderDetailsByPartner($partner_id, $order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new OrderWithProductResource($order);
-        $resource['is_updatable'] = $this->addOrderUpdatableFlag($order);
+        $resource = json_decode(($resource->toJson()), true);
+        $resource['is_updatable'] = $this->isOrderUpdatable($order);
         return $this->success(ResponseMessages::SUCCESS, ['order' => $resource]);
     }
 
@@ -428,7 +429,7 @@ class OrderService extends BaseService
         return $this->success(ResponseMessages::SUCCESS, ['logs' => $logs]);
     }
 
-    private function addOrderUpdatableFlag($order): bool
+    private function isOrderUpdatable($order): bool
     {
         $delivery_integrated = !is_null($order->delivery_request_id);
         if($order->sales_channel_id == SalesChannelIds::POS) {
