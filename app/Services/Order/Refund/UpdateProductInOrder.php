@@ -19,14 +19,16 @@ class UpdateProductInOrder extends ProductOrder
     private array $added_items_obj = [];
     private float $refunded_amount = 0;
     private array $stockUpdateData = [];
+    private array $updatedProductTrackerList = [];
 
     /**
      * @throws OrderException
      */
     public function update() : array
     {
-        $updated_products = $this->getUpdatedProducts();
-        $skus_details = $this->getUpdatedProductsSkuDetails($updated_products);
+//        $updated_products = $this->getUpdatedProducts();
+        $updated_products = $this->updatedProductTrackerList;
+        $skus_details = $this->getUpdatedProductsSkuDetails();
         $this->checkStockAvailability($updated_products, $skus_details);
         foreach ($updated_products as $product) {
             /** @var $product ProductChangeTracker */
@@ -99,8 +101,9 @@ class UpdateProductInOrder extends ProductOrder
         }
     }
 
-    private function getUpdatedProductsSkuDetails(array $updated_products): Collection|bool
+    private function getUpdatedProductsSkuDetails(): Collection|bool
     {
+        /**
         $orderSkuIds = [];
         array_walk($updated_products, function ($items) use (&$orderSkuIds){
             $orderSkuIds [] =  $items->getOrderSkuId();
@@ -110,8 +113,15 @@ class UpdateProductInOrder extends ProductOrder
             ->where('sku_id', '<>', null )
             ->pluck('sku_id')
             ->toArray();
-        if($updated_products_sku_ids){
-            return collect($this->getSkuDetails($updated_products_sku_ids, $this->order->sales_channel_id));
+         */
+        $sku_ids = collect();
+        /** @var ProductChangeTracker $each */
+        foreach ($this->updatedProductTrackerList as $each) {
+            $sku_id = $each->getSkuId();
+            if ($sku_id) $sku_ids->add($sku_id);
+        }
+        if($sku_ids->count() > 0){
+            return collect($this->getSkuDetails($sku_ids->toArray(), $this->order->sales_channel_id));
         } else {
             return false;
         }
@@ -267,5 +277,14 @@ class UpdateProductInOrder extends ProductOrder
         return $this->stockUpdateData;
     }
 
+    /**
+     * @param array $updatedProductTrackerList
+     * @return UpdateProductInOrder
+     */
+    public function setUpdatedProductTrackerList(array $updatedProductTrackerList)
+    {
+        $this->updatedProductTrackerList = $updatedProductTrackerList;
+        return $this;
+    }
 
 }

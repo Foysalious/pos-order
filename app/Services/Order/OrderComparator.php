@@ -1,8 +1,10 @@
 <?php namespace App\Services\Order;
 
 use App\Models\Order;
+use App\Services\Order\Refund\Objects\ProductChangeTracker;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
 
 class OrderComparator
 {
@@ -12,7 +14,7 @@ class OrderComparator
 
     private array $addedProducts = [];
     private array $deletedProducts = [];
-    private array $updatedProducts = [];
+    private array $updatedProductTrackerList = [];
 
     public Order $order;
     public $skus;
@@ -83,21 +85,42 @@ class OrderComparator
     }
 
     private function checkUpdatesInProduct() {
-        $current_products = collect($this->order->items()->get(['id','quantity','unit_price'])->toArray());
+        $current_products = $this->order->orderSkus;
         $request_products = collect(json_decode($this->skus, true));
         $current_products->each(function ($current_product) use ($request_products){
-            if ($request_products->contains('order_sku_id',$current_product['id'])) {
+            if ($request_products->contains('order_sku_id',$current_product->id)) {
+                $updating_product = $request_products->where('order_sku_id', $current_product->id)->first();
+                /** @var ProductChangeTracker $product_obj */
+                $product_obj = App::make(ProductChangeTracker::class);
+                $product_obj->setOrderSkuId($current_product->id)
+                    ->setSkuId($current_product->sku_id)
+                    ->setOldUnitPrice($current_product->unit_price)
+                    ->setPreviousQuantity($current_product->quantity)
+                    ->setPreviuosVatPercentage($current_product->vat_percentage)
+                    ->setPreviousDiscountDetails($current_product->discount)
+                    ->setCurrentUnitPrice($updating_product['price'])
+                    ->setCurrentQuantity($updating_product['quantity'])
+                    ->setCurrentVatPercentage($updating_product['vat_percentage'])
+                    ->setCurrentDiscountDetails(['discount' => $updating_product['discount'], 'is_percentage' => $updating_product['is_discount_percentage']])
+                ;
+
+                if($product_obj->isQuantityChanged() || $product_obj->isPriceChanged() || $product_obj->isVatPercentageChanged() || $product_obj->isDiscountChanged()) {
+                    $this->productUpdatedFlag = True;
+                    $this->updatedProductTrackerList [] = $product_obj;
+                }
+                /**
                 $updating_product = $request_products->where('order_sku_id', $current_product['id'])->first();
                 if ($updating_product['quantity'] != $current_product['quantity']){
-                    $this->productUpdatedFlag = true;
-                    $this->updatedProducts [] = $updating_product['order_sku_id'];
+                $this->productUpdatedFlag = true;
+                $this->updatedProducts [] = $updating_product['order_sku_id'];
                 }
                 if (isset($updating_product['price']) && ($updating_product['price'] != $current_product['unit_price'])){
-                    $this->productUpdatedFlag = true;
-                    if (array_search($updating_product['order_sku_id'],$this->updatedProducts) === FALSE ) {
-                        $this->updatedProducts [] = $updating_product['order_sku_id'];
-                    }
+                $this->productUpdatedFlag = true;
+                if (array_search($updating_product['order_sku_id'],$this->updatedProducts) === FALSE ) {
+                $this->updatedProducts [] = $updating_product['order_sku_id'];
                 }
+                }
+                 */
             }
         });
     }
@@ -145,9 +168,9 @@ class OrderComparator
     /**
      * @return array
      */
-    public function getUpdatedProducts(): array
+    public function getUpdatedProductTrackerList(): array
     {
-        return array_values($this->updatedProducts);
+        return $this->updatedProductTrackerList;
     }
 
 }

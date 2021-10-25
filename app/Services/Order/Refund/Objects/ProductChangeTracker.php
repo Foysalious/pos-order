@@ -13,6 +13,10 @@ class ProductChangeTracker
     protected ?int $skuId;
     protected string $name;
     protected int $productId;
+    protected float $previousVatPercentage;
+    protected float $currentVatPercentage;
+    protected array $previousDiscountDetails;
+    protected array $currentDiscountDetails;
 
     /**
      * @param int $orderSkuId
@@ -229,6 +233,62 @@ class ProductChangeTracker
     public function isCurrentUnitPriceSet() : bool
     {
         return !is_null($this->currentUnitPrice);
+    }
+
+    public function isVatPercentageChanged() : bool
+    {
+        return $this->currentVatPercentage != $this->previousVatPercentage;
+    }
+
+    public function isDiscountChanged()
+    {
+        return collect($this->currentDiscountDetails)->diffAssoc(collect($this->previousDiscountDetails))->count() > 0;
+    }
+
+    /**
+     * @param float $vat_percentage
+     * @return ProductChangeTracker
+     */
+    public function setPreviuosVatPercentage(float $vat_percentage)
+    {
+        $this->previousVatPercentage = $vat_percentage;
+        return $this;
+    }
+
+    /**
+     * @param float $vat_percentage
+     * @return ProductChangeTracker
+     */
+    public function setCurrentVatPercentage(float $vat_percentage)
+    {
+        $this->currentVatPercentage = $vat_percentage;
+        return $this;
+    }
+
+    /**
+     * @param array $currentDiscountDetails
+     * @return ProductChangeTracker
+     */
+    public function setCurrentDiscountDetails(array $currentDiscountDetails)
+    {
+        $this->currentDiscountDetails = [
+            'discount' => (float) $currentDiscountDetails['discount'] ?? 0,
+            'is_percentage' => $currentDiscountDetails['is_percentage'] ?? 0
+        ];
+        return $this;
+    }
+
+    /**
+     * @param array|object|null $previousDiscountDetails
+     * @return ProductChangeTracker
+     */
+    public function setPreviousDiscountDetails(array|object|null $previousDiscountDetails)
+    {
+        $this->previousDiscountDetails = [
+            'discount' =>  $previousDiscountDetails ? (float) $previousDiscountDetails->original_amount : 0,
+            'is_percentage' => $previousDiscountDetails ? $previousDiscountDetails->is_percentage : 0
+        ];
+        return $this;
     }
 
 }
