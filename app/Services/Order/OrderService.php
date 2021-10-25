@@ -187,8 +187,6 @@ class OrderService extends BaseService
         $order = $this->orderRepository->getOrderDetailsByPartner($partner_id, $order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new OrderWithProductResource($order);
-        $resource = $this->addUpdatableFlagForItems($resource, $order);
-        $resource['is_updatable'] = $this->addOrderUpdatableFlag($order);
         return $this->success(ResponseMessages::SUCCESS, ['order' => $resource]);
     }
 
@@ -331,49 +329,6 @@ class OrderService extends BaseService
         $orderPaymentStatus = $this->orderPaymentRepository->where('order_id', $order_id)->get();
         if (count($orderPaymentStatus) > 0) throw new OrderException(trans('order.update.no_customer_update'));
         else return true;
-    }
-
-    private function addUpdatableFlagForItems($order_resource, Order $order)
-    {
-        $order_resource = json_decode(($order_resource->toJson()), true);
-        $sku_ids = $order->orderSkus->whereNotNull('sku_id')->pluck('sku_id');
-        $sku_details = $sku_ids->count() > 0 ? $this->getSkuDetails($sku_ids, $order) : collect();
-        $order_sku_discounts = $order->discounts->where('type', DiscountTypes::SKU);
-        foreach ($order_resource['items'] as &$item) {
-            $flag = true;
-            if ($item['sku_id'] !== null) {
-                $sku = $sku_details->where('id', $item['sku_id'])->first();
-                if(is_null($sku)) {
-                    $item['is_updatable'] = false;
-                    $item['stock'] = 0;
-                    $item['is_published'] = false;
-                    continue;
-                }
-                if ($sku['sku_channel'][0]['price'] != $item['unit_original_price']) {
-                    $flag = false;
-                }
-                $channels_discount = collect($sku['sku_channel'])->where('channel_id', $order->sales_channel_id)->pluck('discounts')->first()[0] ?? [];
-                $sku_discount = $order_sku_discounts->where('item_id', $item['id'])->first();
-                if (($channels_discount && $sku_discount) && ($sku_discount->amount != $channels_discount['amount'] || $sku_discount->is_percentage !== $channels_discount['is_amount_percentage'])) {
-                    $flag = false;
-                }
-                if ($sku['vat_percentage'] != $item['vat_percentage']) {
-                    $flag = false;
-                }
-                $item['stock'] = $sku['stock'];
-                $item['is_published'] = (bool) $sku['is_published'];
-            }
-            $item['is_updatable'] = $flag;
-
-        }
-        return $order_resource;
-    }
-
-    private function getSkuDetails($sku_ids, $order)
-    {
-        $url = 'api/v1/partners/' . $order->partner_id . '/skus?skus=' . json_encode($sku_ids->toArray()) . '&channel_id=' . $order->sales_channel_id;
-        $sku_details = $this->client->get($url)['skus'] ?? [];
-        return collect($sku_details);
     }
 
     public function updateOrderStatus($partner_id, $order_id, OrderStatusUpdateRequest $request): JsonResponse
