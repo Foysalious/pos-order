@@ -187,6 +187,7 @@ class OrderService extends BaseService
         $order = $this->orderRepository->getOrderDetailsByPartner($partner_id, $order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new OrderWithProductResource($order);
+        $resource['is_updatable'] = $this->addOrderUpdatableFlag($order);
         return $this->success(ResponseMessages::SUCCESS, ['order' => $resource]);
     }
 
