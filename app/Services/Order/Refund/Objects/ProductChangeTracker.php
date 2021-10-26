@@ -291,4 +291,20 @@ class ProductChangeTracker
         return $this;
     }
 
+    /**
+     * @return float
+     */
+    public function getCurrentVatPercentage(): float
+    {
+        return $this->currentVatPercentage;
+    }
+
+    /**
+     * @return array
+     */
+    public function getCurrentDiscountDetails(): array
+    {
+        return $this->currentDiscountDetails;
+    }
+
 }

@@ -1,8 +1,8 @@
 <?php namespace App\Services\Order;
 
+use App\Exceptions\OrderException;
 use App\Models\Order;
 use App\Services\Order\Refund\Objects\ProductChangeTracker;
-use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 
@@ -14,7 +14,7 @@ class OrderComparator
 
     private array $addedProducts = [];
     private array $deletedProducts = [];
-    private array $updatedProductTrackerList = [];
+    private array $productChangeTrackerList = [];
 
     public Order $order;
     public $skus;
@@ -30,7 +30,7 @@ class OrderComparator
     }
 
     /**
-     * @param Request $newOrder
+     * @param $skus
      * @return OrderComparator
      */
     public function setOrderNewSkus($skus)
@@ -101,26 +101,14 @@ class OrderComparator
                     ->setCurrentUnitPrice($updating_product['price'])
                     ->setCurrentQuantity($updating_product['quantity'])
                     ->setCurrentVatPercentage($updating_product['vat_percentage'])
-                    ->setCurrentDiscountDetails(['discount' => $updating_product['discount'], 'is_percentage' => $updating_product['is_discount_percentage']])
-                ;
+                    ->setCurrentDiscountDetails(['discount' => $updating_product['discount'], 'is_percentage' => $updating_product['is_discount_percentage']]);
 
-                if($product_obj->isQuantityChanged() || $product_obj->isPriceChanged() || $product_obj->isVatPercentageChanged() || $product_obj->isDiscountChanged()) {
+                $this->validateUpdate($product_obj);
+
+                if ($product_obj->isQuantityChanged() || $product_obj->isPriceChanged() || $product_obj->isVatPercentageChanged() || $product_obj->isDiscountChanged()) {
                     $this->productUpdatedFlag = True;
-                    $this->updatedProductTrackerList [] = $product_obj;
+                    $this->productChangeTrackerList [] = $product_obj;
                 }
-                /**
-                $updating_product = $request_products->where('order_sku_id', $current_product['id'])->first();
-                if ($updating_product['quantity'] != $current_product['quantity']){
-                $this->productUpdatedFlag = true;
-                $this->updatedProducts [] = $updating_product['order_sku_id'];
-                }
-                if (isset($updating_product['price']) && ($updating_product['price'] != $current_product['unit_price'])){
-                $this->productUpdatedFlag = true;
-                if (array_search($updating_product['order_sku_id'],$this->updatedProducts) === FALSE ) {
-                $this->updatedProducts [] = $updating_product['order_sku_id'];
-                }
-                }
-                 */
             }
         });
     }
@@ -168,9 +156,19 @@ class OrderComparator
     /**
      * @return array
      */
-    public function getUpdatedProductTrackerList(): array
+    public function getProductChangeTrackerList(): array
     {
-        return $this->updatedProductTrackerList;
+        return $this->productChangeTrackerList;
+    }
+
+    /**
+     * @throws OrderException
+     */
+    private function validateUpdate(ProductChangeTracker $product_obj)
+    {
+        if ($product_obj->isQuantityDecreased() && ($product_obj->isPriceChanged() || $product_obj->isVatPercentageChanged() || $product_obj->isDiscountChanged())) {
+            throw new OrderException('updating discount/vat-percentage/price is not allowed while quantity decreasing');
+        }
     }
 
 }

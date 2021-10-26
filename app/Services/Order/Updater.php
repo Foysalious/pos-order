@@ -360,7 +360,7 @@ class Updater
             if ($this->paymentMethod == PaymentMethods::EMI) {
                 $this->validateEmiAndCalculateChargesForOrder($order->refresh());
             }
-            dd('before update');
+
             if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
             $this->updateStock();
             DB::commit();
@@ -462,7 +462,7 @@ class Updater
         if ($comparator->isProductUpdated()) {
             /** @var UpdateProductInOrder $updater */
             $updater = OrderUpdateFactory::getOrderProductUpdater($this->order, $this->skus);
-            $return_data = $updater->setUpdatedProductTrackerList($comparator->getUpdatedProductTrackerList())->update();
+            $return_data = $updater->setProductChangeTrackerList($comparator->getProductChangeTrackerList())->update();
             $this->orderProductChangeData['refund_exchanged'] = $return_data;
             $this->stockUpdateEntry = array_merge($this->stockUpdateEntry, $updater->getStockUpdateData());
         }
