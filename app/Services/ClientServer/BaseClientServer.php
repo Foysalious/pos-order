@@ -33,10 +33,11 @@ abstract class BaseClientServer implements BaseClientServerInterface
             return json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data, $multipart))->getBody()->getContents(), true);
         } catch (GuzzleException $e) {
             $res = $e->getResponse();
-            $http_code = $res->getStatusCode();
-            $message = $res->getBody()->getContents();
+            $http_code = !is_null($res) ? $res->getStatusCode() : null;
+            $message = !is_null($res) ? $res->getBody()->getContents() : null;
             if ($http_code > 399 && $http_code < 500) throw new BaseClientServerError($message, $http_code);
-            throw new BaseClientServerError($e->getMessage(), $http_code);
+            $client = ' and client ' . get_called_class();
+            throw new BaseClientServerError($e->getMessage() . "$client", $http_code);
         }
     }
 
