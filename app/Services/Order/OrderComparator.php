@@ -41,12 +41,12 @@ class OrderComparator
 
     public function compare()
     {
-        $this->checkForProductAdditionAndDeletion();
-        $this->checkUpdatesInProduct();
+        $this->checkForNewAndDeletedOrderItems();
+        $this->checkForUpdatesInExistingOrderItems();
         return $this;
     }
 
-    private function checkForProductAdditionAndDeletion()
+    private function checkForNewAndDeletedOrderItems()
     {
         $current_products = $this->order->items()->pluck('id');
         $request_products = collect(json_decode($this->skus, true))->pluck('order_sku_id');
@@ -84,10 +84,12 @@ class OrderComparator
         }
     }
 
-    private function checkUpdatesInProduct() {
+    private function checkForUpdatesInExistingOrderItems() {
         $current_products = $this->order->orderSkus;
         $request_products = collect(json_decode($this->skus, true));
-        $current_products->each(function ($current_product) use ($request_products){
+        $current_products->each(/**
+         * @throws OrderException
+         */ function ($current_product) use ($request_products){
             if ($request_products->contains('order_sku_id',$current_product->id)) {
                 $updating_product = $request_products->where('order_sku_id', $current_product->id)->first();
                 /** @var ProductChangeTracker $product_obj */
