@@ -2,7 +2,7 @@
 
 use App\Helper\ConstGetter;
 
-class Statuses
+class States
 {
     use ConstGetter;
 

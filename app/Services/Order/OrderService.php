@@ -40,7 +40,8 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use App\Services\Order\Constants\Statuses;
-use App\Services\Webstore\Order\Statuses as WebStoreStatuses;
+use App\Services\Webstore\Order\States as WebStoreStatuses;
+use App\Services\Webstore\Order\StateTags;
 
 class OrderService extends BaseService
 {
@@ -196,22 +197,25 @@ class OrderService extends BaseService
         $order = $this->orderRepository->where('partner_id', $partner_id)->where('customer_id', $customer_id)->with('statusChangeLogs')->find($order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new CustomerOrderDetailsResource($order);
-        $statusHistory = $this->getStatusHistory($order);
-        return $this->success(ResponseMessages::SUCCESS, ['order' => $resource, 'status_history' => $statusHistory]);
+        $stateHistory = $this->getStateHistory($order);
+        return $this->success(ResponseMessages::SUCCESS, ['order' => $resource, 'state_history' => $stateHistory]);
     }
 
-    private function getStatusHistory($order): array
+    private function getStateHistory($order): array
     {
         $logs = $order->statusChangeLogs;
         $statusHistory = [];
-        $temp['status'] = WebStoreStatuses::ORDER_PLACED;
-        $temp['time_stamp'] = $order->created_at;
+        $temp['state_text'] = WebStoreStatuses::ORDER_PLACED;
+        $temp['state_tag'] = StateTags::ORDER_PLACED;
+        $temp['time_stamp'] = convertTimezone($order->created_at)?->format('Y-m-d H:i:s');;
         array_push($statusHistory, $temp);
-        $mapped_status = config('mapped_status');
-        $logs->each(function ($log) use (&$statusHistory, $order, $mapped_status) {
+        $mapped_state = config('mapped_status');
+        $mapped_state_tag = config('mapped_state_tag');
+        $logs->each(function ($log) use (&$statusHistory, $order, $mapped_state, $mapped_state_tag) {
             $toStatus = json_decode($log->new_value, true)['to'];
             if (in_array($toStatus, [Statuses::PROCESSING, Statuses::SHIPPED, Statuses::COMPLETED])) {
-                $temp['status'] = $mapped_status[$toStatus];
+                $temp['state_text'] = $mapped_state[$toStatus];
+                $temp['state_tag'] = $mapped_state_tag[$temp['state_text']];
                 $temp['time_stamp'] = convertTimezone($log->created_at)?->format('Y-m-d H:i:s');
                 array_push($statusHistory, $temp);
             }
