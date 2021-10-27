@@ -17,6 +17,7 @@ use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
+use App\Jobs\Order\OrderPlacePushNotification;
 use App\Jobs\WebStoreSettingsSyncJob;
 use App\Models\Order;
 use App\Services\AccessManager\AccessManager;
@@ -54,18 +55,18 @@ class OrderService extends BaseService
     private InvoiceService $invoiceService;
 
     public function __construct(
-        OrderRepositoryInterface $orderRepository,
-        OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
-        CustomerRepositoryInterface $customerRepository,
-        Updater $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
-        Creator $creator,
-        protected InventoryServerClient $client,
-        protected ApiServerClient $apiServerClient,
-        protected AccessManager $accessManager,
-        protected OrderFilter $orderSearch,
-        protected StatusChanger $orderStatusChanger,
+        OrderRepositoryInterface                $orderRepository,
+        OrderSkusRepositoryInterface            $orderSkusRepositoryInterface,
+        CustomerRepositoryInterface             $customerRepository,
+        Updater                                 $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
+        Creator                                 $creator,
+        protected InventoryServerClient         $client,
+        protected ApiServerClient               $apiServerClient,
+        protected AccessManager                 $accessManager,
+        protected OrderFilter                   $orderSearch,
+        protected StatusChanger                 $orderStatusChanger,
         protected StockRefillerForCanceledOrder $stockRefillerForCanceledOrder,
-        InvoiceService $invoiceService
+        InvoiceService                          $invoiceService
     )
     {
         $this->orderRepository = $orderRepository;
@@ -125,7 +126,7 @@ class OrderService extends BaseService
             ->setDeliveryAddress($request->delivery_address)
             ->setCustomerId($request->customer_id)
             ->setSalesChannelId($request->sales_channel_id)
-            ->setDeliveryCharge($request->has('delivery_charge') ? ($request->delivery_method == Methods::OWN_DELIVERY ? $request->delivery_charge :  $this->calculateDeliveryCharge($request,$partner)) : 0)
+            ->setDeliveryCharge($request->has('delivery_charge') ? ($request->delivery_method == Methods::OWN_DELIVERY ? $request->delivery_charge : $this->calculateDeliveryCharge($request, $partner)) : 0)
             ->setCodAmount($request->cod_amount)
             ->setEmiMonth($request->emi_month)
             ->setSkus($request->skus)
@@ -136,9 +137,9 @@ class OrderService extends BaseService
             ->setApiRequest($request->api_request->id)
             ->create();
 
-        if($order) dispatch(new WebStoreSettingsSyncJob($partner,WebStoreSettingsSyncTypes::Order,$order->id));
+        if ($order) dispatch(new WebStoreSettingsSyncJob($partner, WebStoreSettingsSyncTypes::Order, $order->id));
         if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) {
-            //dispatch(new OrderPlacePushNotification($order));
+            dispatch(new OrderPlacePushNotification($order));
             dispatch(new WebstoreOrderSms($partner, $order->id));
         }
         return $this->success(ResponseMessages::SUCCESS, ['order' => ['id' => $order->id]]);
@@ -170,9 +171,9 @@ class OrderService extends BaseService
         return $this->success(ResponseMessages::SUCCESS, ['invoice' => $order->invoice]);
     }
 
-    public function getOrderInvoice(int $partner_id,int $order_id): JsonResponse
+    public function getOrderInvoice(int $partner_id, int $order_id): JsonResponse
     {
-        $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::POS)->where('partner_id',$partner_id)->find($order_id);
+        $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::POS)->where('partner_id', $partner_id)->find($order_id);
         if (!$order) return $this->error('No Order Found', 404);
         if ($order->invoice == null) {
             return $this->invoiceService->setOrder($order_id)->generateInvoice();
@@ -254,7 +255,7 @@ class OrderService extends BaseService
             ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
             ->update();
 
-        dispatch(new WebStoreSettingsSyncJob($partner_id,WebStoreSettingsSyncTypes::Order,$orderDetails->id));
+        dispatch(new WebStoreSettingsSyncJob($partner_id, WebStoreSettingsSyncTypes::Order, $orderDetails->id));
         return $this->success();
     }
 
@@ -436,7 +437,7 @@ class OrderService extends BaseService
     {
         $data['statuses'] = Statuses::get();
         $data['payment_statuses'] = PaymentStatuses::get();
-        return $this->success(ResponseMessages::SUCCESS, [ 'filters' => $data ]);
+        return $this->success(ResponseMessages::SUCCESS, ['filters' => $data]);
     }
 
     private function isInvoiceDownloadable($log_type): bool

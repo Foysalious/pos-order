@@ -3,7 +3,7 @@ services:
   pos-order-service:
     build:
       context: ../
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.production
     container_name: ${CONTAINER_NAME}
     environment:
       SERVICE_NAME: app

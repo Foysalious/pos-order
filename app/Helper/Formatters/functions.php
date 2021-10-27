@@ -17,18 +17,7 @@ if (!function_exists('formatTakaToDecimal')) {
         return TakaFormatter::toDecimal($amount, $comma_separation, $comma_separation_format);
     }
 }
-if (!function_exists('en2bnNumber')) {
-    /**
-     * @param  $number
-     * @return string
-     */
-    function en2bnNumber($number)
-    {
-        $search_array  = [ "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ".", "," ];
-        $replace_array = [ "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯", "০", ".", "," ];
-        return str_replace($search_array, $replace_array, $number);
-    }
-}
+
 if (!function_exists('convertTimezone')) {
 
     /**
