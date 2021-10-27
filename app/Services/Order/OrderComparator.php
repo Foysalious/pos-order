@@ -167,7 +167,7 @@ class OrderComparator
     private function validateUpdate(ProductChangeTracker $product_obj)
     {
         if ($product_obj->isQuantityDecreased() && ($product_obj->isPriceChanged() || $product_obj->isVatPercentageChanged() || $product_obj->isDiscountChanged())) {
-            throw new OrderException('updating discount/vat-percentage/price is not allowed while quantity decreasing');
+            throw new OrderException('updating discount/vat-percentage/price is not allowed while quantity decreasing', 400);
         }
     }
 

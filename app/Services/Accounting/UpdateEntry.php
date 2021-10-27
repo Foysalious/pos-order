@@ -61,7 +61,7 @@ class UpdateEntry extends BaseEntry
             'source_type'        => EntryTypes::POS,
             'note'               => $this->getNote(),
             'amount'             => $order_price_details->getDiscountedPrice(),
-            'amount_cleared'     => (float) $this->orderProductChangeData['paid_amount'],
+            'amount_cleared'     => abs((float) $this->orderProductChangeData['paid_amount']),
             'reconcile_amount'   => (float) $this->calculateAmountChange($inventory_products),
             'total_discount'     => $order_price_details->getDiscount(),
             'total_vat'          => $order_price_details->getVat(),

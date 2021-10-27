@@ -362,7 +362,6 @@ class Updater
             }
 
             if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
-            $this->updateStock();
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();
@@ -441,6 +440,7 @@ class Updater
         if ($this->skus === null) {
             return;
         }
+        $this->validateOrderSkus();
         /** @var OrderComparator $comparator */
         $comparator = App::make(OrderComparator::class);
         $comparator->setOrder($this->order)->setOrderNewSkus($this->skus)->compare();
@@ -600,6 +600,19 @@ class Updater
                     $this->stockManager->setSku($each_data['sku_detail'])->decreaseAndInsertInChunk($each_data['quantity']);
             }
             $this->stockManager->updateStock();
+        }
+    }
+
+    /**
+     * @throws OrderException
+     */
+    private function validateOrderSkus()
+    {
+        $skus = collect(json_decode($this->skus,true));
+        $requested_order_sku_ids = $skus->whereNotNull('order_sku_id')->pluck('order_sku_id');
+        $current_order_sku_ids = $this->order->orderSkus->pluck('id');
+        if ($requested_order_sku_ids->diff($current_order_sku_ids)->count() > 0) {
+            throw new OrderException('Invalid order sku item given', 400);
         }
     }
 }
