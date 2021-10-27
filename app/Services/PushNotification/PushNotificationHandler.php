@@ -4,7 +4,6 @@ class PushNotificationHandler
 {
     public function send($topic, $notification = null, $data = null, $priority = null)
     {
-        $topicResponse = null;
         /** @var PushNotificationClient $client */
         $client = app(PushNotificationClient::class);
         $data = [
@@ -16,7 +15,6 @@ class PushNotificationHandler
         if ($notification && $notification['body']) $data['body'] = $notification['body'];
         if ($priority) $data['priority'] = $priority;
         $url = 'api/vendors/' . config('notification.sheba_services_vendor_id') . '/notification/send';
-        $topicResponse = $client->post($url, $data);
-        return $topicResponse;
+        $client->post($url, $data);
     }
 }
