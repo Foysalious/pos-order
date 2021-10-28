@@ -169,7 +169,17 @@ class OrderComparator
     private function validateUpdate(ProductChangeTracker $product_obj)
     {
         if ($product_obj->isQuantityDecreased() && ($product_obj->isPriceChanged() || $product_obj->isVatPercentageChanged() || $product_obj->isDiscountChanged())) {
-            throw new OrderException('updating discount/vat-percentage/price is not allowed while quantity decreasing', 400);
+            throw new OrderException('updating discount/vat-percentage/price is not allowed while quantity decreasing', 403);
+        }
+        if($product_obj->isDiscountChanged() || $product_obj->isPriceChanged()){
+            $current_discount = $product_obj->getCurrentDiscountDetails();
+            if($current_discount) {
+                if((!$current_discount['is_percentage'] && $current_discount['discount'] >= $product_obj->getCurrentUnitPrice())
+                    || ($current_discount['is_percentage'] && $current_discount['discount'] == 100))
+                {
+                    throw new OrderException('discount should not be equal or greater than product price per unit', 403);
+                }
+            }
         }
     }
 

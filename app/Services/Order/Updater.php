@@ -582,7 +582,7 @@ class Updater
         $amount = $this->orderCalculator->setOrder($order)->getDue();
         $min_emi_amount = config('emi.minimum_emi_amount');
         if($amount < $min_emi_amount) {
-            throw new OrderException("Emi is not available for order amount < " .$min_emi_amount);
+            throw new OrderException("Emi is not available for order amount less than " .$min_emi_amount, 400);
         }
         $data = $this->emiCalculation->setEmiMonth((int)$order->emi_month)->setAmount($amount)->getEmiCharges();
         $emi_data['interest'] = !is_null($order->interest) ? ( $order->interest + $data['total_interest']) :  $data['total_interest'];

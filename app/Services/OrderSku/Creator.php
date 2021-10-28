@@ -118,9 +118,7 @@ class Creator
             $sku_data['vat_percentage'] = $sku->vat_percentage ?? (isset($sku_details[$sku->id]) ? $sku_details[$sku->id]['vat_percentage'] : 0);
             $sku_data['product_image'] = $sku_details[$sku->id]['app_thumb'] ?? null;
             $sku_data['note'] = $sku->note ?? null;
-            $sku_data['discount']['discount'] = $sku->discount ?? 0;
-            $sku_data['discount']['is_discount_percentage'] = $sku->is_discount_percentage ?? null;
-            $sku_data['discount']['cap'] = $sku->cap ?? null;
+            $sku_data['discount'] = $this->resolveDiscount($sku,$sku_details[$sku->id] ?? null);
             $sku_data['is_emi_available'] = $this->isPaymentMethodEmi;
             $order_sku = $this->orderSkuRepository->create($sku_data);
             $created_skus [] = $order_sku;
@@ -186,13 +184,39 @@ class Creator
                 $sku_detail = $sku_details[$sku->id];
                 $emi_availability = $sku_detail['sku_channel'][0]['is_emi_available'] ?? false;
                 if ($emi_availability == false) {
-                    throw new OrderException("Emi is not available for Product #" . $sku->id);
+                    throw new OrderException("Emi is not available for Product #" . $sku->id, 400);
                 }
             } else {
                 if($sku->price < config('emi.minimum_emi_amount')) {
-                    throw new OrderException("Emi is not available for quick sell amount " . $sku->price);
+                    throw new OrderException("Emi is not available for quick sell amount " . $sku->price, 400);
                 }
             }
         }
+    }
+
+    private function resolveDiscount(object $sku, array|null $sku_detail)
+    {
+        $discount_data = [
+            'discount' => 0,
+            'is_discount_percentage' => 0,
+            'cap' => null,
+        ];
+        if($this->order->sales_channel_id == SalesChannelIds::POS) {
+            $discount_data = [
+                'discount' => $sku->discount ?? 0,
+                'is_discount_percentage' => $sku->is_discount_percentage ?? 0,
+                'cap' => $sku->cap ?? 0,
+            ];
+        } else {
+            $discount_detail = collect($sku_detail['sku_channel'])->pluck('valid_discounts')->collapse()->first();
+            if($discount_detail){
+                $discount_data = [
+                    'discount' => $discount_detail['amount'],
+                    'is_discount_percentage' => $discount_detail['is_amount_percentage'],
+                    'cap' => $discount_detail['cap']
+                ];
+            }
+        }
+        return $discount_data;
     }
 }
