@@ -320,7 +320,7 @@ class Creator
                     ->setInterest($order->interest)->create();
             }
             if ($this->hasDueError($order->refresh())) {
-                throw new OrderException("Can not make due order without customer", 421);
+                throw new OrderException("Can not make due order without customer", 403);
             }
             if ($order) event(new OrderPlaceTransactionCompleted($order));
             $this->updateStock($this->orderSkuCreator->getStockDecreasingData());
