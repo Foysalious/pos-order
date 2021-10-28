@@ -416,7 +416,7 @@ class Creator
         $total_amount = $price_calculator->setOrder($order)->getDiscountedPrice();
         $min_emi_amount = config('emi.minimum_emi_amount');
         if($total_amount < $min_emi_amount) {
-            throw new OrderException("Emi is not available for order amount < " .$min_emi_amount);
+            throw new OrderException("Emi is not available for order amount less than " .$min_emi_amount, 400);
         }
         $data = $this->emiCalculation->setEmiMonth($this->emiMonth)->setAmount($total_amount)->getEmiCharges();
         $order->interest = $data['total_interest'];

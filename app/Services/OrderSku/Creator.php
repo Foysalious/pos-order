@@ -186,11 +186,11 @@ class Creator
                 $sku_detail = $sku_details[$sku->id];
                 $emi_availability = $sku_detail['sku_channel'][0]['is_emi_available'] ?? false;
                 if ($emi_availability == false) {
-                    throw new OrderException("Emi is not available for Product #" . $sku->id);
+                    throw new OrderException("Emi is not available for Product #" . $sku->id, 400);
                 }
             } else {
                 if($sku->price < config('emi.minimum_emi_amount')) {
-                    throw new OrderException("Emi is not available for quick sell amount " . $sku->price);
+                    throw new OrderException("Emi is not available for quick sell amount " . $sku->price, 400);
                 }
             }
         }
