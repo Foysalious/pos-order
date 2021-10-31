@@ -133,15 +133,18 @@ class CustomerService extends BaseService
             $order_calculator->setOrder($order);
             $order->discounted_price = $order_calculator->getDiscountedPrice();
             $order->due = $order_calculator->getDue();
-
             $order_list[$date]['total_sale'] += $order->discounted_price;
             $order_list[$date]['total_due'] += $order->due;
             if (!is_null($status) && ($status == PaymentStatuses::DUE || $status == 'Due')) {
                 if ($order->due > 0) {
-                    $order_list[$date]['orders'][] = $order->only(['id', 'partner_wise_order_id', 'status', 'discounted_price', 'due', 'created_at']);
+                    $temp = $order->only(['id', 'partner_wise_order_id', 'status', 'discounted_price', 'due', 'created_at']);
+                    $temp['created_at'] = convertTimezone($order->created_at)?->format('d,M,Y');
+                    $order_list[$date]['orders'][] = $temp;
                 }
             } else {
-                $order_list[$date]['orders'][] = $order->only(['id', 'partner_wise_order_id', 'status', 'discounted_price', 'due', 'created_at']);
+                $temp = $order->only(['id', 'partner_wise_order_id', 'status', 'discounted_price', 'due', 'created_at']);
+                $temp['created_at'] = convertTimezone($order->created_at)?->format('d,M,Y');
+                $order_list[$date]['orders'][] = $temp;
             }
         }
         return $this->success(ResponseMessages::SUCCESS, ['data' => $order_list]);
