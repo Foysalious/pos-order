@@ -115,7 +115,7 @@ class CustomerService extends BaseService
     public function getOrdersByDateWise(CustomerOrderListRequest $request, int $partner_id, string $customer_id)
     {
         $customer = $this->findTheCustomer($partner_id, $customer_id);
-        if (!$customer) return $this->error('Customer Not Found', 404);
+        if (!$customer) return $this->error('No order belongs to this customer', 404);
         $status = $request->status ?? null;
         list($offset, $limit) = calculatePagination($request);
         $order_list = [];
