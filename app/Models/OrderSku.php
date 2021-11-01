@@ -24,7 +24,7 @@ class OrderSku extends BaseModel
 
     public function discount()
     {
-        return $this->hasOne(OrderDiscount::class, 'item_id');
+        return $this->hasOne(OrderDiscount::class, 'type_id');
     }
 
     public function getProductIdAndName($channel_id, $partner_id)

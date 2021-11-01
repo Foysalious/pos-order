@@ -518,7 +518,7 @@ class Updater
         $data['cap'] = $discountData->cap;
         $data['discount_details'] = $discountData->discount_details;
         $data['discount_id'] = $discountData->discount_id;
-        $data['item_id'] = $discountData->item_id;
+        $data['type_id'] = $discountData->item_id;
         if ($discountData->is_percentage) {
             /** @var PriceCalculation $orderPriceCalculation */
             $orderPriceCalculation = app(PriceCalculation::class);

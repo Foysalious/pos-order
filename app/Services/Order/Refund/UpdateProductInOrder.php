@@ -232,7 +232,7 @@ class UpdateProductInOrder extends ProductOrder
                     'amount' => $amount,
                     'original_amount' => $original_amount,
                     'is_percentage' => $is_percentage,
-                    'item_id' => $product->getOrderSkuId(),
+                    'type_id' => $product->getOrderSkuId(),
                 ]));
             }
         }
