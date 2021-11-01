@@ -34,12 +34,12 @@ Route::group(['middleware' => 'ip.whitelist'], function () {
             Route::get('/{customer_id}/reviews', [ReviewController::class, 'getCustomerReviewList']);
             Route::delete('/{customer_id}', [CustomerController::class, 'destroy']);
         });
+        Route::get('customers/{customer_id}/orders', [OrderController::class, 'getCustomerOrderList']);
         Route::get('partners/{partner_id}/orders/{order_id}/generate-invoice', [OrderController::class, 'getOrderinvoice']);
         Route::group(['prefix' => 'webstore'], function () {
             Route::get('orders/{order_id}/generate-invoice', [OrderController::class, 'getWebstoreOrderinvoice']);
             Route::get('partners/{partner_id}/orders/{order_id}/customers/{customer_id}/order-details', [\App\Http\Controllers\Webstore\OrderController::class, 'show']);
             Route::get('partners/{partner_id}/products-by-ratings', [ReviewController::class, 'getProductIdsByRating']);
-            Route::get('/{customer_id}/orders', [OrderController::class, 'getCustomerOrderList']);
         });
         Route::group(['middleware' => 'apiRequestLog'], function () {
             Route::post('partners/{partner}/orders', [OrderController::class, 'store']);
@@ -66,6 +66,6 @@ Route::group(['middleware' => 'ip.whitelist'], function () {
         Route::get('partners/{partner_id}/reports/product-wise', [ReportController::class, 'getProductWise']);
         Route::get('partners/{partner_id}/reports/customer-wise', [ReportController::class, 'getCustomerWise']);
         Route::put('partners/{partner_id}/delivery_req_id/{delivery_req_id}/update-status', [OrderController::class, 'updateOrderStatusForIpn']);
-        Route::get('filters', [OrderController::class, 'getFilteringOptions'] );
+        Route::get('filters', [OrderController::class, 'getFilteringOptions']);
     });
 });
