@@ -117,7 +117,7 @@ class DataMigrationService extends BaseService
 
     private function migratePartnerInfoData()
     {
-        $this->partnerRepositoryInterface->insertOrIgnore($this->partnerInfo);
+        $this->partnerRepositoryInterface->insert($this->partnerInfo);
     }
 
     private function migrateCustomersData()
@@ -127,27 +127,27 @@ class DataMigrationService extends BaseService
 
     private function migrateOrdersData()
     {
-        $this->orderRepositoryInterface->insertOrIgnore($this->orders);
+        $this->orderRepositoryInterface->insert($this->orders);
     }
 
     private function migrateOrderSkusData()
     {
-        $this->orderSkusRepositoryInterface->insertOrIgnore($this->orderSkus);
+        $this->orderSkusRepositoryInterface->insert($this->orderSkus);
     }
 
     private function migrateOrderPaymentsData()
     {
-        $this->orderPaymentsRepositoryInterface->insertOrIgnore($this->orderPayments);
+        $this->orderPaymentsRepositoryInterface->insert($this->orderPayments);
     }
 
     private function migrateOrderDiscountsData()
     {
-        $this->discountRepositoryInterface->insertOrIgnore($this->discounts);
+        $this->discountRepositoryInterface->insert($this->discounts);
     }
 
     private function migrateOrderLogsData()
     {
-        $this->logRepositoryInterface->insertOrIgnore($this->logs);
+        $this->logRepositoryInterface->insert($this->logs);
     }
 
 }
