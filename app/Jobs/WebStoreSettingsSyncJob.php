@@ -26,6 +26,7 @@ class WebStoreSettingsSyncJob implements ShouldQueue
 
     public function handle()
     {
+        if ($this->attempts() > 2) return;
         /** @var WebStoreSettingsSyncService $service */
         $service = app(WebStoreSettingsSyncService::class);
         $service->setPartner($this->partnerId)->setType($this->type)->setTypeId($this->typeId)->sync();
