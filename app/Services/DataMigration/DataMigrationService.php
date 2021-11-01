@@ -123,7 +123,7 @@ class DataMigrationService extends BaseService
     private function migrateCustomersData()
     {
         $this->customerRepository->builder()->upsert($this->customers, ['id', 'partner_id'], ['name', 'is_supplier', 'email',
-            'mobile', 'pro_pic', 'deleted_at', 'is_published_for_sheba', 'created_at', 'updated_at']);
+            'mobile', 'pro_pic', 'deleted_at', 'created_at', 'updated_at']);
     }
 
     private function migrateOrdersData()
