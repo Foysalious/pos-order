@@ -60,7 +60,7 @@ class Sku extends SetParams
             'amount' => $this->amount,
             'original_amount' => $this->originalAmount,
             'is_percentage' => $this->isPercentage,
-            'item_id' => $this->orderSkuId,
+            'type_id' => $this->orderSkuId,
         ];
     }
 }

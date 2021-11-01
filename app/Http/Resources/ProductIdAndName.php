@@ -18,10 +18,9 @@ class ProductIdAndName extends BaseService
 
     public function getProductRatingReview(OrderSku $orderSku, $channel_id, $partner_id)
     {
-        $orderSku = [$orderSku->id];
-        $url = 'api/v1/partners/' . $partner_id . '/skus?skus=' . json_encode($orderSku) . '&channel_id=' . $channel_id;
+        $skus = [$orderSku->sku_id];
+        $url = 'api/v1/partners/' . $partner_id . '/skus?skus=' . json_encode($skus) . '&channel_id=' . $channel_id;
         $response = $this->client->get($url);
-
         $product_name = $response['skus'][0]['product_name'];
         $product_id = $response['skus'][0]['product_id'];
         return [$product_name, $product_id];
