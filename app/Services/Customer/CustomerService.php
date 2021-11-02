@@ -48,6 +48,7 @@ class CustomerService extends BaseService
         if (isset($updateDto->email)) $data['email'] = $updateDto->email;
         if (isset($updateDto->mobile)) $data['mobile'] = $updateDto->mobile;
         if (isset($updateDto->pro_pic)) $data['pro_pic'] = $updateDto->pro_pic;
+        if (isset($updateDto->is_supplier)) $data['is_supplier'] = $updateDto->is_supplier;
         return $data;
     }
 
