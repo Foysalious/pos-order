@@ -172,6 +172,12 @@ class OrderService extends BaseService
         return $this->success(ResponseMessages::SUCCESS, ['invoice' => $order->invoice]);
     }
 
+    public function getTrendingProducts(int $partner_id)
+    {
+        $trending = $this->orderSkusRepositoryInterface->getTrendingProducts($partner_id);
+        return $trending->count() > 0 ? $this->getSkuDetailsForWebstore($partner_id, $trending) : collect();
+    }
+
     public function getOrderInvoice(int $partner_id, int $order_id): JsonResponse
     {
         $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::POS)->where('partner_id', $partner_id)->find($order_id);

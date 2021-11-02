@@ -358,6 +358,7 @@ class OrderController extends Controller
     {
         return $this->orderService->getWebsotreOrderInvoice($order_id);
     }
+
     /**
      * * @OA\Get(
      *      path="/api/v1/orders/{order_id}/generate-invoice",
@@ -416,6 +417,11 @@ class OrderController extends Controller
     public function logs(int $order_id)
     {
         return $this->orderService->logs($order_id);
+    }
+
+    public function getTrendingProducts($partner_id)
+    {
+        return $this->orderService->getTrendingProducts($partner_id);
     }
 
     public function generateLogInvoice(int $order, int $log): JsonResponse
