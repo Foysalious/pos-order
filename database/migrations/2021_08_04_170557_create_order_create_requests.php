@@ -37,6 +37,7 @@ class CreateOrderCreateRequests extends Migration
     public function down()
     {
         Schema::table('orders', function (Blueprint $table) {
+            $table->dropForeign(['api_request_id']);
             $table->dropColumn('api_request_id');
         });
         Schema::dropIfExists('api_requests');
