@@ -21,7 +21,7 @@ class CreateOrdersTable extends Migration
             $table->bigInteger('partner_id')->nullable()->unsigned()->index();
             $table->foreign('partner_id')->references('id')->on('partners')
                 ->onUpdate('cascade')->onDelete('set null');
-            $table->bigInteger('customer_id')->unsigned()->nullable();
+            $table->string('customer_id')->nullable()->index();
             $table->enum('status', Statuses::get())->default(Statuses::PENDING);
             $table->bigInteger('sales_channel_id');
             $table->bigInteger('emi_month')->nullable();
