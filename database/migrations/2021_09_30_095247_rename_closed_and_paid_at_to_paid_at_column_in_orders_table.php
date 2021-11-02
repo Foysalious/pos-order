@@ -25,7 +25,7 @@ class RenameClosedAndPaidAtToPaidAtColumnInOrdersTable extends Migration
      */
     public function down()
     {
-        Schema::table('paid_at_column_in_orders', function (Blueprint $table) {
+        Schema::table('orders', function (Blueprint $table) {
             $table->renameColumn('paid_at','closed_and_paid_at');
         });
     }
