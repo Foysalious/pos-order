@@ -120,6 +120,7 @@ class CustomerController extends Controller
             'email' => $request->email,
             'mobile' => $request->mobile,
             'pro_pic' => $request->pro_pic,
+            'is_supplier'=>$request->is_supplier
         ]);
         return $this->customerService->update($customer_id, $customer,$partner_id);
     }
