@@ -1,7 +1,7 @@
 pipeline {
     agent any
     stages {
-        stage('Make ENV File') {
+        stage('MAKE ENV FILE') {
             steps {
                 withCredentials([
                     string(credentialsId: 'VAULT_ROLE_ID', variable: 'VAULT_ROLE_ID'),
@@ -12,7 +12,7 @@ pipeline {
                 }
             }
         }
-        stage('Pull In Development') {
+        stage('PULL IN DEVELOPMENT') {
             when { branch 'development' }
             steps {
                 script {
@@ -56,24 +56,83 @@ pipeline {
                 }
             }
         }
-        stage('Build For Production') {
-            when { branch 'master-docker' }
+        stage('BUILD FOR PRODUCTION - FOR DOCKER') {
+            when { branch 'master' }
             steps {
                  sh './bin/copy_needed_auth.sh'
                  sh './bin/build.sh'
             }
         }
-
-        stage('Clean Up Build') {
-            when { branch 'master-docker' }
+        stage('DEPLOY TO PRODUCTION - FOR PRODUCTION SERVER') {
+            when { branch 'master' }
+            steps {
+                script {
+                    sshPublisher(publishers: [
+                        sshPublisherDesc(configName: 'smanager-sales-server',
+                            transfers: [
+                                sshTransfer(
+                                    cleanRemote: false,
+                                    excludes: '',
+                                    execCommand: 'cd /var/www/pos-order && ./bin/deploy.sh master',
+                                    execTimeout: 300000,
+                                    flatten: false,
+                                    makeEmptyDirs: false,
+                                    noDefaultExcludes: false,
+                                    patternSeparator: '[, ]+',
+                                    remoteDirectory: '',
+                                    remoteDirectorySDF: false,
+                                    removePrefix: '',
+                                    sourceFiles: ''
+                                )
+                            ],
+                            usePromotionTimestamp: false,
+                            useWorkspaceInPromotion: false,
+                            verbose: true
+                        )]
+                    )
+                }
+            }
+        }
+        stage('CLEAN UP BUILD') {
+            when { branch 'master' }
             steps {
                 sh './bin/remove_build.sh'
             }
         }
-        stage('Delete Workspace Files') {
+        stage('DELETE WORKSPACE FILES') {
             steps {
                 echo 'Deleting current workspace ...'
                 deleteDir() /* clean up our workspace */
+            }
+        }
+        stage('DELETE DOCKER DANGLING IMAGES') {
+            when { branch 'master' }
+            steps {
+                script {
+                    sshPublisher(publishers: [
+                        sshPublisherDesc(configName: 'smanager-sales-server',
+                            transfers: [
+                                sshTransfer(
+                                    cleanRemote: false,
+                                    excludes: '',
+                                    execCommand: 'cd /var/www/pos-order && ./bin/remove_dangling_images.sh',
+                                    execTimeout: 300000,
+                                    flatten: false,
+                                    makeEmptyDirs: false,
+                                    noDefaultExcludes: false,
+                                    patternSeparator: '[, ]+',
+                                    remoteDirectory: '',
+                                    remoteDirectorySDF: false,
+                                    removePrefix: '',
+                                    sourceFiles: ''
+                                )
+                            ],
+                            usePromotionTimestamp: false,
+                            useWorkspaceInPromotion: false,
+                            verbose: true
+                        )]
+                    )
+                }
             }
         }
     }

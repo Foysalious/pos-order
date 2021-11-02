@@ -8,5 +8,5 @@ services:
       - ${PORT}:80
 
 networks:
-  inventory-service-network:
+  pos-order-service:
     driver: bridge

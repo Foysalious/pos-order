@@ -5,27 +5,11 @@ services:
       context: ../
       dockerfile: Dockerfile.production
     container_name: ${CONTAINER_NAME}
-    environment:
-      SERVICE_NAME: app
-      VIRTUAL_HOST: ${API_DOMAIN}
-    working_dir: /var/www
-    entrypoint: /etc/entrypoint.sh
-    volumes:
-      - ../../:/var/www
-      - ../../composer-auth.json:/root/.composer/auth.json
-      - ../nginx/conf.d/nginx-local.conf:/etc/nginx/sites-enabled/default
-      - ../php/local.ini:/usr/local/etc/php/conf.d/local.ini
-      - ../php/memory_limit.ini:/usr/local/etc/php/conf.d/memory_limit.ini
-      - ../php/php.ini:/usr/local/etc/php/conf.d/php.override.ini
-      - ../php/conf.d/www.local.conf:/usr/local/etc/php-fpm.d/www.conf
-    extra_hosts:
-      - "inventory.sheba.test:172.17.0.1"
-    ports:
-      - ${EXPORTED_PORT}:80
-    networks:
-      - development_network
-
-networks:
-  development_network:
-    external:
-      name: ${EXTERNAL_NETWORK}
+    restart: unless-stopped
+    tty: true
+    env_file: ../../.env
+    healthcheck:
+      test: curl -sS http://127.0.0.1 || exit 1
+      interval: 15s
+      timeout: 10s
+      retries: 3

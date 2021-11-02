@@ -53,7 +53,6 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Copy existing application directory permissions
 COPY --chown=www-data:www-data . /var/www
 
-COPY ./composer-auth.json /root/.composer/auth.json
 COPY ./.sentryclirc .sentryclirc
 
 # PHP configuration
@@ -86,6 +85,7 @@ WORKDIR /var/www
 # RUN find ./ -type d -exec chmod 775 {} \;
 # RUN chgrp -R www-data storage bootstrap/cache
 # RUN chmod -R ug+rwx storage bootstrap/cache
+RUN chown -R www-data:www-data storage/logs/
 
 # Make sentry cli script executable
 RUN chmod +x ./bin/sentry_release.sh
