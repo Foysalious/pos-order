@@ -15,8 +15,7 @@ class CreateOrderReviewsTable extends Migration
     {
         Schema::create('reviews', function (Blueprint $table) {
             $table->id();
-
-            $table->bigInteger('customer_id')->nullable()->unsigned()->index();
+            $table->string('customer_id')->nullable()->index();
             $table->bigInteger('order_sku_id')->nullable()->unsigned()->index();
             $table->string('review_title')->nullable();
             $table->text('review_details')->nullable();
