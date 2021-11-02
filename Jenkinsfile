@@ -37,7 +37,7 @@ pipeline {
                                     cleanRemote: false,
                                     excludes: '',
                                     execCommand: 'cd /var/www/pos-order && ./bin/deploy.sh development',
-                                    execTimeout: 120000,
+                                    execTimeout: 300000,
                                     flatten: false,
                                     makeEmptyDirs: false,
                                     noDefaultExcludes: false,

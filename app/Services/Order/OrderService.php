@@ -171,6 +171,17 @@ class OrderService extends BaseService
         }
         return $this->success(ResponseMessages::SUCCESS, ['invoice' => $order->invoice]);
     }
+    private function getSkuDetailsForWebstore($partner, $sku_ids)
+    {
+        $url = 'api/v1/partners/' . $partner . '/webstore-skus-details?skus=' . json_encode($sku_ids->toArray()) . '&channel_id=' . 2;
+        $sku_details = $this->client->get($url)['skus'] ?? [];
+        return $this->success(ResponseMessages::SUCCESS, ['data' => collect($sku_details)]);
+    }
+    public function getTrendingProducts(int $partner_id)
+    {
+        $trending = $this->orderSkusRepositoryInterface->getTrendingProducts($partner_id);
+        return $trending->count() > 0 ? $this->getSkuDetailsForWebstore($partner_id, $trending) : collect();
+    }
 
     public function getOrderInvoice(int $partner_id, int $order_id): JsonResponse
     {
