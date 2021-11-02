@@ -37,6 +37,7 @@ Route::group(['middleware' => 'ip.whitelist'], function () {
         });
         Route::post('payment-links', [PaymentLinkController::class, 'store']);
         Route::get('orders/{order_id}/generate-invoice', [OrderController::class, 'getOrderinvoice']);
+        Route::get('partners/{partner}/trending', [OrderController::class, 'getTrendingProducts']);
         Route::group(['prefix' => 'webstore'], function () {
             Route::get('orders/{order_id}/generate-invoice', [OrderController::class, 'getWebstoreOrderinvoice']);
             Route::get('partners/{partner_id}/orders/{order_id}/customers/{customer_id}/order-details', [\App\Http\Controllers\Webstore\OrderController::class, 'show']);

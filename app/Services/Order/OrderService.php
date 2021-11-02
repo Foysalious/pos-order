@@ -53,18 +53,18 @@ class OrderService extends BaseService
     private InvoiceService $invoiceService;
 
     public function __construct(
-        OrderRepositoryInterface $orderRepository,
-        OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
-        CustomerRepositoryInterface $customerRepository,
-        Updater $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
-        Creator $creator,
-        protected InventoryServerClient $client,
-        protected ApiServerClient $apiServerClient,
-        protected AccessManager $accessManager,
-        protected OrderFilter $orderSearch,
-        protected StatusChanger $orderStatusChanger,
+        OrderRepositoryInterface                $orderRepository,
+        OrderSkusRepositoryInterface            $orderSkusRepositoryInterface,
+        CustomerRepositoryInterface             $customerRepository,
+        Updater                                 $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
+        Creator                                 $creator,
+        protected InventoryServerClient         $client,
+        protected ApiServerClient               $apiServerClient,
+        protected AccessManager                 $accessManager,
+        protected OrderFilter                   $orderSearch,
+        protected StatusChanger                 $orderStatusChanger,
         protected StockRefillerForCanceledOrder $stockRefillerForCanceledOrder,
-        InvoiceService $invoiceService
+        InvoiceService                          $invoiceService
     )
     {
         $this->orderRepository = $orderRepository;
@@ -124,7 +124,7 @@ class OrderService extends BaseService
             ->setDeliveryAddress($request->delivery_address)
             ->setCustomerId($request->customer_id)
             ->setSalesChannelId($request->sales_channel_id)
-            ->setDeliveryCharge($request->has('delivery_charge') ? ($request->delivery_method == Methods::OWN_DELIVERY ? $request->delivery_charge :  $this->calculateDeliveryCharge($request,$partner)) : 0)
+            ->setDeliveryCharge($request->has('delivery_charge') ? ($request->delivery_method == Methods::OWN_DELIVERY ? $request->delivery_charge : $this->calculateDeliveryCharge($request, $partner)) : 0)
             ->setCodAmount($request->cod_amount)
             ->setEmiMonth($request->emi_month)
             ->setSkus($request->skus)
@@ -135,7 +135,7 @@ class OrderService extends BaseService
             ->setApiRequest($request->api_request->id)
             ->create();
 
-        if($order) dispatch(new WebStoreSettingsSyncJob($partner,WebStoreSettingsSyncTypes::Order,$order->id));
+        if ($order) dispatch(new WebStoreSettingsSyncJob($partner, WebStoreSettingsSyncTypes::Order, $order->id));
         if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) {
             //dispatch(new OrderPlacePushNotification($order));
             dispatch(new WebstoreOrderSms($partner, $order->id));
@@ -167,6 +167,12 @@ class OrderService extends BaseService
             return $this->invoiceService->setOrder($order_id)->generateInvoice();
         }
         return $this->success(ResponseMessages::SUCCESS, ['invoice' => $order->invoice]);
+    }
+
+    public function getTrendingProducts(int $partner_id)
+    {
+        $trending = $this->orderSkusRepositoryInterface->getTrendingProducts($partner_id);
+        return $trending->count() > 0 ? $this->getSkuDetailsForWebstore($partner_id, $trending) : collect();
     }
 
     public function getOrderInvoice(int $order_id): JsonResponse
@@ -255,7 +261,7 @@ class OrderService extends BaseService
             ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
             ->update();
 
-        dispatch(new WebStoreSettingsSyncJob($partner_id,WebStoreSettingsSyncTypes::Order,$orderDetails->id));
+        dispatch(new WebStoreSettingsSyncJob($partner_id, WebStoreSettingsSyncTypes::Order, $orderDetails->id));
         return $this->success();
     }
 
@@ -342,7 +348,7 @@ class OrderService extends BaseService
             $flag = true;
             if ($item['sku_id'] !== null) {
                 $sku = $sku_details->where('id', $item['sku_id'])->first();
-                if(is_null($sku)) {
+                if (is_null($sku)) {
                     $item['is_updatable'] = false;
                     $item['stock'] = 0;
                     $item['is_published'] = false;
@@ -359,8 +365,8 @@ class OrderService extends BaseService
                 if ($sku['vat_percentage'] != $item['vat_percentage']) {
                     $flag = false;
                 }
-                $item['stock'] = rand(4,10);
-                $item['is_published'] = (bool) rand(0,1);
+                $item['stock'] = rand(4, 10);
+                $item['is_published'] = (bool)rand(0, 1);
             }
             $item['is_updatable'] = $flag;
 
@@ -373,6 +379,13 @@ class OrderService extends BaseService
         $url = 'api/v1/partners/' . $order->partner_id . '/skus?skus=' . json_encode($sku_ids->toArray()) . '&channel_id=' . $order->sales_channel_id;
         $sku_details = $this->client->get($url)['skus'] ?? [];
         return collect($sku_details);
+    }
+
+    private function getSkuDetailsForWebstore($partner, $sku_ids)
+    {
+        $url = 'api/v1/partners/' . $partner . '/webstore-skus-details?skus=' . json_encode($sku_ids->toArray()) . '&channel_id=' . 2;
+        $sku_details = $this->client->get($url)['skus'] ?? [];
+        return $this->success(ResponseMessages::SUCCESS, ['data' => collect($sku_details)]);
     }
 
     public function updateOrderStatus($partner_id, $order_id, OrderStatusUpdateRequest $request): JsonResponse
@@ -460,11 +473,13 @@ class OrderService extends BaseService
     private function addOrderUpdatableFlag($order): bool
     {
         $delivery_integrated = !is_null($order->delivery_request_id);
-        if($order->sales_channel_id == SalesChannelIds::POS) {
-            if(($delivery_integrated && in_array($order->status, [Statuses::PENDING, Statuses::PROCESSING])) || !$delivery_integrated) return true;
+        if ($order->sales_channel_id == SalesChannelIds::POS) {
+            if (($delivery_integrated && in_array($order->status, [Statuses::PENDING, Statuses::PROCESSING])) || !$delivery_integrated) return true;
         } else {
             if (in_array($order->status, [Statuses::PENDING, Statuses::PROCESSING])) return true;
         }
         return false;
     }
+
+
 }
