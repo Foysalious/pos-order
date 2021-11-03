@@ -13,7 +13,6 @@ class RenameImageColumnInCustomersTable extends Migration
      */
     public function up()
     {
-//        DB::statement("ALTER TABLE `payment_gateways` CHANGE `method_name` `name` char(255) NOT NULL");
         DB::statement("ALTER TABLE `customers` CHANGE `image` `pro_pic` char(255) NULL");
     }
 
