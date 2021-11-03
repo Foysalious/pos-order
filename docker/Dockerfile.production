@@ -1,4 +1,4 @@
-FROM php:8.0.2-fpm
+FROM php:8.0.11-fpm
 
 ARG APP_ENV
 
@@ -82,21 +82,16 @@ WORKDIR /var/www
 # RUN find ./ -type d -exec chmod 775 {} \;
 # RUN chgrp -R www-data storage bootstrap/cache
 # RUN chmod -R ug+rwx storage bootstrap/cache
-RUN chown -R www-data:www-data storage/logs/
 
 # Make sentry cli script executable
 RUN chmod +x ./bin/sentry_release.sh
 
 RUN composer install --ignore-platform-reqs && rm -rf /home/www-data/.composer/cache
 
-
-
 # RUN chmod -R g+w /var/www/vendor
 
 RUN php artisan cache:clear
 RUN php artisan config:clear
-
-RUN usermod -u 1000 www-data
 
 EXPOSE 80 443
 
