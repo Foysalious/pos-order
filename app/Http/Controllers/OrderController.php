@@ -421,7 +421,7 @@ class OrderController extends Controller
 
     /**
      * @OA\Get(
-     *      path="/api/v1/partners/{partner}/trending",
+     *      path="/api/v1/partners/{partner}/trending-products",
      *      operationId="getCustomerTrendingProduct",
      *      tags={"Trending Product List"},
      *      summary="Trending Product List",
@@ -448,11 +448,11 @@ class OrderController extends Controller
      *      "name_en": "sft"
      *      },
      *     "stock": 20,
-     *"rating": null,
-     *"rating_count": null,
-     *"app_thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/default.jpg",
-     *"warranty": 1,
-     *"warranty_unit": "month",
+     *     "rating": null,
+     *     "rating_count": null,
+     *     "app_thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/default.jpg",
+     *     "warranty": 1,
+     *     "warranty_unit": "month",
      *     "image_gallery": {},
      *     "variations": {}
      *     }}}
@@ -460,6 +460,10 @@ class OrderController extends Controller
      *      @OA\Response(
      *          response=404,
      *          description="Message: No product found ",
+     *      ),
+     *         @OA\Response(
+     *          response=500,
+     *          description="Message: Internal Server Errorl ",
      *      )
      *     )
      */
