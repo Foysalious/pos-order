@@ -119,7 +119,7 @@ class OrderService extends BaseService
             ->setDeliveryAddress($request->delivery_address)
             ->setCustomerId($request->customer_id)
             ->setSalesChannelId($request->sales_channel_id)
-            ->setDeliveryCharge($request->has('delivery_charge') ? ($request->delivery_method == Methods::OWN_DELIVERY ? $request->delivery_charge :  $this->calculateDeliveryCharge($request,$partner)) : 0)
+            ->setDeliveryCharge($request->has('delivery_address_id') ? $this->calculateDeliveryCharge($request,$partner): 0)
             ->setCodAmount($request->cod_amount)
             ->setEmiMonth($request->emi_month)
             ->setSkus($request->skus)
@@ -139,6 +139,8 @@ class OrderService extends BaseService
 
     private function calculateDeliveryCharge($request, $partner_id)
     {
+
+        $this->resolveDeliveryAddress($request);
         $data = [
             'weight' => $request->weight,
             'delivery_district' => $request->delivery_district,
@@ -147,6 +149,11 @@ class OrderService extends BaseService
             'cod_amount' => $request->sdelivery_cod_amount
         ];
         return $this->apiServerClient->setBaseUrl()->post('v2/pos/delivery/delivery-charge', $data)['delivery_charge'];
+    }
+
+    private function resolveDeliveryAddress($request)
+    {
+
     }
 
     /**
