@@ -5,10 +5,12 @@ use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\PriceCalculation;
+use App\Traits\ModificationFields;
 use Carbon\Carbon;
 
 class Creator
 {
+    use ModificationFields;
     private PaymentRepositoryInterface $paymentRepositoryInterface;
     private $orderId;
     private $amount;
@@ -120,7 +122,7 @@ class Creator
         $data['method_details'] = $this->method_details;
         $data['emi_month'] = $this->emiMonth;
         $data['interest'] = $this->interest;
-        return $data;
+        return $data + $this->modificationFields(true,false);
     }
 
 }

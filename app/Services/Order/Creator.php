@@ -17,13 +17,12 @@ use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
-use App\Services\Order\Validators\OrderCreateValidator;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\OrderSku\Creator as OrderSkuCreator;
 use App\Services\Product\StockManageByChunk;
 use App\Services\Transaction\Constants\TransactionTypes;
-use App\Traits\ResponseAPI;
+use App\Traits\ModificationFields;
 use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -32,9 +31,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Creator
 {
-    use ResponseAPI;
+    use ModificationFields;
 
-    private $createValidator;
     private $partner;
     /**  @var array */
     private $data;
@@ -74,7 +72,6 @@ class Creator
 
 
     public function __construct(
-        OrderCreateValidator                  $createValidator,
         OrderRepositoryInterface              $orderRepositoryInterface,
         PartnerRepositoryInterface            $partnerRepositoryInterface,
         InventoryServerClient                 $client,
@@ -90,7 +87,6 @@ class Creator
         protected StockManageByChunk $stockManager
     )
     {
-        $this->createValidator = $createValidator;
         $this->orderRepositoryInterface = $orderRepositoryInterface;
         $this->partnerRepositoryInterface = $partnerRepositoryInterface;
         $this->orderSkuRepository = $orderSkuRepository;
@@ -348,7 +344,7 @@ class Creator
                 'mobile' => $customer['mobile'],
                 'pro_pic' => $customer['pro_pic'],
             ];
-            $customer = $this->customerRepository->create($data);
+            $customer = $this->customerRepository->create($this->withCreateModificationField($data));
         }
         if ($customer->partner_id != $this->partner->id) {
             throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Belong To Partner #" . $this->partner->id);
@@ -394,7 +390,7 @@ class Creator
         $order_data['is_discount_percentage'] = json_decode($this->discount)->is_percentage ?? 0;
         $order_data['voucher_id'] = $this->voucher_id;
         $order_data['api_request_id'] = $this->apiRequest;
-        return $order_data;
+        return $order_data + $this->modificationFields(true,false);
     }
 
     private function hasDueError(Order $order)

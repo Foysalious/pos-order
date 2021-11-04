@@ -8,10 +8,12 @@ use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Discount\DTO\Params\Order as OrderParam;
 use App\Services\Discount\DTO\Params\Sku as SkuParam;
 use App\Services\Discount\DTO\Params\Voucher as VoucherParams;
+use App\Traits\ModificationFields;
 use Illuminate\Validation\ValidationException;
 
 class Handler
 {
+    use ModificationFields;
     /** @var OrderDiscountRepositoryInterface $orderDiscountRepo */
     private OrderDiscountRepositoryInterface $orderDiscountRepo;
     private $type;
@@ -99,13 +101,13 @@ class Handler
 
     public function create()
     {
-        $discount_data = $this->getData();
+        $discount_data = $this->makeDiscountData();
         if (empty($discount_data)) return false;
         $discount_data['order_id'] = $this->order->id;
-        return $this->orderDiscountRepo->create($discount_data);
+        return $this->orderDiscountRepo->create($this->withCreateModificationField($discount_data));
     }
 
-    public function getData()
+    public function makeDiscountData()
     {
         $order_discount = null;
         if ($this->type == DiscountTypes::ORDER) {

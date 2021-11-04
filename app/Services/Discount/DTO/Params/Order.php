@@ -2,6 +2,7 @@
 
 
 use App\Services\Order\PriceCalculation;
+use App\Traits\ModificationFields;
 
 class Order extends SetParams
 {

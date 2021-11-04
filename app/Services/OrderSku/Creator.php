@@ -2,18 +2,18 @@
 
 use App\Exceptions\OrderException;
 use App\Interfaces\OrderSkuRepositoryInterface;
-use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\WarrantyUnits;
 use App\Services\Product\StockManager;
-use Illuminate\Support\Facades\App;
+use App\Traits\ModificationFields;
 use Illuminate\Validation\ValidationException;
 
 class Creator
 {
+    use ModificationFields;
     private $order;
     /** @var OrderSkuRepositoryInterface */
     private OrderSkuRepositoryInterface $orderSkuRepository;
@@ -120,7 +120,7 @@ class Creator
             $sku_data['note'] = $sku->note ?? null;
             $sku_data['discount'] = $this->resolveDiscount($sku,$sku_details[$sku->id] ?? null);
             $sku_data['is_emi_available'] = $this->isPaymentMethodEmi;
-            $order_sku = $this->orderSkuRepository->create($sku_data);
+            $order_sku = $this->orderSkuRepository->create($this->withCreateModificationField($sku_data));
             $created_skus [] = $order_sku;
             $this->discountHandler->setType(DiscountTypes::SKU)->setOrder($this->order)->setSkuData($sku_data)->setOrderSkuId($order_sku->id);
             if ($this->discountHandler->hasDiscount()) {
