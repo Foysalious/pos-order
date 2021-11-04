@@ -109,6 +109,7 @@ class OrderService extends BaseService
         return $this->success(ResponseMessages::SUCCESS, ['order_count' => $orderCount, 'orders' => $orderList]);
     }
 
+
     /**
      * @param $partner
      * @param OrderCreateRequest $request
@@ -125,7 +126,9 @@ class OrderService extends BaseService
             ->setDeliveryAddress($request->delivery_address)
             ->setCustomerId($request->customer_id)
             ->setSalesChannelId($request->sales_channel_id)
-            ->setDeliveryCharge($request->has('delivery_charge') ? ($request->delivery_method == Methods::OWN_DELIVERY ? $request->delivery_charge : $this->calculateDeliveryCharge($request, $partner)) : 0)
+            ->setDeliveryAddressId($request->delivery_address_id)
+            ->setTotalWeight($request->total_weight)
+            ->setDeliveryMethod($request->delivery_method)
             ->setCodAmount($request->cod_amount)
             ->setEmiMonth($request->emi_month)
             ->setSkus($request->skus)
@@ -142,18 +145,6 @@ class OrderService extends BaseService
             dispatch(new WebstoreOrderSms($partner, $order->id));
         }
         return $this->success(ResponseMessages::SUCCESS, ['order' => ['id' => $order->id]]);
-    }
-
-    private function calculateDeliveryCharge($request, $partner_id)
-    {
-        $data = [
-            'weight' => $request->weight,
-            'delivery_district' => $request->delivery_district,
-            'delivery_thana' => $request->delivery_thana,
-            'partner_id' => $partner_id,
-            'cod_amount' => $request->sdelivery_cod_amount
-        ];
-        return $this->apiServerClient->post('v2/pos/delivery/delivery-charge', $data)['delivery_charge'];
     }
 
     /**
