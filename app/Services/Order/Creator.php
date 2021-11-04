@@ -425,7 +425,6 @@ class Creator
         $order_data['delivery_thana'] = isset($this->deliveryAddressId)?? $this->deliveryAddressInfo['address'];
         $order_data['delivery_district'] = isset($this->deliveryAddressId) ?? $this->deliveryAddressInfo['address'];
         $order_data['sales_channel_id'] = $this->salesChannelId ?: SalesChannelIds::POS;
-        $order_data['delivery_charge'] = $this->deliveryCharge ?: 0;
         $order_data['emi_month'] = ($this->paymentMethod == PaymentMethods::EMI && !is_null($this->emiMonth)) ? $this->emiMonth : null;
         $order_data['status'] = ($this->salesChannelId == SalesChannelIds::POS || is_null($this->salesChannelId)) ? Statuses::COMPLETED : Statuses::PENDING;
         $order_data['discount'] = json_decode($this->discount)->original_amount ?? 0;
