@@ -17,10 +17,12 @@ use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Models\Order;
+use App\Models\Partner;
 use App\Services\AccessManager\AccessManager;
 use App\Services\AccessManager\Features;
 use App\Services\APIServerClient\ApiServerClient;
 use App\Services\BaseService;
+use App\Services\ClientServer\SmanagerUser\SmanagerUserServerClient;
 use App\Services\Delivery\Methods;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Inventory\InventoryServerClient;
@@ -68,6 +70,7 @@ class OrderService extends BaseService
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->customerRepository = $customerRepository;
         $this->invoiceService = $invoiceService;
+
     }
 
     public function getOrderList(int $partner_id, OrderFilterRequest $request): JsonResponse
@@ -119,7 +122,9 @@ class OrderService extends BaseService
             ->setDeliveryAddress($request->delivery_address)
             ->setCustomerId($request->customer_id)
             ->setSalesChannelId($request->sales_channel_id)
-            ->setDeliveryCharge($request->has('delivery_address_id') ? $this->calculateDeliveryCharge($request,$partner): 0)
+            ->setDeliveryAddressId($request->delivery_address_id)
+            ->setTotalWeight($request->total_weight)
+            ->setDeliveryMethod($request->delivery_method)
             ->setCodAmount($request->cod_amount)
             ->setEmiMonth($request->emi_month)
             ->setSkus($request->skus)
@@ -135,25 +140,6 @@ class OrderService extends BaseService
             dispatch(new WebstoreOrderSms($partner,$order->id));
         }
         return $this->success('Successful', ['order' => ['id' => $order->id]]);
-    }
-
-    private function calculateDeliveryCharge($request, $partner_id)
-    {
-
-        $this->resolveDeliveryAddress($request);
-        $data = [
-            'weight' => $request->weight,
-            'delivery_district' => $request->delivery_district,
-            'delivery_thana' => $request->delivery_thana,
-            'partner_id' => $partner_id,
-            'cod_amount' => $request->sdelivery_cod_amount
-        ];
-        return $this->apiServerClient->setBaseUrl()->post('v2/pos/delivery/delivery-charge', $data)['delivery_charge'];
-    }
-
-    private function resolveDeliveryAddress($request)
-    {
-
     }
 
     /**
