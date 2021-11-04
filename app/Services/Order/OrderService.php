@@ -295,6 +295,7 @@ class OrderService extends BaseService
             'created_at' => $orderDetails->created_at,
             'partner_id' => $orderDetails->partner_id,
             'customer_id' => $orderDetails->customer_id,
+            'emi_month' => $orderDetails->emi_month,
             'customer' => [
                 'id' => $orderDetails->customer_id,
                 'name' => $orderDetails?->customer?->name,
