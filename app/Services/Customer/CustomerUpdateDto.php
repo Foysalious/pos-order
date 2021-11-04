@@ -9,4 +9,5 @@ class CustomerUpdateDto extends DataTransferObject
     public ?string $email;
     public ?string $mobile;
     public ?string $pro_pic;
+    public ?string $is_supplier;
 }

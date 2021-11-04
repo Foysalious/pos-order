@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AlterTableOrdersChangeCustomerId extends Migration
+class RenameClosedAndPaidAtToPaidAtColumnInOrdersTable extends Migration
 {
     /**
      * Run the migrations.
@@ -14,8 +14,7 @@ class AlterTableOrdersChangeCustomerId extends Migration
     public function up()
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->dropForeign(['customer_id']);
-            $table->dropColumn('customer_id');
+            $table->renameColumn('closed_and_paid_at','paid_at');
         });
     }
 
@@ -27,7 +26,7 @@ class AlterTableOrdersChangeCustomerId extends Migration
     public function down()
     {
         Schema::table('orders', function (Blueprint $table) {
-            //
+            $table->renameColumn('paid_at','closed_and_paid_at');
         });
     }
 }

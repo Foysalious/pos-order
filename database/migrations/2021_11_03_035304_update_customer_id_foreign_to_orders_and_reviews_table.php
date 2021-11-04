@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddCustomerIdColumnToOrdersTable extends Migration
+class UpdateCustomerIdForeignToOrdersAndReviewsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -14,7 +14,10 @@ class AddCustomerIdColumnToOrdersTable extends Migration
     public function up()
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->bigInteger('customer_id')->after('partner_id')->nullable()->unsigned()->index();
+            $table->foreign('customer_id')->references('id')->on('customers')
+                ->onUpdate('cascade')->onDelete('set null');
+        });
+        Schema::table('reviews', function (Blueprint $table) {
             $table->foreign('customer_id')->references('id')->on('customers')
                 ->onUpdate('cascade')->onDelete('set null');
         });
@@ -28,8 +31,10 @@ class AddCustomerIdColumnToOrdersTable extends Migration
     public function down()
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->dropForeign('orders_customer_id_foreign');
-            $table->dropColumn('customer_id');
+            $table->dropForeign(['customer_id']);
+        });
+        Schema::table('reviews', function (Blueprint $table) {
+            $table->dropForeign(['customer_id']);
         });
     }
 }

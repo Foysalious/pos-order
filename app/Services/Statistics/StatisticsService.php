@@ -1,6 +1,7 @@
 <?php namespace App\Services\Statistics;
 
 
+use App\Constants\ResponseMessages;
 use App\Http\Requests\StatisticsRequest;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Order;
@@ -36,7 +37,7 @@ class StatisticsService extends BaseService
             'total_order' => $webstore_sales_count,
             'total_sales' => $webstore_sales
         ];
-        return $this->success('Successful', ['statistics' => $statistics]);
+        return $this->success(ResponseMessages::SUCCESS, ['statistics' => $statistics]);
 
     }
 

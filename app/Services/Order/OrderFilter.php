@@ -167,9 +167,9 @@ class OrderFilter
     private function filterByPaymentStatus(Builder $query)
     {
         return $query->when($this->paymentStatus == PaymentStatuses::PAID, function ($q) {
-            return $q->whereNotNull('closed_and_paid_at');
+            return $q->whereNotNull('paid_at');
         })->when($this->paymentStatus == PaymentStatuses::DUE, function ($q) {
-            return $q->whereNull('closed_and_paid_at');
+            return $q->whereNull('paid_at');
         });
     }
 

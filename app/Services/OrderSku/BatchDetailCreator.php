@@ -1,7 +1,7 @@
 <?php namespace App\Services\OrderSku;
 
 
-class OrderSkuDetailCreator
+class BatchDetailCreator
 {
     protected $sku;
     protected $skuDetails;
@@ -15,7 +15,7 @@ class OrderSkuDetailCreator
 
     /**
      * @param $skuDetails
-     * @return OrderSkuDetailCreator
+     * @return BatchDetailCreator
      */
     public function setSkuDetails($skuDetails)
     {
@@ -61,7 +61,6 @@ class OrderSkuDetailCreator
      */
     public function create(): array
     {
-        $batch_detail = $this->generateOrderedSkuBatchDetail($this->skuDetails['batches']);
-        return (array) $this->sku + [ 'batch_detail' => $batch_detail ];
+        return $this->generateOrderedSkuBatchDetail($this->skuDetails['batches']);
     }
 }

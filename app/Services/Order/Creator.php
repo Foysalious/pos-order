@@ -13,17 +13,18 @@ use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\ClientServer\SmanagerUser\SmanagerUserServerClient;
 use App\Services\Delivery\Methods;
 use App\Services\Discount\Constants\DiscountTypes;
-use App\Services\EMI\Calculations;
+use App\Services\EMI\Calculations as EmiCalculation;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
-use App\Services\Order\Validators\OrderCreateValidator;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\OrderSku\Creator as OrderSkuCreator;
+use App\Services\Product\StockManageByChunk;
 use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ResponseAPI;
+use App\Traits\ModificationFields;
 use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +33,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Creator
 {
-    use ResponseAPI;
+    use ModificationFields;
 
     private $createValidator;
     private $partner;
@@ -78,7 +79,6 @@ class Creator
 
 
     public function __construct(
-        OrderCreateValidator                  $createValidator,
         OrderRepositoryInterface              $orderRepositoryInterface,
         PartnerRepositoryInterface            $partnerRepositoryInterface,
         InventoryServerClient                 $client,
@@ -87,10 +87,13 @@ class Creator
         DiscountHandler                       $discountHandler,
         OrderSkuCreator                       $orderSkuCreator,
         protected CustomerRepositoryInterface $customerRepository,
-        protected SmanagerUserServerClient    $smanagerUserServerClient
+        protected SmanagerUserServerClient    $smanagerUserServerClient,
+        protected PriceCalculation $priceCalculation,
+        protected EmiCalculation $emiCalculation,
+        protected StockRefillerForCanceledOrder $stockRefill,
+        protected StockManageByChunk $stockManager
     )
     {
-        $this->createValidator = $createValidator;
         $this->orderRepositoryInterface = $orderRepositoryInterface;
         $this->partnerRepositoryInterface = $partnerRepositoryInterface;
         $this->orderSkuRepository = $orderSkuRepository;
@@ -334,24 +337,29 @@ class Creator
             if (isset($this->voucher_id)) {
                 $this->discountHandler->setVoucherId($this->voucher_id)->voucherDiscountCalculate($order);
             }
+            if ($this->paymentMethod == PaymentMethods::EMI) {
+                $this->validateEmiAndCalculateChargesForOrder($order, new PriceCalculation());
+            }
             if ($this->paidAmount > 0) {
+                $this->priceCalculation->setOrder($order->refresh());
+                $net_bill = $this->priceCalculation->setOrder($order->refresh())->getDiscountedPrice();
+                if($this->paidAmount > $net_bill ) {
+                    $this->paidAmount = $net_bill;
+                }
                 $this->paymentCreator->setOrderId($order->id)->setAmount($this->paidAmount)->setMethod($this->paymentMethod)
                     ->setTransactionType(TransactionTypes::CREDIT)->setEmiMonth($order->emi_month)
                     ->setInterest($order->interest)->create();
             }
-            if ($this->hasDueError($order)) {
-                throw new OrderException("Can not make due order without customer", 421);
-            }
-            if ($this->paymentMethod == PaymentMethods::EMI) {
-                $this->calculateEmiChargesAndSave($order, new PriceCalculation());
+            if ($this->hasDueError($order->refresh())) {
+                throw new OrderException("Can not make due order without customer", 403);
             }
 
             if ($this->deliveryAddressId)
                 $this->calculateDeliveryChargeAndSave($order);
 
-            DB::commit();
             if ($order) event(new OrderPlaceTransactionCompleted($order));
-
+            $this->updateStock($this->orderSkuCreator->getStockDecreasingData());
+            DB::commit();
         } catch (Exception $e) {
             DB::rollback();
             throw $e;
@@ -364,7 +372,7 @@ class Creator
         if (!isset($this->customerId)) return $this->setCustomer(null);
         $customer = $this->customerRepository->find($this->customerId);
         if (!$customer) {
-            $customer = $this->smanagerUserServerClient->setBaseUrl()->get('/api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId);
+            $customer = $this->smanagerUserServerClient->get('/api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId);
             if (!$customer) throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Exists.");
             $data = [
                 'id' => $customer['_id'],
@@ -374,7 +382,7 @@ class Creator
                 'mobile' => $customer['mobile'],
                 'pro_pic' => $customer['pro_pic'],
             ];
-            $customer = $this->customerRepository->create($data);
+            $customer = $this->customerRepository->create($this->withCreateModificationField($data));
         }
         if ($customer->partner_id != $this->partner->id) {
             throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Belong To Partner #" . $this->partner->id);
@@ -399,14 +407,7 @@ class Creator
     private function resolveDeliveryMobile()
     {
         if ($this->deliveryMobile) return $this->deliveryMobile;
-        if ($this->customer) return $this->customer->phone;
-        return null;
-    }
-
-    private function resolveDeliveryAddress2()
-    {
-        if ($this->deliveryAddress) return $this->deliveryAddress;
-        if ($this->customer) return $this->customer->address;
+        if ($this->customer) return $this->customer->mobile;
         return null;
     }
 
@@ -424,13 +425,14 @@ class Creator
         $order_data['delivery_thana'] = isset($this->deliveryAddressId)?? $this->deliveryAddressInfo['address'];
         $order_data['delivery_district'] = isset($this->deliveryAddressId) ?? $this->deliveryAddressInfo['address'];
         $order_data['sales_channel_id'] = $this->salesChannelId ?: SalesChannelIds::POS;
+        $order_data['delivery_charge'] = $this->deliveryCharge ?: 0;
         $order_data['emi_month'] = ($this->paymentMethod == PaymentMethods::EMI && !is_null($this->emiMonth)) ? $this->emiMonth : null;
         $order_data['status'] = ($this->salesChannelId == SalesChannelIds::POS || is_null($this->salesChannelId)) ? Statuses::COMPLETED : Statuses::PENDING;
         $order_data['discount'] = json_decode($this->discount)->original_amount ?? 0;
         $order_data['is_discount_percentage'] = json_decode($this->discount)->is_percentage ?? 0;
         $order_data['voucher_id'] = $this->voucher_id;
         $order_data['api_request_id'] = $this->apiRequest;
-        return $order_data;
+        return $order_data + $this->modificationFields(true,false);
     }
 
     private function hasDueError(Order $order): bool
@@ -450,13 +452,30 @@ class Creator
 
     }
 
-    private function calculateEmiChargesAndSave($order, PriceCalculation $price_calculator)
+    /**
+     * @throws OrderException|BaseClientServerError
+     */
+    private function validateEmiAndCalculateChargesForOrder($order, PriceCalculation $price_calculator)
     {
         $total_amount = $price_calculator->setOrder($order)->getDiscountedPrice();
-        $data = Calculations::getMonthData($total_amount, (int)$order->emi_month, false);
+        $min_emi_amount = config('emi.minimum_emi_amount');
+        if($total_amount < $min_emi_amount) {
+            throw new OrderException("Emi is not available for order amount less than " .$min_emi_amount, 400);
+        }
+        $data = $this->emiCalculation->setEmiMonth($this->emiMonth)->setAmount($total_amount)->getEmiCharges();
         $order->interest = $data['total_interest'];
         $order->bank_transaction_charge = $data['bank_transaction_fee'];
         $order->save();
+    }
+
+    private function updateStock(array $stockDecreasingData)
+    {
+       if(count($stockDecreasingData) > 0) {
+           foreach ($stockDecreasingData as $each_data) {
+               $this->stockManager->setSku($each_data['sku_detail'])->decreaseAndInsertInChunk($each_data['quantity']);
+           }
+           $this->stockManager->updateStock();
+       }
     }
 
     private function calculateDeliveryChargeAndSave($order)

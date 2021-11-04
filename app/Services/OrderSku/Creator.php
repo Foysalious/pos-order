@@ -2,18 +2,18 @@
 
 use App\Exceptions\OrderException;
 use App\Interfaces\OrderSkuRepositoryInterface;
-use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\WarrantyUnits;
 use App\Services\Product\StockManager;
-use Illuminate\Support\Facades\App;
+use App\Traits\ModificationFields;
 use Illuminate\Validation\ValidationException;
 
 class Creator
 {
+    use ModificationFields;
     private $order;
     /** @var OrderSkuRepositoryInterface */
     private OrderSkuRepositoryInterface $orderSkuRepository;
@@ -27,14 +27,19 @@ class Creator
     private StockManager $stockManager;
 
     private bool $isPaymentMethodEmi;
+    private array $stockDecreasingData = [];
 
     /**
      * Creator constructor.
      * @param OrderSkuRepositoryInterface $orderSkuRepository
      * @param DiscountHandler $discountHandler
      * @param InventoryServerClient $client
+     * @param StockManager $stockManager
+     * @param BatchDetailCreator $batchDetailCreator
      */
-    public function __construct(OrderSkuRepositoryInterface $orderSkuRepository, DiscountHandler $discountHandler, InventoryServerClient $client, StockManager $stockManager)
+    public function __construct(OrderSkuRepositoryInterface $orderSkuRepository, DiscountHandler $discountHandler,
+                                InventoryServerClient $client, StockManager $stockManager,
+                                protected BatchDetailCreator $batchDetailCreator)
     {
         $this->orderSkuRepository = $orderSkuRepository;
         $this->discountHandler = $discountHandler;
@@ -74,7 +79,14 @@ class Creator
     }
 
     /**
-     * @throws BaseClientServerError
+     * @return array
+     */
+    public function getStockDecreasingData(): array
+    {
+        return $this->stockDecreasingData;
+    }
+
+    /**
      * @throws OrderException
      * @throws ValidationException
      */
@@ -94,9 +106,10 @@ class Creator
         $this->checkProductAndStockAvailability($skus,$sku_details);
         foreach ($skus as $sku) {
             $sku_data['order_id'] = $this->order->id;
-            $sku_data['name'] = $sku->product_name ?? $sku_details[$sku->id]['product_name'] ?? 'Quick Sell Item';
+            $sku_data['name'] = $sku->product_name ?? $sku_details[$sku->id]['product_name'] ?? 'Custom Item';
             $sku_data['sku_id'] = $sku->id ?: null;
-            $sku_data['details'] = $this->makeSkudetails($sku,$sku_details[$sku->id] ?? null);
+            $sku_data['details'] = isset($sku_details[$sku->id]) && $sku_details[$sku->id]['combination'] ? json_encode($sku_details[$sku->id]['combination']) : null;
+            $sku_data['batch_detail'] = $this->makeBatchDetail($sku,$sku_details[$sku->id] ?? null);
             $sku_data['quantity'] = $sku->quantity;
             $sku_data['unit_price'] = $sku->price ?? $sku_details[$sku->id]['sku_channel'][0]['price'];
             $sku_data['unit'] = $sku->unit ?? (isset($sku_details[$sku->id]) ? ($sku_details[$sku->id]['unit']['name_en'] ?? null) : null);
@@ -105,11 +118,9 @@ class Creator
             $sku_data['vat_percentage'] = $sku->vat_percentage ?? (isset($sku_details[$sku->id]) ? $sku_details[$sku->id]['vat_percentage'] : 0);
             $sku_data['product_image'] = $sku_details[$sku->id]['app_thumb'] ?? null;
             $sku_data['note'] = $sku->note ?? null;
-            $sku_data['discount']['discount'] = $sku->discount ?? 0;
-            $sku_data['discount']['is_discount_percentage'] = $sku->is_discount_percentage ?? null;
-            $sku_data['discount']['cap'] = $sku->cap ?? null;
+            $sku_data['discount'] = $this->resolveDiscount($sku,$sku_details[$sku->id] ?? null);
             $sku_data['is_emi_available'] = $this->isPaymentMethodEmi;
-            $order_sku = $this->orderSkuRepository->create($sku_data);
+            $order_sku = $this->orderSkuRepository->create($this->withCreateModificationField($sku_data));
             $created_skus [] = $order_sku;
             $this->discountHandler->setType(DiscountTypes::SKU)->setOrder($this->order)->setSkuData($sku_data)->setOrderSkuId($order_sku->id);
             if ($this->discountHandler->hasDiscount()) {
@@ -117,16 +128,22 @@ class Creator
             }
             if(isset($sku_details[$sku->id])) {
                 $is_stock_maintainable = $this->stockManager->setSku($sku_details[$sku->id])->setOrder($this->order)->isStockMaintainable();
-                if ($is_stock_maintainable) $this->stockManager->decrease($sku->quantity);
+                if ($is_stock_maintainable) {
+                    $this->stockDecreasingData [] = [
+                        'sku_detail' => $sku_details[$sku->id],
+                        'quantity' => (float) $sku->quantity,
+                        'operation' => StockManager::STOCK_DECREMENT
+                    ];
+                }
             }
         }
         return $created_skus;
     }
 
-    public function getSkuDetails($sku_ids, $sales_channel_id)
+    private function getSkuDetails($sku_ids, $sales_channel_id)
     {
         $url = 'api/v1/partners/' . $this->order->partner_id . '/skus?skus=' . json_encode($sku_ids) . '&channel_id='.$sales_channel_id;
-        $response = $this->client->setBaseUrl()->get($url);
+        $response = $this->client->get($url);
         return $response['skus'];
     }
 
@@ -145,14 +162,12 @@ class Creator
         }
     }
 
-    private function makeSkudetails(object $sku, ?array $sku_details)
+    private function makeBatchDetail(object $sku, ?array $sku_details) : null | string
     {
         if ( is_null($sku_details)) {
-           return json_encode($sku);
+           return null;
         } else {
-            /** @var OrderSkuDetailCreator $creator */
-            $creator = App::make(OrderSkuDetailCreator::class);
-            $data = $creator->setSku($sku)->setSkuDetails($sku_details)->create();
+            $data = $this->batchDetailCreator->setSku($sku)->setSkuDetails($sku_details)->create();
             return json_encode($data);
         }
     }
@@ -162,18 +177,46 @@ class Creator
      */
     private function checkEmiAvailabilityForProducts(array $skus, array $sku_details)
     {
+        return ;
+        if($this->order->sales_channel_id == SalesChannelIds::POS) return;
         foreach ($skus as $sku) {
             if(!is_null($sku->id)) {
                 $sku_detail = $sku_details[$sku->id];
                 $emi_availability = $sku_detail['sku_channel'][0]['is_emi_available'] ?? false;
                 if ($emi_availability == false) {
-                    throw new OrderException("Emi is not available for Product #" . $sku->id);
+                    throw new OrderException("Emi is not available for Product #" . $sku->id, 400);
                 }
             } else {
                 if($sku->price < config('emi.minimum_emi_amount')) {
-                    throw new OrderException("Emi is not available for quick sell amount " . $sku->price);
+                    throw new OrderException("Emi is not available for quick sell amount " . $sku->price, 400);
                 }
             }
         }
+    }
+
+    private function resolveDiscount(object $sku, array|null $sku_detail)
+    {
+        $discount_data = [
+            'discount' => 0,
+            'is_discount_percentage' => 0,
+            'cap' => null,
+        ];
+        if($this->order->sales_channel_id == SalesChannelIds::POS) {
+            $discount_data = [
+                'discount' => $sku->discount ?? 0,
+                'is_discount_percentage' => $sku->is_discount_percentage ?? 0,
+                'cap' => $sku->cap ?? 0,
+            ];
+        } else {
+            $discount_detail = collect($sku_detail['sku_channel'])->pluck('valid_discounts')->collapse()->first();
+            if($discount_detail){
+                $discount_data = [
+                    'discount' => $discount_detail['amount'],
+                    'is_discount_percentage' => $discount_detail['is_amount_percentage'],
+                    'cap' => $discount_detail['cap']
+                ];
+            }
+        }
+        return $discount_data;
     }
 }

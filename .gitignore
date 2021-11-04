@@ -16,5 +16,5 @@ horizon.log
 storage/api-docs
 composer-auth.json
 storage/clockwork
-.composer/
+.composer
 

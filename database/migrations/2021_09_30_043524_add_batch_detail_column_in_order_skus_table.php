@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class RemoveCustomerIdToOrdersTable extends Migration
+class AddBatchDetailColumnInOrderSkusTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,9 @@ class RemoveCustomerIdToOrdersTable extends Migration
      */
     public function up()
     {
-        Schema::table('orders', function (Blueprint $table) {
-            $table->dropColumn('customer_id');
+        Schema::table('order_skus', function (Blueprint $table) {
+            $table->json('batch_detail')->nullable()->after('unit_price');
+
         });
     }
 
@@ -25,8 +26,8 @@ class RemoveCustomerIdToOrdersTable extends Migration
      */
     public function down()
     {
-        Schema::table('orders', function (Blueprint $table) {
-            $table->bigInteger('customer_id')->unsigned()->nullable();
+        Schema::table('order_skus', function (Blueprint $table) {
+            $table->dropColumn('batch_detail');
         });
     }
 }

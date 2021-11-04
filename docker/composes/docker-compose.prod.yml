@@ -1,0 +1,12 @@
+version: '3.5'
+services:
+  pos-order-service:
+    image: registry.sheba.xyz/${CONTAINER_NAME}
+    environment:
+      SERVICE_NAME: app
+    ports:
+      - ${PORT}:80
+
+networks:
+  pos-order-service:
+    driver: bridge

@@ -117,37 +117,37 @@ class DataMigrationService extends BaseService
 
     private function migratePartnerInfoData()
     {
-        $this->partnerRepositoryInterface->insertOrIgnore($this->partnerInfo);
+        $this->partnerRepositoryInterface->builder()->upsert($this->partnerInfo, ['id']);
     }
 
     private function migrateCustomersData()
     {
-        $this->customerRepository->insertOrIgnore($this->customers);
+        $this->customerRepository->builder()->upsert($this->customers, ['id', 'partner_id'], ['name']);
     }
 
     private function migrateOrdersData()
     {
-        $this->orderRepositoryInterface->insertOrIgnore($this->orders);
+        $this->orderRepositoryInterface->insert($this->orders);
     }
 
     private function migrateOrderSkusData()
     {
-        $this->orderSkusRepositoryInterface->insertOrIgnore($this->orderSkus);
+        $this->orderSkusRepositoryInterface->insert($this->orderSkus);
     }
 
     private function migrateOrderPaymentsData()
     {
-        $this->orderPaymentsRepositoryInterface->insertOrIgnore($this->orderPayments);
+        $this->orderPaymentsRepositoryInterface->insert($this->orderPayments);
     }
 
     private function migrateOrderDiscountsData()
     {
-        $this->discountRepositoryInterface->insertOrIgnore($this->discounts);
+        $this->discountRepositoryInterface->insert($this->discounts);
     }
 
     private function migrateOrderLogsData()
     {
-        $this->logRepositoryInterface->insertOrIgnore($this->logs);
+        $this->logRepositoryInterface->insert($this->logs);
     }
 
 }

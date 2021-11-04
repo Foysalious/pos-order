@@ -22,7 +22,7 @@ class CustomerOrderResource extends JsonResource
         return [
             'id' => $this->id,
             'status' => $this->status,
-            'date' => convertTimezone($this->created_at)->format('d,M,Y'),
+            'date' => convertTimezone($this->created_at)?->format('d,M,Y'),
             'discounted_price' => $price_calculator->getDiscountedPrice(),
         ];
     }

@@ -9,7 +9,7 @@ class NotRatedSkuResource extends JsonResource
     public function toArray($request)
     {
         /** @var OrderSku $this */
-        list($product_name, $product_id, $combination) = $this->getProductIdAndName($this->order->sales_channel_id, $this->order->partner_id);
+        list($product_name, $product_id) = $this->getProductIdAndName($this->order->sales_channel_id, $this->order->partner_id);
         $details = json_decode($this->details, true);
 
         return [
@@ -18,7 +18,7 @@ class NotRatedSkuResource extends JsonResource
             'product_name' => $product_name ?? null,
             'product_image' => $this->product_image ?? null,
             'order_id' => $this->order_id,
-            'variation' => null,
+            'variation' => $details ?? null,
         ];
     }
 }

@@ -1,4 +1,4 @@
-FROM php:8.0.2-fpm
+FROM php:8.0.11-fpm
 
 ARG APP_ENV
 
@@ -38,9 +38,6 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 RUN docker-php-ext-configure intl
 RUN docker-php-ext-install -j$(nproc) pdo_mysql mbstring zip calendar soap gd intl opcache pcntl
 
-# Install mongodb extension
-RUN pecl install mongodb && docker-php-ext-enable mongodb
-
 # Install php-ext-apfd
 RUN pecl install apfd && docker-php-ext-enable apfd
 
@@ -53,7 +50,6 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Copy existing application directory permissions
 COPY --chown=www-data:www-data . /var/www
 
-COPY ./composer-auth.json /root/.composer/auth.json
 COPY ./.sentryclirc .sentryclirc
 
 # PHP configuration
@@ -64,6 +60,8 @@ COPY ./docker/php/conf.d/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 COPY ./docker/php/conf.d/www.production.conf /usr/local/etc/php-fpm.d/www.conf
 # Nginx configuration
 COPY ./docker/nginx/conf.d/nginx-prod.conf /etc/nginx/sites-enabled/default
+# Supervisor configuration
+COPY ./docker/supervisor/conf.d/horizon.conf /etc/supervisor/conf.d/horizon.conf
 
 COPY ./docker/entrypoint.sh /etc/entrypoint.sh
 RUN chmod +x /etc/entrypoint.sh
@@ -89,8 +87,6 @@ WORKDIR /var/www
 RUN chmod +x ./bin/sentry_release.sh
 
 RUN composer install --ignore-platform-reqs && rm -rf /home/www-data/.composer/cache
-
-
 
 # RUN chmod -R g+w /var/www/vendor
 

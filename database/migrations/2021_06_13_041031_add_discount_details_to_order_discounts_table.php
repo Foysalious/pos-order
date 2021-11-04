@@ -26,7 +26,7 @@ class AddDiscountDetailsToOrderDiscountsTable extends Migration
     public function down()
     {
         Schema::table('order_discounts', function (Blueprint $table) {
-            //
+            $table->dropColumn('discount_details');
         });
     }
 }

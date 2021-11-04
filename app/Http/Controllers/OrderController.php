@@ -16,6 +16,10 @@ use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
+    /**
+     * @OA\Info(title="POS-ORDER PROJECTS API", version="1")
+     * It's required to generate swagger doc
+     */
     use ResponseAPI;
 
     protected $orderService;
@@ -354,6 +358,7 @@ class OrderController extends Controller
     {
         return $this->orderService->getWebsotreOrderInvoice($order_id);
     }
+
     /**
      * * @OA\Get(
      *      path="/api/v1/orders/{order_id}/generate-invoice",
@@ -374,9 +379,9 @@ class OrderController extends Controller
      * @param int $order_id
      * @return JsonResponse
      */
-    public function getOrderinvoice(int $order_id)
+    public function getOrderinvoice(int $partner_id, int $order_id)
     {
-        return $this->orderService->getOrderInvoice($order_id);
+        return $this->orderService->getOrderInvoice($partner_id, $order_id);
     }
 
 
@@ -412,5 +417,86 @@ class OrderController extends Controller
     public function logs(int $order_id)
     {
         return $this->orderService->logs($order_id);
+    }
+
+    /**
+     * @OA\Get(
+     *      path="/api/v1/partners/{partner}/trending-products",
+     *      operationId="getCustomerTrendingProduct",
+     *      tags={"Trending Product List"},
+     *      summary="Trending Product List",
+     *      description="Trending Product List",
+     *      @OA\Parameter(name="partner",description="partner Id",required=true,in="path", @OA\Schema(type="integer")),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Successful operation",
+     *          @OA\JsonContent(
+     *              type="object",
+     *             example={"message": "Successful","data":
+     *     {{"id": 1002041,
+     *      "category_id": 10048,
+     *      "category_name": "Master Category 2",
+     *      "sub_category_id": 10049,
+     *      "sub_category_name": "Others",
+     *      "collection_id": null,
+     *      "name": "Test Product Variation",
+     *      "description": "null",
+     *      "vat_percentage": 1,
+     *      "unit": {
+     *      "id": 2,
+     *      "name_bn": "স্কয়ার ফিট",
+     *      "name_en": "sft"
+     *      },
+     *     "stock": 20,
+     *     "rating": null,
+     *     "rating_count": null,
+     *     "app_thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/default.jpg",
+     *     "warranty": 1,
+     *     "warranty_unit": "month",
+     *     "image_gallery": {},
+     *     "variations": {}
+     *     }}}
+     *          )),
+     *      @OA\Response(
+     *          response=404,
+     *          description="Message: No product found ",
+     *      ),
+     *         @OA\Response(
+     *          response=500,
+     *          description="Message: Internal Server Errorl ",
+     *      )
+     *     )
+     */
+    public function getTrendingProducts($partner_id)
+    {
+        return $this->orderService->getTrendingProducts($partner_id);
+    }
+
+    public function generateLogInvoice(int $order, int $log): JsonResponse
+    {
+        return $this->orderService->generateLogInvoice($order, $log);
+    }
+
+    /**
+     * * @OA\Get(
+     *      path="/api/v1/filters",
+     *      operationId="filters",
+     *      tags={"ORDER API"},
+     *      summary="Get all filters",
+     *      description="Return filters",
+     *      @OA\Response(response=200, description="Successful",
+     *          @OA\JsonContent(
+     *          type="object",
+     *          example={"message":"Successful",  "invoice": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20210810_pos_order_invoice_2001022_report_1628597035.pdf"}
+     *          ),
+     *     ),
+     *      @OA\Response(response=404, description="message: Order Not Found")
+     *  )
+     *
+     * @return JsonResponse
+     */
+    public function getFilteringOptions(): JsonResponse
+    {
+        return $this->orderService->getAllFilteringOptions();
     }
 }

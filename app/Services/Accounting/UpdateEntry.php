@@ -1,8 +1,6 @@
 <?php namespace App\Services\Accounting;
 
 use App\Helper\Miscellaneous\RequestIdentification;
-use App\Models\Order;
-use App\Models\OrderSku;
 use App\Repositories\Accounting\AccountingRepository;
 use App\Repositories\Accounting\Constants\EntryTypes;
 use App\Services\Accounting\Constants\Accounts;
@@ -10,13 +8,10 @@ use App\Services\Accounting\Constants\Cash;
 use App\Services\Accounting\Constants\OrderChangingTypes;
 use App\Services\Accounting\Constants\Sales;
 use App\Services\Inventory\InventoryServerClient;
-use App\Services\Order\Constants\SalesChannel;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\PriceCalculation;
-
 use App\Services\Order\Refund\Objects\AddRefundTracker;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\App;
 
 class UpdateEntry extends BaseEntry
 {
@@ -52,14 +47,13 @@ class UpdateEntry extends BaseEntry
         return $this;
     }
 
-    private function makeData()
+    private function makeData() : array
     {
-        /** @var PriceCalculation $order_price_details */
-        $order_price_details = $this->getOrderPriceDetails();
+        $order_price_details = $this->getOrderPriceDetails(new PriceCalculation());
 
-        $customer = $this->order->customer->only('id','name');
+        $customer = $this->order->customer ?? null;
         $inventory_products = $this->makeInventoryProducts();
-        $data = [
+        $data =  [
             'created_from' => json_encode($this->withBothModificationFields((new RequestIdentification())->get())),
             'credit_account_key' => Sales::SALES_FROM_POS,
             'debit_account_key'  => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ? Accounts::SHEBA_ACCOUNT : Cash::CASH,
@@ -67,19 +61,20 @@ class UpdateEntry extends BaseEntry
             'source_type'        => EntryTypes::POS,
             'note'               => $this->getNote(),
             'amount'             => $order_price_details->getDiscountedPrice(),
-            'amount_cleared'     => (float) $this->orderProductChangeData['paid_amount'],
+            'amount_cleared'     => abs((float) $this->orderProductChangeData['paid_amount']),
             'reconcile_amount'   => (float) $this->calculateAmountChange($inventory_products),
             'total_discount'     => $order_price_details->getDiscount(),
             'total_vat'          => $order_price_details->getVat(),
-            'entry_at' => convertTimezone($this->order->created_at)->format('Y-m-d H:i:s'),
+            'entry_at' => convertTimezone($this->order->created_at)?->format('Y-m-d H:i:s'),
+            'delivery_charge'    => (double) $this->order->delivery_charge ??  0,
+            'bank_transaction_charge' => (double) $this->order->bank_transaction_charge ??  0,
+            'interest'           => (double) $this->order->interest ??  0,
             'inventory_products' => json_encode($inventory_products),
-            'customer_id' => is_string($customer['id']) ? 5 : $customer['id'],
-            'customer_name' => $customer['name'],
         ];
-        return $data;
+        return array_merge($data,$this->makeCustomerData($customer));
     }
 
-    private function makeInventoryProducts()
+    private function makeInventoryProducts() : array
     {
         $data = [];
         $sku_ids = $this->getSkuIdsFromProductChangeData();
@@ -94,12 +89,11 @@ class UpdateEntry extends BaseEntry
         if(isset($this->orderProductChangeData['deleted']['refunded_products'])) {
             $data = array_merge_recursive($this->makeNewAndDeletedProductsData($order_skus,$sku_details, self::FULLY_DELETED_PRODUCT), $data);
         }
-        $data = array_merge_recursive($this->makeRefundExchangedProductsData($order_skus,$sku_details), $data);
-        return $data;
+        return array_merge_recursive($this->makeRefundExchangedProductsData($order_skus,$sku_details), $data);
 
     }
 
-    private function makeNewAndDeletedProductsData($order_skus, $sku_details, $product_type)
+    private function makeNewAndDeletedProductsData($order_skus, $sku_details, $product_type) : array
     {
         $data = [];
         if($product_type == self::NEWLY_ADDED_PRODUCT) {
@@ -165,7 +159,7 @@ class UpdateEntry extends BaseEntry
         return $amount;
     }
 
-    private function getNote()
+    private function getNote() : string
     {
         $note = '';
         if(count($this->orderProductChangeData['new'] ?? []) > 0) {
@@ -180,7 +174,7 @@ class UpdateEntry extends BaseEntry
         return $note;
     }
 
-    private function getSkuIdsFromProductChangeData()
+    private function getSkuIdsFromProductChangeData(): array
     {
         $sku_ids [] = array_column($this->orderProductChangeData['new'] ?? [], 'sku_id');
         $sku_ids [] = array_column($this->orderProductChangeData['deleted']['refunded_products'] ?? [], 'sku_id');
@@ -195,10 +189,9 @@ class UpdateEntry extends BaseEntry
         return $sku_ids;
     }
 
-    private function splitSkuByBatch($order_sku)
+    private function splitSkuByBatch($order_sku): array
     {
-        $order_details = json_decode($order_sku->details, true);
-        $batch_detail = $order_details['batch_detail'] ?? [];
+        $batch_detail = json_decode($order_sku->batch_detail, true);
         $data = [];
         if (empty($batch_detail)) {
             $data [] = [
@@ -217,7 +210,7 @@ class UpdateEntry extends BaseEntry
 
     }
 
-    private function getBatchWiseCost(AddRefundTracker $item, string $quantity_change_type)
+    private function getBatchWiseCost(AddRefundTracker $item, string $quantity_change_type): array
     {
         $batch_detail = $item->getUpdatedBatchDetail();
         if($quantity_change_type == self::QUANTITY_DECREASED){
@@ -244,8 +237,9 @@ class UpdateEntry extends BaseEntry
 
     }
 
-    private function takeOutFromBatchDetail($quantity, $batch_detail)
+    private function takeOutFromBatchDetail($quantity, $batch_detail): array
     {
+        $data = [];
         foreach ($batch_detail as $batch) {
             if($batch['quantity'] >= $quantity){
                 $data [] = [
@@ -253,7 +247,7 @@ class UpdateEntry extends BaseEntry
                     'unit_price' => $batch['cost'],
                 ];
                 break;
-            } elseif ($batch['quantity'] < $quantity) {
+            } else {
                 $data [] = [
                     'quantity' => $batch['quantity'],
                     'unit_price' => $batch['cost'],
@@ -265,7 +259,7 @@ class UpdateEntry extends BaseEntry
 
     }
 
-    public function makeAddedRefundedProductsData(array $products, \Illuminate\Database\Eloquent\Collection $order_skus, Collection $sku_details)
+    public function makeAddedRefundedProductsData(array $products, \Illuminate\Database\Eloquent\Collection $order_skus, Collection $sku_details): array
     {
         $data = [];
         /** @var AddRefundTracker $each_product */

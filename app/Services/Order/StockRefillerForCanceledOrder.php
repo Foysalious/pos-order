@@ -52,7 +52,7 @@ class StockRefillerForCanceledOrder
         $url = 'api/v1/partners/' . $this->order->partner_id . '/skus?skus=' . json_encode($sku_ids->toArray()) .'&channel_id=1';
         /** @var InventoryServerClient $client */
         $client = App::make(InventoryServerClient::class);
-        $sku_details = $client->setBaseUrl()->get($url)['skus'] ?? [];
+        $sku_details = $client->get($url)['skus'] ?? [];
         return collect($sku_details);
     }
 

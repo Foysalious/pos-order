@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AlterTableCustomersChangeCustomerId extends Migration
+class AddMethodDetailsColumnInOrderPaymentsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class AlterTableCustomersChangeCustomerId extends Migration
      */
     public function up()
     {
-        Schema::table('customers', function (Blueprint $table) {
-            $table->string('id')->change();
+        Schema::table('order_payments', function (Blueprint $table) {
+            $table->json('method_details')->after('method')->nullable();
         });
     }
 
@@ -25,8 +25,8 @@ class AlterTableCustomersChangeCustomerId extends Migration
      */
     public function down()
     {
-        Schema::table('customers', function (Blueprint $table) {
-            //
+        Schema::table('order_payments', function (Blueprint $table) {
+            $table->dropColumn('method_details');
         });
     }
 }

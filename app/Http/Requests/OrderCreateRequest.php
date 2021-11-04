@@ -30,7 +30,7 @@ class OrderCreateRequest extends FormRequest
 //            'delivery_charge'   => 'sometimes|required',
             'paid_amount'       => 'sometimes|required|numeric',
             'payment_method'    => 'sometimes|required|string|in:' . implode(',', config('pos.payment_method')),
-            'emi_month'         => 'required_if:payment_method,emi|numeric',
+            'emi_month'         => 'required_if:payment_method,emi|numeric|gt:0',
             'discount'          => 'sometimes|JSON',
             'voucher_id'        => 'sometimes|numeric',
             'skus'              => 'required|json',

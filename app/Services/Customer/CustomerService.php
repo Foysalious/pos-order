@@ -1,5 +1,6 @@
 <?php namespace App\Services\Customer;
 
+use App\Constants\ResponseMessages;
 use App\Http\Requests\CustomerOrderListRequest;
 use App\Http\Resources\Webstore\Customer\NotRatedSkuResource;
 use App\Interfaces\CustomerRepositoryInterface;
@@ -47,6 +48,7 @@ class CustomerService extends BaseService
         if (isset($updateDto->email)) $data['email'] = $updateDto->email;
         if (isset($updateDto->mobile)) $data['mobile'] = $updateDto->mobile;
         if (isset($updateDto->pro_pic)) $data['pro_pic'] = $updateDto->pro_pic;
+        if (isset($updateDto->is_supplier)) $data['is_supplier'] = $updateDto->is_supplier;
         return $data;
     }
 
@@ -66,7 +68,7 @@ class CustomerService extends BaseService
         if ($not_rated_skus->isEmpty())
             throw new NotFoundHttpException("No SKUS Found");
         $not_rated_skus = NotRatedSkuResource::collection($not_rated_skus);
-        return $this->success('Successful', ['total_count' => $not_rated_skus_count, 'not_rated_order_skus' => $not_rated_skus]);
+        return $this->success(ResponseMessages::SUCCESS, ['total_count' => $not_rated_skus_count, 'not_rated_order_skus' => $not_rated_skus]);
     }
 
     /**
@@ -107,14 +109,14 @@ class CustomerService extends BaseService
         });
         $return_data['total_purchase_amount'] = round($return_data['total_purchase_amount'], 2);
         $return_data['total_used_promo'] = round($return_data['total_used_promo'], 2);
-        return $this->success('Successful', ['data' => $return_data]);
+        return $this->success(ResponseMessages::SUCCESS, ['data' => $return_data]);
     }
 
 
     public function getOrdersByDateWise(CustomerOrderListRequest $request, int $partner_id, string $customer_id)
     {
         $customer = $this->findTheCustomer($partner_id, $customer_id);
-        if (!$customer) return $this->error('Customer Not Found', 404);
+        if (!$customer) return $this->error('No order belongs to this customer', 404);
         $status = $request->status ?? null;
         list($offset, $limit) = calculatePagination($request);
         $order_list = [];
@@ -124,7 +126,7 @@ class CustomerService extends BaseService
             ->orderBy('created_at', 'desc')
             ->skip($offset)->take($limit)->get();
         foreach ($all_orders as $order) {
-            $date = convertTimezone($order->created_at)->format('Y-m-d');
+            $date = convertTimezone($order->created_at)?->format('Y-m-d');
             $order_list[$date]['total_sale'] = $order_list[$date]['total_sale'] ?? 0;
             $order_list[$date]['total_due'] = $order_list[$date]['total_due'] ?? 0;
             /** @var PriceCalculation $order_calculator */
@@ -132,18 +134,21 @@ class CustomerService extends BaseService
             $order_calculator->setOrder($order);
             $order->discounted_price = $order_calculator->getDiscountedPrice();
             $order->due = $order_calculator->getDue();
-
             $order_list[$date]['total_sale'] += $order->discounted_price;
             $order_list[$date]['total_due'] += $order->due;
             if (!is_null($status) && ($status == PaymentStatuses::DUE || $status == 'Due')) {
                 if ($order->due > 0) {
-                    $order_list[$date]['orders'][] = $order->only(['id', 'partner_wise_order_id', 'status', 'discounted_price', 'due', 'created_at']);
+                    $temp = $order->only(['id', 'partner_wise_order_id', 'status', 'discounted_price', 'due', 'created_at']);
+                    $temp['created_at'] = convertTimezone($order->created_at)?->format('d,M,Y');
+                    $order_list[$date]['orders'][] = $temp;
                 }
             } else {
-                $order_list[$date]['orders'][] = $order->only(['id', 'partner_wise_order_id', 'status', 'discounted_price', 'due', 'created_at']);
+                $temp = $order->only(['id', 'partner_wise_order_id', 'status', 'discounted_price', 'due', 'created_at']);
+                $temp['created_at'] = convertTimezone($order->created_at)?->format('d,M,Y');
+                $order_list[$date]['orders'][] = $temp;
             }
         }
-        return $this->success('Successful', ['data' => $order_list]);
+        return $this->success(ResponseMessages::SUCCESS, ['data' => $order_list]);
 
     }
 

@@ -1,10 +1,8 @@
 <?php namespace App\Listeners;
 
-use App\Events\OrderPlaceTransactionCompleted;
 use App\Events\OrderUpdated;
+use App\Services\Accounting\Exceptions\AccountingEntryServerError;
 use App\Services\Accounting\UpdateEntry;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 
 class AccountingEntryOnOrderUpdating
 {
@@ -23,8 +21,9 @@ class AccountingEntryOnOrderUpdating
     /**
      * Handle the event.
      *
-     * @param  OrderUpdated  $event
+     * @param OrderUpdated $event
      * @return void
+     * @throws AccountingEntryServerError
      */
     public function handle(OrderUpdated $event)
     {

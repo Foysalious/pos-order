@@ -1,5 +1,6 @@
 <?php namespace App\Services\Order\Refund;
 
+use App\Interfaces\OrderDiscountRepositoryInterface;
 use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Models\Order;
 use App\Repositories\OrderSkuRepository;
@@ -8,10 +9,12 @@ use App\Services\Order\Updater;
 use App\Services\OrderSku\Creator;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Product\StockManager;
+use App\Traits\ModificationFields;
 use Illuminate\Support\Collection;
 
 abstract class ProductOrder
 {
+    use ModificationFields;
     /** @var Order */
     protected Order $order;
 
@@ -44,7 +47,8 @@ abstract class ProductOrder
     public function __construct(Updater $updater, OrderSkuRepositoryInterface $orderSkuRepository,
                                 InventoryServerClient $client, StockManager $stockManager,
                                 PaymentCreator $paymentCreator,
-                                protected Creator $orderSkuCreator
+                                protected Creator $orderSkuCreator,
+                                protected OrderDiscountRepositoryInterface $discountRepository
     )
     {
         $this->updater = $updater;
@@ -84,7 +88,7 @@ abstract class ProductOrder
     protected function getSkuDetails($sku_ids, $sales_channel_id)
     {
         $url = 'api/v1/partners/' . $this->order->partner_id . '/skus?skus=' . json_encode($sku_ids) . '&channel_id='.$sales_channel_id;
-        $response = $this->client->setBaseUrl()->get($url);
+        $response = $this->client->get($url);
         return $response['skus'];
     }
 

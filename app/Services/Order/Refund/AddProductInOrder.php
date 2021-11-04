@@ -1,36 +1,38 @@
 <?php namespace App\Services\Order\Refund;
 
 use App\Exceptions\OrderException;
-use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Traits\ModificationFields;
-use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 class AddProductInOrder extends ProductOrder
 {
     use ModificationFields;
     private array $added_products = [];
+    private array $stockUpdateData = [];
 
     /**
-     * @throws BaseClientServerError
      * @throws OrderException
      * @throws ValidationException
      */
     public function update(): array
     {
         $all_items = $this->getAddedItems();
+        foreach ($all_items as $each_item) {
+            if(!is_null($each_item->id)) unset($each_item->price);
+        }
+        // false for no check in backend for updating emi order by POS
+        $this->isPaymentMethodEmi = false;
         $new_order_skus = $this->orderSkuCreator->setOrder($this->order)->setIsPaymentMethodEmi($this->isPaymentMethodEmi)
             ->setSkus($all_items)->create();
+        $this->stockUpdateData = $this->orderSkuCreator->getStockDecreasingData();
         $this->addOrderSkusInReturnData($new_order_skus);
+
         return $this->added_products;
     }
 
     private function getAddedItems(): array
     {
-        $current_products = $this->order->items()->pluck('id');
-        $request_products = $this->skus->pluck('id');
-        $items = $request_products->diff($current_products);
-        return $this->skus->whereIn('id',$items)->toArray();
+        return $this->skus->whereNull('order_sku_id')->toArray();
     }
 
     private function addOrderSkusInReturnData(array $new_order_skus)
@@ -38,6 +40,14 @@ class AddProductInOrder extends ProductOrder
         foreach ($new_order_skus as $each) {
             $this->added_products [] = $each;
         }
+    }
+
+    /**
+     * @return array
+     */
+    public function getStockUpdateData(): array
+    {
+        return $this->stockUpdateData;
     }
 
 }
