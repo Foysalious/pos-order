@@ -41,6 +41,7 @@ Route::group(['middleware' => 'ip.whitelist'], function () {
             Route::get('orders/{order_id}/generate-invoice', [OrderController::class, 'getWebstoreOrderinvoice']);
             Route::get('partners/{partner_id}/orders/{order_id}/customers/{customer_id}/order-details', [\App\Http\Controllers\Webstore\OrderController::class, 'show']);
             Route::get('partners/{partner_id}/products-by-ratings', [ReviewController::class, 'getProductIdsByRating']);
+            Route::get('customers/{customer_id}/orders', [OrderController::class, 'getCustomerOrderList']);
         });
         Route::group(['middleware' => 'apiRequestLog'], function () {
             Route::post('partners/{partner}/orders', [OrderController::class, 'store']);
