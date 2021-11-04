@@ -51,7 +51,6 @@ class OrderWithProductResource extends JsonResource
             'sales_channel_id' => $this->sales_channel_id,
             'note' => $this->note,
             'invoice' => $this->invoice,
-            'emi_month' => $this->emi_month,
             'items' => OrderSkuResource::collection($this->orderSkus),
             'price' => $this->getOrderPriceRelatedInfo(),
             'customer' => $this->getOrderCustomer(),
