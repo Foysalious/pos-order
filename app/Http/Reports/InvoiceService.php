@@ -84,7 +84,8 @@ class InvoiceService extends BaseService
         }
         $invoice_name = 'pos_order_invoice_' . $order->id;
         $link = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
-        $this->updater->setPartnerId($order->partner_id)->setOrderId($order->id)->setOrder($this->order)->setInvoiceLink($link)->update();
+        $order->invoice=$link;
+        $order->save();
         return $this->success(ResponseMessages::SUCCESS, ['invoice' =>  $link]);
     }
 }

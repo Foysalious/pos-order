@@ -117,7 +117,7 @@ class DataMigrationService extends BaseService
 
     private function migratePartnerInfoData()
     {
-        $this->partnerRepositoryInterface->insert($this->partnerInfo);
+        $this->partnerRepositoryInterface->builder()->upsert($this->partnerInfo, ['id']);
     }
 
     private function migrateCustomersData()
