@@ -7,6 +7,7 @@ use App\Services\Order\Refund\Objects\AddRefundTracker;
 use App\Services\Order\Refund\Objects\ProductChangeTracker;
 use App\Services\OrderSku\BatchManipulator;
 use App\Services\Product\StockManager;
+use App\Traits\ModificationFields;
 use App\Traits\ResponseAPI;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
@@ -14,7 +15,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class UpdateProductInOrder extends ProductOrder
 {
-    use ResponseAPI;
+    use ModificationFields;
     private array $refunded_items_obj = [];
     private array $added_items_obj = [];
     private float $refunded_amount = 0;
@@ -202,14 +203,14 @@ class UpdateProductInOrder extends ProductOrder
     {
         $order_sku = $this->order->orderSkus->where('id', $product->getOrderSkuId())->first();
         $order_sku->vat_percentage = $product->getCurrentVatPercentage();
-        $order_sku->update();
+        $order_sku->update($this->modificationFields(false,true));
     }
 
     private function updatePrice(ProductChangeTracker $product)
     {
         $order_sku = $this->order->orderSkus->where('id', $product->getOrderSkuId())->first();
         $order_sku->unit_price = $product->getCurrentUnitPrice();
-        $order_sku->update();
+        $order_sku->update($this->modificationFields(false,true));
     }
 
     private function updateDiscount(ProductChangeTracker $product)
@@ -223,7 +224,7 @@ class UpdateProductInOrder extends ProductOrder
             $order_sku_discount->original_amount = $original_amount;
             $order_sku_discount->is_percentage = $is_percentage;
             $order_sku_discount->amount = $amount;
-            $order_sku_discount->update();
+            $order_sku_discount->update($this->modificationFields(false,true));
         } else {
             if($discount_detail['discount'] > 0) {
                 $this->discountRepository->create($this->withCreateModificationField([

@@ -484,7 +484,7 @@ class Updater
             $order_payment_link = $this->orderPaymentRepository->where('order_id', $this->order->id)->where('method', PaymentMethods::PAYMENT_LINK)->first();
             if ($order_payment_link) {
                 $order_payment_link->amount = $this->paymentLinkAmount;
-                $order_payment_link->save();
+                $order_payment_link->update($this->modificationFields(false,true));
             } else {
                 $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paymentLinkAmount)->setMethod(PaymentMethods::PAYMENT_LINK)
                     ->setTransactionType(TransactionTypes::CREDIT)->create();
@@ -499,7 +499,7 @@ class Updater
         $discountData = json_decode($this->discount);
         $originalAmount = $discountData->original_amount;
         $hasDiscount = $this->validateDiscountData($originalAmount);
-        if ($hasDiscount) $this->orderDiscountRepository->where('order_id', $this->order_id)->update($this->makeOrderDiscountData($discountData));
+        if ($hasDiscount) $this->orderDiscountRepository->where('order_id', $this->order_id)->update($this->withUpdateModificationField($this->makeOrderDiscountData($discountData)));
         $this->setOrderLogType(OrderLogTypes::PRODUCTS_AND_PRICES);
     }
 
@@ -537,13 +537,13 @@ class Updater
             return $this->orderDiscountRepository->where('order_id', $this->order_id)->where('type', 'voucher')->delete();
         } else {
             $this->orderDiscountRepository->where('order_id', $this->order_id)->where('type', 'voucher')->delete();
-            return $this->discountHandler->setVoucherId($this->voucher_id)->setHeader($this->header)->voucherDiscountCalculate($this->order);
+            return $this->discountHandler->setVoucherId($this->voucher_id)->voucherDiscountCalculate($this->order);
         }
     }
 
     private function updateCustomer()
     {
-        return $this->orderRepositoryInterface->where('id', $this->order->id)->update(['customer_id' => $this->customer_id]);
+        return $this->orderRepositoryInterface->where('id', $this->order->id)->update($this->withUpdateModificationField(['customer_id' => $this->customer_id]));
     }
 
     private function setDeliveryNameAndMobile()
@@ -570,7 +570,7 @@ class Updater
         }
         if(($refunded == false && $this->orderCalculator->getDue() > 0)) {
             $this->order->paid_at = null;
-            $this->order->save();
+            $this->order->update($this->modificationFields(false,true));
         }
     }
 
