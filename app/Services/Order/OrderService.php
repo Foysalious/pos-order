@@ -19,14 +19,12 @@ use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Jobs\Order\OrderPlacePushNotification;
 use App\Jobs\WebStoreSettingsSyncJob;
-use App\Models\Order;
 use App\Services\AccessManager\AccessManager;
 use App\Services\AccessManager\Features;
 use App\Services\APIServerClient\ApiServerClient;
 use App\Services\BaseService;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Delivery\Methods;
-use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentStatuses;
@@ -36,7 +34,6 @@ use App\Services\Webstore\SettingsSync\WebStoreSettingsSyncTypes;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\App;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use App\Services\Order\Constants\Statuses;
@@ -59,7 +56,8 @@ class OrderService extends BaseService
         OrderRepositoryInterface                $orderRepository,
         OrderSkusRepositoryInterface            $orderSkusRepositoryInterface,
         CustomerRepositoryInterface             $customerRepository,
-        Updater                                 $updater, OrderPaymentRepositoryInterface $orderPaymentRepository,
+        Updater                                 $updater,
+        OrderPaymentRepositoryInterface $orderPaymentRepository,
         Creator                                 $creator,
         protected InventoryServerClient         $client,
         protected ApiServerClient               $apiServerClient,
