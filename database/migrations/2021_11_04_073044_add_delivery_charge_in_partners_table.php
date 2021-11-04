@@ -14,7 +14,7 @@ class AddDeliveryChargeInPartnersTable extends Migration
     public function up()
     {
         Schema::table('partners', function (Blueprint $table) {
-
+            $table->decimal('delivery_charge', 11, 2)->after('printer_model')->nullable();
         });
     }
 
@@ -26,7 +26,7 @@ class AddDeliveryChargeInPartnersTable extends Migration
     public function down()
     {
         Schema::table('partners', function (Blueprint $table) {
-
+            $table->dropColumn('delivery_charge');
         });
     }
 }
