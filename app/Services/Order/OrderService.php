@@ -17,8 +17,10 @@ use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
+use App\Jobs\Order\OrderEmail;
 use App\Jobs\Order\OrderPlacePushNotification;
 use App\Jobs\WebStoreSettingsSyncJob;
+use App\Models\Order;
 use App\Services\AccessManager\AccessManager;
 use App\Services\AccessManager\Features;
 use App\Services\APIServerClient\ApiServerClient;
@@ -57,7 +59,7 @@ class OrderService extends BaseService
         OrderSkusRepositoryInterface            $orderSkusRepositoryInterface,
         CustomerRepositoryInterface             $customerRepository,
         Updater                                 $updater,
-        OrderPaymentRepositoryInterface $orderPaymentRepository,
+        OrderPaymentRepositoryInterface         $orderPaymentRepository,
         Creator                                 $creator,
         protected InventoryServerClient         $client,
         protected ApiServerClient               $apiServerClient,
@@ -169,12 +171,14 @@ class OrderService extends BaseService
         }
         return $this->success(ResponseMessages::SUCCESS, ['invoice' => $order->invoice]);
     }
+
     private function getSkuDetailsForWebstore($partner, $sku_ids)
     {
         $url = 'api/v1/partners/' . $partner . '/webstore-skus-details?skus=' . json_encode($sku_ids->toArray()) . '&channel_id=' . 2;
         $sku_details = $this->client->get($url)['skus'] ?? [];
         return $this->success(ResponseMessages::SUCCESS, ['data' => collect($sku_details)]);
     }
+
     public function getTrendingProducts(int $partner_id)
     {
         $trending = $this->orderSkusRepositoryInterface->getTrendingProducts($partner_id);
@@ -458,5 +462,11 @@ class OrderService extends BaseService
     {
         if ($log_type == 'status_update') return false;
         return true;
+    }
+
+    public function sendEmail($order)
+    {
+        $order = Order::find($order);
+        dispatch(new OrderEmail($order));
     }
 }

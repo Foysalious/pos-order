@@ -499,4 +499,9 @@ class OrderController extends Controller
     {
         return $this->orderService->getAllFilteringOptions();
     }
+
+    public function sendEmail($order)
+    {
+        $this->orderService->sendEmail($order);
+    }
 }
