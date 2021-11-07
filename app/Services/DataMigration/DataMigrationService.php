@@ -8,6 +8,8 @@ use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Interfaces\PartnerRepositoryInterface;
 use App\Services\BaseService;
+use App\Services\ClientServer\SmanagerUser\SmanagerUserServerClient;
+use Carbon\Carbon;
 
 class DataMigrationService extends BaseService
 {
@@ -38,7 +40,8 @@ class DataMigrationService extends BaseService
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
                                 OrderPaymentsRepositoryInterface $orderPaymentsRepositoryInterface,
                                 LogRepositoryInterface $logRepositoryInterface,
-                                private CustomerRepositoryInterface $customerRepository)
+                                private CustomerRepositoryInterface $customerRepository,
+                                private SmanagerUserServerClient $smanagerUserServerClient)
     {
         $this->discountRepositoryInterface = $discountRepositoryInterface;
         $this->partnerRepositoryInterface = $partnerRepositoryInterface;
@@ -127,7 +130,23 @@ class DataMigrationService extends BaseService
 
     private function migrateOrdersData()
     {
-        $this->orderRepositoryInterface->insert($this->orders);
+        foreach ($this->orders as $order) {
+            if($order['customer_id']) {
+                $customer = $this->customerRepository->builder()->withTrashed()->find($order['customer_id']);
+                if(!$customer) {
+                    $data = [
+                        'id' => (string) $order['customer_id'],
+                        'partner_id' => $order['partner_id'],
+                        'name' => $order['delivery_name'],
+                        'mobile' => $order['delivery_mobile'],
+                        'deleted_at' => convertTimezone(Carbon::now())?->format('Y-m-d H:i:s'),
+                    ];
+                    $this->customerRepository->insert($data);
+                    $this->smanagerUserServerClient->post('/api/v1/partners/'. $order['partner_id'] .'/users/store-or-get', $data);
+                }
+            }
+            $this->orderRepositoryInterface->insert($order);
+        }
     }
 
     private function migrateOrderSkusData()
