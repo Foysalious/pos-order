@@ -502,6 +502,6 @@ class OrderController extends Controller
 
     public function sendEmail($order)
     {
-        $this->orderService->sendEmail($order);
+       return $this->orderService->sendEmail($order);
     }
 }

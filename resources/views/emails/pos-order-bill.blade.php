@@ -83,7 +83,7 @@
             font-size: 2.4em;
             line-height: 1em;
             font-weight: normal;
-            margin: 0  0 10px 0;
+            margin: 0 0 10px 0;
         }
 
         #invoice .date {
@@ -115,18 +115,18 @@
             font-weight: bold;
         }
 
-        table td{
+        table td {
             font-size: 0.9em;
         }
 
-        table td h3{
+        table td h3 {
             color: #1b4280;
             font-size: 1.0em;
             font-weight: normal;
             margin: 0 0 0.2em 0;
         }
 
-        table td span{
+        table td span {
             font-size: 0.8em;
         }
 
@@ -139,7 +139,7 @@
 
         table .desc {
             text-align: left;
-            width:220px;
+            width: 220px;
         }
 
         table .code {
@@ -196,12 +196,12 @@
             border: none;
         }
 
-        #thanks{
+        #thanks {
             font-size: 2em;
             margin-bottom: 50px;
         }
 
-        #notices{
+        #notices {
             padding-left: 6px;
             border-left: 6px solid #1b4280;
         }
@@ -221,98 +221,98 @@
             text-align: center;
         }
 
-        #order{
+        #order {
             padding: 20px 0;
         }
 
-        .s-price{
+        .s-price {
             text-align: right;
         }
 
-        .text-left{
+        .text-left {
             text-align: left;
         }
 
-        .text-right{
+        .text-right {
             text-align: right;
         }
 
-        .pull-left{
+        .pull-left {
             float: left;
         }
 
-        table.materials-table tbody > tr > td{
+        table.materials-table tbody > tr > td {
             text-align: left;
         }
 
-        .material-name{
+        .material-name {
             width: 400px;
             text-align: left;
         }
 
-        .total-job-material{
+        .total-job-material {
             background-color: #eeeeee;
             font-weight: bold;
-            color:#111;
+            color: #111;
         }
 
-        .m-job-code{
-            color:#1b4280;
+        .m-job-code {
+            color: #1b4280;
             font-weight: bold;
             font-size: 1.0em;
         }
 
-        #client .to{
+        #client .to {
             text-transform: uppercase;
         }
 
     </style>
 </head>
-
 <body>
 <header class="clearfix">
     <div>
-{{--        <div id="logo">--}}
-{{--            <img src="{{ $order->partner->logo }}" class="img-responsive">--}}
-{{--        </div>--}}
+        <div id="logo">
+            <img src="{{ $partner["info"]["logo"] }}" class="img-responsive">
+        </div>
         <div id="company">
-            <h2 class="name">{{ $order->partner->name }}</h2>
-{{--            <div>{{ $order->partner->address }}</div>--}}
-{{--            <div>{{ $order->partner->getContactNumber() }}</div>--}}
+            <h2 class="name">{{ $partner["info"]["name"] }}</h2>
+            <div>{{ $partner["info"]["address"] }}</div>
+            <div>{{ $partner["info"]["mobile"] }}</div>
         </div>
     </div>
 </header>
-{{--<main>--}}
-{{--    <div id="details" class="clearfix">--}}
-{{--        <div id="client">--}}
-{{--            <div class="to">TO:</div>--}}
-{{--            <h2 class="name">{{ $order->customer->profile->name }}</h2>--}}
-{{--            <div class="email">{{ $order->customer->profile->email }}</div>--}}
-{{--        </div>--}}
-{{--        <div id="invoice">--}}
-{{--            <h1># {{ $order->id }}</h1>--}}
-{{--            <div class="date">Date of Bill: {{ \Carbon\Carbon::now()->format('d/m/Y') }}</div>--}}
-{{--        </div>--}}
-{{--    </div>--}}
-{{--    <div id="order">--}}
-{{--        <div class="pull-left">--}}
-{{--            ORDER NUMBER : # {{ $order->id }}--}}
-{{--        </div>--}}
-{{--        <div class="text-right">--}}
-{{--            VENDOR :  {{ $order->partner->name }}--}}
-{{--        </div>--}}
-{{--    </div>--}}
+<main>
+    <div id="details" class="clearfix">
+        <div id="client">
+            <div class="to">TO:</div>
+            <h2 class="name">{{ $order->customer->name }}</h2>
+            <div class="email">{{ $order->customer->email }}</div>
+        </div>
+        <div id="invoice">
+            <h1># {{ $order->id }}</h1>
+            <div class="date">Date of Bill: {{ \Carbon\Carbon::now()->format('d/m/Y') }}</div>
+        </div>
+    </div>
+    <div id="order">
+        <div class="pull-left">
+            ORDER NUMBER : # {{ $order->id }}
+        </div>
+        <div class="text-right">
+            VENDOR : {{ $order->partner->name }}
+        </div>
+    </div>
 
-{{--    <table border="0" cellspacing="0" cellpadding="0">--}}
-{{--        @include('emails._invoice')--}}
-{{--    </table>--}}
-
-{{--    <div id="notices">--}}
-{{--        <div class="notice">"No Tips" policy applicable.</div>--}}
-{{--    </div>--}}
-{{--</main>--}}
-{{--<footer>--}}
-{{--    This was created on a computer and is valid without the signature and seal.--}}
-{{--</footer>--}}
-{{--</body>--}}
-{{--</html>--}}
+    <table border="0" cellspacing="0" cellpadding="0">
+        @include('emails._invoice')
+    </table>
+    <br>
+    <br>
+    <div id="notices">
+        <div class="notice">"No Tips" policy applicable.</div>
+    </div>
+</main>
+<footer>
+    This was created on a computer and is valid without the signature and seal.
+</footer>
+</body>
+</html>

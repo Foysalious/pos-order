@@ -4,6 +4,8 @@ namespace App\Jobs\Order;
 
 use App\Http\Reports\InvoiceService;
 use App\Models\Order;
+use App\Models\Partner;
+use App\Services\APIServerClient\ApiServerClient;
 use App\Services\Order\EmailHandler;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -16,6 +18,7 @@ class OrderEmail implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private Order $order;
+    private Partner $partner;
 
     /**
      * Create a new job instance.

@@ -67,7 +67,8 @@ class OrderService extends BaseService
         protected OrderFilter                   $orderSearch,
         protected StatusChanger                 $orderStatusChanger,
         protected StockRefillerForCanceledOrder $stockRefillerForCanceledOrder,
-        InvoiceService                          $invoiceService
+        InvoiceService                          $invoiceService,
+        protected ApiServerClient               $apiServerClientclient
     )
     {
         $this->orderRepository = $orderRepository;
@@ -467,6 +468,10 @@ class OrderService extends BaseService
     public function sendEmail($order)
     {
         $order = Order::find($order);
+//       $partner = $this->apiServerClientclient->get('v2/partners/' . $order->partner->name);
+//        $order_info = $this->getOrderDetails($order->partner_id, $order->id);
+//        $order_info = $order_info->getData()->order->items;
+//        return view('emails.pos-order-bill', compact('order','partner','order_info'));
         dispatch(new OrderEmail($order));
     }
 }
