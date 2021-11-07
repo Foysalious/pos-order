@@ -102,7 +102,8 @@ class Creator
         if(count($sku_ids) > 0){
             $sku_details = collect($this->getSkuDetails($sku_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
         }
-        if($this->isPaymentMethodEmi) $this->checkEmiAvailabilityForProducts($skus, $sku_details);
+        //product-wise emi for future
+//        if($this->isPaymentMethodEmi) $this->checkEmiAvailabilityForProducts($skus, $sku_details);
         $this->checkProductAndStockAvailability($skus,$sku_details);
         foreach ($skus as $sku) {
             $sku_data['order_id'] = $this->order->id;
@@ -172,12 +173,10 @@ class Creator
         }
     }
 
-    /**
-     * @throws OrderException
-     */
-    private function checkEmiAvailabilityForProducts(array $skus, array $sku_details)
+    // product-wise emi for future
+    /*
+     private function checkEmiAvailabilityForProducts(array $skus, array $sku_details)
     {
-        return ;
         if($this->order->sales_channel_id == SalesChannelIds::POS) return;
         foreach ($skus as $sku) {
             if(!is_null($sku->id)) {
@@ -193,6 +192,7 @@ class Creator
             }
         }
     }
+    */
 
     private function resolveDiscount(object $sku, array|null $sku_detail)
     {
