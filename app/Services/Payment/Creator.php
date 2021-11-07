@@ -108,7 +108,7 @@ class Creator
         $priceCalculation = app(PriceCalculation::class);
         $paid_at = $payment->created_at ?: Carbon::now();
         if (! $priceCalculation->setOrder($order)->getDue() && !$order->paid_at)
-            $this->orderRepository->update($order, ['paid_at' => $paid_at]);
+            $this->orderRepository->update($order, ['paid_at' => $paid_at] + $this->modificationFields(false,true));
         return $payment;
     }
 

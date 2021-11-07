@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\Partner;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\ClientServer\SmanagerUser\SmanagerUserServerClient;
+use App\Services\Delivery\Methods;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\EMI\Calculations as EmiCalculation;
 use App\Services\Inventory\InventoryServerClient;
@@ -22,6 +23,7 @@ use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\OrderSku\Creator as OrderSkuCreator;
 use App\Services\Product\StockManageByChunk;
 use App\Services\Transaction\Constants\TransactionTypes;
+use App\Traits\ResponseAPI;
 use App\Traits\ModificationFields;
 use Exception;
 use Illuminate\Support\Facades\App;
@@ -33,6 +35,7 @@ class Creator
 {
     use ModificationFields;
 
+    private $createValidator;
     private $partner;
     /**  @var array */
     private $data;
@@ -69,6 +72,10 @@ class Creator
      */
     private OrderSkuCreator $orderSkuCreator;
     private $codAmount;
+    private ?string $deliveryAddressId;
+    private ?string $deliveryMethod;
+    private ?string $totalWeight;
+    private  $deliveryAddressInfo;
 
 
     public function __construct(
@@ -123,7 +130,35 @@ class Creator
         $this->customer = $customer;
         return $this;
     }
+    /**
+     * @param mixed $deliveryAddressId
+     * @return Creator
+     */
+    public function setDeliveryAddressId( ? string $deliveryAddressId): Creator
+    {
+        $this->deliveryAddressId = $deliveryAddressId;
+        return $this;
+    }
 
+    /**
+     * @param string|null $totalWeight
+     * @return Creator
+     */
+    public function setTotalWeight( ? string $totalWeight): Creator
+    {
+        $this->totalWeight = $totalWeight;
+        return $this;
+    }
+
+    /**
+     * @param string|null $deliveryMethod
+     * @return Creator
+     */
+    public function setDeliveryMethod(?string $deliveryMethod): Creator
+    {
+        $this->deliveryMethod = $deliveryMethod;
+        return $this;
+    }
     /**
      * @param string|null $deliveryName
      * @return Creator
@@ -318,10 +353,13 @@ class Creator
             if ($this->hasDueError($order->refresh())) {
                 throw new OrderException("Can not make due order without customer", 403);
             }
+
+            if ($this->deliveryAddressId)
+                $this->calculateDeliveryChargeAndSave($order);
+
             if ($order) event(new OrderPlaceTransactionCompleted($order));
             $this->updateStock($this->orderSkuCreator->getStockDecreasingData());
             DB::commit();
-
         } catch (Exception $e) {
             DB::rollback();
             throw $e;
@@ -375,15 +413,18 @@ class Creator
 
     private function makeOrderData(): array
     {
+        if ($this->deliveryAddressId)
+        $this->deliveryAddressInfo = $this->resolveDeliveryAddress();
         $order_data = [];
         $order_data['partner_id'] = $this->partner->id;
         $order_data['partner_wise_order_id'] = $this->resolvePartnerWiseOrderId($this->partner);
         $order_data['customer_id'] = $this->customer->id ?? null;
-        $order_data['delivery_name'] = $this->resolveDeliveryName();
-        $order_data['delivery_mobile'] = $this->resolveDeliveryMobile();
-        $order_data['delivery_address'] = $this->deliveryAddress;
+        $order_data['delivery_name'] = isset($this->deliveryAddressId) ?? $this->deliveryAddressInfo['name'];
+        $order_data['delivery_mobile'] = isset($this->deliveryAddressId) ??  $this->deliveryAddressInfo['mobile'];
+        $order_data['delivery_address'] = isset($this->deliveryAddressId) ?? $this->deliveryAddressInfo['address'];
+        $order_data['delivery_thana'] = isset($this->deliveryAddressId)?? $this->deliveryAddressInfo['address'];
+        $order_data['delivery_district'] = isset($this->deliveryAddressId) ?? $this->deliveryAddressInfo['address'];
         $order_data['sales_channel_id'] = $this->salesChannelId ?: SalesChannelIds::POS;
-        $order_data['delivery_charge'] = $this->deliveryCharge ?: 0;
         $order_data['emi_month'] = ($this->paymentMethod == PaymentMethods::EMI && !is_null($this->emiMonth)) ? $this->emiMonth : null;
         $order_data['status'] = ($this->salesChannelId == SalesChannelIds::POS || is_null($this->salesChannelId)) ? Statuses::COMPLETED : Statuses::PENDING;
         $order_data['discount'] = json_decode($this->discount)->original_amount ?? 0;
@@ -393,15 +434,21 @@ class Creator
         return $order_data + $this->modificationFields(true,false);
     }
 
-    private function hasDueError(Order $order)
+    private function hasDueError(Order $order): bool
+    {
+        if ($this->getDueAmount($order) > 0 && is_null($this->customer)) {
+            return true;
+        }
+        return false;
+    }
+
+    private function getDueAmount(Order $order): float
     {
         /** @var PriceCalculation $order_bill */
         $order_bill = App::make(PriceCalculation::class);
         $order_bill = $order_bill->setOrder($order);
-        if ($order_bill->getDue() > 0 && is_null($this->customer)) {
-            return true;
-        }
-        return false;
+        return $order_bill->getDue();
+
     }
 
     /**
@@ -429,6 +476,30 @@ class Creator
            $this->stockManager->updateStock();
        }
     }
+
+    private function calculateDeliveryChargeAndSave($order)
+    {
+        if($this->deliveryMethod == Methods::OWN_DELIVERY)
+            return  $this->partner->delivery_charge;
+
+        $data = [
+            'weight' => $this->totalWeight,
+            'delivery_district' => $this->deliveryAddressInfo['district'],
+            'delivery_thana' => $this->deliveryAddressInfo['thana'],
+            'partner_id' => $this->partner->id,
+            'cod_amount' => $this->getDueAmount($order)
+        ];
+        $delivery_charge = $this->apiServerClient->setBaseUrl()->post('v2/pos/delivery/delivery-charge', $data)['delivery_charge'];
+        $order->delivery_charge = $delivery_charge;
+        $order->save();
+    }
+
+    private function resolveDeliveryAddress()
+    {
+        return $this->smanagerUserServerClient->get('/api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId . '/addresses/'.$this->deliveryAddressId);
+    }
+
+
 }
 
 
