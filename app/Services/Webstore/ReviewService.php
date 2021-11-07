@@ -102,6 +102,6 @@ class ReviewService extends BaseService
             ->setReviewImages($request->review_images)
             ->create();
 
-        return $this->success(ResponseMessages::SUCCESS, null, 201);
+        return $this->success(ResponseMessages::SUCCESS);
     }
 }
