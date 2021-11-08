@@ -125,7 +125,7 @@ class DataMigrationService extends BaseService
 
     private function migrateCustomersData()
     {
-        $this->customerRepository->insertOrIgnore($this->customers);
+        $this->customerRepository->builder()->upsert($this->customers, ['id', 'partner_id']);
     }
 
     private function migrateOrdersData()
