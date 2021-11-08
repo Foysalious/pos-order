@@ -125,14 +125,17 @@ class DataMigrationService extends BaseService
 
     private function migrateCustomersData()
     {
-        $this->customerRepository->builder()->upsert($this->customers, ['id', 'partner_id']);
+        foreach ($this->customers as $customer) {
+            $customer = $this->customerRepository->builder()->withTrashed()->where('id', $customer['id'])->where('partner_id', $customer['partner_id'])->first();
+            if (!$customer) $this->customerRepository->insert($customer);
+        }
     }
 
     private function migrateOrdersData()
     {
         foreach ($this->orders as $order) {
             if($order['customer_id']) {
-                $customer = $this->customerRepository->builder()->withTrashed()->find($order['customer_id']);
+                $customer = $this->customerRepository->builder()->withTrashed()->where('id', $order['customer_id'])->where('partner_id', $order['partner_id'])->first();
                 if(!$customer) {
                     $this->customerRepository->insert([
                         'id' => $order['customer_id'],
