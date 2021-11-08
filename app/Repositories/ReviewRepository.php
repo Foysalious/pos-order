@@ -82,11 +82,10 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
     {
         $reviewList = $data['review'];
         $reviewImageList = $data['review_images'] ?? [];
-
         for ($i = 0; $i < count($reviewList); $i++) {
             $singleReviewData = $this->makeSingleReviewData($data, $reviewList[$i]);
             $review = $this->create($singleReviewData);
-            if (count($reviewImageList) > 0) $this->getReviewImages($i, $reviewImageList, $review->id);
+            if (!empty($reviewImageList[0])) $this->getReviewImages($i, $reviewImageList, $review->id);
         }
     }
 
@@ -120,7 +119,7 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
 
     public function getProductIdsByRating($partnerId, $ratings)
     {
-        return $this->model->where('partner_id', $partnerId)->groupBy('rating')->havingRaw("AVG(rating) in ('".implode("','", $ratings)."')")->pluck('product_id');
+        return $this->model->where('partner_id', $partnerId)->groupBy('rating')->havingRaw("AVG(rating) in ('" . implode("','", $ratings) . "')")->pluck('product_id');
     }
 
 }
