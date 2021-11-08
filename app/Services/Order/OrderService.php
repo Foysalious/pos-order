@@ -17,8 +17,10 @@ use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
+use App\Jobs\Order\OrderEmail;
 use App\Jobs\Order\OrderPlacePushNotification;
 use App\Jobs\WebStoreSettingsSyncJob;
+use App\Models\Order;
 use App\Services\AccessManager\AccessManager;
 use App\Services\AccessManager\Features;
 use App\Services\APIServerClient\ApiServerClient;
@@ -57,7 +59,7 @@ class OrderService extends BaseService
         OrderSkusRepositoryInterface            $orderSkusRepositoryInterface,
         CustomerRepositoryInterface             $customerRepository,
         Updater                                 $updater,
-        OrderPaymentRepositoryInterface $orderPaymentRepository,
+        OrderPaymentRepositoryInterface         $orderPaymentRepository,
         Creator                                 $creator,
         protected InventoryServerClient         $client,
         protected ApiServerClient               $apiServerClient,
@@ -65,7 +67,8 @@ class OrderService extends BaseService
         protected OrderFilter                   $orderSearch,
         protected StatusChanger                 $orderStatusChanger,
         protected StockRefillerForCanceledOrder $stockRefillerForCanceledOrder,
-        InvoiceService                          $invoiceService
+        InvoiceService                          $invoiceService,
+        protected ApiServerClient               $apiServerClientclient
     )
     {
         $this->orderRepository = $orderRepository;
@@ -109,6 +112,7 @@ class OrderService extends BaseService
         return $this->success(ResponseMessages::SUCCESS, ['order_count' => $orderCount, 'orders' => $orderList]);
     }
 
+
     /**
      * @param $partner
      * @param OrderCreateRequest $request
@@ -125,7 +129,9 @@ class OrderService extends BaseService
             ->setDeliveryAddress($request->delivery_address)
             ->setCustomerId($request->customer_id)
             ->setSalesChannelId($request->sales_channel_id)
-            ->setDeliveryCharge($request->has('delivery_charge') ? ($request->delivery_method == Methods::OWN_DELIVERY ? $request->delivery_charge : $this->calculateDeliveryCharge($request, $partner)) : 0)
+            ->setDeliveryAddressId($request->delivery_address_id)
+            ->setTotalWeight($request->total_weight)
+            ->setDeliveryMethod($request->delivery_method)
             ->setCodAmount($request->cod_amount)
             ->setEmiMonth($request->emi_month)
             ->setSkus($request->skus)
@@ -144,18 +150,6 @@ class OrderService extends BaseService
         return $this->success(ResponseMessages::SUCCESS, ['order' => ['id' => $order->id]]);
     }
 
-    private function calculateDeliveryCharge($request, $partner_id)
-    {
-        $data = [
-            'weight' => $request->weight,
-            'delivery_district' => $request->delivery_district,
-            'delivery_thana' => $request->delivery_thana,
-            'partner_id' => $partner_id,
-            'cod_amount' => $request->sdelivery_cod_amount
-        ];
-        return $this->apiServerClient->post('v2/pos/delivery/delivery-charge', $data)['delivery_charge'];
-    }
-
     /**
      * @param int $order_id
      * @return JsonResponse
@@ -169,12 +163,14 @@ class OrderService extends BaseService
         }
         return $this->success(ResponseMessages::SUCCESS, ['invoice' => $order->invoice]);
     }
+
     private function getSkuDetailsForWebstore($partner, $sku_ids)
     {
         $url = 'api/v1/partners/' . $partner . '/webstore-skus-details?skus=' . json_encode($sku_ids->toArray()) . '&channel_id=' . 2;
         $sku_details = $this->client->get($url)['skus'] ?? [];
         return $this->success(ResponseMessages::SUCCESS, ['data' => collect($sku_details)]);
     }
+
     public function getTrendingProducts(int $partner_id)
     {
         $trending = $this->orderSkusRepositoryInterface->getTrendingProducts($partner_id);
@@ -259,9 +255,7 @@ class OrderService extends BaseService
             ->setVoucherId($orderUpdateRequest->voucher_id)
             ->setPaidAmount($orderUpdateRequest->paid_amount ?? null)
             ->setPaymentMethod($orderUpdateRequest->payment_method ?? null)
-            ->setPaymentLinkAmount($orderUpdateRequest->payment_link_amount ?? null)
             ->setDiscount($orderUpdateRequest->discount)
-            ->setHeader($orderUpdateRequest->header('Authorization'))
             ->setDeliveryVendorName($orderUpdateRequest->delivery_vendor_name ?? null)
             ->setDeliveryRequestId($orderUpdateRequest->delivery_request_id ?? null)
             ->setDeliveryThana($orderUpdateRequest->delivery_thana ?? null)
@@ -458,5 +452,12 @@ class OrderService extends BaseService
     {
         if ($log_type == 'status_update') return false;
         return true;
+    }
+
+    public function sendEmail($order)
+    {
+        $order = Order::find($order);
+        dispatch(new OrderEmail($order));
+        return $this->success(ResponseMessages::SUCCESS);
     }
 }

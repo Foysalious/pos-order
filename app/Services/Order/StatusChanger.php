@@ -53,7 +53,7 @@ class StatusChanger
 
     public function changeStatus()
     {
-        $this->orderRepository->update($this->order, ['status' => $this->status]);
+        $this->orderRepository->update($this->order, $this->withUpdateModificationField(['status' => $this->status]));
         /** @var PriceCalculation $order_calculator */
         $order_calculator = App::make(PriceCalculation::class);
         $order_calculator->setOrder($this->order);
