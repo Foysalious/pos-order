@@ -54,7 +54,7 @@ class ReviewController extends Controller
      *              @OA\Schema(
      *                  @OA\Property(property="review[0]", type="JSON"),
      *                  @OA\Property(property="review_images[0][0]", type="file"),
-     *                  required={"review[0]", "review_images[0][0]"}
+     *                  required={"review[0]"}
      *             )
      *         )
      *      ),
