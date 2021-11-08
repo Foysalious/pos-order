@@ -125,24 +125,24 @@ class DataMigrationService extends BaseService
 
     private function migrateCustomersData()
     {
-        $this->customerRepository->builder()->upsert($this->customers, ['id', 'partner_id']);
+        $this->customerRepository->insertOrIgnore($this->customers);
     }
 
     private function migrateOrdersData()
     {
         foreach ($this->orders as $order) {
             if($order['customer_id']) {
-                $customer = $this->customerRepository->builder()->withTrashed()->find($order['customer_id']);
+                $customer = $this->customerRepository->builder()->withTrashed()->where('id', $order['customer_id'])->where('partner_id', $order['partner_id'])->first();
                 if(!$customer) {
                     $this->customerRepository->insert([
-                        'id' => (string) $order['customer_id'],
+                        'id' => $order['customer_id'],
                         'partner_id' => $order['partner_id'],
                         'name' => $order['delivery_name'],
                         'mobile' => $order['delivery_mobile'],
                         'deleted_at' => convertTimezone(Carbon::now())?->format('Y-m-d H:i:s'),
                     ]);
                     $this->smanagerUserServerClient->post('/api/v1/partners/'. $order['partner_id'] .'/users/store-or-get', [
-                        'previous_id' => (string) $order['customer_id'],
+                        'previous_id' => $order['customer_id'],
                         'partner_id' => $order['partner_id'],
                         'name' => $order['delivery_name'],
                         'mobile' => $order['delivery_mobile'],
