@@ -75,7 +75,8 @@ class Creator
     private ?string $deliveryAddressId;
     private ?string $deliveryMethod;
     private ?string $totalWeight;
-    private  $deliveryAddressInfo;
+    private ?string $deliveryDistrict;
+    private ?string $deliveryThana;
 
 
     public function __construct(
@@ -206,6 +207,19 @@ class Creator
     public function setSalesChannelId(?int $salesChannelId): Creator
     {
         $this->salesChannelId = $salesChannelId;
+        return $this;
+    }
+
+
+    public function setDeliveryDistrict($deliveryDistrict)
+    {
+        $this->deliveryDistrict = $deliveryDistrict;
+        return $this;
+    }
+
+    public function setDeliveryThana($deliveryThana)
+    {
+        $this->deliveryThana = $deliveryThana;
         return $this;
     }
 
@@ -354,7 +368,7 @@ class Creator
                 throw new OrderException("Can not make due order without customer", 403);
             }
 
-            if ($this->deliveryAddressId)
+            if($this->deliveryMethod)
                 $this->calculateDeliveryChargeAndSave($order);
 
             if ($order) event(new OrderPlaceTransactionCompleted($order));
@@ -413,17 +427,15 @@ class Creator
 
     private function makeOrderData(): array
     {
-        if ($this->deliveryAddressId)
-        $this->deliveryAddressInfo = $this->resolveDeliveryAddress();
         $order_data = [];
         $order_data['partner_id'] = $this->partner->id;
         $order_data['partner_wise_order_id'] = $this->resolvePartnerWiseOrderId($this->partner);
         $order_data['customer_id'] = $this->customer->id ?? null;
-        $order_data['delivery_name'] = isset($this->deliveryAddressId) ?? $this->deliveryAddressInfo['name'];
-        $order_data['delivery_mobile'] = isset($this->deliveryAddressId) ??  $this->deliveryAddressInfo['mobile'];
-        $order_data['delivery_address'] = isset($this->deliveryAddressId) ?? $this->deliveryAddressInfo['address'];
-        $order_data['delivery_thana'] = isset($this->deliveryAddressId)?? $this->deliveryAddressInfo['address'];
-        $order_data['delivery_district'] = isset($this->deliveryAddressId) ?? $this->deliveryAddressInfo['address'];
+        $order_data['delivery_name'] = $this->resolveDeliveryName();
+        $order_data['delivery_mobile'] = $this->resolveDeliveryMobile();
+        $order_data['delivery_address'] = $this->deliveryAddress;
+        $order_data['delivery_thana'] = $this->deliveryThana;
+        $order_data['delivery_district'] = $this->deliveryDistrict;
         $order_data['sales_channel_id'] = $this->salesChannelId ?: SalesChannelIds::POS;
         $order_data['emi_month'] = ($this->paymentMethod == PaymentMethods::EMI && !is_null($this->emiMonth)) ? $this->emiMonth : null;
         $order_data['status'] = ($this->salesChannelId == SalesChannelIds::POS || is_null($this->salesChannelId)) ? Statuses::COMPLETED : Statuses::PENDING;
@@ -479,25 +491,25 @@ class Creator
 
     private function calculateDeliveryChargeAndSave($order)
     {
-        if($this->deliveryMethod == Methods::OWN_DELIVERY)
-            return  $this->partner->delivery_charge;
+        if ($this->deliveryMethod == Methods::OWN_DELIVERY)
+            return $this->partner->delivery_charge;
 
-        $data = [
-            'weight' => $this->totalWeight,
-            'delivery_district' => $this->deliveryAddressInfo['district'],
-            'delivery_thana' => $this->deliveryAddressInfo['thana'],
-            'partner_id' => $this->partner->id,
-            'cod_amount' => $this->getDueAmount($order)
-        ];
-        $delivery_charge = $this->apiServerClient->setBaseUrl()->post('v2/pos/delivery/delivery-charge', $data)['delivery_charge'];
-        $order->delivery_charge = $delivery_charge;
-        $order->save();
+        if ($this->deliveryDistrict && $this->deliveryThana && $this->totalWeight)
+        {
+            $data = [
+                'weight' => $this->totalWeight,
+                'delivery_district' => $this->deliveryDistrict,
+                'delivery_thana' => $this->deliveryThana,
+                'partner_id' => $this->partner->id,
+                'cod_amount' => $this->getDueAmount($order)
+            ];
+            $delivery_charge = $this->apiServerClient->setBaseUrl()->post('v2/pos/delivery/delivery-charge', $data)['delivery_charge'];
+            $order->delivery_charge = $delivery_charge;
+            return $order->save();
+        }
+        return false;
     }
 
-    private function resolveDeliveryAddress()
-    {
-        return $this->smanagerUserServerClient->get('/api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId . '/addresses/'.$this->deliveryAddressId);
-    }
 
 
 }
