@@ -454,9 +454,10 @@ class OrderService extends BaseService
         return true;
     }
 
-    public function sendEmail($order)
+    public function sendEmail($partner, $order)
     {
-        $order = Order::find($order);
+        $order = Order::where('partner_id',$partner)->find($order);
+       if (!$order) $this->error('Order Not Found',404);
         dispatch(new OrderEmail($order));
         return $this->success(ResponseMessages::SUCCESS);
     }

@@ -36,7 +36,7 @@ Route::group(['middleware' => 'ip.whitelist'], function () {
         });
 
         Route::get('partners/{partner_id}/orders/{order_id}/generate-invoice', [OrderController::class, 'getOrderinvoice']);
-        Route::post('orders/{order}/send-email', [OrderController::class, 'sendEmail']);
+        Route::post('partners/{partner_id}/orders/{order}/send-email', [OrderController::class, 'sendEmail']);
         Route::get('partners/{partner}/trending-products', [OrderController::class, 'getTrendingProducts']);
         Route::group(['prefix' => 'webstore'], function () {
             Route::get('orders/{order_id}/generate-invoice', [OrderController::class, 'getWebstoreOrderinvoice']);

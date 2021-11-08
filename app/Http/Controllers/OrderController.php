@@ -500,8 +500,8 @@ class OrderController extends Controller
         return $this->orderService->getAllFilteringOptions();
     }
 
-    public function sendEmail($order)
+    public function sendEmail($partner, $order)
     {
-       return $this->orderService->sendEmail($order);
+       return $this->orderService->sendEmail($partner,$order);
     }
 }
