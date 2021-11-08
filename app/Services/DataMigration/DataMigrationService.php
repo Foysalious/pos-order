@@ -125,7 +125,7 @@ class DataMigrationService extends BaseService
 
     private function migrateCustomersData()
     {
-        $this->customerRepository->builder()->upsert($this->customers, ['id', 'partner_id'], ['name']);
+        $this->customerRepository->builder()->upsert($this->customers, ['id', 'partner_id']);
     }
 
     private function migrateOrdersData()
@@ -134,15 +134,20 @@ class DataMigrationService extends BaseService
             if($order['customer_id']) {
                 $customer = $this->customerRepository->builder()->withTrashed()->find($order['customer_id']);
                 if(!$customer) {
-                    $data = [
+                    $this->customerRepository->insert([
                         'id' => (string) $order['customer_id'],
                         'partner_id' => $order['partner_id'],
                         'name' => $order['delivery_name'],
                         'mobile' => $order['delivery_mobile'],
                         'deleted_at' => convertTimezone(Carbon::now())?->format('Y-m-d H:i:s'),
-                    ];
-                    $this->customerRepository->insert($data);
-                    $this->smanagerUserServerClient->post('/api/v1/partners/'. $order['partner_id'] .'/users/store-or-get', $data);
+                    ]);
+                    $this->smanagerUserServerClient->post('/api/v1/partners/'. $order['partner_id'] .'/users/store-or-get', [
+                        'previous_id' => (string) $order['customer_id'],
+                        'partner_id' => $order['partner_id'],
+                        'name' => $order['delivery_name'],
+                        'mobile' => $order['delivery_mobile'],
+                        'deleted_at' => convertTimezone(Carbon::now())?->format('Y-m-d H:i:s'),
+                    ]);
                 }
             }
             $this->orderRepositoryInterface->insert($order);
