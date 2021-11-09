@@ -12,12 +12,13 @@ $price_calculator = (App::make(PriceCalculation::class))->setOrder($order)?>
 </thead>
 
 <tbody>
+
 @forelse($order_info as $item)
     <tr>
-        <td class=""><h3>{{ $item->name }}</h3></td>
-        <td class="qty" style="background-color: #DDDDDD;"> {{ $item->quantity }} </td>
-        <td class="qty"> {{ $item->unit_discounted_price_without_vat }} </td>
-        <td class="unit"> {{ $item->quantity*$item->unit_discounted_price_without_vat }} </td>
+        <td class=""><h3>{{ $item['name'] }}</h3></td>
+        <td class="qty" style="background-color: #DDDDDD;"> {{ $item['quantity'] }} </td>
+        <td class="qty"> {{ $item['unit_discounted_price_without_vat'] }} </td>
+        <td class="unit"> {{ $item['quantity']*$item['unit_discounted_price_without_vat'] }} </td>
     </tr>
 @empty
     <tr>

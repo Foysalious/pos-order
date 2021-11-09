@@ -198,6 +198,12 @@ class OrderService extends BaseService
         return $this->success(ResponseMessages::SUCCESS, ['order' => $resource]);
     }
 
+    public function getOrderInfo($partner_id, $order_id)
+    {
+        $order = $this->orderRepository->getOrderDetailsByPartner($partner_id, $order_id);
+        return json_encode(new OrderWithProductResource($order, true));
+    }
+
     public function getWebStoreOrderDetails(int $partner_id, int $order_id, string $customer_id): JsonResponse
     {
         $order = $this->orderRepository->where('partner_id', $partner_id)->where('customer_id', $customer_id)->with('statusChangeLogs')->find($order_id);
