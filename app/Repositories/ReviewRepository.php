@@ -70,7 +70,6 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
     public function getReviewImages($reviewIndex, $reviewImageList, $review_id)
     {
         foreach ($reviewImageList as $imageName => $imageFile) {
-            $reviewIndexFromSingleImage = null;
             if (is_array($imageFile) && $imageFile[0]) {
                 $reviewIndexFromSingleImage = $imageName;
                 $this->getReviewImagesFromArray($imageFile, $reviewIndex, $reviewIndexFromSingleImage, $review_id);
