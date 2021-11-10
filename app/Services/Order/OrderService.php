@@ -26,6 +26,7 @@ use App\Services\AccessManager\Features;
 use App\Services\APIServerClient\ApiServerClient;
 use App\Services\BaseService;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
+use App\Services\Customer\CustomerResolver;
 use App\Services\Delivery\Methods;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
@@ -68,7 +69,8 @@ class OrderService extends BaseService
         protected StatusChanger                 $orderStatusChanger,
         protected StockRefillerForCanceledOrder $stockRefillerForCanceledOrder,
         InvoiceService                          $invoiceService,
-        protected ApiServerClient               $apiServerClientclient
+        protected ApiServerClient               $apiServerClientclient,
+        protected CustomerResolver $customerResolver
     )
     {
         $this->orderRepository = $orderRepository;
@@ -319,11 +321,11 @@ class OrderService extends BaseService
     {
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if (!$order) return $this->error(trans('order.order_not_found'), 404);
-        if (!$this->customerRepository->find($customer_id)) return $this->error(trans('order.customer_not_found'), 404);
+        $customer = $this->customerResolver->setCustomerId($customer_id)->setPartnerId($partner_id)->resolveCustomer();
         if ($this->checkCustomerHasPayment($order_id))
             $this->updater->setOrderId($order_id)
                 ->setOrder($order)
-                ->setCustomerId($customer_id)
+                ->setCustomerId($customer->id)
                 ->setOrderLogType(OrderLogTypes::CUSTOMER)
                 ->update();
         $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
@@ -468,6 +470,6 @@ class OrderService extends BaseService
         if (!$order->customer) return $this->error('Customer Not Found', 404);
         if (!$order->customer->email) return $this->error('Email Not Found', 404);
         dispatch(new OrderEmail($order));
-        return $this->success(ResponseMessages::SUCCESS);
+        return $this->success();
     }
 }

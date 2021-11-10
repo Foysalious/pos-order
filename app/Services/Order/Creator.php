@@ -12,6 +12,7 @@ use App\Models\Partner;
 use App\Services\APIServerClient\ApiServerClient;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\ClientServer\SmanagerUser\SmanagerUserServerClient;
+use App\Services\Customer\CustomerResolver;
 use App\Services\Delivery\Methods;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\EMI\Calculations as EmiCalculation;
@@ -24,13 +25,11 @@ use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\OrderSku\Creator as OrderSkuCreator;
 use App\Services\Product\StockManageByChunk;
 use App\Services\Transaction\Constants\TransactionTypes;
-use App\Traits\ResponseAPI;
 use App\Traits\ModificationFields;
 use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Creator
 {
@@ -95,7 +94,9 @@ class Creator
         protected EmiCalculation $emiCalculation,
         protected StockRefillerForCanceledOrder $stockRefill,
         protected StockManageByChunk $stockManager,
-         protected ApiServerClient               $apiServerClient
+        protected ApiServerClient $apiServerClient,
+        protected CustomerResolver $customerResolver
+
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -408,23 +409,7 @@ class Creator
     private function resolveCustomer(): Creator
     {
         if (!isset($this->customerId)) return $this->setCustomer(null);
-        $customer = $this->customerRepository->find($this->customerId);
-        if (!$customer) {
-            $customer = $this->smanagerUserServerClient->get('/api/v1/partners/' . $this->partnerId . '/users/' . $this->customerId);
-            if (!$customer) throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Exists.");
-            $data = [
-                'id' => $customer['_id'],
-                'name' => $customer['name'],
-                'email' => $customer['email'],
-                'partner_id' => $customer['partner_id'],
-                'mobile' => $customer['mobile'],
-                'pro_pic' => $customer['pro_pic'],
-            ];
-            $customer = $this->customerRepository->create($this->withCreateModificationField($data));
-        }
-        if ($customer->partner_id != $this->partnerId) {
-            throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Belong To Partner #" . $this->partnerId);
-        }
+        $customer = $this->customerResolver->setPartnerId($this->partnerId)->setCustomerId($this->customerId)->resolveCustomer();
         return $this->setCustomer($customer);
     }
 
