@@ -28,10 +28,10 @@ class EmailHandler
 
     public function handle()
     {
-        $partner = $this->client->get('v2/partners/' . $this->order->partner->name);
-        $order_info = $this->orderService->getOrderDetails($this->order->partner_id, $this->order->id);
-        $order_info = $order_info->getData()->order->items;
-        Mail::send('emails.pos-order-bill', ['order' => $this->order, 'partner' => $partner,'order_info'=>$order_info], function ($m) {
+        $partner = $this->client->get('v2/partners/' . $this->order->partner->sub_domain);
+        $order_info = json_decode($this->orderService->getOrderInfo($this->order->partner_id, $this->order->id),true);
+        $order_info = $order_info['items'];
+        Mail::send('emails.pos-order-bill', ['order' => $this->order, 'partner' => $partner, 'order_info' => $order_info], function ($m) {
             $m->to($this->order->customer->email)->subject('Order Bills');
         });
     }

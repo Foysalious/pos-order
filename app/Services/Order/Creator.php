@@ -9,6 +9,7 @@ use App\Interfaces\PartnerRepositoryInterface;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Partner;
+use App\Services\APIServerClient\ApiServerClient;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\ClientServer\SmanagerUser\SmanagerUserServerClient;
 use App\Services\Delivery\Methods;
@@ -36,7 +37,7 @@ class Creator
     use ModificationFields;
 
     private $createValidator;
-    private $partner;
+    private $partnerId;
     /**  @var array */
     private $data;
     private $status;
@@ -77,6 +78,7 @@ class Creator
     private ?string $totalWeight;
     private ?string $deliveryDistrict;
     private ?string $deliveryThana;
+    private $partner;
 
 
     public function __construct(
@@ -92,7 +94,8 @@ class Creator
         protected PriceCalculation $priceCalculation,
         protected EmiCalculation $emiCalculation,
         protected StockRefillerForCanceledOrder $stockRefill,
-        protected StockManageByChunk $stockManager
+        protected StockManageByChunk $stockManager,
+         protected ApiServerClient               $apiServerClient
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -104,11 +107,29 @@ class Creator
         $this->orderSkuCreator = $orderSkuCreator;
     }
 
-    public function setPartner($partner): Creator
+    public function setPartner($partnerId): Creator
     {
-        $partner = Partner::find($partner);
-        $this->partner = $partner;
+        $this->partnerId = $partnerId;
         return $this;
+    }
+
+    private function resolvePartner()
+    {
+        $partnerInfo = $this->getPartnerInfo();
+        $data = [
+            'id' => $this->partnerId,
+            'sub_domain' => $partnerInfo['sub_domain'],
+            'delivery_charge' => $partnerInfo['delivery_charge'],
+        ];
+       return $this->partnerRepositoryInterface->create($data);
+    }
+
+    /**
+     * @throws BaseClientServerError
+     */
+    private function getPartnerInfo()
+    {
+        return $this->apiServerClient->get('pos/v1/partners/'.$this->partnerId)['partner'];
     }
 
     /**
@@ -340,6 +361,10 @@ class Creator
     {
         try {
             DB::beginTransaction();
+            $partner = Partner::find($this->partnerId);
+            if(!$partner)
+                $partner = $this->resolvePartner();
+            $this->partner = $partner;
             $order_data = $this->makeOrderData();
             $order = $this->orderRepositoryInterface->create($order_data);
             $this->orderSkuCreator->setOrder($order)->setIsPaymentMethodEmi($this->paymentMethod == PaymentMethods::EMI)
@@ -367,7 +392,6 @@ class Creator
             if ($this->hasDueError($order->refresh())) {
                 throw new OrderException("Can not make due order without customer", 403);
             }
-
             if($this->deliveryMethod)
                 $this->calculateDeliveryChargeAndSave($order);
 
@@ -386,7 +410,7 @@ class Creator
         if (!isset($this->customerId)) return $this->setCustomer(null);
         $customer = $this->customerRepository->find($this->customerId);
         if (!$customer) {
-            $customer = $this->smanagerUserServerClient->get('/api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId);
+            $customer = $this->smanagerUserServerClient->get('/api/v1/partners/' . $this->partnerId . '/users/' . $this->customerId);
             if (!$customer) throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Exists.");
             $data = [
                 'id' => $customer['_id'],
@@ -398,15 +422,15 @@ class Creator
             ];
             $customer = $this->customerRepository->create($this->withCreateModificationField($data));
         }
-        if ($customer->partner_id != $this->partner->id) {
-            throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Belong To Partner #" . $this->partner->id);
+        if ($customer->partner_id != $this->partnerId) {
+            throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Belong To Partner #" . $this->partnerId);
         }
         return $this->setCustomer($customer);
     }
 
-    private function resolvePartnerWiseOrderId(Partner $partner)
+    private function resolvePartnerWiseOrderId($partnerId)
     {
-        $lastOrder = $partner->orders()->orderBy('id', 'desc')->first();
+        $lastOrder = Order::where('partner_id',$partnerId)->orderBy('id', 'desc')->first();
         $lastOrder_id = $lastOrder ? $lastOrder->partner_wise_order_id : 0;
         return $lastOrder_id + 1;
     }
@@ -428,8 +452,8 @@ class Creator
     private function makeOrderData(): array
     {
         $order_data = [];
-        $order_data['partner_id'] = $this->partner->id;
-        $order_data['partner_wise_order_id'] = $this->resolvePartnerWiseOrderId($this->partner);
+        $order_data['partner_id'] = $this->partnerId;
+        $order_data['partner_wise_order_id'] = $this->resolvePartnerWiseOrderId($this->partnerId);
         $order_data['customer_id'] = $this->customer->id ?? null;
         $order_data['delivery_name'] = $this->resolveDeliveryName();
         $order_data['delivery_mobile'] = $this->resolveDeliveryMobile();
@@ -494,20 +518,29 @@ class Creator
         if ($this->deliveryMethod == Methods::OWN_DELIVERY)
             return $this->partner->delivery_charge;
 
-        if ($this->deliveryDistrict && $this->deliveryThana && $this->totalWeight)
+        if ($this->deliveryDistrict && $this->deliveryThana)
         {
             $data = [
-                'weight' => $this->totalWeight,
+                'weight' => $this->calculateTotalWeight($order),
                 'delivery_district' => $this->deliveryDistrict,
                 'delivery_thana' => $this->deliveryThana,
-                'partner_id' => $this->partner->id,
+                'partner_id' => $this->partnerId,
                 'cod_amount' => $this->getDueAmount($order)
             ];
-            $delivery_charge = $this->apiServerClient->setBaseUrl()->post('v2/pos/delivery/delivery-charge', $data)['delivery_charge'];
+            $delivery_charge = $this->apiServerClient->post('v2/pos/delivery/delivery-charge', $data)['delivery_charge'];
             $order->delivery_charge = $delivery_charge;
             return $order->save();
         }
         return false;
+    }
+
+    private function calculateTotalWeight($order)
+    {
+        $totalWeight = 0;
+        ($order->orderSkus)->each(function($sku) use(&$totalWeight){
+            $totalWeight += (double) $sku->unit_weight* $sku->quantity;
+        });
+        return $totalWeight;
     }
 
 
