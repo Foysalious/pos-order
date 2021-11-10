@@ -538,7 +538,7 @@ class Creator
     {
         $totalWeight = 0;
         ($order->orderSkus)->each(function($sku) use(&$totalWeight){
-            $totalWeight += $sku->unit_weight* $sku->quantity;
+            $totalWeight += (double) $sku->unit_weight* $sku->quantity;
         });
         return $totalWeight;
     }

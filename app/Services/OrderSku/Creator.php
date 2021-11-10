@@ -112,7 +112,7 @@ class Creator
             $sku_data['details'] = isset($sku_details[$sku->id]) && $sku_details[$sku->id]['combination'] ? json_encode($sku_details[$sku->id]['combination']) : null;
             $sku_data['batch_detail'] = $this->makeBatchDetail($sku,$sku_details[$sku->id] ?? null);
             $sku_data['quantity'] = $sku->quantity;
-            $sku_data['unit_weight'] = $sku_details[$sku->id]['weight'];
+            $sku_data['unit_weight'] = isset($sku_details[$sku->id]) && $sku_details[$sku->id]['weight'] ? $sku_details[$sku->id]['weight'] : null ;
             $sku_data['unit_price'] = $sku->price ?? $sku_details[$sku->id]['sku_channel'][0]['price'];
             $sku_data['unit'] = $sku->unit ?? (isset($sku_details[$sku->id]) ? ($sku_details[$sku->id]['unit']['name_en'] ?? null) : null);
             $sku_data['warranty'] = $sku->warranty ?? (isset($sku_details[$sku->id]) && $sku_details[$sku->id]['warranty'] ?: 0);
