@@ -2,6 +2,7 @@
 
 use App\Exceptions\OrderException;
 use App\Http\Reports\InvoiceService;
+use App\Http\Requests\DeliveryStatusUpdateIpnRequest;
 use App\Http\Requests\OrderCreateRequest;
 use App\Http\Requests\OrderCustomerRequest;
 use App\Http\Requests\OrderFilterRequest;
@@ -406,12 +407,12 @@ class OrderController extends Controller
      *
      * @param int $partner_id
      * @param string $delivery_req_id
-     * @param Request $request
+     * @param DeliveryStatusUpdateIpnRequest $request
      * @return JsonResponse
      */
-    public function updateOrderStatusForIpn(int $partner_id, string $delivery_req_id, Request $request)
+    public function updateOrderStatusForIpn(int $partner_id, string $delivery_req_id, DeliveryStatusUpdateIpnRequest $request): JsonResponse
     {
-        return $this->orderService->updateOrderStatusForIpn($partner_id, $delivery_req_id, $request);
+        return $this->orderService->updateOrderStatusByIpn($partner_id, $delivery_req_id, $request);
     }
 
     public function logs(int $order_id)

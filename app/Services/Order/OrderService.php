@@ -3,6 +3,7 @@
 use App\Constants\ResponseMessages;
 use App\Events\OrderDeleted;
 use App\Http\Reports\InvoiceService;
+use App\Http\Requests\DeliveryStatusUpdateIpnRequest;
 use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
 use App\Http\Requests\OrderFilterRequest;
@@ -357,14 +358,11 @@ class OrderService extends BaseService
         return $this->success();
     }
 
-    public function updateOrderStatusForIpn(int $partner_id, string $delivery_req_id, Request $request): JsonResponse
+    public function updateOrderStatusByIpn(int $partner_id, string $delivery_req_id, DeliveryStatusUpdateIpnRequest $request): JsonResponse
     {
-        $request->validate([
-            'status' => Rule::in(Statuses::COMPLETED)
-        ]);
         $order = $this->orderRepository->where('delivery_request_id', $delivery_req_id)->where('partner_id', $partner_id)->first();
         if (!$order) return $this->error("No Order Found", 404);
-        $this->orderStatusChanger->setDeliveryRequestId($delivery_req_id)->setStatus(Statuses::COMPLETED)->setOrder($order)->updateStatusForIpn();
+        $this->orderStatusChanger->setDeliveryRequestId($delivery_req_id)->setDeliveryStatus($request->delivery_status)->setOrder($order)->updateStatusForIpn();
         return $this->success();
     }
 

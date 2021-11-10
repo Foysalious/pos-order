@@ -19,6 +19,7 @@ class StatusChanger
     /** @var Order */
     protected Order $order;
     protected string $delivery_request_id;
+    protected string $deliveryStatus;
 
 
     public function __construct(
@@ -38,6 +39,16 @@ class StatusChanger
     public function setStatus($status) : StatusChanger
     {
         $this->status = $status;
+        return $this;
+    }
+
+    /**
+     * @param string $deliveryStatus
+     * @return StatusChanger
+     */
+    public function setDeliveryStatus(string $deliveryStatus): StatusChanger
+    {
+        $this->deliveryStatus = $deliveryStatus;
         return $this;
     }
 
