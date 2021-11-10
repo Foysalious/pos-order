@@ -518,10 +518,10 @@ class Creator
         if ($this->deliveryMethod == Methods::OWN_DELIVERY)
             return $this->partner->delivery_charge;
 
-        if ($this->deliveryDistrict && $this->deliveryThana && $this->totalWeight)
+        if ($this->deliveryDistrict && $this->deliveryThana)
         {
             $data = [
-                'weight' => $this->totalWeight,
+                'weight' => $this->calculateTotalWeight($order),
                 'delivery_district' => $this->deliveryDistrict,
                 'delivery_thana' => $this->deliveryThana,
                 'partner_id' => $this->partnerId,
@@ -532,6 +532,15 @@ class Creator
             return $order->save();
         }
         return false;
+    }
+
+    private function calculateTotalWeight($order)
+    {
+        $totalWeight = 0;
+        ($order->orderSkus)->each(function($sku) use(&$totalWeight){
+            $totalWeight += $sku->unit_weight* $sku->quantity;
+        });
+        return $totalWeight;
     }
 
 
