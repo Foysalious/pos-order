@@ -410,9 +410,9 @@ class OrderController extends Controller
      * @param DeliveryStatusUpdateIpnRequest $request
      * @return JsonResponse
      */
-    public function updateOrderStatusForIpn(int $partner_id, string $delivery_req_id, DeliveryStatusUpdateIpnRequest $request): JsonResponse
+    public function updateOrderStatusForIpn(int $partner_id, DeliveryStatusUpdateIpnRequest $request): JsonResponse
     {
-        return $this->orderService->updateOrderStatusByIpn($partner_id, $delivery_req_id, $request);
+        return $this->orderService->updateOrderStatusByIpn($partner_id, $request);
     }
 
     public function logs(int $order_id)

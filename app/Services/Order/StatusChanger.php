@@ -4,6 +4,7 @@ use App\Events\OrderDeleted;
 use App\Events\OrderDueCleared;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Order;
+use App\Services\Order\Constants\DeliveryStatuses;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
@@ -97,7 +98,12 @@ class StatusChanger
 
     public function updateStatusForIpn()
     {
-        $this->order->update($this->withUpdateModificationField(['status' => Statuses::COMPLETED]));
+        if($this->deliveryStatus == DeliveryStatuses::PICKED_UP)
+            $data = ['status' => Statuses::SHIPPED];
+        elseif ($this->deliveryStatus == DeliveryStatuses::DELIVERED)
+            $data = ['status' => Statuses::COMPLETED];
+        if(isset($data))
+            $this->order->update($this->withUpdateModificationField($data));
     }
 
     private function refundIfEligible()

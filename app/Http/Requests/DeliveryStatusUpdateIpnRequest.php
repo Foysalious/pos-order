@@ -1,9 +1,9 @@
 <?php namespace App\Http\Requests;
 
-use Illuminate\Http\Request;
+use Illuminate\Foundation\Http\FormRequest;
 
 
-class DeliveryStatusUpdateIpnRequest extends Request
+class DeliveryStatusUpdateIpnRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,6 +23,7 @@ class DeliveryStatusUpdateIpnRequest extends Request
     public function rules()
     {
         return [
+            'delivery_req_id' => 'string|required',
             'delivery_status' => 'string|required'
         ];
     }

@@ -358,11 +358,11 @@ class OrderService extends BaseService
         return $this->success();
     }
 
-    public function updateOrderStatusByIpn(int $partner_id, string $delivery_req_id, DeliveryStatusUpdateIpnRequest $request): JsonResponse
+    public function updateOrderStatusByIpn(int $partner_id, DeliveryStatusUpdateIpnRequest $request): JsonResponse
     {
-        $order = $this->orderRepository->where('delivery_request_id', $delivery_req_id)->where('partner_id', $partner_id)->first();
+        $order = $this->orderRepository->where('delivery_request_id', $request->delivery_req_id)->where('partner_id', $partner_id)->first();
         if (!$order) return $this->error("No Order Found", 404);
-        $this->orderStatusChanger->setDeliveryRequestId($delivery_req_id)->setDeliveryStatus($request->delivery_status)->setOrder($order)->updateStatusForIpn();
+        $this->orderStatusChanger->setDeliveryRequestId($request->delivery_req_id)->setDeliveryStatus($request->delivery_status)->setOrder($order)->updateStatusForIpn();
         return $this->success();
     }
 
