@@ -35,6 +35,7 @@ Route::group(['middleware' => 'ip.whitelist'], function () {
             Route::delete('/{customer_id}', [CustomerController::class, 'destroy']);
         });
 
+        Route::get('partners/{partner_id}/sales', [ReportController::class, 'getSalesReport']);
         Route::get('partners/{partner_id}/orders/{order_id}/generate-invoice', [OrderController::class, 'getOrderinvoice']);
         Route::post('partners/{partner_id}/orders/{order}/send-email', [OrderController::class, 'sendEmail']);
         Route::get('partners/{partner}/trending-products', [OrderController::class, 'getTrendingProducts']);

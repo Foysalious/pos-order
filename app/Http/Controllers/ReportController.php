@@ -5,6 +5,7 @@ use App\Http\Requests\CustomerWiseReportRequest;
 use App\Http\Requests\ProductWiseReportRequest;
 use App\Services\Report\ReportService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ReportController
 {
@@ -62,5 +63,9 @@ class ReportController
     public function getCustomerWise(int $partner_id, CustomerWiseReportRequest $request ): JsonResponse
     {
         return $this->reportService->getCustomerReport($partner_id, $request);
+    }
+    public function getSalesReport(int $partner, CustomerWiseReportRequest $request)
+    {
+        return $this->reportService->getSalesReport($partner,$request);
     }
 }
