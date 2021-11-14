@@ -1,7 +1,8 @@
 <?php namespace App\Http\Controllers;
 
+use App\Exceptions\OrderException;
 use App\Http\Reports\InvoiceService;
-use App\Http\Requests\CustomerOrderRequest;
+use App\Http\Requests\DeliveryStatusUpdateIpnRequest;
 use App\Http\Requests\OrderCreateRequest;
 use App\Http\Requests\OrderCustomerRequest;
 use App\Http\Requests\OrderFilterRequest;
@@ -10,14 +11,16 @@ use App\Http\Requests\OrderUpdateRequest;
 use App\Services\Order\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Models\Order;
-use App\Services\Order\StatusChanger;
 use App\Traits\ResponseAPI;
 use Illuminate\Validation\ValidationException;
 
 
 class OrderController extends Controller
 {
+    /**
+     * @OA\Info(title="POS-ORDER PROJECTS API", version="1")
+     * It's required to generate swagger doc
+     */
     use ResponseAPI;
 
     protected $orderService;
@@ -42,12 +45,17 @@ class OrderController extends Controller
      *      tags={"ORDER API"},
      *      summary="Api to get all orders",
      *      description="Return all orders with searching and filtering parameters",
-     *      @OA\Parameter(name="payment_status",description="Payment Status",required=false,in="path", @OA\Schema(type="String")),
-     *      @OA\Parameter(name="order_status",description="Order Status",required=false,in="path", @OA\Schema(type="String")),
-     *      @OA\Parameter(name="customer_name",description="Customer Name",required=false,in="path", @OA\Schema(type="String")),
-     *      @OA\Parameter(name="order_id",description="Order ID",required=false,in="path", @OA\Schema(type="Integer")),
-     *      @OA\Parameter(name="sales_channel_id",description="Sales Channel ID",required=false,in="path", @OA\Schema(type="IntegerInteger")),
-     *      @OA\Parameter(name="type",description="Type",required=false,in="path", @OA\Schema(type="String", example={"new": "running", "pending": "Processing Shipped", "completed": "Completed Cancelled Declined"})),
+     *      @OA\Parameter(name="partner",description="partner ID",required=false,in="path", @OA\Schema(type="Integer")),
+     *      @OA\Parameter(name="payment_status",description="Payment Status query string either 'paid' or 'due'",required=false,in="query", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="order_status",description="Order Status query strings are (Pending | Processing | Declined | Shipped | Completed | Cancelled)",required=false,in="query", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="type",description="type query strings are (completed | new | running)",required=false,in="query", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="sales_channel_id",description="Sales Channel ID 1 or 2",required=false,in="query", @OA\Schema(type="Integer")),
+     *      @OA\Parameter(name="type",description="Type",required=false,in="query", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="q",description="search query customer_name or mobile or partner-wise order-id",required=false,in="query", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="limit",description="limit range",required=false,in="query", @OA\Schema(type="Integer")),
+     *      @OA\Parameter(name="offset",description="offset value",required=false,in="query", @OA\Schema(type="Integer")),
+     *      @OA\Parameter(name="sort_by",description="sort by variable either created_at or customer_name",required=false,in="query", @OA\Schema(type="String")),
+     *      @OA\Parameter(name="sort_by_order",description="order of the sort by 'asc' or 'desc'",required=false,in="query", @OA\Schema(type="String")),
      *      @OA\Response(
      *          response=200,
      *          description="Successful operation",
@@ -161,9 +169,9 @@ class OrderController extends Controller
      * @param $partner
      * @param OrderCreateRequest $request
      * @return JsonResponse
-     * @throws ValidationException
+     * @throws ValidationException|OrderException
      */
-    public function store($partner, OrderCreateRequest $request)
+    public function store($partner, OrderCreateRequest $request): JsonResponse
     {
         return $this->orderService->store($partner, $request);
     }
@@ -351,6 +359,7 @@ class OrderController extends Controller
     {
         return $this->orderService->getWebsotreOrderInvoice($order_id);
     }
+
     /**
      * * @OA\Get(
      *      path="/api/v1/orders/{order_id}/generate-invoice",
@@ -371,8 +380,129 @@ class OrderController extends Controller
      * @param int $order_id
      * @return JsonResponse
      */
-    public function getOrderinvoice(int $order_id)
+    public function getOrderinvoice(int $partner_id, int $order_id)
     {
-        return $this->orderService->getOrderInvoice($order_id);
+        return $this->orderService->getOrderInvoice($partner_id, $order_id);
+    }
+
+
+    /**
+     * @OA\Put(
+     *     path="/api/v1/partners/{partner}/delivery_req_id/{delivery_req_id}/update-status",
+     *     tags={"ORDER API"},
+     *     summary="Order status update by IPN",
+     *     description="Order update under a specific partner",
+     *     @OA\Parameter(name="partner", description="partner id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="delivery_req_id", description="order delivery request id", required=true, in="path", @OA\Schema(type="string")),
+     *     @OA\RequestBody(
+     *          @OA\MediaType(mediaType="application/json",
+     *              @OA\Schema(
+     *                  @OA\Property(property="status", type="string", example="Completed"),
+     *                  )
+     *         )
+     *      ),
+     *     @OA\Response(response="200", description="Successful"),
+     *     @OA\Response(response="404", description="No Order Found"),
+     * )
+     *
+     * @param int $partner_id
+     * @param string $delivery_req_id
+     * @param DeliveryStatusUpdateIpnRequest $request
+     * @return JsonResponse
+     */
+    public function updateOrderStatusForIpn(int $partner_id, DeliveryStatusUpdateIpnRequest $request): JsonResponse
+    {
+        return $this->orderService->updateOrderStatusByIpn($partner_id, $request);
+    }
+
+    public function logs(int $order_id)
+    {
+        return $this->orderService->logs($order_id);
+    }
+
+    /**
+     * @OA\Get(
+     *      path="/api/v1/partners/{partner}/trending-products",
+     *      operationId="getCustomerTrendingProduct",
+     *      tags={"Trending Product List"},
+     *      summary="Trending Product List",
+     *      description="Trending Product List",
+     *      @OA\Parameter(name="partner",description="partner Id",required=true,in="path", @OA\Schema(type="integer")),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Successful operation",
+     *          @OA\JsonContent(
+     *              type="object",
+     *             example={"message": "Successful","data":
+     *     {{"id": 1002041,
+     *      "category_id": 10048,
+     *      "category_name": "Master Category 2",
+     *      "sub_category_id": 10049,
+     *      "sub_category_name": "Others",
+     *      "collection_id": null,
+     *      "name": "Test Product Variation",
+     *      "description": "null",
+     *      "vat_percentage": 1,
+     *      "unit": {
+     *      "id": 2,
+     *      "name_bn": "স্কয়ার ফিট",
+     *      "name_en": "sft"
+     *      },
+     *     "stock": 20,
+     *     "rating": null,
+     *     "rating_count": null,
+     *     "app_thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/default.jpg",
+     *     "warranty": 1,
+     *     "warranty_unit": "month",
+     *     "image_gallery": {},
+     *     "variations": {}
+     *     }}}
+     *          )),
+     *      @OA\Response(
+     *          response=404,
+     *          description="Message: No product found ",
+     *      ),
+     *         @OA\Response(
+     *          response=500,
+     *          description="Message: Internal Server Errorl ",
+     *      )
+     *     )
+     */
+    public function getTrendingProducts($partner_id)
+    {
+        return $this->orderService->getTrendingProducts($partner_id);
+    }
+
+    public function generateLogInvoice(int $order, int $log): JsonResponse
+    {
+        return $this->orderService->generateLogInvoice($order, $log);
+    }
+
+    /**
+     * * @OA\Get(
+     *      path="/api/v1/filters",
+     *      operationId="filters",
+     *      tags={"ORDER API"},
+     *      summary="Get all filters",
+     *      description="Return filters",
+     *      @OA\Response(response=200, description="Successful",
+     *          @OA\JsonContent(
+     *          type="object",
+     *          example={"message":"Successful",  "invoice": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20210810_pos_order_invoice_2001022_report_1628597035.pdf"}
+     *          ),
+     *     ),
+     *      @OA\Response(response=404, description="message: Order Not Found")
+     *  )
+     *
+     * @return JsonResponse
+     */
+    public function getFilteringOptions(): JsonResponse
+    {
+        return $this->orderService->getAllFilteringOptions();
+    }
+
+    public function sendEmail($partner, $order)
+    {
+       return $this->orderService->sendEmail($partner,$order);
     }
 }

@@ -1,5 +1,6 @@
 <?php namespace App\Services\Webstore;
 
+use App\Constants\ResponseMessages;
 use App\Http\Resources\CustomerReviewResource;
 use App\Http\Resources\Webstore\ReviewResource;
 use App\Interfaces\OrderRepositoryInterface;
@@ -26,11 +27,11 @@ class ReviewService extends BaseService
     }
 
 
-    public function getProductIdsByRating()
+    public function getProductIdsByRating(): JsonResponse
     {
 
         $product_ids_by_ratings = $this->reviewRepositoryInterface->getProductIdsByRating($this->partnerId, $this->ratings);
-        return $this->success('Successful', ['product_ids_by_ratings' => $product_ids_by_ratings], 200);
+        return $this->success(ResponseMessages::SUCCESS, ['product_ids_by_ratings' => $product_ids_by_ratings]);
     }
 
     /**
@@ -57,7 +58,7 @@ class ReviewService extends BaseService
         if (count($reviews) == 0) return $this->error('এই প্রোডাক্ট এর জন্য কোন রিভিউ পাওয়া যায় নি', 404);
         $reviews = ReviewResource::collection($reviews);
         $review_statistics = $this->reviewStatistics($product_id);
-        return $this->success('Successful', ['reviews' => $reviews, 'rating_statistics' => $review_statistics], 200);
+        return $this->success(ResponseMessages::SUCCESS, ['reviews' => $reviews, 'rating_statistics' => $review_statistics]);
     }
 
     public function reviewStatistics($productId): array
@@ -85,7 +86,7 @@ class ReviewService extends BaseService
         $reviews = $this->reviewRepositoryInterface->getCustomerReviews($customer_id, $offset, $limit, $order);
         if (count($reviews) == 0) return $this->error('You have not placed any reviews yet', 404);
         $reviews = CustomerReviewResource::collection($reviews);
-        return $this->success('Successful', ['total_count' => $reviewCount, 'reviews' => $reviews,], 200);
+        return $this->success(ResponseMessages::SUCCESS, ['total_count' => $reviewCount, 'reviews' => $reviews]);
     }
 
 
@@ -101,6 +102,6 @@ class ReviewService extends BaseService
             ->setReviewImages($request->review_images)
             ->create();
 
-        return $this->success('Successful', [], 201);
+        return $this->success(ResponseMessages::SUCCESS);
     }
 }

@@ -51,12 +51,6 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         }
     }
 
-    private function getReviewIndexFromImageName($imageName): int
-    {
-        preg_match('#\[(.*?)\]#', $imageName, $match);
-        return (int)$match[1];
-    }
-
     private function insertReviewImages($reviewIndex, $imageFile, $reviewIndexFromSingleImage, $review_id)
     {
         $reviewImageUrl = $this->generateImageFrom64base($reviewIndex, $imageFile, $reviewIndexFromSingleImage) ?? '';
@@ -76,7 +70,6 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
     public function getReviewImages($reviewIndex, $reviewImageList, $review_id)
     {
         foreach ($reviewImageList as $imageName => $imageFile) {
-            $reviewIndexFromSingleImage = null;
             if (is_array($imageFile) && $imageFile[0]) {
                 $reviewIndexFromSingleImage = $imageName;
                 $this->getReviewImagesFromArray($imageFile, $reviewIndex, $reviewIndexFromSingleImage, $review_id);
@@ -88,11 +81,10 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
     {
         $reviewList = $data['review'];
         $reviewImageList = $data['review_images'] ?? [];
-
         for ($i = 0; $i < count($reviewList); $i++) {
             $singleReviewData = $this->makeSingleReviewData($data, $reviewList[$i]);
             $review = $this->create($singleReviewData);
-            if (count($reviewImageList) > 0) $this->getReviewImages($i, $reviewImageList, $review->id);
+            if (!empty($reviewImageList[0])) $this->getReviewImages($i, $reviewImageList, $review->id);
         }
     }
 
@@ -126,7 +118,7 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
 
     public function getProductIdsByRating($partnerId, $ratings)
     {
-        return $this->model->where('partner_id', $partnerId)->whereIn('rating', $ratings)->select('product_id')->pluck('product_id');
+        return $this->model->where('partner_id', $partnerId)->groupBy('rating')->havingRaw("AVG(rating) in ('" . implode("','", $ratings) . "')")->pluck('product_id');
     }
 
 }

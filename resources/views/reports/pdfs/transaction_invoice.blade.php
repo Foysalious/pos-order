@@ -369,15 +369,21 @@
     <tbody>
     <tr>
         <td>{{$payment_receiver['name']}}</td>
-        <td>{{$user['name']}}</td>
+        @if(isset($user['name']))
+            <td>{{$user['name']}}
+            </td> @endif
     </tr>
     <tr>
         <td>{{$payment_receiver['address']}}</td>
+        @if(isset($user['address']))
         <td>{{$user['address']}}</td>
+        @endif
     </tr>
     <tr>
         <td>{{$payment_receiver['mobile']}}</td>
+        @if(isset($user['address']))
         <td>{{$user['mobile']}}</td>
+        @endif
     </tr>
     </tbody>
 </table>
@@ -395,16 +401,16 @@
     <tbody>
     @foreach($pos_order['items'] as $key=>$skus)
         <tr>
-            <td>
-                {{$skus->name}}
-                @php
-                    $sku_details= json_decode($skus['details'],true);
-                    $sku_name=$sku_details['name'];
+            {{--            <td>--}}
+            {{--                {{$skus->name}}--}}
+            {{--                @php--}}
+            {{--                    $sku_details= json_decode($skus['details'],true);--}}
+            {{--                    $sku_name=$sku_details['name'];--}}
 
-                @endphp
-                <div class="item-sub-cotent">{{$sku_name}}</div>
+            {{--                @endphp--}}
+            {{--                <div class="item-sub-cotent">{{$sku_name}}</div>--}}
 
-            </td>
+            {{--            </td>--}}
             <td>{{$skus->quantity}}</td>
             <td>৳{{$skus->unit_price}}</td>
             <td>৳{{$skus->quantity*$skus->unit_price}}</td>

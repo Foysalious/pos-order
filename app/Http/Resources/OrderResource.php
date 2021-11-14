@@ -26,15 +26,12 @@ class OrderResource extends JsonResource
             'customer_id' => $this->customer_id,
             'status' => $this->status,
             'sales_channel_id' => $this->sales_channel_id,
-            'emi_month' => $this->emi_month,
-            'interest' => $this->interest,
-            'bank_transaction_charge' => $this->bank_transaction_charge,
             'delivery_name' => $this->delivery_name,
             'delivery_mobile' => $this->delivery_mobile,
             'delivery_address' => $this->delivery_address,
             'note' => $this->note,
             'voucher_id' => $this->voucher_id,
-            'payment_status' => $this->closed_and_paid_at ? PaymentStatuses::PAID : PaymentStatuses::DUE,
+            'payment_status' => $this->paid_at ? PaymentStatuses::PAID : PaymentStatuses::DUE,
             'order_update_message' => $this->isUpdated() ? trans('order.update.updated') : null,
             'original_price' => $price_calculator->getOriginalPrice(),
             'discounted_price_without_vat' => $price_calculator->getDiscountedPriceWithoutVat(),
@@ -45,7 +42,7 @@ class OrderResource extends JsonResource
             'discounted_price' => $price_calculator->getDiscountedPrice(),
             'paid' => $price_calculator->getPaid(),
             'due' => $price_calculator->getDue(),
-            'created_at' => convertTimezone($this->created_at)->format('Y-m-d G:i:s')
+            'created_at' => convertTimezone($this->created_at)?->format('Y-m-d H:i:s')
         ];
     }
 }

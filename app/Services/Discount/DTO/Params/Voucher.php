@@ -7,6 +7,7 @@ class Voucher extends SetParams
 {
     private float $totalAmount;
     private int $isPercentage;
+    private array $discountDetails;
 
     /**
      * @param mixed $totalAmount
@@ -28,6 +29,16 @@ class Voucher extends SetParams
         return $this;
     }
 
+    /**
+     * @param array $discountDetails
+     * @return Voucher
+     */
+    public function setDiscountDetails(array $discountDetails)
+    {
+        $this->discountDetails = $discountDetails;
+        return $this;
+    }
+
     public function getData() : array
     {
         return [
@@ -35,6 +46,7 @@ class Voucher extends SetParams
             'amount' => $this->getApplicableAmount(),
             'original_amount' => $this->totalAmount,
             'is_percentage' => $this->isPercentage,
+            'discount_details' => json_encode($this->discountDetails)
         ];
     }
 

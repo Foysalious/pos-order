@@ -1,7 +1,5 @@
 <?php namespace App\Http\Controllers;
 
-use App\Exceptions\CustomerNotFound;
-use App\Exceptions\ProductNotFoundException;
 use App\Http\Requests\CustomerOrderListRequest;
 use App\Http\Requests\CustomerRequest;
 use App\Services\Customer\CustomerCreateDto;
@@ -86,7 +84,7 @@ class CustomerController extends Controller
      * @return JsonResponse
      * @throws UnknownProperties
      * @OA\Post(
-     *      path="/api/v1/customers/{customer_id}",
+     *      path="/api/v1/partners/{partner_id}/customers/{customer_id}",
      *      operationId="updatingcustomer",
      *      tags={"Customer API"},
      *      summary="To update a Customer ",
@@ -122,6 +120,7 @@ class CustomerController extends Controller
             'email' => $request->email,
             'mobile' => $request->mobile,
             'pro_pic' => $request->pro_pic,
+            'is_supplier'=>$request->is_supplier
         ]);
         return $this->customerService->update($customer_id, $customer,$partner_id);
     }

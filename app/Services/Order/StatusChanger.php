@@ -3,56 +3,69 @@
 use App\Events\OrderDeleted;
 use App\Events\OrderDueCleared;
 use App\Interfaces\OrderRepositoryInterface;
-use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Models\Order;
+use App\Services\Order\Constants\DeliveryStatuses;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Transaction\Constants\TransactionTypes;
-use App\Services\Usage\UsageService;
-use App\Traits\ResponseAPI;
+use App\Traits\ModificationFields;
 use Illuminate\Support\Facades\App;
 
 class StatusChanger
 {
-    use ResponseAPI;
-    protected $status;
+    use ModificationFields;
+    protected string $status;
     /** @var Order */
-    protected $order;
-    protected $modifier;
+    protected Order $order;
+    protected string $delivery_request_id;
+    protected string $deliveryStatus;
 
 
     public function __construct(
-        protected OrderRepositoryInterface $orderRepositoryInterface,
-        protected PaymentCreator $paymentCreator,
-        protected UsageService $usageService,
-        protected OrderSkuRepositoryInterface $orderSkuRepository,
-        protected StockRefillerForCanceledOrder $stockRefillerForCanceledOrder
+        protected OrderRepositoryInterface      $orderRepository,
+        protected PaymentCreator                $paymentCreator,
+        protected StockRefillerForCanceledOrder $stockRefillForCanceledOrder,
+        protected PriceCalculation              $orderCalculator
     )
     {}
 
-    public function setOrder(Order $order)
+    public function setOrder(Order $order) : StatusChanger
     {
         $this->order = $order;
         return $this;
     }
 
-    public function setStatus($status)
+    public function setStatus($status) : StatusChanger
     {
         $this->status = $status;
         return $this;
     }
 
-    public function setModifier($modifier)
+    /**
+     * @param string $deliveryStatus
+     * @return StatusChanger
+     */
+    public function setDeliveryStatus(string $deliveryStatus): StatusChanger
     {
-        $this->modifier = $modifier;
+        $this->deliveryStatus = $deliveryStatus;
+        return $this;
+    }
+
+    /**
+     * @param string $delivery_request_id
+     * @return StatusChanger
+     */
+    public function setDeliveryRequestId(string $delivery_request_id) : StatusChanger
+    {
+        $this->delivery_request_id = $delivery_request_id;
         return $this;
     }
 
     public function changeStatus()
     {
-        $this->orderRepositoryInterface->update($this->order, ['status' => $this->status]);
+        $this->orderRepository->update($this->order, $this->withUpdateModificationField(['status' => $this->status]));
         /** @var PriceCalculation $order_calculator */
         $order_calculator = App::make(PriceCalculation::class);
         $order_calculator->setOrder($this->order);
@@ -65,15 +78,14 @@ class StatusChanger
                   $this->collectPayment($this->order, $order_calculator );
               }
           }
-        return $this->success('Successful', [], 200);
     }
 
 
     private function cancelOrder()
     {
-        $this->stockRefillerForCanceledOrder->setOrder($this->order)->refillStock();
+        $this->stockRefillForCanceledOrder->setOrder($this->order)->refillStock();
+        $this->refundIfEligible();
         event(new OrderDeleted($this->order));
-        $this->order->delete();
     }
 
     private function collectPayment(Order $order, PriceCalculation $order_calculator)
@@ -84,5 +96,29 @@ class StatusChanger
         event(new OrderDueCleared($order));
     }
 
+    public function updateStatusForIpn()
+    {
+        if($this->deliveryStatus == DeliveryStatuses::PICKED_UP)
+            $data = ['status' => Statuses::SHIPPED];
+        elseif ($this->deliveryStatus == DeliveryStatuses::DELIVERED)
+            $data = ['status' => Statuses::COMPLETED];
+        if(isset($data))
+            $this->order->update($this->withUpdateModificationField($data));
+    }
+
+    private function refundIfEligible()
+    {
+        $this->orderCalculator->setOrder($this->order);
+        $paid_amount = $this->orderCalculator->getPaid();
+        if( $paid_amount > 0) {
+            $this->paymentCreator->setOrderId($this->order->id);
+            $this->paymentCreator->setAmount($paid_amount);
+            $this->paymentCreator->setMethod(PaymentMethods::CASH_ON_DELIVERY);
+            $this->paymentCreator->setTransactionType(TransactionTypes::DEBIT);
+            $this->paymentCreator->create();
+            $this->order->paid_at = null;
+            $this->order->save();
+        }
+    }
 
 }

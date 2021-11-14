@@ -47,7 +47,7 @@ trait ModificationFields
      */
     private function addModificationFieldsToObject($model, $created_fields = true, $updated_fields = true)
     {
-        list($id, $name, $time) = $this->getData();
+        list($id,$name, $time) = $this->getData();
 
         if ($created_fields) {
             $model->created_by_name = $name;
@@ -104,7 +104,7 @@ trait ModificationFields
      */
     private function getData(): array
     {
-        $this->modifier = Session::get('modifier');
+        $this->modifier = request()->hasHeader('Modifier-Name') ? request()->Header('Modifier-Name') : '';
         $time = Carbon::now();
         $name = $this->modifier;
         return [$name, $time];

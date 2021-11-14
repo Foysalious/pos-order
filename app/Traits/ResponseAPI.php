@@ -1,5 +1,6 @@
 <?php namespace App\Traits;
 
+use App\Constants\ResponseMessages;
 use Illuminate\Http\JsonResponse;
 
 trait ResponseAPI
@@ -13,7 +14,7 @@ trait ResponseAPI
      * @param boolean $isSuccess
      * @return JsonResponse
      */
-    public function coreResponse($message, $statusCode, $isSuccess = true, $data = null)
+    private function coreResponse(string $message, int $statusCode, bool $isSuccess = true, $data = null): JsonResponse
     {
         if (!$message) return response()->json(['message' => 'Message is required'], 500);
         if ($data != null) $public_response = array_merge(['message' => $message], $data);
@@ -33,7 +34,7 @@ trait ResponseAPI
      * @param integer $statusCode
      * @return JsonResponse
      */
-    public function success(string $message = "Successful", array $data = [], int $statusCode = 200): JsonResponse
+    public function success(string $message = ResponseMessages::SUCCESS, array $data = [], int $statusCode = 200): JsonResponse
     {
         return $this->coreResponse($message, $statusCode, true, $data);
     }
@@ -45,8 +46,8 @@ trait ResponseAPI
      * @param integer $statusCode
      * @return JsonResponse
      */
-    public function error($message, $statusCode = 500)
+    public function error(string $message, int $statusCode = 500): JsonResponse
     {
-        return $this->coreResponse($message, $statusCode, false, null);
+        return $this->coreResponse($message, $statusCode, false);
     }
 }

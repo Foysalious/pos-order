@@ -26,6 +26,6 @@ class Review extends Model
 
     public function variation()
     {
-        return $this->orderSku->details ? json_decode($this->orderSku->details,true)["combination"] : null;
+        return $this->orderSku && $this->orderSku->details ?  json_decode($this->orderSku->details, true) : null;
     }
 }

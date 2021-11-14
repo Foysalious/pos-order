@@ -1,7 +1,10 @@
 <?php namespace App\Http\Resources;
 
+use App\Models\Order;
 use App\Repositories\PaymentLinkRepository;
 use App\Services\Order\Constants\PaymentStatuses;
+use App\Services\Order\Constants\SalesChannelIds;
+use App\Services\Order\Constants\Statuses;
 use App\Services\Order\PriceCalculation;
 use App\Services\PaymentLink\PaymentLinkTransformer;
 use App\Services\Transaction\Constants\TransactionTypes;
@@ -12,16 +15,20 @@ use Illuminate\Support\Facades\App;
 
 class OrderWithProductResource extends JsonResource
 {
-    private $order;
+    private Order $order;
     private array $orderWithProductResource = [];
+    private bool $addOrderUpdatableFlag;
 
     /**
      * OrderWithProductResource constructor.
      */
-    public function __construct($order)
+    public function __construct($order,$add_order_updatable_flag = false)
     {
         parent::__construct($order);
         $this->order = $order;
+        $this->addOrderUpdatableFlag = $add_order_updatable_flag;
+
+
     }
 
 
@@ -35,24 +42,23 @@ class OrderWithProductResource extends JsonResource
     {
         $this->orderWithProductResource = [
             'id' => $this->id,
-            'created_at' => convertTimezone($this->created_at),
+            'created_at' => convertTimezone($this->created_at)?->format('Y-m-d H:i:s'),
             'created_by_name' => $this->created_by_name,
             'previous_order_id' => $this->previous_order_id,
             'partner_wise_order_id' => $this->partner_wise_order_id,
             'status' => $this->status,
-            'payment_status' => $this->closed_and_paid_at ? PaymentStatuses::PAID : PaymentStatuses::DUE,
+            'payment_status' => $this->paid_at ? PaymentStatuses::PAID : PaymentStatuses::DUE,
             'sales_channel_id' => $this->sales_channel_id,
-            'delivery_name' => $this->delivery_name,
-            'delivery_mobile' => $this->delivery_mobile,
-            'delivery_address' => $this->delivery_address,
             'note' => $this->note,
             'invoice' => $this->invoice,
             'items' => OrderSkuResource::collection($this->orderSkus),
             'price' => $this->getOrderPriceRelatedInfo(),
             'customer' => $this->getOrderCustomer(),
             'payments' => $this->getPayments(),
+            'promo_code' => $this->getPromoCode(),
         ];
         $this->orderWithProductResource['payment_link'] = $this->getOrderDetailsWithPaymentLink();
+        if ($this->addOrderUpdatableFlag) $this->orderWithProductResource['is_updatable'] = $this->isOrderUpdatable();
         return $this->orderWithProductResource;
     }
 
@@ -67,6 +73,7 @@ class OrderWithProductResource extends JsonResource
         return [
             'original_price' => $price_calculator->getOriginalPrice(),
             'discounted_price_without_vat' => $price_calculator->getDiscountedPriceWithoutVat(),
+            'product_discount' => $price_calculator->getProductDiscount(),
             'promo_discount' => $price_calculator->getPromoDiscount(),
             'order_discount' => $price_calculator->getOrderDiscount(),
             'vat' => $price_calculator->getVat(),
@@ -83,7 +90,7 @@ class OrderWithProductResource extends JsonResource
     private function getOrderDetailsWithPaymentLink(): ?array
     {
         $payment_link = [];
-        if (isset($this->orderWithProductResource['price_info']['due_amount']) && $this->orderWithProductResource['price_info']['due_amount'] > 0) {
+        if (isset($this->orderWithProductResource['price']['due']) && $this->orderWithProductResource['price']['due'] > 0) {
             $payment_link_target = $this->order->getPaymentLinkTarget();
             /** @var PaymentLinkRepository $paymentLinkRepository */
             $paymentLinkRepository = App::make(PaymentLinkRepository::class);
@@ -95,10 +102,11 @@ class OrderWithProductResource extends JsonResource
                     'status' => $payment_link_transformer->getIsActive() ? 'active' : 'inactive',
                     'link' => $payment_link_transformer->getLink(),
                     'amount' => $payment_link_transformer->getAmount(),
-                    'created_at' => $payment_link_transformer->getCreatedAt()->format('d-m-Y h:s A')
+                    'created_at' => $payment_link_transformer->getCreatedAt()->format('Y-m-d H:i:s')
                 ];
             }
         }
+        if (empty($payment_link)) return null;
         return $payment_link;
     }
 
@@ -107,10 +115,13 @@ class OrderWithProductResource extends JsonResource
         /** @var Collection $payments */
         $payments = $this->payments->where('transaction_type', TransactionTypes::CREDIT)->sortByDesc('created_at')->values();
         return $payments->map(function ($each) {
+            $details = $each->method_details ? json_decode($each->method_details) : null;
             return [
                 'amount' => $each->amount,
                 'method' => $each->method,
-                'created_at' => convertTimezone($each->created_at),
+                'method_bn' => $details ? $details->payment_method_bn : null,
+                'method_icon' => $details ? $details->payment_method_icon : null,
+                'created_at' => convertTimezone($each->created_at)?->format('Y-m-d H:i:s'),
             ];
         });
     }
@@ -120,7 +131,32 @@ class OrderWithProductResource extends JsonResource
         if (empty($this->customer)) {
             return null;
         } else {
-            return $this->customer->only('id','name', 'mobile', 'pro_pic');
+            return [
+                'id' => $this->customer->id,
+                'name' => $this->delivery_name ?? $this->customer->name,
+                'mobile' => $this->delivery_mobile ?? $this->customer->mobile,
+                'pro_pic' => $this->customer->pro_pic,
+                'address' => $this->delivery_address,
+            ];
         }
+    }
+
+    private function getPromoCode()
+    {
+        $voucher = $this->voucherDiscounts->first();
+        if(!$voucher) return null;
+        $details = json_decode($voucher->discount_details);
+        return !is_null($details) ? $details->promo_code : null;
+    }
+
+    private function isOrderUpdatable(): bool
+    {
+        $delivery_integrated = !is_null($this->delivery_request_id);
+        if($this->sales_channel_id == SalesChannelIds::POS) {
+            if(($delivery_integrated && in_array($this->status, [Statuses::PENDING, Statuses::PROCESSING])) || !$delivery_integrated) return true;
+        } else {
+            if (in_array($this->status, [Statuses::PENDING, Statuses::PROCESSING])) return true;
+        }
+        return false;
     }
 }

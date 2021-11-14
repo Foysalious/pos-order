@@ -1,41 +1,70 @@
 <?php namespace App\Services\Order\Refund;
 
 use App\Models\OrderSku;
-use App\Services\Order\Constants\PaymentMethods;
+use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Refund\Objects\AddRefundTracker;
 use App\Services\Order\Refund\Objects\ProductChangeTracker;
 use App\Services\OrderSku\BatchManipulator;
-use App\Services\OrderSku\Creator;
-use App\Services\Transaction\Constants\TransactionTypes;
+use App\Services\Product\StockManager;
+use App\Traits\ModificationFields;
+use App\Traits\ResponseAPI;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class UpdateProductInOrder extends ProductOrder
 {
-    const QUANTITY_INCREASED = 'increment';
-    const QUANTITY_DECREASED = 'decrement';
-
+    use ModificationFields;
     private array $refunded_items_obj = [];
     private array $added_items_obj = [];
     private float $refunded_amount = 0;
+    private array $stockUpdateData = [];
+    private array $productChangeTrackerList = [];
 
-    public function update()
+
+    /**
+     * @return array
+     */
+    public function getStockUpdateData(): array
     {
-        $updated_products = $this->getUpdatedProducts();
-        $skus_details = $this->getUpdatedProductsSkuDetails($updated_products);
-        $this->checkStockAvailability($updated_products, $skus_details);
-        foreach ($updated_products as $product) {
+        return $this->stockUpdateData;
+    }
+
+    /**
+     * @param array $productChangeTrackerList
+     * @return UpdateProductInOrder
+     */
+    public function setProductChangeTrackerList(array $productChangeTrackerList)
+    {
+        $this->productChangeTrackerList = $productChangeTrackerList;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function update() : array
+    {
+        $skus_details = $this->getUpdatedProductsSkuDetails();
+        $this->checkStockAvailability($skus_details);
+        foreach ($this->productChangeTrackerList as $product) {
             /** @var $product ProductChangeTracker */
-            if($product->getSkuId() == null)
-                $this->handleNullSkuItemInOrder($product);
-            elseif ($product->isQuantityChanged() && $product->getSkuId() != null ) {
+            if($product->isVatPercentageChanged()) {
+                $this->updateVatPercentage($product);
+            }
+            if($product->isPriceChanged() && !$product->isQuantityChanged()){
+                $this->updatePrice($product);
+            }
+            if($product->isDiscountChanged()){
+                $this->updateDiscount($product);
+            }
+            if($product->isQuantityChanged()) {
                 $this->handleQuantityUpdateForOrderSku($product, $skus_details->where('id', $product->getSkuId())->first());
             }
         }
-        $this->updateStockForProductsChanges($updated_products,$skus_details);
-        $this->calculateAndRefundForUpdatedOrder();
+        $this->makeStockUpdateDataForProductsChanges($skus_details);
+        $this->calculateRefundedAmountOfReturnedProducts();
         return [
             'refunded_amount' => $this->refunded_amount,
             'added_products' =>  $this->added_items_obj,
@@ -43,107 +72,30 @@ class UpdateProductInOrder extends ProductOrder
         ];
     }
 
-    private function getUpdatedProducts()
+    /**
+     * @param ProductChangeTracker $product
+     * @param array|null $sku_detail
+     */
+    private function handleQuantityUpdateForOrderSku(ProductChangeTracker $product, array|null $sku_detail)
     {
-        $current_products = collect($this->order->items()->get(['id', 'quantity', 'unit_price', 'sku_id'])->toArray());
-        $request_products = collect(json_decode($this->skus, true));
-        $updatedProducts = [];
-        $current_products->each(function ($current_product) use ($request_products, &$updatedProducts) {
-            $updatedFlag = false;
-            /** @var ProductChangeTracker $product_obj */
-            $product_obj = App::make(ProductChangeTracker::class);
-            $product_obj->setOrderSkuId($current_product['id'])
-                ->setSkuId($current_product['sku_id'])
-                ->setOldUnitPrice($current_product['unit_price'])
-                ->setCurrentUnitPrice($current_product['unit_price']);
-
-            if ($request_products->contains('id', $current_product['id'])) {
-                $updating_product = $request_products->where('id', $current_product['id'])->first();
-
-                if ($updating_product['quantity'] != $current_product['quantity']) {
-                    $updatedFlag = true;
-                    $product_obj->setCurrentQuantity($updating_product['quantity']);
-                    $product_obj->setPreviousQuantity($current_product['quantity']);
-                }
-                if (isset($updating_product['price']) && ($updating_product['price'] != $current_product['unit_price'])) {
-                    $updatedFlag = true;
-                    $product_obj->setCurrentUnitPrice($updating_product['price']);
-                }
-            }
-            if ($updatedFlag) {
-                $updatedProducts [] = $product_obj;
-            }
-        });
-        return $updatedProducts;
-    }
-
-
-    private function updateOrderSkuPriceOnly(ProductChangeTracker $product)
-    {
-        $order_sku = $this->order->orderSkus()->where('id', $product->getOrderSkuId())->first();
-        if ($order_sku) {
-            $order_sku->unit_price = $product->getCurrentUnitPrice();
-            $order_sku->save();
+        if (!$product->isPriceChanged()) {
+            $this->updateOrderSkuQuantityForSamePrice($product, $sku_detail);
         }
     }
 
-    private function handleQuantityUpdateForOrderSku(ProductChangeTracker $product, array|null $sku_details)
+    private function getUpdatedProductsSkuDetails(): Collection
     {
-        $sku_channel = collect($sku_details['sku_channel'])->where('channel_id', $this->order->sales_channel_id)->first();
-        $product->setCurrentUnitPrice($sku_channel['price']);
-        //handle when price same and quantity does not matter
-        if ($product->isPriceChanged() == false || ($product->isPriceChanged() && $product->isQuantityDecreased())) { //price is same so we are changing the quantity in order_skus
-            $this->updateOrderSkuQuantityForSamePrice($product, $sku_details);
+        $sku_ids = collect();
+        /** @var ProductChangeTracker $each */
+        foreach ($this->productChangeTrackerList as $each) {
+            $sku_id = $each->getSkuId();
+            if ($sku_id) $sku_ids->add($sku_id);
         }
-        //handle when price changed and quantity increased
-        elseif ( $product->isPriceChanged() && $product->isQuantityIncreased()) {
-            $this->createOrderSkuForNewPriceQuantity($product);
-        }
-    }
-
-    private function getUpdatedProductsSkuDetails(array $updated_products): Collection|bool
-    {
-        $orderSkuIds = [];
-        array_walk($updated_products, function ($items) use (&$orderSkuIds){
-            $orderSkuIds [] =  $items->getOrderSkuId();
-        });
-        $updated_products_sku_ids =  $this->order->orderSkus()
-            ->whereIn('id', $orderSkuIds)
-            ->where('sku_id', '<>', null )
-            ->pluck('sku_id')
-            ->toArray();
-        if($updated_products_sku_ids){
-            return collect($this->getSkuDetails($updated_products_sku_ids, $this->order->sales_channel_id));
+        if($sku_ids->count() > 0){
+            return collect($this->getSkuDetails($sku_ids->toArray(), $this->order->sales_channel_id));
         } else {
-            return false;
+            return collect();
         }
-
-    }
-
-    private function getQuantityChangingDetails($current_product, array $updating_product): array
-    {
-        $data = [];
-        if ($updating_product['quantity'] > $current_product['quantity']) {
-            $data['type'] = self::QUANTITY_INCREASED;
-            $data['value'] = $updating_product['quantity'] - $current_product['quantity'];
-        }
-        else if ($current_product['quantity'] > $updating_product['quantity']) {
-            $data['type'] = self::QUANTITY_DECREASED;
-            $data['value'] = $current_product['quantity'] - $updating_product['quantity'];
-        }
-        return $data;
-    }
-
-    private function createOrderSkuForNewPriceQuantity(ProductChangeTracker $product)
-    {
-        $new_sku['id'] = $product->getSkuId();
-        $new_sku['quantity'] = $product->getQuantityChangedValue();
-        $new_sku['price'] = $product->getCurrentUnitPrice();
-        $new_sku = (object) $new_sku;
-        /** @var Creator $creator */
-        $creator = App::make(Creator::class);
-        $new_order_sku = $creator->setOrder($this->order)->setSkus([$new_sku])->create();
-        $this->added_items_obj[] = $this->makeObject($product,$new_order_sku[0],$new_order_sku[0]);
     }
 
     private function updateOrderSkuQuantityForSamePrice(ProductChangeTracker $product, ?array $sku_details=null)
@@ -153,7 +105,7 @@ class UpdateProductInOrder extends ProductOrder
         $order_sku->quantity = $product->getCurrentQuantity();
         $old_order_sku = clone $order_sku;
         if($sku_details){
-            $order_sku->details = $this->calculateUpdatedOrderSkuDetails($product,$sku_details['batches'],$order_sku);
+            $order_sku->batch_detail = $this->calculateUpdatedBatchDetail($product,$sku_details['batches'],$order_sku);
         }
         $order_sku->save();
         if ($product->isQuantityDecreased()) {
@@ -163,62 +115,11 @@ class UpdateProductInOrder extends ProductOrder
         }
     }
 
-    private function handleNullSkuItemInOrder(ProductChangeTracker $product)
+    private function checkStockAvailability(Collection $skus_details)
     {
-        //price not set or if set than if equal to previous price then update the quantity only
-        if ( $product->isPriceChanged() == false ) {
-            $this->updateOrderSkuQuantityForSamePrice($product);
-        }
-        //price set but no quantity change only update the price
-        elseif ( !$product->isQuantityChanged() && $product->isPriceChanged() ) {
-            $this->updateOrderSkuPriceOnly($product);
-        }
-        //price and quantity both changed
-        elseif ($product->isPriceChanged() && $product->isQuantityChanged()) {
-            //price changed and quantity increased then create new order sku
-            if ($product->isQuantityIncreased()) {
-                $this->createOrderSkuForNullSkuItem($product);
-            }
-            //price not same but quantity decreased then order sku update
-            elseif ($product->isQuantityDecreased()){
-                $this->updateOrderSkuPriceAndQuantity($product);
-            }
-        }
-    }
+        if ($skus_details->isEmpty() || $this->order->sales_channel_id == SalesChannelIds::POS) return; // null sku_id products have no $sku_details OR  POS is not required to check stock
 
-    private function createOrderSkuForNullSkuItem(ProductChangeTracker $product)
-    {
-        /** @var OrderSku $order_sku */
-        $order_sku = $this->order->orderSkus()->where('id', $product->getOrderSkuId())->first();
-        $order_sku->quantity = $product->getQuantityChangedValue();
-        $order_sku->unit_price = $product->getCurrentUnitPrice();
-        $new_sku = $order_sku->toArray();
-        $new_sku['details'] = json_encode(["id"=> null, "price" => $product->getCurrentUnitPrice(), "quantity" => $product->getQuantityChangedValue()]);
-        $new_order_sku = $this->orderSkuRepository->create($new_sku);
-        $this->added_items_obj [] = $this->makeObject($product, $order_sku, $new_order_sku);
-    }
-
-    private function updateOrderSkuPriceAndQuantity(ProductChangeTracker $product)
-    {
-        /** @var OrderSku $order_sku */
-        $order_sku = $this->order->orderSkus()->where('id', $product->getOrderSkuId())->first();
-        $old_order_sku = clone $order_sku;
-        $order_sku->quantity = $product->getCurrentQuantity();
-        $order_sku->unit_price = $product->getCurrentUnitPrice();
-        $order_sku->details = json_encode(["id"=> null, "price" => $product->getCurrentUnitPrice(), "quantity" => $product->getCurrentQuantity() ]);
-        $updated = $order_sku->save();
-        if ($updated && $product->isQuantityDecreased()) {
-            $this->refunded_items_obj [] = $this->makeObject($product, $old_order_sku, $order_sku);
-        } else {
-            $this->added_items_obj [] = $this->makeObject($product, $old_order_sku, $order_sku);
-        }
-    }
-
-    private function checkStockAvailability(array $updated_products, bool|Collection $skus_details)
-    {
-        if (!$skus_details || $this->order->sales_channel_id == SalesChannelIds::POS) return; // null sku_id products have no $sku_details OR  POS is not required to check stock
-
-        foreach ($updated_products as $product) {
+        foreach ($this->productChangeTrackerList as $product) {
             /** @var $product ProductChangeTracker */
             if ($product->getSkuId() == null) continue;
             $product_detail = $skus_details->where('id', $product->getSkuId())->first();
@@ -228,25 +129,35 @@ class UpdateProductInOrder extends ProductOrder
         }
     }
 
-    private function updateStockForProductsChanges(array $updated_products, bool|Collection $skus_details)
+    /**
+     * @param Collection $skus_details
+     */
+    private function makeStockUpdateDataForProductsChanges(Collection $skus_details)
     {
-
-        if (!$skus_details) return;
-        foreach ($updated_products as $product) {
+        if ($skus_details->isEmpty()) return;
+        foreach ($this->productChangeTrackerList as $product) {
             /** @var $product ProductChangeTracker */
             if ($product->getSkuId() == null) continue;
             $product_detail = $skus_details->where('id', $product->getSkuId())->first();
             $this->stockManager->setOrder($this->order)->setSku($product_detail);
             if ($product->isQuantityIncreased()) {
-                if ($this->stockManager->isStockMaintainable()) $this->stockManager->decrease($product->getQuantityIncreasedValue());
+                $this->stockUpdateData [] = [
+                    'sku_detail' => $product_detail,
+                    'quantity' => $product->getQuantityIncreasedValue(),
+                    'operation' => StockManager::STOCK_DECREMENT,
+                ];
             }
             if ($product->isQuantityDecreased()) {
-                $this->stockManager->increase($product->getQuantityDecreasedValue());
+                $this->stockUpdateData [] = [
+                    'sku_detail' => $product_detail,
+                    'quantity' => $product->getQuantityDecreasedValue(),
+                    'operation' => StockManager::STOCK_INCREMENT,
+                ];
             }
         }
     }
 
-    private function calculateAndRefundForUpdatedOrder()
+    private function calculateRefundedAmountOfReturnedProducts()
     {
         if(count($this->refunded_items_obj) == 0) return;
         $total_refund = 0;
@@ -256,20 +167,15 @@ class UpdateProductInOrder extends ProductOrder
                 $total_refund = $total_refund + ($item->getOldUnitPrice() * $item->getQuantityDecreasedValue());
             }
         }
-        $this->paymentCreator->setOrderId($this->order->id);
-        $this->paymentCreator->setAmount($total_refund);
-        $this->paymentCreator->setMethod(PaymentMethods::CASH_ON_DELIVERY);
-        $this->paymentCreator->setTransactionType(TransactionTypes::DEBIT);
-        $this->paymentCreator->create();
         $this->refunded_amount = $total_refund;
     }
 
-    private function calculateUpdatedOrderSkuDetails(ProductChangeTracker $product, array $sku_batch, OrderSku $order_sku): bool|string
+    private function calculateUpdatedBatchDetail(ProductChangeTracker $product, array $sku_batch, OrderSku $order_sku): bool|string
     {
         /** @var BatchManipulator $manipulator */
         $manipulator = App::make(BatchManipulator::class);
-        return $manipulator->setOrderSkuDetails($order_sku->details)
-            ->setQuantity($product->getCurrentQuantity())->setSkuBatch($sku_batch)->updateBatchDetail()->getUpdatedSkuDetails();
+        return $manipulator->setBatchDetail($order_sku->batch_detail)
+            ->setUpdatedQuantity($product->getCurrentQuantity())->setPreviousQuantity($product->getPreviousQuantity())->setSkuBatch($sku_batch)->updateBatchDetail()->getUpdatedBatchDetail();
     }
 
     /**
@@ -287,11 +193,61 @@ class UpdateProductInOrder extends ProductOrder
             ->setPreviousQuantity($product->getPreviousQuantity())
             ->setOldUnitPrice($product->getOldUnitPrice())
             ->setCurrentUnitPrice($product->getCurrentUnitPrice())
-            ->setOrderSkuId($product->getOrderSkuId())
-            ->setOldBatchDetail($old_order_sku->details)
-            ->setUpdatedBatchDetail($new_order_sku->details);
+            ->setOrderSkuId($new_order_sku->id)
+            ->setOldBatchDetail($old_order_sku->batch_detail)
+            ->setUpdatedBatchDetail($new_order_sku->batch_detail);
 
     }
 
+    private function updateVatPercentage(ProductChangeTracker $product)
+    {
+        $order_sku = $this->order->orderSkus->where('id', $product->getOrderSkuId())->first();
+        $order_sku->vat_percentage = $product->getCurrentVatPercentage();
+        $order_sku->update($this->modificationFields(false,true));
+    }
+
+    private function updatePrice(ProductChangeTracker $product)
+    {
+        $order_sku = $this->order->orderSkus->where('id', $product->getOrderSkuId())->first();
+        $order_sku->unit_price = $product->getCurrentUnitPrice();
+        $order_sku->update($this->modificationFields(false,true));
+    }
+
+    private function updateDiscount(ProductChangeTracker $product)
+    {
+        $order_sku_discount = $this->order->orderSkus->where('id',$product->getOrderSkuId())->first()->discount;
+        $discount_detail = $product->getCurrentDiscountDetails();
+        $original_amount = $discount_detail['discount'];
+        $is_percentage = $discount_detail['is_percentage'];
+        $amount = $this->calculateTotalDiscount($discount_detail,$product);
+        if($order_sku_discount){
+            $order_sku_discount->original_amount = $original_amount;
+            $order_sku_discount->is_percentage = $is_percentage;
+            $order_sku_discount->amount = $amount;
+            $order_sku_discount->update($this->modificationFields(false,true));
+        } else {
+            if($discount_detail['discount'] > 0) {
+                $this->discountRepository->create($this->withCreateModificationField([
+                    'order_id' => $this->order->id,
+                    'type' => DiscountTypes::SKU,
+                    'amount' => $amount,
+                    'original_amount' => $original_amount,
+                    'is_percentage' => $is_percentage,
+                    'type_id' => $product->getOrderSkuId(),
+                ]));
+            }
+        }
+    }
+
+    private function calculateTotalDiscount(array $discount_detail, ProductChangeTracker $productChangeTracker) : float
+    {
+        $price = $productChangeTracker->getCurrentUnitPrice();
+        $quantity = $productChangeTracker->getCurrentQuantity();
+        if($discount_detail['is_percentage']) {
+            return ($price*$quantity*$discount_detail['discount']) / 100;
+        } else {
+            return $quantity*$discount_detail['discount'];
+        }
+    }
 
 }

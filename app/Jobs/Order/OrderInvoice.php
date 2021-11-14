@@ -3,21 +3,18 @@
 namespace App\Jobs\Order;
 
 use App\Http\Reports\InvoiceService;
-use App\Jobs\Job;
 use App\Models\Order;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class OrderInvoice extends Job implements ShouldQueue
+class OrderInvoice implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private Order $order;
-    private InvoiceService $invoiceService;
 
     /**
      * Create a new job instance.
@@ -36,7 +33,8 @@ class OrderInvoice extends Job implements ShouldQueue
      */
     public function handle()
     {
-        app(InvoiceService::class)->setOrder($this->order->id)->generateInvoice();
-
+        /** @var InvoiceService $invoice_service */
+        $invoice_service = app(InvoiceService::class);
+        $invoice_service->setOrder($this->order->id)->generateInvoice();
     }
 }

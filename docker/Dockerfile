@@ -1,4 +1,4 @@
-FROM php:8.0.2-fpm
+FROM php:8.0.12-fpm
 
 # PHP_CPPFLAGS are used by the docker-php-ext-* scripts
 ENV PHP_CPPFLAGS="$PHP_CPPFLAGS -std=c++11"
@@ -30,9 +30,6 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 RUN docker-php-ext-configure intl
 RUN docker-php-ext-install -j$(nproc) pdo_mysql zip calendar soap gd intl pcntl
-
-# Install mongodb extension
-RUN pecl install mongodb && docker-php-ext-enable mongodb
 
 # Install php-ext-apfd
 RUN pecl install apfd && docker-php-ext-enable apfd

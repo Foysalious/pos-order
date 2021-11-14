@@ -7,7 +7,7 @@ class TakaFormatter
     {
         $amount = number_format($amount, 2, '.', '');
         if ($comma_separation) {
-            $amount = self::commaSeparate($amount, $decimal = 2, $comma_separation_format);
+            $amount = self::commaSeparate($amount, 2, $comma_separation_format);
         }
         return $amount;
     }

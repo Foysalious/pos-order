@@ -61,7 +61,7 @@ class DataMigrationController extends Controller
      *     @OA\Put (
      *     path="/api/v1/partners/{partner}",
      *     summary="Sync partners pos setting",
-     *     tags={"Partner Sync API"},
+     *     tags={"Partner Update API"},
      *     @OA\Parameter(name="partner", description="partner id", required=true, in="path", @OA\Schema(type="integer")),
      *     @OA\RequestBody(
      *          @OA\MediaType(mediaType="application/x-www-form-urlencoded",

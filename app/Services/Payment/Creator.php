@@ -5,15 +5,18 @@ use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\PriceCalculation;
+use App\Traits\ModificationFields;
 use Carbon\Carbon;
 
 class Creator
 {
+    use ModificationFields;
     private PaymentRepositoryInterface $paymentRepositoryInterface;
     private $orderId;
     private $amount;
     private $transactionType;
     private $method;
+    private $method_details;
     private $emiMonth;
     private $interest;
 
@@ -63,7 +66,17 @@ class Creator
      */
     public function setMethod($method)
     {
-        $this->method = $method;
+        $this->method = is_null($method) ? PaymentMethods::CASH_ON_DELIVERY : $method;
+        return $this;
+    }
+
+    /**
+     * @param mixed $method_details
+     * @return Creator
+     */
+    public function setMethodDetails($method_details)
+    {
+        $this->method_details = $method_details;
         return $this;
     }
 
@@ -93,9 +106,9 @@ class Creator
         $order = $this->orderRepository->find($this->orderId);
         /** @var PriceCalculation $priceCalculation */
         $priceCalculation = app(PriceCalculation::class);
-        $closed_and_paid_at = $payment->created_at ?: Carbon::now();
-        if (! $priceCalculation->setOrder($order)->getDue() && !$order->closed_and_paid_at)
-            $this->orderRepository->update($order, ['closed_and_paid_at' => $closed_and_paid_at]);
+        $paid_at = $payment->created_at ?: Carbon::now();
+        if (! $priceCalculation->setOrder($order)->getDue() && !$order->paid_at)
+            $this->orderRepository->update($order, ['paid_at' => $paid_at] + $this->modificationFields(false,true));
         return $payment;
     }
 
@@ -106,9 +119,10 @@ class Creator
         $data['amount'] = $this->amount;
         $data['transaction_type'] = $this->transactionType;
         $data['method'] = $this->method;
+        $data['method_details'] = $this->method_details;
         $data['emi_month'] = $this->emiMonth;
         $data['interest'] = $this->interest;
-        return $data;
+        return $data + $this->modificationFields(true,false);
     }
 
 }

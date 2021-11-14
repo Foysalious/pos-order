@@ -1,6 +1,7 @@
 <?php namespace App\Http\Reports;
 
 
+use App\Constants\ResponseMessages;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Customer;
 use App\Models\Order;
@@ -47,7 +48,7 @@ class InvoiceService extends BaseService
         $order = $this->order;
         /** @var PriceCalculation $price_calculator */
         $price_calculator = (App::make(PriceCalculation::class))->setOrder($order);
-        $partner = $this->client->setBaseUrl()->get('v2/partners/' . $order->partner->sub_domain);
+        $partner = $this->client->get('v2/partners/' . $order->partner->sub_domain);
         $info = [
             'order_id'=>$order->id,
             'amount' => $price_calculator->getOriginalPrice(),
@@ -83,7 +84,8 @@ class InvoiceService extends BaseService
         }
         $invoice_name = 'pos_order_invoice_' . $order->id;
         $link = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
-        $this->updater->setPartnerId($order->partner_id)->setOrderId($order->id)->setOrder($this->order)->setInvoiceLink($link)->update();
-        return $this->success('Successful', ['invoice' =>  $link], 200);
+        $order->invoice=$link;
+        $order->save();
+        return $this->success(ResponseMessages::SUCCESS, ['invoice' =>  $link]);
     }
 }

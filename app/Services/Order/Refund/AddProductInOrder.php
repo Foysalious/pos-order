@@ -1,66 +1,53 @@
 <?php namespace App\Services\Order\Refund;
 
-use App\Services\OrderSku\Creator;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\App;
+use App\Exceptions\OrderException;
+use App\Traits\ModificationFields;
+use Illuminate\Validation\ValidationException;
 
 class AddProductInOrder extends ProductOrder
 {
-    private $added_products = [];
+    use ModificationFields;
+    private array $added_products = [];
+    private array $stockUpdateData = [];
 
-    public function update()
-    {
-        return $this->addItemsInOrderSku();
-    }
-
-    private function addItemsInOrderSku()
+    /**
+     * @throws OrderException
+     * @throws ValidationException
+     */
+    public function update(): array
     {
         $all_items = $this->getAddedItems();
-        $null_sku_items = $all_items->where('id','=', null);
-        $sku_items = $all_items->where('id','<>', null)->toArray();
-        if($sku_items) {
-            /** @var Creator $creator */
-            $creator = App::make(Creator::class);
-            $new_order_skus = $creator->setOrder($this->order)->setSkus($sku_items)->create();
-            $this->makeAddedProducts($new_order_skus);
+        foreach ($all_items as $each_item) {
+            if(!is_null($each_item->id)) unset($each_item->price);
         }
-        if ($null_sku_items) {
-            $this->addNullSkuItems($null_sku_items);
-        }
+        // false for no check in backend for updating emi order by POS
+        $this->isPaymentMethodEmi = false;
+        $new_order_skus = $this->orderSkuCreator->setOrder($this->order)->setIsPaymentMethodEmi($this->isPaymentMethodEmi)
+            ->setSkus($all_items)->create();
+        $this->stockUpdateData = $this->orderSkuCreator->getStockDecreasingData();
+        $this->addOrderSkusInReturnData($new_order_skus);
 
         return $this->added_products;
     }
 
-    private function getAddedItems()
+    private function getAddedItems(): array
     {
-        $current_products = $this->order->items()->pluck('id');
-        $request_products = $this->skus->pluck('id');
-        $items = $request_products->diff($current_products);
-        return $this->skus->whereIn('id',$items);
+        return $this->skus->whereNull('order_sku_id')->toArray();
     }
 
-    private function addNullSkuItems(Collection $items)
-    {
-        foreach ($items as $item) {
-            $data['sku_id'] = null;
-            $data['quantity'] = $item->quantity;
-            $data['unit_price'] = $item->price;
-            $data['order_id'] = $this->order->id;
-            $this->orderSkuRepository->create($data);
-            $this->added_products [] = $data;
-        }
-    }
-
-    private function makeAddedProducts(array $new_order_skus)
+    private function addOrderSkusInReturnData(array $new_order_skus)
     {
         foreach ($new_order_skus as $each) {
-            $this->added_products [] = [
-                'id' => $each->id,
-                'sku_id' => $each->sku_id,
-                'quantity' => $each->quantity,
-                'unit_price' => $each->unit_price
-            ];
+            $this->added_products [] = $each;
         }
+    }
+
+    /**
+     * @return array
+     */
+    public function getStockUpdateData(): array
+    {
+        return $this->stockUpdateData;
     }
 
 }

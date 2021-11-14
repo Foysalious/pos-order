@@ -46,6 +46,11 @@ class Handler extends ExceptionHandler
         $this->renderable(function (Throwable $e) {
             return $this->handleException($e);
         });
+        $this->reportable(function (Throwable $e) {
+            if ($this->shouldReport($e) && app()->bound('sentry')) {
+                app('sentry')->captureException($e);
+            }
+        });
     }
 
     public function handleException(Throwable $e)
@@ -65,7 +70,7 @@ class Handler extends ExceptionHandler
         } elseif ($e instanceof ValidationException) {
             $errors = $e->validator->errors()->all();
             return $this->error(getValidationErrorMessage($errors), Response::HTTP_UNPROCESSABLE_ENTITY);
-        } elseif ($e instanceof BaseException) {
+        } elseif ($e instanceof BaseException || $e instanceof DoNotReportException) {
             return $this->error($e->getMessage(), $e->getCode());
         } else {
             $response = [];

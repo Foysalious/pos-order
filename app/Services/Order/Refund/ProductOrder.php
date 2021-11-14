@@ -1,16 +1,20 @@
 <?php namespace App\Services\Order\Refund;
 
+use App\Interfaces\OrderDiscountRepositoryInterface;
 use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Models\Order;
 use App\Repositories\OrderSkuRepository;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Updater;
+use App\Services\OrderSku\Creator;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Product\StockManager;
+use App\Traits\ModificationFields;
 use Illuminate\Support\Collection;
 
 abstract class ProductOrder
 {
+    use ModificationFields;
     /** @var Order */
     protected Order $order;
 
@@ -33,12 +37,19 @@ abstract class ProductOrder
     /** @var StockManager $stockManager */
     protected StockManager $stockManager;
 
+    protected bool $isPaymentMethodEmi;
+
 
     /**
      * RefundProduct constructor.
      * @param Updater $updater
      */
-    public function __construct(Updater $updater, OrderSkuRepositoryInterface $orderSkuRepository, InventoryServerClient $client, StockManager $stockManager, PaymentCreator $paymentCreator)
+    public function __construct(Updater $updater, OrderSkuRepositoryInterface $orderSkuRepository,
+                                InventoryServerClient $client, StockManager $stockManager,
+                                PaymentCreator $paymentCreator,
+                                protected Creator $orderSkuCreator,
+                                protected OrderDiscountRepositoryInterface $discountRepository
+    )
     {
         $this->updater = $updater;
         $this->orderSkuRepository = $orderSkuRepository;
@@ -54,6 +65,7 @@ abstract class ProductOrder
     public function setOrder(Order $order)
     {
         $this->order = $order;
+        $this->isPaymentMethodEmi = !is_null($this->order->emi_month);
         return $this;
     }
 
@@ -76,8 +88,16 @@ abstract class ProductOrder
     protected function getSkuDetails($sku_ids, $sales_channel_id)
     {
         $url = 'api/v1/partners/' . $this->order->partner_id . '/skus?skus=' . json_encode($sku_ids) . '&channel_id='.$sales_channel_id;
-        $response = $this->client->setBaseUrl()->get($url);
+        $response = $this->client->get($url);
         return $response['skus'];
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPaymentMethodEmi() : bool
+    {
+        return $this->isPaymentMethodEmi;
     }
 
     public abstract function update();

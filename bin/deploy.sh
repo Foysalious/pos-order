@@ -24,6 +24,8 @@ pull_from_docker_registry() {
 run_on_local() {
     . ./bin/parse_env.sh
     ./bin/dcup.sh local -d
+    ./bin/composer.sh install
+    ./bin/composer.sh update
 }
 
 # USE ON DEVELOPMENT
@@ -36,7 +38,8 @@ run_on_development() {
     . ./bin/parse_env.sh
     ./bin/dcup.sh dev -d
 
-    ./bin/composer.sh install --no-interaction --ignore-platform-reqs
+    ./bin/composer.sh install --no-interaction
+    ./bin/composer.sh update
     ./bin/config_clear.sh
 }
 

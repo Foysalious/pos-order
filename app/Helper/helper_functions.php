@@ -10,7 +10,8 @@ $helper_files = [
     "app/Helper/FileManager/review.php",
     "app/Helper/Formatters/functions.php",
     "app/Helper/Pagination/function.php",
-    "app/Helper/Miscellaneous/functions.php"
+    "app/Helper/Miscellaneous/functions.php",
+    "app/Helper/Time/functions.php"
 ];
 
 foreach ($helper_files as $file) {

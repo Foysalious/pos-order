@@ -1,46 +1,53 @@
 <?php namespace App\Services\Order;
 
 use App\Events\OrderUpdated;
+use App\Exceptions\OrderException;
+use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderDiscountRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
+use App\Models\Order;
+use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Discount\Handler;
+use App\Services\EMI\Calculations as EmiCalculation;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
-use App\Services\Order\Objects\OrderDetailsObject;
 use App\Services\Order\Refund\AddProductInOrder;
 use App\Services\Order\Refund\DeleteProductFromOrder;
 use App\Services\Order\Refund\OrderUpdateFactory;
 use App\Services\Order\Refund\UpdateProductInOrder;
 use App\Services\Payment\Creator as PaymentCreator;
+use App\Services\Product\StockManageByChunk;
+use App\Services\Product\StockManager;
 use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ModificationFields;
 use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class Updater
 {
     use ModificationFields;
 
-    protected $partner_id, $order_id, $customer_id, $status, $sales_channel_id, $emi_month, $interest, $delivery_charge, $header;
+    protected $partner_id, $order_id, $customer_id, $status, $sales_channel_id, $emi_month, $interest, $delivery_charge;
     protected $bank_transaction_charge, $delivery_name, $delivery_mobile, $delivery_address, $note, $voucher_id, $discount;
-    protected $skus, $order, $existingOrder;
+    protected $skus, $existingOrder;
+    protected Order $order;
     protected $orderLogCreator;
     protected $orderRepositoryInterface, $orderSkusRepositoryInterface, $orderPaymentRepository;
     protected $orderDiscountRepository;
     protected $orderPaymentCreator;
     protected $paymentMethod;
     protected $paidAmount;
-    protected $paymentLinkAmount;
-    protected $orderProductChangeData;
+    protected array $orderProductChangeData;
     protected string $orderLogType = OrderLogTypes::OTHERS;
     protected ?string $delivery_vendor_name;
     protected ?string $delivery_request_id;
     protected ?string $delivery_thana;
     protected ?string $delivery_district;
+    private array $stockUpdateEntry = [];
 
     public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
                                 OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
@@ -48,7 +55,10 @@ class Updater
                                 OrderPaymentRepositoryInterface $orderPaymentRepository,
                                 protected Handler $discountHandler,
                                 protected PaymentCreator $paymentCreator,
-                                private OrderDetailsObject $orderDetailsObject
+                                protected CustomerRepositoryInterface $customerRepository,
+                                protected PriceCalculation $orderCalculator,
+                                protected EmiCalculation $emiCalculation,
+                                protected StockManageByChunk $stockManager
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -58,16 +68,6 @@ class Updater
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->orderDiscountRepository = $orderDiscountRepository;
-    }
-
-    /**
-     * @param mixed $paymentLinkAmount
-     * @return Updater
-     */
-    public function setPaymentLinkAmount($paymentLinkAmount): Updater
-    {
-        $this->paymentLinkAmount = $paymentLinkAmount;
-        return $this;
     }
 
     /**
@@ -87,16 +87,6 @@ class Updater
     public function setPaidAmount($paidAmount)
     {
         $this->paidAmount = $paidAmount;
-        return $this;
-    }
-
-    /**
-     * @param mixed $header
-     * @return Creator
-     */
-    public function setHeader($header): Updater
-    {
-        $this->header = $header;
         return $this;
     }
 
@@ -336,21 +326,24 @@ class Updater
             DB::beginTransaction();
             $order = $this->setExistingOrder();
             $this->calculateOrderChangesAndUpdateSkus();
-            if (isset($this->customer_id)) $this->updateCustomer();
+            if (isset($this->customer_id)) {
+                $this->updateCustomer();
+                $this->setDeliveryNameAndMobile();
+            }
             $this->orderRepositoryInterface->update($this->order, $this->makeData());
             if (isset($this->voucher_id)) $this->updateVoucherDiscount();
             $this->updateOrderPayments();
             if (isset($this->discount)) $this->updateDiscount();
+            $this->refundIfEligible();
             $this->createLog($order);
+            if ($this->paymentMethod == PaymentMethods::EMI) {
+                $this->validateEmiAndCalculateChargesForOrder($order->refresh());
+            }
+
+            if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();
-            throw $e;
-        }
-        try {
-            if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order, $this->orderProductChangeData));
-        } catch (Exception $e) {
-            Log::error($e);
             throw $e;
         }
     }
@@ -414,17 +407,19 @@ class Updater
 
     private function setNewOrder()
     {
-        $order = $this->orderRepositoryInterface->find($this->order->id);
-        $this->orderDetailsObject->setOrderDetails($order)->build();
-        dd('here');
-        $this->orderLogCreator->setChangedOrderData()->setType($this->getTypeOfChangeLog());
+        $this->orderLogCreator->setChangedOrderData($this->orderRepositoryInterface->find($this->order->id))->setType($this->getTypeOfChangeLog());
     }
 
+    /**
+     * @throws OrderException
+     * @throws ValidationException
+     */
     private function calculateOrderChangesAndUpdateSkus()
     {
         if ($this->skus === null) {
             return;
         }
+        $this->validateOrderSkus();
         /** @var OrderComparator $comparator */
         $comparator = App::make(OrderComparator::class);
         $comparator->setOrder($this->order)->setOrderNewSkus($this->skus)->compare();
@@ -432,23 +427,26 @@ class Updater
         if ($comparator->isProductDeleted()) {
             /** @var DeleteProductFromOrder $updater */
             $updater = OrderUpdateFactory::getProductDeletionUpdater($this->order, $this->skus);
-            $updated_flag = $updater->update();
-            $this->orderProductChangeData['deleted'] = $updated_flag;
+            $return_data = $updater->update();
+            $this->orderProductChangeData['deleted'] = $return_data;
+            $this->stockUpdateEntry = array_merge($this->stockUpdateEntry, $updater->getStockUpdateData());
         }
         if ($comparator->isProductAdded()) {
             /** @var AddProductInOrder $updater */
             $updater = OrderUpdateFactory::getProductAddingUpdater($this->order, $this->skus);
-            $updated_flag = $updater->update();
-            $this->orderProductChangeData['new'] = $updated_flag;
+            $return_data = $updater->update();
+            $this->orderProductChangeData['new'] = $return_data;
+            $this->stockUpdateEntry = array_merge($this->stockUpdateEntry, $updater->getStockUpdateData());
         }
         if ($comparator->isProductUpdated()) {
             /** @var UpdateProductInOrder $updater */
             $updater = OrderUpdateFactory::getOrderProductUpdater($this->order, $this->skus);
-            $updated_flag = $updater->update();
-            $this->orderProductChangeData['refund_exchanged'] = $updated_flag;
+            $return_data = $updater->setProductChangeTrackerList($comparator->getProductChangeTrackerList())->update();
+            $this->orderProductChangeData['refund_exchanged'] = $return_data;
+            $this->stockUpdateEntry = array_merge($this->stockUpdateEntry, $updater->getStockUpdateData());
         }
 
-        if (isset($updated_flag)) {
+        if (isset($return_data)) {
             $this->orderProductChangeData['paid_amount'] = is_null($this->paidAmount) ? 0 : $this->paidAmount ;
             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
         }
@@ -457,19 +455,13 @@ class Updater
 
     private function updateOrderPayments()
     {
-        if (isset($this->paymentMethod) && $this->paymentMethod == PaymentMethods::CASH_ON_DELIVERY && isset($this->paidAmount)) {
+        if (isset($this->paymentMethod) && $this->paymentMethod == PaymentMethods::CASH_ON_DELIVERY && $this->paidAmount > 0) {
             $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod(PaymentMethods::CASH_ON_DELIVERY)
                 ->setTransactionType(TransactionTypes::CREDIT)->create();
             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
-        } elseif (isset($this->paymentMethod) && $this->paymentMethod == PaymentMethods::PAYMENT_LINK && isset($this->paymentLinkAmount)) {
-            $order_payment_link = $this->orderPaymentRepository->where('order_id', $this->order->id)->where('method', PaymentMethods::PAYMENT_LINK)->first();
-            if ($order_payment_link) {
-                $order_payment_link->amount = $this->paymentLinkAmount;
-                $order_payment_link->save();
-            } else {
-                $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paymentLinkAmount)->setMethod(PaymentMethods::PAYMENT_LINK)
+        } elseif ($this->paidAmount > 0 && $this->paymentMethod == PaymentMethods::PAYMENT_LINK) {
+                $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod(PaymentMethods::PAYMENT_LINK)
                     ->setTransactionType(TransactionTypes::CREDIT)->create();
-            }
             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
         }
     }
@@ -480,7 +472,7 @@ class Updater
         $discountData = json_decode($this->discount);
         $originalAmount = $discountData->original_amount;
         $hasDiscount = $this->validateDiscountData($originalAmount);
-        if ($hasDiscount) $this->orderDiscountRepository->where('order_id', $this->order_id)->update($this->makeOrderDiscountData($discountData));
+        if ($hasDiscount) $this->orderDiscountRepository->where('order_id', $this->order_id)->update($this->withUpdateModificationField($this->makeOrderDiscountData($discountData)));
         $this->setOrderLogType(OrderLogTypes::PRODUCTS_AND_PRICES);
     }
 
@@ -499,7 +491,7 @@ class Updater
         $data['cap'] = $discountData->cap;
         $data['discount_details'] = $discountData->discount_details;
         $data['discount_id'] = $discountData->discount_id;
-        $data['item_id'] = $discountData->item_id;
+        $data['type_id'] = $discountData->item_id;
         if ($discountData->is_percentage) {
             /** @var PriceCalculation $orderPriceCalculation */
             $orderPriceCalculation = app(PriceCalculation::class);
@@ -518,12 +510,82 @@ class Updater
             return $this->orderDiscountRepository->where('order_id', $this->order_id)->where('type', 'voucher')->delete();
         } else {
             $this->orderDiscountRepository->where('order_id', $this->order_id)->where('type', 'voucher')->delete();
-            return $this->discountHandler->setVoucherId($this->voucher_id)->setHeader($this->header)->voucherDiscountCalculate($this->order);
+            return $this->discountHandler->setVoucherId($this->voucher_id)->voucherDiscountCalculate($this->order);
         }
     }
 
     private function updateCustomer()
     {
-        return $this->orderRepositoryInterface->where('id', $this->order->id)->update(['customer_id' => $this->customer_id]);
+        return $this->orderRepositoryInterface->where('id', $this->order->id)->update($this->withUpdateModificationField(['customer_id' => $this->customer_id]));
+    }
+
+    private function setDeliveryNameAndMobile()
+    {
+        $customer = $this->customerRepository->where('id',$this->customer_id)->first();
+        $this->delivery_name = $customer->name;
+        $this->delivery_mobile = $customer->mobile;
+    }
+
+    private function refundIfEligible()
+    {
+        $this->orderCalculator->setOrder($this->order->refresh());
+        $total_paid = $this->orderCalculator->getPaid();
+        $total_amount = $this->orderCalculator->getDiscountedPrice();
+        $refunded = false;
+        if( $total_paid > $total_amount) {
+            $refund_amount = $total_paid - $total_amount;
+            $this->paymentCreator->setOrderId($this->order->id);
+            $this->paymentCreator->setAmount($refund_amount);
+            $this->paymentCreator->setMethod(PaymentMethods::CASH_ON_DELIVERY);
+            $this->paymentCreator->setTransactionType(TransactionTypes::DEBIT);
+            $this->paymentCreator->create();
+            $refunded = true;
+        }
+        if(($refunded == false && $this->orderCalculator->getDue() > 0)) {
+            $this->order->paid_at = null;
+            $this->order->update($this->modificationFields(false,true));
+        }
+    }
+
+    /**
+     * @throws OrderException|BaseClientServerError
+     */
+    private function validateEmiAndCalculateChargesForOrder(Order $order)
+    {
+        $amount = $this->orderCalculator->setOrder($order)->getDue();
+        $min_emi_amount = config('emi.minimum_emi_amount');
+        if($amount < $min_emi_amount) {
+            throw new OrderException("Emi is not available for order amount less than " .$min_emi_amount, 400);
+        }
+        $data = $this->emiCalculation->setEmiMonth((int)$order->emi_month)->setAmount($amount)->getEmiCharges();
+        $emi_data['interest'] = !is_null($this->interest) ? $this->interest :  $data['total_interest'];
+        $emi_data['bank_transaction_charge'] = !is_null($this->bank_transaction_charge) ? $this->bank_transaction_charge : $data['bank_transaction_fee'];
+        $order->update($this->withUpdateModificationField($emi_data));
+    }
+
+    public function updateStock()
+    {
+        if(count($this->stockUpdateEntry) > 0) {
+            foreach ($this->stockUpdateEntry as $each_data) {
+                if($each_data['operation'] == StockManager::STOCK_INCREMENT)
+                    $this->stockManager->setSku($each_data['sku_detail'])->increaseAndInsertInChunk($each_data['quantity']);
+                if($each_data['operation'] == StockManager::STOCK_DECREMENT)
+                    $this->stockManager->setSku($each_data['sku_detail'])->decreaseAndInsertInChunk($each_data['quantity']);
+            }
+            $this->stockManager->updateStock();
+        }
+    }
+
+    /**
+     * @throws OrderException
+     */
+    private function validateOrderSkus()
+    {
+        $skus = collect(json_decode($this->skus,true));
+        $requested_order_sku_ids = $skus->whereNotNull('order_sku_id')->pluck('order_sku_id');
+        $current_order_sku_ids = $this->order->orderSkus->pluck('id');
+        if ($requested_order_sku_ids->diff($current_order_sku_ids)->count() > 0) {
+            throw new OrderException('Invalid order sku item given', 400);
+        }
     }
 }

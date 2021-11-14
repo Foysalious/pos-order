@@ -1,8 +1,10 @@
 <?php namespace App\Services\Order;
 
+use App\Exceptions\OrderException;
 use App\Models\Order;
-use Illuminate\Http\Request;
+use App\Services\Order\Refund\Objects\ProductChangeTracker;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
 
 class OrderComparator
 {
@@ -12,7 +14,7 @@ class OrderComparator
 
     private array $addedProducts = [];
     private array $deletedProducts = [];
-    private array $updatedProducts = [];
+    private array $productChangeTrackerList = [];
 
     public Order $order;
     public $skus;
@@ -28,7 +30,7 @@ class OrderComparator
     }
 
     /**
-     * @param Request $newOrder
+     * @param $skus
      * @return OrderComparator
      */
     public function setOrderNewSkus($skus)
@@ -39,19 +41,15 @@ class OrderComparator
 
     public function compare()
     {
-        $this->checkForProductAdditionAndDeletion();
-        $this->checkUpdatesInProduct();
+        $this->checkForNewAndDeletedOrderItems();
+        $this->checkForUpdatesInExistingOrderItems();
         return $this;
-//        dump('added',$this->productAddedFlag, $this->addedProducts);
-//        dump('deleted',$this->productDeletedFlag, $this->deletedProducts);
-//        dump('updated',$this->productUpdatedFlag, $this->updatedProducts);
-//        die;
     }
 
-    private function checkForProductAdditionAndDeletion()
+    private function checkForNewAndDeletedOrderItems()
     {
         $current_products = $this->order->items()->pluck('id');
-        $request_products = collect(json_decode($this->skus, true))->pluck('id');
+        $request_products = collect(json_decode($this->skus, true))->pluck('order_sku_id');
 
         if ($current_products->diff($request_products)->isEmpty() && $request_products->diff($current_products)->isEmpty()) {
             $this->productAddedFlag = FALSE;
@@ -86,22 +84,32 @@ class OrderComparator
         }
     }
 
-    private function checkUpdatesInProduct() {
-        $current_products = collect($this->order->items()->get(['id','quantity','unit_price'])->toArray());
+    private function checkForUpdatesInExistingOrderItems() {
+        $current_products = $this->order->orderSkus;
         $request_products = collect(json_decode($this->skus, true));
-        $current_products->each(function ($current_product) use ($request_products){
-            if ($request_products->contains('id',$current_product['id'])) {
-                $updating_product = $request_products->where('id', $current_product['id'])->first();
+        $current_products->each(/**
+         * @throws OrderException
+         */ function ($current_product) use ($request_products){
+            if ($request_products->contains('order_sku_id',$current_product->id)) {
+                $updating_product = $request_products->where('order_sku_id', $current_product->id)->first();
+                /** @var ProductChangeTracker $product_obj */
+                $product_obj = App::make(ProductChangeTracker::class);
+                $product_obj->setOrderSkuId($current_product->id)
+                    ->setSkuId($current_product->sku_id)
+                    ->setOldUnitPrice($current_product->unit_price)
+                    ->setPreviousQuantity($current_product->quantity)
+                    ->setPreviuosVatPercentage($current_product->vat_percentage)
+                    ->setPreviousDiscountDetails($current_product->discount)
+                    ->setCurrentUnitPrice($updating_product['price'])
+                    ->setCurrentQuantity($updating_product['quantity'])
+                    ->setCurrentVatPercentage($updating_product['vat_percentage'])
+                    ->setCurrentDiscountDetails(['discount' => $updating_product['discount'], 'is_percentage' => $updating_product['is_discount_percentage']]);
 
-                if ($updating_product['quantity'] != $current_product['quantity']){
-                    $this->productUpdatedFlag = true;
-                    $this->updatedProducts [] = $updating_product['id'];
-                }
-                if (isset($updating_product['price']) && ($updating_product['price'] != $current_product['unit_price'])){
-                    $this->productUpdatedFlag = true;
-                    if (array_search($updating_product['id'],$this->updatedProducts) === FALSE ) {
-                        $this->updatedProducts [] = $updating_product['id'];
-                    }
+                $this->validateUpdate($product_obj);
+
+                if ($product_obj->isQuantityChanged() || $product_obj->isPriceChanged() || $product_obj->isVatPercentageChanged() || $product_obj->isDiscountChanged()) {
+                    $this->productUpdatedFlag = True;
+                    $this->productChangeTrackerList [] = $product_obj;
                 }
             }
         });
@@ -150,9 +158,29 @@ class OrderComparator
     /**
      * @return array
      */
-    public function getUpdatedProducts(): array
+    public function getProductChangeTrackerList(): array
     {
-        return array_values($this->updatedProducts);
+        return $this->productChangeTrackerList;
+    }
+
+    /**
+     * @throws OrderException
+     */
+    private function validateUpdate(ProductChangeTracker $product_obj)
+    {
+        if ($product_obj->isQuantityDecreased() && ($product_obj->isPriceChanged() || $product_obj->isVatPercentageChanged() || $product_obj->isDiscountChanged())) {
+            throw new OrderException('updating discount/vat-percentage/price is not allowed while quantity decreasing', 403);
+        }
+        if($product_obj->isDiscountChanged() || $product_obj->isPriceChanged()){
+            $current_discount = $product_obj->getCurrentDiscountDetails();
+            if($current_discount) {
+                if((!$current_discount['is_percentage'] && $current_discount['discount'] >= $product_obj->getCurrentUnitPrice())
+                    || ($current_discount['is_percentage'] && $current_discount['discount'] == 100))
+                {
+                    throw new OrderException('discount should not be equal or greater than product price per unit', 403);
+                }
+            }
+        }
     }
 
 }

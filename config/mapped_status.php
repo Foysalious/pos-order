@@ -1,7 +1,7 @@
 <?php
 
 use App\Services\Order\Constants\Statuses;
-use App\Services\Webstore\Order\Statuses as WebStoreStatuses;
+use App\Services\Webstore\Order\States as WebStoreStatuses;
 
 return [
     Statuses::PROCESSING => WebStoreStatuses::ITEMS_PROCESSED,
