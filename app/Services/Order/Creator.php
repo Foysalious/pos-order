@@ -380,15 +380,16 @@ class Creator
             if ($this->paymentMethod == PaymentMethods::EMI) {
                 $this->validateEmiAndCalculateChargesForOrder($order, new PriceCalculation());
             }
-            if ($this->paidAmount > 0) {
+            if (isset($this->paymentMethod) && ($this->paymentMethod == PaymentMethods::CASH_ON_DELIVERY || $this->paymentMethod == PaymentMethods::QR_CODE) && $this->paidAmount > 0) {
                 $this->priceCalculation->setOrder($order->refresh());
                 $net_bill = $this->priceCalculation->setOrder($order->refresh())->getDiscountedPrice();
                 if($this->paidAmount > $net_bill ) {
                     $this->paidAmount = $net_bill;
                 }
+                $cash_details = json_encode(['payment_method_en' => 'Cash', 'payment_method_bn' => ' নগদ গ্রহন', 'payment_method_icon' => config('s3.url') . 'pos/payment/cash_v2.png']);
                 $this->paymentCreator->setOrderId($order->id)->setAmount($this->paidAmount)->setMethod($this->paymentMethod)
                     ->setTransactionType(TransactionTypes::CREDIT)->setEmiMonth($order->emi_month)
-                    ->setInterest($order->interest)->create();
+                    ->setInterest($order->interest)->setMethodDetails($cash_details)->create();
             }
             if ($this->hasDueError($order->refresh())) {
                 throw new OrderException("Can not make due order without customer", 403);

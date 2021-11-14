@@ -119,6 +119,7 @@ class OrderWithProductResource extends JsonResource
             return [
                 'amount' => $each->amount,
                 'method' => $each->method,
+                'method_en' =>  $details ? $details->payment_method_en : null,
                 'method_bn' => $details ? $details->payment_method_bn : null,
                 'method_icon' => $details ? $details->payment_method_icon : null,
                 'created_at' => convertTimezone($each->created_at)?->format('Y-m-d H:i:s'),
