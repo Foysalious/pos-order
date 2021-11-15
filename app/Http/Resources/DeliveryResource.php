@@ -30,7 +30,7 @@ class DeliveryResource extends JsonResource
             'payment_method' => $this->paymentMethod(),
             'due' => $priceCalculation->setOrder($this->resource)->getDue(),
             'weight' => $this->getWeight(),
-            'delivery_charge' => $this->delivery_charge,
+            'delivery_charge' => (double) $this->delivery_charge,
 
         ];
     }
