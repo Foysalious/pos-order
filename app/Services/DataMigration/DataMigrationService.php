@@ -141,7 +141,7 @@ class DataMigrationService extends BaseService
                         'mobile' => $order['delivery_mobile'],
                         'deleted_at' => convertTimezone(Carbon::now())?->format('Y-m-d H:i:s'),
                     ]);
-                    $this->smanagerUserServerClient->post('/api/v1/partners/'. $order['partner_id'] .'/users/store-or-get', [
+                    $this->smanagerUserServerClient->post('api/v1/partners/'. $order['partner_id'] .'/users/store-or-get', [
                         'previous_id' => $order['customer_id'],
                         'partner_id' => $order['partner_id'],
                         'name' => $order['delivery_name'],
