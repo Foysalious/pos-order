@@ -271,7 +271,7 @@
 <body>
 <header class="clearfix">
     <div>
-        @if(isset($partner["info"]["logo"]))
+        @if(isset($partner["info"]))
             <div id="logo">
                 <img src="{{ $partner["info"]["logo"] }}" class="img-responsive">
             </div>
