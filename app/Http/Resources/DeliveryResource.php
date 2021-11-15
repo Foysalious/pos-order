@@ -28,7 +28,9 @@ class DeliveryResource extends JsonResource
             'delivery_thana' => $this->delivery_thana,
             'delivery_district' => $this->delivery_district,
             'payment_method' => $this->paymentMethod(),
-            'due' => $priceCalculation->setOrder($this->resource)->getDue()
+            'due' => $priceCalculation->setOrder($this->resource)->getDue(),
+            'weight' => $this->getWeight(),
+            'delivery_charge' => $this->delivery_charge,
 
         ];
     }

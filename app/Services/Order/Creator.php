@@ -499,7 +499,7 @@ class Creator
        }
     }
 
-    private function calculateDeliveryChargeAndSave($order)
+    private function calculateDeliveryChargeAndSave(Order $order)
     {
         if ($this->deliveryMethod == Methods::OWN_DELIVERY)
             return $this->partner->delivery_charge;
@@ -507,7 +507,7 @@ class Creator
         if ($this->deliveryDistrict && $this->deliveryThana)
         {
             $data = [
-                'weight' => $this->calculateTotalWeight($order),
+                'weight' => $order->getWeight(),
                 'delivery_district' => $this->deliveryDistrict,
                 'delivery_thana' => $this->deliveryThana,
                 'partner_id' => $this->partnerId,
@@ -519,17 +519,6 @@ class Creator
         }
         return false;
     }
-
-    private function calculateTotalWeight($order)
-    {
-        $totalWeight = 0;
-        ($order->orderSkus)->each(function($sku) use(&$totalWeight){
-            $totalWeight += (double) $sku->unit_weight* $sku->quantity;
-        });
-        return $totalWeight;
-    }
-
-
 
 }
 
