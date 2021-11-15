@@ -59,7 +59,7 @@ class SalesReport
         $due = 0;
         $due_count = 0;
         $net_bill = 0;
-        $order_count = 0;
+        $order_count = count($orders);
         foreach ($orders as $order) {
             $order_calculator->setOrder($order);
             $net_bill = $net_bill + $order_calculator->getDiscountedPrice();
@@ -69,7 +69,6 @@ class SalesReport
                 $paid_count = $paid_count + 1;
             if ($order_calculator->getDue() > 0)
                 $due_count = $due_count + 1;
-            $order_count = $order_count + 1;
         }
         $data['paid'] = $paid;
         $data['paid_count'] = $paid_count;
