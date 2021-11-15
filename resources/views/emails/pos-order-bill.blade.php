@@ -271,14 +271,16 @@
 <body>
 <header class="clearfix">
     <div>
-        <div id="logo">
-            <img src="{{ $partner["info"]["logo"] }}" class="img-responsive">
-        </div>
-        <div id="company">
-            <h2 class="name">{{ $partner["info"]["name"] }}</h2>
-            <div>{{ $partner["info"]["address"] }}</div>
-            <div>{{ $partner["info"]["mobile"] }}</div>
-        </div>
+        @if(isset($partner["info"]["logo"]))
+            <div id="logo">
+                <img src="{{ $partner["info"]["logo"] }}" class="img-responsive">
+            </div>
+            <div id="company">
+                <h2 class="name">{{ $partner["info"]["name"] }}</h2>
+                <div>{{ $partner["info"]["address"] }}</div>
+                <div>{{ $partner["info"]["mobile"] }}</div>
+            </div>
+        @endif
     </div>
 </header>
 <main>
