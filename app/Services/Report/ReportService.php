@@ -9,10 +9,7 @@ use Illuminate\Http\JsonResponse;
 
 class ReportService extends BaseService
 {
-    public function __construct(
-        protected ProductReport  $productReport,
-        protected CustomerReport $customerReport
-    )
+    public function __construct(protected ProductReport $productReport, protected CustomerReport $customerReport, protected SalesReport $salesReport)
     {
     }
 
@@ -40,7 +37,7 @@ class ReportService extends BaseService
 
     public function getSalesReport(int $partner_id, CustomerWiseReportRequest $request)
     {
-        $report = $this->customerReport->setPartnerId($partner_id)
+        $report = $this->salesReport->setPartnerId($partner_id)
             ->setFrom($request->from)
             ->setTo($request->to)
             ->getSalesReport();

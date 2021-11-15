@@ -64,7 +64,7 @@ class ReportController
     {
         return $this->reportService->getCustomerReport($partner_id, $request);
     }
-    public function getSalesReport(int $partner, CustomerWiseReportRequest $request)
+    public function getSalesReport(int $partner, CustomerWiseReportRequest $request): JsonResponse
     {
         return $this->reportService->getSalesReport($partner,$request);
     }
