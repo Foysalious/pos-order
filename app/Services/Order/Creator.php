@@ -77,7 +77,6 @@ class Creator
     private ?string $totalWeight;
     private ?string $deliveryDistrict;
     private ?string $deliveryThana;
-    private $partner;
 
 
     public function __construct(
@@ -95,7 +94,8 @@ class Creator
         protected StockRefillerForCanceledOrder $stockRefill,
         protected StockManageByChunk $stockManager,
         protected ApiServerClient $apiServerClient,
-        protected CustomerResolver $customerResolver
+        protected CustomerResolver $customerResolver,
+        private  Partner $partner
 
     )
     {
@@ -108,21 +108,33 @@ class Creator
         $this->orderSkuCreator = $orderSkuCreator;
     }
 
-    public function setPartner($partnerId): Creator
+    public function setPartnerId($partnerId): Creator
     {
         $this->partnerId = $partnerId;
         return $this;
     }
 
+    private function setPartner(Partner $partner)
+    {
+        $this->partner = $partner;
+    }
+
+    /**
+     * @throws BaseClientServerError
+     */
     private function resolvePartner()
     {
-        $partnerInfo = $this->getPartnerInfo();
-        $data = [
-            'id' => $this->partnerId,
-            'sub_domain' => $partnerInfo['sub_domain'],
-            'delivery_charge' => $partnerInfo['delivery_charge'],
-        ];
-       return $this->partnerRepositoryInterface->create($data);
+        $partner = Partner::find($this->partnerId);
+        if (!$partner) {
+            $partnerInfo = $this->getPartnerInfo();
+            $data = [
+                'id' => $this->partnerId,
+                'sub_domain' => $partnerInfo['sub_domain'],
+                'delivery_charge' => $partnerInfo['delivery_charge'],
+            ];
+            $partner = $this->partnerRepositoryInterface->create($data);
+        }
+        $this->setPartner($partner);
     }
 
     /**
@@ -362,10 +374,7 @@ class Creator
     {
         try {
             DB::beginTransaction();
-            $partner = Partner::find($this->partnerId);
-            if(!$partner)
-                $partner = $this->resolvePartner();
-            $this->partner = $partner;
+            $this->resolvePartner();
             $order_data = $this->makeOrderData();
             $order = $this->orderRepositoryInterface->create($order_data);
             $this->orderSkuCreator->setOrder($order)->setIsPaymentMethodEmi($this->paymentMethod == PaymentMethods::EMI)

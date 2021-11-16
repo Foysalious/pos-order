@@ -125,7 +125,7 @@ class OrderService extends BaseService
      */
     public function store($partner, OrderCreateRequest $request): JsonResponse
     {
-        $order = $this->creator->setPartner($partner)
+        $order = $this->creator->setPartnerId($partner)
             ->setCustomerId($request->customer_id)
             ->setDeliveryName($request->delivery_name)
             ->setDeliveryMobile($request->delivery_mobile)
