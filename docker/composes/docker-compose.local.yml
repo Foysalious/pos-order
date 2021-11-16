@@ -21,6 +21,7 @@ services:
       - ../php/conf.d/www.local.conf:/usr/local/etc/php-fpm.d/www.conf
     extra_hosts:
       - "api.sheba.test:172.17.0.1"
+      - "smanager-user.sheba.test:172.17.0.1"
     ports:
       - ${EXPORTED_PORT}:80
     networks:
