@@ -209,7 +209,7 @@ class Creator
                 'cap' => $sku->cap ?? 0,
             ];
         } else {
-            $discount_detail = collect($sku_detail['sku_channel'])->pluck('valid_discounts')->collapse()->first();
+            $discount_detail = collect($sku_detail['sku_channel'] ?? [])?->pluck('valid_discounts')?->collapse()?->first();
             if($discount_detail){
                 $discount_data = [
                     'discount' => $discount_detail['amount'],

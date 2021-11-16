@@ -54,10 +54,10 @@ class InvoiceService extends BaseService
             'amount' => $price_calculator->getOriginalPrice(),
             'created_at' => $order->created_at->format('jS M, Y, h:i A'),
             'payment_receiver' => [
-                'name' => $partner["info"]["name"],
-                'image' => $partner["info"]["logo"],
-                'mobile' => $partner["info"]["mobile"],
-                'address' => $partner["info"]["address"],
+                'name' => $partner["info"]["name"] ?? '',
+                'image' => $partner["info"]["logo"] ?? '',
+                'mobile' => $partner["info"]["mobile"] ?? '',
+                'address' => $partner["info"]["address"] ?? '',
             ],
 
             'pos_order' => $order ? [
