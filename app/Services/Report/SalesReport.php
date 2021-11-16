@@ -95,6 +95,7 @@ class SalesReport
             $this->data[$pos_order_created_at_formatter]['date'] = $date;
             $this->data[$pos_order_created_at_formatter]['day'] = $day;
         });
+
         return collect($this->data)->values()->all();
     }
 
