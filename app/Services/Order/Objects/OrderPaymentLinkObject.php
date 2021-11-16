@@ -11,22 +11,52 @@ class OrderPaymentLinkObject
     protected $created_at;
 
     /**
-     * @param mixed $paymentLinkDetails
+     * @param int|null $id
      * @return OrderPaymentLinkObject
      */
-    public function setPaymentLinkDetails($paymentLinkDetails)
+    public function setId(?int $id): OrderPaymentLinkObject
     {
-        $this->paymentLinkDetails = $paymentLinkDetails;
+        $this->id = $id;
         return $this;
     }
 
-    public function build()
+    /**
+     * @param string|null $status
+     * @return OrderPaymentLinkObject
+     */
+    public function setStatus(?string $status): OrderPaymentLinkObject
     {
-        $this->id = $this->paymentLinkDetails->id;
-        $this->status = $this->paymentLinkDetails->status;
-        $this->link = $this->paymentLinkDetails->link;
-        $this->amount = $this->paymentLinkDetails->amount;
-        $this->created_at = $this->paymentLinkDetails->created_at;
+        $this->status = $status;
+        return $this;
+    }
+
+    /**
+     * @param string|null $link
+     * @return OrderPaymentLinkObject
+     */
+    public function setLink(?string $link): OrderPaymentLinkObject
+    {
+        $this->link = $link;
+        return $this;
+    }
+
+    /**
+     * @param float|null $amount
+     * @return OrderPaymentLinkObject
+     */
+    public function setAmount(?float $amount): OrderPaymentLinkObject
+    {
+        $this->amount = $amount;
+        return $this;
+    }
+
+    /**
+     * @param mixed $created_at
+     * @return OrderPaymentLinkObject
+     */
+    public function setCreatedAt($created_at)
+    {
+        $this->created_at = $created_at;
         return $this;
     }
 

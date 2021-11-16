@@ -13,10 +13,12 @@ use App\Services\Discount\Handler;
 use App\Services\EMI\Calculations as EmiCalculation;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
+use App\Services\Order\Objects\OrderDetailsObject;
 use App\Services\Order\Refund\AddProductInOrder;
 use App\Services\Order\Refund\DeleteProductFromOrder;
 use App\Services\Order\Refund\OrderUpdateFactory;
 use App\Services\Order\Refund\UpdateProductInOrder;
+use App\Services\OrderLog\Object\OrderObject;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Product\StockManageByChunk;
 use App\Services\Product\StockManager;
@@ -58,7 +60,8 @@ class Updater
                                 protected CustomerRepositoryInterface $customerRepository,
                                 protected PriceCalculation $orderCalculator,
                                 protected EmiCalculation $emiCalculation,
-                                protected StockManageByChunk $stockManager
+                                protected StockManageByChunk $stockManager,
+                                private OrderDetailsObject $orderDetailsObject
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -324,7 +327,7 @@ class Updater
     {
         try {
             DB::beginTransaction();
-            $order = $this->setExistingOrder();
+            $previous_order = $this->setExistingOrder();
             $this->calculateOrderChangesAndUpdateSkus();
             if (isset($this->customer_id)) {
                 $this->updateCustomer();
@@ -335,9 +338,9 @@ class Updater
             $this->updateOrderPayments();
             if (isset($this->discount)) $this->updateDiscount();
             $this->refundIfEligible();
-            $this->createLog($order);
+            $this->createLog($previous_order, $this->order->refresh());
             if ($this->paymentMethod == PaymentMethods::EMI) {
-                $this->validateEmiAndCalculateChargesForOrder($order->refresh());
+                $this->validateEmiAndCalculateChargesForOrder($this->order->refresh());
             }
 
             if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
@@ -380,18 +383,16 @@ class Updater
     {
         $previous_order = clone $this->order;
         $order = $previous_order;
-        $order->products = $previous_order->items;
+        $order->items = $previous_order->items;
         $order->customer = $previous_order->customer;
-        $order->price = $previous_order->price;
         $order->payments = $previous_order->payments;
-        $order->payment_link = $previous_order->payment_link;
-        return $order;
+        return $previous_order;
     }
 
-    private function createLog($previous_order)
+    private function createLog($previous_order, $updated_order)
     {
         $this->setPreviousOrder($previous_order);
-        $this->setNewOrder();
+        $this->setNewOrder($updated_order);
         $this->orderLogCreator->create();
     }
 
@@ -402,12 +403,19 @@ class Updater
 
     private function setPreviousOrder($order)
     {
-        $this->orderLogCreator->setExistingOrderData($order)->setOrderId($this->order_id);
+        $order->load(['items', 'customer', 'payments', 'discounts']);
+        /** @var OrderObject $orderObject */
+        $orderObject = app(OrderObject::class);
+        $orderObject->setOrder($order);
+        $this->orderLogCreator->setExistingOrderData(json_encode($orderObject))->setOrderId($this->order_id);
     }
 
-    private function setNewOrder()
+    private function setNewOrder($order)
     {
-        $this->orderLogCreator->setChangedOrderData($this->orderRepositoryInterface->find($this->order->id))->setType($this->getTypeOfChangeLog());
+        /** @var OrderObject $orderObject */
+        $orderObject = app(OrderObject::class);
+        $orderObject->setOrder($order);
+        $this->orderLogCreator->setChangedOrderData(json_encode($orderObject))->setType($this->getTypeOfChangeLog());
     }
 
     /**

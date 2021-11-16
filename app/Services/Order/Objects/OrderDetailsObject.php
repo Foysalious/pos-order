@@ -2,19 +2,12 @@
 
 
 use App\Models\Order;
+use App\Services\Order\PriceCalculation;
+use stdClass;
 
 class OrderDetailsObject
 {
     protected $orderDetails;
-    protected $id;
-    protected $created_at;
-    protected $partner_wise_order_id;
-    protected $status;
-    protected $sales_channel_id;
-    protected $delivery_name;
-    protected $delivery_mobile;
-    protected $delivery_address;
-    protected $note;
     /** @var OrderSkuObject[]|null  */
     protected ?array $skus;
     protected ?OrderPriceObject $price;
@@ -22,75 +15,132 @@ class OrderDetailsObject
     /** @var OrderPaymentObject[]|null */
     protected ?array $payments;
     protected ?OrderPaymentLinkObject $payment_link;
+    private OrderObject $order;
 
-    public function setOrderDetails(Order $orderDetail): OrderDetailsObject
+    public function setOrderDetails($orderDetail): OrderDetailsObject
     {
         $this->orderDetails = $orderDetail;
         return $this;
     }
 
-    public function build(): OrderDetailsObject
+    public function get()
     {
-        $this->id = $this->orderDetails->id;
-        $this->created_at = $this->orderDetails->created_at;
-        $this->partner_wise_order_id = $this->orderDetails->partner_wise_order_id;
-        $this->status = $this->orderDetails->status;
-        $this->sales_channel_id = $this->orderDetails->sales_channel_id;
-        $this->sales_channel_id = $this->orderDetails->sales_channel_id;
-        $this->delivery_name = $this->orderDetails->delivery_name;
-        $this->note = $this->orderDetails->note;
+        $this->build();
+        return $this->order;
+    }
+
+    public function toArray()
+    {
+        $this->build();
+        dd($this->order->skus->toArray());
+    }
+
+    private function build()
+    {
+        $this->buildOrderDetails();
         $this->buildSkus();
         $this->buildPrice();
         $this->buildCustomer();
         $this->buildPayments();
         $this->buildPaymentLink();
-        return $this;
+    }
+
+    private function buildOrderDetails()
+    {
+        /** @var OrderObject $orderObject */
+        $orderObject = app(OrderObject::class);
+        $order = $orderObject->setId($this->orderDetails->id)->setCreatedAt($this->orderDetails->created_at)
+            ->setPartnerWiseOrderId($this->orderDetails->partner_wise_order_id)
+            ->setStatus($this->orderDetails->status)->setSalesChannelId($this->orderDetails->sales_channel_id)
+            /**->setDeliveryName($this->orderDetails->delivery_name)
+            ->setDeliveryMobile($this->orderDetails->delivery_mobile)
+            ->setDeliveryAddress($this->orderDetails->delivery_address)**/
+            ->setNote($this->orderDetails->note);
+        $this->order = $order;
     }
 
     private function buildSkus(): void
     {
         $final = [];
-        foreach ($this->orderDetails->orderSkus as $sku) {
+
+        foreach ($this->orderDetails->items as $sku) {
+//            dd($sku);
             /** @var OrderSkuObject $orderSkuObject */
             $orderSkuObject = app(OrderSkuObject::class);
-            array_push($final, $orderSkuObject->setSkuDetails($sku)->build());
+            array_push($final, $orderSkuObject->setId($sku->id)->setName($sku->name)/**->setProductId($sku->product_id)
+            ->setProductName($sku->product_name)**/->setNote($sku->note)->setUnit($sku->unit)->setSkuId($sku->sku_id)
+            ->setOriginalPrice($sku->original_price)->setQuantity($sku->quantity)->setBatchDetail($sku->batch_detail)
+            ->setDiscount($sku->discount)->setIsDiscountPercentage($sku->is_discount_percentage)->setCap($sku->cap)
+            ->setVatPercentage($sku->vat_percentage)->setWarranty($sku->warranty)->setWarrantyUnit($sku->warranty_unit)->setSkuChannelId($sku->sku_channel_id)
+            ->setChannelId($sku->channel_id)->setChannelName($sku->channel_name)->setCombination($sku->combination));
         }
-        $this->skus = $final;
+        $this->order->skus = $final;
     }
 
     private function buildPrice(): void
     {
         /** @var OrderPriceObject $orderPriceObject */
         $orderPriceObject = app(OrderPriceObject::class);
-        dd($this->orderDetails);
-        $price = $orderPriceObject->setPriceDetails($this->orderDetails->price)->build();
-        $this->price = $price;
+        $priceDetails = new stdClass();
+        /** @var PriceCalculation $priceCalculation */
+        $priceCalculation = app(PriceCalculation::class);
+        $priceCalculation->setOrder($this->orderDetails);
+        $priceDetails->original_price = $priceCalculation->getDiscountedPrice();
+        $priceDetails->discounted_price_without_vat = $priceCalculation->getDiscountedPriceWithoutVat();
+        $priceDetails->promo_discount = $priceCalculation->getPromoDiscount();
+        $priceDetails->order_discount = $priceCalculation->getOrderDiscount();
+        $priceDetails->vat = $priceCalculation->getVat();
+        $priceDetails->delivery_charge = $priceCalculation->getDeliveryCharge();
+        $priceDetails->discounted_price = $priceCalculation->getDiscountedPrice();
+        $priceDetails->paid = $priceCalculation->getPaid();
+        $priceDetails->due = $priceCalculation->getDue();
+        $price = $orderPriceObject->setOriginalPrice($priceCalculation->getDiscountedPrice())
+            ->setDiscountedPriceWithoutVat($priceCalculation->getDiscountedPriceWithoutVat())
+            ->setPromoDiscount($priceCalculation->getPromoDiscount())
+            ->setOrderDiscount($priceCalculation->getOrderDiscount())
+            ->setVat($priceCalculation->getVat())
+            ->setDeliveryCharge($priceCalculation->getDeliveryCharge())
+            ->setDiscountedPrice($priceCalculation->getDeliveryCharge())
+            ->setPaid($priceCalculation->getPaid())
+            ->setDue($priceCalculation->getDue());
+        $this->order->price = $price;
     }
 
     private function buildCustomer(): void
     {
         /** @var OrderCustomerObject $orderCustomerObject */
         $orderCustomerObject = app(OrderCustomerObject::class);
-        $customer = $orderCustomerObject->setCustomerDetails($this->orderDetails->customer)->build();
-        $this->customer = $customer;
+        $customer = $orderCustomerObject->setName($this->orderDetails?->customer?->name)
+            ->setMobile($this->orderDetails?->customer?->mobile)
+            ->setProPic($this->orderDetails?->customer?->pro_pic);
+        $this->order->customer = $customer;
     }
 
     private function buildPayments(): void
     {
         $final = [];
-        foreach ($this->orderDetails->paymnets as $payment) {
+        foreach ($this->orderDetails->payments as $payment) {
             /** @var OrderPaymentObject $orderPaymentObject */
             $orderPaymentObject = app(OrderPaymentObject::class);
-            array_push($final, $orderPaymentObject->setPaymentDetails($payment)->build());
+            array_push($final, $orderPaymentObject->setAmount($payment->amount)->setMethod($payment->method)->setCreatedAt($payment->created_at));
         }
-        $this->payments = $final;
+        $this->order->payments = $final;
     }
 
     private function buildPaymentLink(): void
     {
         /** @var OrderPaymentLinkObject $orderPaymentLinkObject */
         $orderPaymentLinkObject = app(OrderPaymentLinkObject::class);
-        $payment_link = $orderPaymentLinkObject->setPaymentLinkDetails($this->orderDetails->payment_link)->build();
-        $this->payment_link = $payment_link;
+        if ($this->orderDetails->payment_link) {
+            $payment_link = $orderPaymentLinkObject->setId($this->orderDetails->payment_link->id)
+                ->setAmount($this->orderDetails->payment_link->amount)
+                ->setLink($this->orderDetails->payment_link->link)
+                ->setStatus($this->orderDetails->payment_link->status)
+                ->setCreatedAt($this->orderDetails->payment_link->created_at);
+        } else {
+            $payment_link = null;
+        }
+
+        $this->order->payment_link = $payment_link;
     }
 }

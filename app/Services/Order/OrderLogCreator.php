@@ -3,10 +3,12 @@
 
 use App\Http\Resources\OrderWithProductResource;
 use App\Interfaces\OrderLogRepositoryInterface;
+use App\Traits\ModificationFields;
 use Carbon\Carbon;
 
 class OrderLogCreator
 {
+    use ModificationFields;
     protected $existingOrder, $changedOrderData, $orderId, $type, $existingOrderSkus, $newOrderSkus, $orderStatus;
     protected $orderLogRepository;
 
@@ -95,11 +97,9 @@ class OrderLogCreator
         $data = [];
         if(isset($this->orderId)) $data['order_id']             = $this->orderId;
         if(isset($this->type)) $data['type']                    = $this->type;
-        if(isset($this->existingOrder)) $data['old_value']      = $this->makeLogDataToJSON($this->existingOrder) ?? '';
-        if(isset($this->changedOrderData)) $data['new_value']   = $this->makeLogDataToJSON($this->changedOrderData) ?? '';
-        $data['created_by_name']                                = 'anonymous';
-        $data['created_at']                                     = Carbon::now();
-        return $data;
+        if(isset($this->existingOrder)) $data['old_value']      = $this->existingOrder;
+        if(isset($this->changedOrderData)) $data['new_value']   = $this->changedOrderData;
+        return $data + $this->modificationFields(true, false);
     }
 
     private function makeLogDataToJSON($order)

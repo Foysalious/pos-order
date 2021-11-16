@@ -25,11 +25,6 @@ class OrderSkuObject
     protected $channel_name;
     protected $combination;
 
-    public function setSkuDetails($skuDetails)
-    {
-        $this->skuDetails = $skuDetails;
-        return $this;
-    }
 
     public function build()
     {
@@ -55,6 +50,211 @@ class OrderSkuObject
         $this->combination = $this->skuDetails->combination;
         return $this;
 
+    }
+
+    /**
+     * @param mixed $id
+     * @return OrderSkuObject
+     */
+    public function setId($id)
+    {
+        $this->id = $id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $name
+     * @return OrderSkuObject
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * @param mixed $product_id
+     * @return OrderSkuObject
+     */
+    public function setProductId($product_id)
+    {
+        $this->product_id = $product_id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $product_name
+     * @return OrderSkuObject
+     */
+    public function setProductName($product_name)
+    {
+        $this->product_name = $product_name;
+        return $this;
+    }
+
+    /**
+     * @param mixed $note
+     * @return OrderSkuObject
+     */
+    public function setNote($note)
+    {
+        $this->note = $note;
+        return $this;
+    }
+
+    /**
+     * @param mixed $unit
+     * @return OrderSkuObject
+     */
+    public function setUnit($unit)
+    {
+        $this->unit = $unit;
+        return $this;
+    }
+
+    /**
+     * @param mixed $sku_id
+     * @return OrderSkuObject
+     */
+    public function setSkuId($sku_id)
+    {
+        $this->sku_id = $sku_id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $original_price
+     * @return OrderSkuObject
+     */
+    public function setOriginalPrice($original_price)
+    {
+        $this->original_price = $original_price;
+        return $this;
+    }
+
+    /**
+     * @param mixed $quantity
+     * @return OrderSkuObject
+     */
+    public function setQuantity($quantity)
+    {
+        $this->quantity = $quantity;
+        return $this;
+    }
+
+    /**
+     * @param mixed $batch_detail
+     * @return OrderSkuObject
+     */
+    public function setBatchDetail($batch_detail)
+    {
+        $this->batch_detail = $batch_detail;
+        return $this;
+    }
+
+    /**
+     * @param mixed $discount
+     * @return OrderSkuObject
+     */
+    public function setDiscount($discount)
+    {
+        $this->discount = $discount;
+        return $this;
+    }
+
+    /**
+     * @param mixed $is_discount_percentage
+     * @return OrderSkuObject
+     */
+    public function setIsDiscountPercentage($is_discount_percentage)
+    {
+        $this->is_discount_percentage = $is_discount_percentage;
+        return $this;
+    }
+
+    /**
+     * @param mixed $cap
+     * @return OrderSkuObject
+     */
+    public function setCap($cap)
+    {
+        $this->cap = $cap;
+        return $this;
+    }
+
+    /**
+     * @param mixed $vat_percentage
+     * @return OrderSkuObject
+     */
+    public function setVatPercentage($vat_percentage)
+    {
+        $this->vat_percentage = $vat_percentage;
+        return $this;
+    }
+
+    /**
+     * @param mixed $warranty
+     * @return OrderSkuObject
+     */
+    public function setWarranty($warranty)
+    {
+        $this->warranty = $warranty;
+        return $this;
+    }
+
+    /**
+     * @param mixed $warranty_unit
+     * @return OrderSkuObject
+     */
+    public function setWarrantyUnit($warranty_unit)
+    {
+        $this->warranty_unit = $warranty_unit;
+        return $this;
+    }
+
+    /**
+     * @param mixed $sku_channel_id
+     * @return OrderSkuObject
+     */
+    public function setSkuChannelId($sku_channel_id)
+    {
+        $this->sku_channel_id = $sku_channel_id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $channel_id
+     * @return OrderSkuObject
+     */
+    public function setChannelId($channel_id)
+    {
+        $this->channel_id = $channel_id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $channel_name
+     * @return OrderSkuObject
+     */
+    public function setChannelName($channel_name)
+    {
+        $this->channel_name = $channel_name;
+        return $this;
+    }
+
+    /**
+     * @param mixed $combination
+     * @return OrderSkuObject
+     */
+    public function setCombination($combination)
+    {
+        $this->combination = $combination;
+        return $this;
+    }
+
+    public function __get($value)
+    {
+        return $this->{$value};
     }
 
 }

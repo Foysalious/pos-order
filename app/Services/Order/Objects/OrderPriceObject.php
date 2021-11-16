@@ -3,7 +3,6 @@
 
 class OrderPriceObject
 {
-    protected $priceDetails;
     protected ?float $original_price;
     protected ?float $discounted_price_without_vat;
     protected ?float $promo_discount;
@@ -15,28 +14,97 @@ class OrderPriceObject
     protected ?float $due;
 
     /**
-     * @param mixed $priceDetails
+     * @param float|null $original_price
      * @return OrderPriceObject
      */
-    public function setPriceDetails($priceDetails)
+    public function setOriginalPrice(?float $original_price): OrderPriceObject
     {
-        dd($this->priceDetails);
-        $this->priceDetails = $priceDetails;
+        $this->original_price = $original_price;
         return $this;
     }
 
-    public function build()
+    /**
+     * @param float|null $discounted_price_without_vat
+     * @return OrderPriceObject
+     */
+    public function setDiscountedPriceWithoutVat(?float $discounted_price_without_vat): OrderPriceObject
     {
-        $this->original_price = $this->priceDetails->original_price;
-        $this->discounted_price_without_vat = $this->priceDetails->discounted_price_without_vat;
-        $this->promo_discount = $this->priceDetails->promo_discount;
-        $this->order_discount = $this->priceDetails->order_discount;
-        $this->vat = $this->priceDetails->vat;
-        $this->delivery_charge = $this->priceDetails->delivery_charge;
-        $this->discounted_price = $this->priceDetails->discounted_price;
-        $this->paid = $this->priceDetails->paid;
-        $this->due = $this->priceDetails->due;
+        $this->discounted_price_without_vat = $discounted_price_without_vat;
         return $this;
     }
 
+    /**
+     * @param float|null $promo_discount
+     * @return OrderPriceObject
+     */
+    public function setPromoDiscount(?float $promo_discount): OrderPriceObject
+    {
+        $this->promo_discount = $promo_discount;
+        return $this;
+    }
+
+    /**
+     * @param float|null $order_discount
+     * @return OrderPriceObject
+     */
+    public function setOrderDiscount(?float $order_discount): OrderPriceObject
+    {
+        $this->order_discount = $order_discount;
+        return $this;
+    }
+
+    /**
+     * @param float|null $vat
+     * @return OrderPriceObject
+     */
+    public function setVat(?float $vat): OrderPriceObject
+    {
+        $this->vat = $vat;
+        return $this;
+    }
+
+    /**
+     * @param float|null $delivery_charge
+     * @return OrderPriceObject
+     */
+    public function setDeliveryCharge(?float $delivery_charge): OrderPriceObject
+    {
+        $this->delivery_charge = $delivery_charge;
+        return $this;
+    }
+
+    /**
+     * @param float|null $discounted_price
+     * @return OrderPriceObject
+     */
+    public function setDiscountedPrice(?float $discounted_price): OrderPriceObject
+    {
+        $this->discounted_price = $discounted_price;
+        return $this;
+    }
+
+    /**
+     * @param float|null $paid
+     * @return OrderPriceObject
+     */
+    public function setPaid(?float $paid): OrderPriceObject
+    {
+        $this->paid = $paid;
+        return $this;
+    }
+
+    /**
+     * @param float|null $due
+     * @return OrderPriceObject
+     */
+    public function setDue(?float $due): OrderPriceObject
+    {
+        $this->due = $due;
+        return $this;
+    }
+
+    public function __get($value)
+    {
+        return $this->{$value};
+    }
 }

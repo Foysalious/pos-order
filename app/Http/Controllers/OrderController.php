@@ -206,7 +206,7 @@ class OrderController extends Controller
      */
     public function show($partner_id, $order_id): JsonResponse
     {
-        return $this->orderService->details($partner_id, $order_id);
+        return $this->orderService->getOrderDetails($partner_id, $order_id);
     }
 
     /**
@@ -415,9 +415,9 @@ class OrderController extends Controller
         return $this->orderService->updateOrderStatusByIpn($partner_id, $request);
     }
 
-    public function logs(int $order_id)
+    public function logs(int $partner_id, int $order_id)
     {
-        return $this->orderService->logs($order_id);
+        return $this->orderService->logs($partner_id, $order_id);
     }
 
     /**

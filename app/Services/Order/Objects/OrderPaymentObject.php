@@ -3,22 +3,44 @@
 
 class OrderPaymentObject
 {
-    protected $paymentDetails;
     protected ?float $amount;
     protected ?string $method;
     protected $created_at;
 
-    public function setPaymentDetails($paymentDetails)
+    /**
+     * @param float|null $amount
+     * @return OrderPaymentObject
+     */
+    public function setAmount(?float $amount): OrderPaymentObject
     {
-        $this->paymentDetails = $paymentDetails;
+        $this->amount = $amount;
         return $this;
     }
 
-    public function build()
+    /**
+     * @param string|null $method
+     * @return OrderPaymentObject
+     */
+    public function setMethod(?string $method): OrderPaymentObject
     {
-        $this->amount = $this->paymentDetails->amount;
-        $this->method = $this->paymentDetails->method;
-        $this->created_at = $this->paymentDetails->created_at;
+        $this->method = $method;
         return $this;
     }
+
+    /**
+     * @param mixed $created_at
+     * @return OrderPaymentObject
+     */
+    public function setCreatedAt($created_at)
+    {
+        $this->created_at = $created_at;
+        return $this;
+    }
+
+    public function __get($value)
+    {
+        return $this->{$value};
+    }
+
+
 }
