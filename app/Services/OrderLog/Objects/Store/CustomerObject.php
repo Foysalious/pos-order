@@ -1,4 +1,4 @@
-<?php namespace App\Services\OrderLog\Object;
+<?php namespace App\Services\OrderLog\Objects\Store;
 
 
 use App\Models\Customer;

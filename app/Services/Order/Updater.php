@@ -13,12 +13,11 @@ use App\Services\Discount\Handler;
 use App\Services\EMI\Calculations as EmiCalculation;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
-use App\Services\Order\Objects\OrderDetailsObject;
 use App\Services\Order\Refund\AddProductInOrder;
 use App\Services\Order\Refund\DeleteProductFromOrder;
 use App\Services\Order\Refund\OrderUpdateFactory;
 use App\Services\Order\Refund\UpdateProductInOrder;
-use App\Services\OrderLog\Object\OrderObject;
+use App\Services\OrderLog\Objects\Store\OrderObject;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Product\StockManageByChunk;
 use App\Services\Product\StockManager;
@@ -61,7 +60,6 @@ class Updater
                                 protected PriceCalculation $orderCalculator,
                                 protected EmiCalculation $emiCalculation,
                                 protected StockManageByChunk $stockManager,
-                                private OrderDetailsObject $orderDetailsObject
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -343,7 +341,7 @@ class Updater
                 $this->validateEmiAndCalculateChargesForOrder($this->order->refresh());
             }
 
-            if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
+//            if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();

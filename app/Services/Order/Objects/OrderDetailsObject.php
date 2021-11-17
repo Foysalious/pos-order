@@ -17,7 +17,7 @@ class OrderDetailsObject
     protected ?OrderPaymentLinkObject $payment_link;
     private OrderObject $order;
 
-    public function setOrderDetails($orderDetail): OrderDetailsObject
+    public function setOrderDetails($orderDetail)
     {
         $this->orderDetails = $orderDetail;
         return $this;

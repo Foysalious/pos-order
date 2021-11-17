@@ -15,6 +15,7 @@ use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderWithProductResource;
 use App\Http\Resources\Webstore\CustomerOrderDetailsResource;
 use App\Interfaces\CustomerRepositoryInterface;
+use App\Interfaces\OrderLogRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
@@ -33,6 +34,7 @@ use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\Constants\SalesChannelIds;
+use App\Services\OrderLog\Objects\Retrieve\OrderObjectRetriever;
 use App\Services\OrderSms\WebstoreOrderSms;
 use App\Services\Webstore\SettingsSync\WebStoreSettingsSyncTypes;
 use Exception;
@@ -71,7 +73,8 @@ class OrderService extends BaseService
         protected StockRefillerForCanceledOrder $stockRefillerForCanceledOrder,
         InvoiceService                          $invoiceService,
         protected ApiServerClient               $apiServerClientclient,
-        protected CustomerResolver $customerResolver
+        protected CustomerResolver $customerResolver,
+        private OrderLogRepositoryInterface $orderLogRepository
     )
     {
         $this->orderRepository = $orderRepository;
@@ -163,7 +166,7 @@ class OrderService extends BaseService
         $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::WEBSTORE)->find($order_id);
         if (!$order) return $this->error('No Order Found', 404);
         if ($order->invoice == null) {
-            return $this->invoiceService->setOrder($order_id)->generateInvoice();
+            return $this->invoiceService->setOrder($order)->generateInvoice();
         }
         return $this->success(ResponseMessages::SUCCESS, ['invoice' => $order->invoice]);
     }
@@ -186,7 +189,7 @@ class OrderService extends BaseService
         $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::POS)->where('partner_id', $partner_id)->find($order_id);
         if (!$order) return $this->error('No Order Found', 404);
         if ($order->invoice == null) {
-            return $this->invoiceService->setOrder($order_id)->generateInvoice();
+            return $this->invoiceService->setOrder($order)->generateInvoice();
         }
         $this->accessManager->setPartnerId($order->partner_id)->setFeature(Features::INVOICE_DOWNLOAD)->checkAccess();
         return $this->success(ResponseMessages::SUCCESS, ['invoice' => $order->invoice]);
@@ -272,7 +275,7 @@ class OrderService extends BaseService
             ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
             ->update();
 
-        dispatch(new WebStoreSettingsSyncJob($partner_id, WebStoreSettingsSyncTypes::Order, $orderDetails->id));
+//        dispatch(new WebStoreSettingsSyncJob($partner_id, WebStoreSettingsSyncTypes::Order, $orderDetails->id));
         return $this->success();
     }
 
@@ -366,80 +369,96 @@ class OrderService extends BaseService
         return $this->success();
     }
 
-    public function logs(int $order_id)
+    public function logs(int $partner_id, int $order_id)
     {
-        $logs = [
-            [
-                'id' => 1,
-                'log_type' => 'due_bill',
-                'log_type_show_name' => ['bn' => 'বাকি বিল', 'en' => 'Due Bill'],
-                'old_value' => null,
-                'new_value' => 500.00,
-                'created_at' => '2020-01-05 12:45:05',
-                'created_by_name' => 'Resource - Abdullah Arnab',
-                'is_invoice_downloadable' => $this->isInvoiceDownloadable('due_bill'),
-            ],
-            [
-                'id' => 2,
-                'log_type' => 'payments',
-                'log_type_show_name' => ['bn' => 'নগদ  গ্রহণ', 'en' => 'Cash Collection'],
-                'old_value' => null,
-                'new_value' => 500.00,
-                'created_at' => '2020-01-05 12:46:05',
-                'created_by_name' => 'Resource - Abdullah Arnab',
-                'is_invoice_downloadable' => $this->isInvoiceDownloadable('payments')
-            ],
-            [
-                'id' => 3,
-                'log_type' => 'payments',
-                'log_type_show_name' => ['bn' => 'অনলাইন গ্রহন', 'en' => 'Online Collection'],
-                'old_value' => null,
-                'new_value' => 500.00,
-                'created_at' => '2020-01-05 12:47:05',
-                'created_by_name' => 'Resource - Abdullah Arnab',
-                'is_invoice_downloadable' => $this->isInvoiceDownloadable('payments'),
-            ],
-            [
-                'id' => 4,
-                'log_type' => 'payable',
-                'log_type_show_name' => ['bn' => 'অর্ডার আপডেট (Increase)', 'en' => 'Order Update (Increase)'],
-                'old_value' => null,
-                'new_value' => 500.00,
-                'created_at' => '2020-01-05 12:48:05',
-                'created_by_name' => 'Resource - Abdullah Arnab',
-                'is_invoice_downloadable' => $this->isInvoiceDownloadable('payable'),
-            ],
-            [
-                'id' => 5,
-                'log_type' => 'payable',
-                'log_type_show_name' => ['bn' => 'অর্ডার আপডেট (Decrease)', 'en' => 'Order Update (Decrease)'],
-                'old_value' => null,
-                'new_value' => 500.00,
-                'created_at' => '2020-01-05 12:49:05',
-                'created_by_name' => 'Resource - Abdullah Arnab',
-                'is_invoice_downloadable' => $this->isInvoiceDownloadable('payable'),
-            ],
-            [
-                'id' => 6,
-                'log_type' => 'emi',
-                'log_type_show_name' => ['bn' => 'কিস্তি - ৩ মাস', 'en' => 'Emi - 3 Months'],
-                'old_value' => null,
-                'new_value' => 5000.00,
-                'created_at' => '2020-01-05 12:45:05',
-                'created_by_name' => 'Resource - Abdullah Arnab',
-                'is_invoice_downloadable' => $this->isInvoiceDownloadable('emi'),
-            ],
-            [
-                'id' => 7,
-                'log_type' => 'status_update',
-                'log_type_show_name' => ['bn' => 'স্ট্যাটাস আপডেট ', 'en' => 'Status Update'],
-                'old_value' => Statuses::PROCESSING,
-                'new_value' => Statuses::SHIPPED,
-                'created_at' => '2020-01-05 12:50:05',
-                'created_by_name' => 'Resource - Abdullah Arnab',
-                'is_invoice_downloadable' => $this->isInvoiceDownloadable('status_update'),
-            ]
-        ];
+        $logs = $this->orderLogRepository->where('id', 1675)->first();
+        /** @var OrderObjectRetriever $orderObjectRetriever */
+        $orderObjectRetriever = app(OrderObjectRetriever::class);
+        $orderObject = $orderObjectRetriever->setOrder($logs->new_value)->get();
+        /** @var PriceCalculation $priceCalculation */
+        $priceCalculation = app(PriceCalculation::class);
+        $order = Order::find(2003015)->load(['orderSkus', 'customer', 'payments', 'discounts']);
+        /** @var InvoiceService $invoiceService */
+        $invoiceService = app(InvoiceService::class);
+        $invoice = $invoiceService->setOrder($orderObject)->generateInvoice();
+        dd($invoice);
+        $priceCalculation->setOrder($orderObject);
+
+        dd($priceCalculation->getDiscountedPrice());
+
+
+//        $logs = [
+//            [
+//                'id' => 1,
+//                'log_type' => 'due_bill',
+//                'log_type_show_name' => ['bn' => 'বাকি বিল', 'en' => 'Due Bill'],
+//                'old_value' => null,
+//                'new_value' => 500.00,
+//                'created_at' => '2020-01-05 12:45:05',
+//                'created_by_name' => 'Resource - Abdullah Arnab',
+//                'is_invoice_downloadable' => $this->isInvoiceDownloadable('due_bill'),
+//            ],
+//            [
+//                'id' => 2,
+//                'log_type' => 'payments',
+//                'log_type_show_name' => ['bn' => 'নগদ  গ্রহণ', 'en' => 'Cash Collection'],
+//                'old_value' => null,
+//                'new_value' => 500.00,
+//                'created_at' => '2020-01-05 12:46:05',
+//                'created_by_name' => 'Resource - Abdullah Arnab',
+//                'is_invoice_downloadable' => $this->isInvoiceDownloadable('payments')
+//            ],
+//            [
+//                'id' => 3,
+//                'log_type' => 'payments',
+//                'log_type_show_name' => ['bn' => 'অনলাইন গ্রহন', 'en' => 'Online Collection'],
+//                'old_value' => null,
+//                'new_value' => 500.00,
+//                'created_at' => '2020-01-05 12:47:05',
+//                'created_by_name' => 'Resource - Abdullah Arnab',
+//                'is_invoice_downloadable' => $this->isInvoiceDownloadable('payments'),
+//            ],
+//            [
+//                'id' => 4,
+//                'log_type' => 'payable',
+//                'log_type_show_name' => ['bn' => 'অর্ডার আপডেট (Increase)', 'en' => 'Order Update (Increase)'],
+//                'old_value' => null,
+//                'new_value' => 500.00,
+//                'created_at' => '2020-01-05 12:48:05',
+//                'created_by_name' => 'Resource - Abdullah Arnab',
+//                'is_invoice_downloadable' => $this->isInvoiceDownloadable('payable'),
+//            ],
+//            [
+//                'id' => 5,
+//                'log_type' => 'payable',
+//                'log_type_show_name' => ['bn' => 'অর্ডার আপডেট (Decrease)', 'en' => 'Order Update (Decrease)'],
+//                'old_value' => null,
+//                'new_value' => 500.00,
+//                'created_at' => '2020-01-05 12:49:05',
+//                'created_by_name' => 'Resource - Abdullah Arnab',
+//                'is_invoice_downloadable' => $this->isInvoiceDownloadable('payable'),
+//            ],
+//            [
+//                'id' => 6,
+//                'log_type' => 'emi',
+//                'log_type_show_name' => ['bn' => 'কিস্তি - ৩ মাস', 'en' => 'Emi - 3 Months'],
+//                'old_value' => null,
+//                'new_value' => 5000.00,
+//                'created_at' => '2020-01-05 12:45:05',
+//                'created_by_name' => 'Resource - Abdullah Arnab',
+//                'is_invoice_downloadable' => $this->isInvoiceDownloadable('emi'),
+//            ],
+//            [
+//                'id' => 7,
+//                'log_type' => 'status_update',
+//                'log_type_show_name' => ['bn' => 'স্ট্যাটাস আপডেট ', 'en' => 'Status Update'],
+//                'old_value' => Statuses::PROCESSING,
+//                'new_value' => Statuses::SHIPPED,
+//                'created_at' => '2020-01-05 12:50:05',
+//                'created_by_name' => 'Resource - Abdullah Arnab',
+//                'is_invoice_downloadable' => $this->isInvoiceDownloadable('status_update'),
+//            ]
+//        ];
         return $this->success(ResponseMessages::SUCCESS, ['logs' => $logs]);
     }
 
