@@ -11,4 +11,6 @@ class PartnerDto extends DataTransferObject
     public ?bool $auto_printing;
     public ?string $printer_name;
     public ?string $printer_model;
+    public ?string $qr_code_image;
+    public ?string $qr_code_account_type;
 }
