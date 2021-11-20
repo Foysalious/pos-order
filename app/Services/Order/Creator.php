@@ -403,7 +403,7 @@ class Creator
             if ($this->hasDueError($order->refresh())) {
                 throw new OrderException("Can not make due order without customer", 403);
             }
-            if($this->deliveryMethod)
+            if($this->getDeliveryMethod() == Methods::OWN_DELIVERY)
                 $this->calculateDeliveryChargeAndSave($order);
 
             if ($order) event(new OrderPlaceTransactionCompleted($order));
@@ -414,6 +414,11 @@ class Creator
             throw $e;
         }
         return $order;
+    }
+
+    private function getDeliveryMethod()
+    {
+        $this->apiServerClient->get('v1/pos/partners/'. $this->partnerId)['partner']['delivery_method'];
     }
 
     private function resolveCustomer(): Creator
