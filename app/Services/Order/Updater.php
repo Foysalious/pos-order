@@ -384,6 +384,7 @@ class Updater
         $order->items = $previous_order->items;
         $order->customer = $previous_order->customer;
         $order->payments = $previous_order->payments;
+        $order->discounts = $previous_order->discounts;
         return $previous_order;
     }
 

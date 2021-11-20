@@ -473,9 +473,9 @@ class OrderController extends Controller
         return $this->orderService->getTrendingProducts($partner_id);
     }
 
-    public function generateLogInvoice(int $order, int $log): JsonResponse
+    public function generateLogInvoice(int $partner_id, int $order, int $log): JsonResponse
     {
-        return $this->orderService->generateLogInvoice($order, $log);
+        return $this->orderService->generateLogInvoice($partner_id, $order, $log);
     }
 
     /**
