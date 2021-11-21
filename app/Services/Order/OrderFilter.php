@@ -134,7 +134,9 @@ class OrderFilter
 
     public function getOrderListWithPagination()
     {
-        $query = $this->orderRepository->where('partner_id', $this->partnerId)->with(['orderSkus','payments','discounts','customer']);
+        $query = $this->orderRepository->where('partner_id', $this->partnerId)->with(['payments','discounts','customer','logs','orderSkus' =>function($q){
+            $q->with('discount');
+        }]);
         $query = $this->filterByType($query);
         $query = $this->filterByPaymentStatus($query);
         $query = $this->filterBySalesChannelId($query);
