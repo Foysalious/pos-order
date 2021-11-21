@@ -410,8 +410,8 @@ class Creator
             if ($this->hasDueError($order->refresh())) {
                 throw new OrderException("Can not make due order without customer", 403);
             }
-            if($this->deliveryMethod)
-                $this->calculateDeliveryChargeAndSave($order);
+
+            $this->calculateDeliveryChargeAndSave($order);
 
             if ($order) event(new OrderPlaceTransactionCompleted($order));
             $this->updateStock($this->orderSkuCreator->getStockDecreasingData());
@@ -428,6 +428,7 @@ class Creator
         }
         return $order;
     }
+
 
     private function resolveCustomer(): Creator
     {
@@ -521,27 +522,16 @@ class Creator
        }
     }
 
-    private function calculateDeliveryChargeAndSave(Order $order)
+    /**
+     * @param Order $order
+     * @return bool
+     */
+    private function calculateDeliveryChargeAndSave(Order $order): bool
     {
-        if ($this->deliveryMethod == Methods::OWN_DELIVERY)
-            return $this->partner->delivery_charge;
-
-        if ($this->deliveryDistrict && $this->deliveryThana)
-        {
-            $data = [
-                'weight' => $order->getWeight(),
-                'delivery_district' => $this->deliveryDistrict,
-                'delivery_thana' => $this->deliveryThana,
-                'partner_id' => $this->partnerId,
-                'cod_amount' => $this->getDueAmount($order)
-            ];
-            $delivery_charge = $this->apiServerClient->post('v2/pos/delivery/delivery-charge', $data)['delivery_charge'];
-            $order->delivery_charge = $delivery_charge;
-            return $order->save();
-        }
-        return false;
+        /** @var PriceCalculation $priceCalculation */
+        $priceCalculation  = app(PriceCalculation::class);
+        return $priceCalculation->setOrder($order)->calculateDeliveryChargeAndSave();
     }
-
 }
 
 
