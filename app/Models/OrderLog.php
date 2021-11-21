@@ -6,4 +6,5 @@ class OrderLog extends BaseModel
 {
     use HasFactory;
     protected $guarded = ['id'];
+    public $timestamps = false;
 }
