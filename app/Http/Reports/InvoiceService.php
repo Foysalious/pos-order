@@ -10,7 +10,9 @@ use App\Services\APIServerClient\ApiServerClient;
 use App\Services\BaseService;
 use App\Services\Order\PriceCalculation;
 use App\Services\Order\Updater;
+use App\Services\OrderLog\Objects\Retrieve\OrderObject;
 use App\Traits\ModificationFields;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\App;
 
 
@@ -25,9 +27,9 @@ class InvoiceService extends BaseService
 
     }
 
-    public function setOrder($order_id)
+    public function setOrder($order)
     {
-        $this->order = $this->orderRepository->find($order_id);
+        $this->order = $order;
         return $this;
     }
 
@@ -48,11 +50,13 @@ class InvoiceService extends BaseService
         $order = $this->order;
         /** @var PriceCalculation $price_calculator */
         $price_calculator = (App::make(PriceCalculation::class))->setOrder($order);
-        $partner = $this->client->get('v2/partners/' . $order->partner->sub_domain);
+        $sub_domain = Partner::find($order->partner_id)->sub_domain;
+        $partner = $this->client->get('v2/partners/' . $sub_domain);
+        $created_at_formatted = $order->created_at instanceof Carbon ? $order->created_at : Carbon::parse($order->created_at);
         $info = [
             'order_id'=>$order->id,
             'amount' => $price_calculator->getOriginalPrice(),
-            'created_at' => $order->created_at->format('jS M, Y, h:i A'),
+            'created_at' => $created_at_formatted,
             'payment_receiver' => [
                 'name' => $partner["info"]["name"] ?? '',
                 'image' => $partner["info"]["logo"] ?? '',
@@ -79,11 +83,12 @@ class InvoiceService extends BaseService
             $info['user'] = [
                 'name' => $customer->name,
                 'mobile' => $customer->mobile,
-                'address' => $order->address
+                'address' => $order->delivery_address
             ];
         }
         $invoice_name = 'pos_order_invoice_' . $order->id;
         $link = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+        if ($order instanceof OrderObject) return $link;
         $order->invoice=$link;
         $order->save();
         return $this->success(ResponseMessages::SUCCESS, ['invoice' =>  $link]);

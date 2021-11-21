@@ -3,10 +3,12 @@
 use App\Models\Order;
 use App\Models\OrderSku;
 use App\Services\Discount\Constants\DiscountTypes;
+use App\Services\OrderLog\Objects\Retrieve\ItemObject;
+use App\Services\OrderLog\Objects\Retrieve\OrderObject;
 
 class PriceCalculation
 {
-    private Order $order;
+    private Order|OrderObject $order;
     private float $originalPrice;
     private float $vat;
     private float $productDiscount;
@@ -16,6 +18,8 @@ class PriceCalculation
     private float $discount;
     private float $discountedPrice;
     private float $discountedPriceWithoutVat;
+    private float $debit = 0.0;
+    private float $credit = 0.0;
     /**
      * @var int|mixed
      */
@@ -26,10 +30,10 @@ class PriceCalculation
     private mixed $promoDiscount;
 
     /**
-     * @param Order $order
+     * @param Order|OrderObject $order
      * @return PriceCalculation
      */
-    public function setOrder(Order $order): PriceCalculation
+    public function setOrder(Order|OrderObject $order): PriceCalculation
     {
         $this->order = $order;
         $this->calculate();
@@ -180,7 +184,7 @@ class PriceCalculation
         }
     }
 
-    private function updateTotalPriceAndCost(OrderSku $orderSku)
+    private function updateTotalPriceAndCost(OrderSku|ItemObject $orderSku)
     {
         $this->originalPrice += $orderSku->getOriginalPrice();
         $this->vat += $orderSku->getVat();
@@ -215,9 +219,13 @@ class PriceCalculation
 
     private function calculatePaidAmount()
     {
-        $credit = $this->creditPaymentsCollect()->sum('amount');
-        $debit = $this->debitPaymentsCollect()->sum('amount');
-        $this->paid = $credit - $debit;
+        foreach ($this->creditPaymentsCollect() as $credit){
+            $this->credit += $credit->amount;
+        }
+        foreach ($this->debitPaymentsCollect() as $debit){
+            $this->debit += $debit->amount;
+        }
+        $this->paid = $this->credit - $this->debit;
     }
 
     private function formatAllToTaka(): void
