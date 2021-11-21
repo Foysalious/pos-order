@@ -49,7 +49,7 @@ class OrderObject implements JsonSerializable
             'created_at' => $this->order->created_at,
             'updated_at' => $this->order->updated_at,
             'items' => $this->getItems(),
-            'customer' => $this->getCustomer(),
+            'customer' => $this->order->customer ? $this->getCustomer() : null,
             'payments' => $this->getPayments(),
             'discounts' => $this->getDiscounts()
         ];
