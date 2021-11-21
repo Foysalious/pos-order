@@ -6,12 +6,13 @@ use JsonSerializable;
 
 class CustomerObject implements JsonSerializable
 {
-    private Customer $customer;
+    private ?Customer $customer;
+
     /**
-     * @param Customer $customer
+     * @param Customer|null $customer
      * @return CustomerObject
      */
-    public function setCustomer(Customer $customer): CustomerObject
+    public function setCustomer(?Customer $customer): CustomerObject
     {
         $this->customer = $customer;
         return $this;
@@ -19,6 +20,7 @@ class CustomerObject implements JsonSerializable
 
     public function jsonSerialize()
     {
+        if(!$this->customer) return null;
         return [
             'id' => $this->customer->id,
             'name' => $this->customer->name,
