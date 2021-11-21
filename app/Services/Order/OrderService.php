@@ -76,8 +76,8 @@ class OrderService extends BaseService
         protected StockRefillerForCanceledOrder $stockRefillerForCanceledOrder,
         InvoiceService                          $invoiceService,
         protected ApiServerClient               $apiServerClientclient,
-        protected CustomerResolver $customerResolver,
-        private OrderLogRepositoryInterface $orderLogRepository
+        protected CustomerResolver              $customerResolver,
+        private OrderLogRepositoryInterface     $orderLogRepository
     )
     {
         $this->orderRepository = $orderRepository;
@@ -210,7 +210,7 @@ class OrderService extends BaseService
     public function getOrderInfo($partner_id, $order_id)
     {
         $order = $this->orderRepository->getOrderDetailsByPartner($partner_id, $order_id);
-        return json_encode(new OrderWithProductResource($order, true));
+        return $order;
     }
 
     public function getWebStoreOrderDetails(int $partner_id, int $order_id, string $customer_id): JsonResponse
@@ -393,11 +393,11 @@ class OrderService extends BaseService
         }
     }
 
-    public function generateLogInvoice(int$partner_id, int $order_id, int $log_id): JsonResponse
+    public function generateLogInvoice(int $partner_id, int $order_id, int $log_id): JsonResponse
     {
         /** @var OrderLog $log */
         $log = $this->orderLogRepository->where('order_id', $order_id)->where('id', $log_id)->first();
-        if($log->invoice) return $this->success(ResponseMessages::SUCCESS, ['link' => $log->invoice]);
+        if ($log->invoice) return $this->success(ResponseMessages::SUCCESS, ['link' => $log->invoice]);
         /** @var OrderObjectRetriever $orderObjectRetriever */
         $orderObjectRetriever = app(OrderObjectRetriever::class);
         $newOrderObject = $orderObjectRetriever->setOrder($log->new_value)->get();

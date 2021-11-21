@@ -2,6 +2,8 @@
 
 use App\Models\Order;
 use App\Models\OrderSku;
+use App\Services\APIServerClient\ApiServerClient;
+use App\Services\Delivery\Methods;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\OrderLog\Objects\Retrieve\ItemObject;
 use App\Services\OrderLog\Objects\Retrieve\OrderObject;
@@ -28,6 +30,8 @@ class PriceCalculation
      * @var int|mixed
      */
     private mixed $promoDiscount;
+
+    private string $deliveryMethod;
 
     /**
      * @param Order|OrderObject $order
@@ -238,4 +242,48 @@ class PriceCalculation
         $this->paid = formatTakaToDecimal($this->paid);
         $this->due = formatTakaToDecimal($this->due);
     }
+
+    /**
+     * @param mixed $deliveryMethod
+     * @return PriceCalculation
+     */
+    public function setDeliveryMethod(string $deliveryMethod)
+    {
+        $this->deliveryMethod = $deliveryMethod;
+        return $this;
+    }
+
+    public function calculateDeliveryChargeAndSave()
+    {
+        $this->setDeliveryMethod($this->getDeliveryMethod());
+        if ($this->deliveryMethod == Methods::OWN_DELIVERY && $this->order->deliveryDistrict && $this->order->deliveryThana)
+        {
+            $this->order->delivery_charge = $this->order->partner->delivery_charge;
+            return $this->order->save();
+        }
+        if ($this->order->deliveryDistrict && $this->order->deliveryThana)
+        {
+            $data = [
+                'weight' => $this->order->getWeight(),
+                'delivery_district' => $this->deliveryDistrict,
+                'delivery_thana' => $this->deliveryThana,
+                'partner_id' => $this->order->partner->id,
+                'cod_amount' => $this->getDue()
+            ];
+            /** @var ApiServerClient $apiServerClient */
+            $apiServerClient = app(ApiServerClient::class);
+            $delivery_charge = $apiServerClient->post('v2/pos/delivery/delivery-charge', $data)['delivery_charge'];
+            $this->order->delivery_charge = $delivery_charge;
+            return $this->order->save();
+        }
+        return false;
+    }
+
+    private function getDeliveryMethod()
+    {
+        /** @var ApiServerClient $apiServerClient */
+        $apiServerClient = app(ApiServerClient::class);
+        return $apiServerClient->get('v1/pos/partners/'. $this->partnerId)['partner']['delivery_method'];
+    }
+
 }
