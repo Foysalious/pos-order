@@ -7,6 +7,7 @@ use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\PriceCalculation;
 use App\Services\OrderLog\Objects\Retrieve\OrderObject;
 use App\Services\Transaction\Constants\TransactionTypes;
+use Carbon\Carbon;
 
 class OrderLogGenerator
 {
@@ -58,7 +59,7 @@ class OrderLogGenerator
                 'log_type_show_name' => ['bn' => 'বাকি বিল', 'en' => 'Due Bill'],
                 'old_value' => $old_discounted_price,
                 'new_value' => $new_discounted_price,
-                'created_at' => convertTimezone($this->log->created_at)?->format('Y-m-d H:i:s'),
+                'created_at' => convertTimezone(Carbon::parse($this->log->created_at))?->format('Y-m-d H:i:s'),
                 'created_by_name' => $this->log->created_by_name,
                 'is_invoice_downloadable' => $this->isInvoiceDownloadable('due_bill')
             ];
@@ -96,7 +97,7 @@ class OrderLogGenerator
                 ],
                 'old_value' => null,
                 'new_value' => $payment->amount,
-                'created_at' => convertTimezone($this->log->created_at)?->format('Y-m-d H:i:s'),
+                'created_at' => convertTimezone(Carbon::parse($this->log->created_at))?->format('Y-m-d H:i:s'),
                 'created_by_name' => $this->log->created_by_name,
                 'is_invoice_downloadable' => $this->isInvoiceDownloadable(OrderLogTypes::PAYMENTS)
             ];
@@ -110,7 +111,7 @@ class OrderLogGenerator
                 ],
                 'old_value' => null,
                 'new_value' => $old_discounted_price <  $new_discounted_price ? $new_discounted_price - $old_discounted_price : $old_discounted_price - $new_discounted_price,
-                'created_at' => convertTimezone($this->log->created_at)?->format('Y-m-d H:i:s'),
+                'created_at' => convertTimezone(Carbon::parse($this->log->created_at))?->format('Y-m-d H:i:s'),
                 'created_by_name' => $this->log->created_by_name,
                 'is_invoice_downloadable' => $this->isInvoiceDownloadable('payable')
             ];
@@ -124,7 +125,7 @@ class OrderLogGenerator
                 ],
                 'old_value' => $this->oldObject->status,
                 'new_value' =>$this->newObject->status,
-                'created_at' => convertTimezone($this->log->created_at)?->format('Y-m-d H:i:s'),
+                'created_at' => convertTimezone(Carbon::parse($this->log->created_at))?->format('Y-m-d H:i:s'),
                 'created_by_name' => $this->log->created_by_name,
                 'is_invoice_downloadable' => $this->isInvoiceDownloadable('status_update')
             ];
