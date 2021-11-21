@@ -19,6 +19,7 @@ class OrderObjectRetriever
 
     public function get()
     {
+        if(!$this->order) return null;
         $order = $this->buildOrderObject();
         $order->items = $this->buildItemsObject();
         $order->orderSkus = $this->buildItemsObject();
@@ -33,7 +34,8 @@ class OrderObjectRetriever
     {
         /** @var OrderObject $orderObject */
         $orderObject = app(OrderObject::class);
-        $orderObject->setId($this->order->id)->setPartnerWiseOrderId($this->order->partner_wise_order_id)
+        $orderObject->setId($this->order->id)
+            ->setPartnerWiseOrderId($this->order->partner_wise_order_id)
             ->setPartnerId($this->order->partner_id)->setCustomerId($this->order->customer_id)
             ->setStatus($this->order->status)->setSalesChannelId($this->order->sales_channel_id)
             ->setInvoice($this->order->invoice)->setEmiMonth($this->order->emi_month)->setInterest($this->order->interest)

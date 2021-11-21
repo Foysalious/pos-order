@@ -17,9 +17,11 @@ use App\Services\Delivery\Methods;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\EMI\Calculations as EmiCalculation;
 use App\Services\Inventory\InventoryServerClient;
+use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
+use App\Services\OrderLog\Objects\Store\OrderObject;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\OrderSku\Creator as OrderSkuCreator;
@@ -95,7 +97,8 @@ class Creator
         protected StockRefillerForCanceledOrder $stockRefill,
         protected StockManageByChunk $stockManager,
         protected ApiServerClient $apiServerClient,
-        protected CustomerResolver $customerResolver
+        protected CustomerResolver $customerResolver,
+        private OrderLogCreator $orderLogCreator
 
     )
     {
@@ -379,6 +382,10 @@ class Creator
             }
             if ($this->paymentMethod == PaymentMethods::EMI) {
                 $this->validateEmiAndCalculateChargesForOrder($order, new PriceCalculation());
+                /** @var OrderObject $orderObject */
+                $orderObject = app(OrderObject::class);
+                $orderObject->setOrder($order);
+                $this->orderLogCreator->setOrderId($order->id)->setType(OrderLogTypes::EMI)->setChangedOrderData(json_encode($orderObject))->create();
             }
             if ($this->paidAmount > 0) {
                 $this->priceCalculation->setOrder($order->refresh());
@@ -398,6 +405,12 @@ class Creator
 
             if ($order) event(new OrderPlaceTransactionCompleted($order));
             $this->updateStock($this->orderSkuCreator->getStockDecreasingData());
+            if ($this->getDueAmount($order) > 0) {
+                /** @var OrderObject $orderObject */
+                $orderObject = app(OrderObject::class);
+                $orderObject->setOrder($order);
+                $this->orderLogCreator->setOrderId($order->id)->setType(OrderLogTypes::DUE_BILL)->setExistingOrderData(null)->setChangedOrderData(json_encode($orderObject))->create();
+            }
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();

@@ -341,7 +341,7 @@ class Updater
                 $this->validateEmiAndCalculateChargesForOrder($this->order->refresh());
             }
 
-//            if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
+            if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();

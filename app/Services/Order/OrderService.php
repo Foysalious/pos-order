@@ -37,6 +37,7 @@ use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\OrderLog\Objects\Retrieve\OrderObjectRetriever;
+use App\Services\OrderLog\OrderLogGenerator;
 use App\Services\OrderSms\WebstoreOrderSms;
 use App\Services\Webstore\SettingsSync\WebStoreSettingsSyncTypes;
 use Exception;
@@ -277,7 +278,7 @@ class OrderService extends BaseService
             ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
             ->update();
 
-//        dispatch(new WebStoreSettingsSyncJob($partner_id, WebStoreSettingsSyncTypes::Order, $orderDetails->id));
+        dispatch(new WebStoreSettingsSyncJob($partner_id, WebStoreSettingsSyncTypes::Order, $orderDetails->id));
         return $this->success();
     }
 
@@ -379,9 +380,11 @@ class OrderService extends BaseService
             foreach ($logs as $log) {
                 /** @var OrderObjectRetriever $orderObjectRetriever */
                 $orderObjectRetriever = app(OrderObjectRetriever::class);
-                $oldOrderObject = $orderObjectRetriever->setOrder($log->old_value)->get();
-                $newOrderObject = $orderObjectRetriever->setOrder($log->new_value)->get();
-                $log_details = $this->getLogDetails($log, $oldOrderObject, $newOrderObject);
+                $oldOrderObject = $log->old_value ? $orderObjectRetriever->setOrder($log->old_value)->get() : null;
+                $newOrderObject = $log->new_value ? $orderObjectRetriever->setOrder($log->new_value)->get() : null;
+                /** @var OrderLogGenerator $orderLogGenerator */
+                $orderLogGenerator = app(OrderLogGenerator::class);
+                $log_details = $orderLogGenerator->setLog($log)->setOldObject($oldOrderObject)->setNewObject($newOrderObject)->getLogDetails();
                 $final_logs->push($log_details);
             }
             return $this->success(ResponseMessages::SUCCESS, ['logs' => $final_logs->toArray()]);
@@ -409,12 +412,6 @@ class OrderService extends BaseService
         return $this->success(ResponseMessages::SUCCESS, ['filters' => $data]);
     }
 
-    private function isInvoiceDownloadable($log_type): bool
-    {
-        if ($log_type == 'status_update') return false;
-        return true;
-    }
-
     public function sendEmail($partner, $order)
     {
         $order = Order::where('partner_id', $partner)->find($order);
@@ -423,82 +420,5 @@ class OrderService extends BaseService
         if (!$order->customer->email) return $this->error('Email Not Found', 404);
         dispatch(new OrderEmail($order));
         return $this->success();
-    }
-
-    private function getLogDetails($log, $old_value, $new_value)
-    {
-        /** @var PriceCalculation $priceCalculation */
-        $priceCalculation = app(PriceCalculation::class);
-        $old_discounted_price = $priceCalculation->setOrder($old_value)->getDiscountedPrice();
-        $new_discounted_price = $priceCalculation->setOrder($new_value)->getDiscountedPrice();
-
-        if ($log->type == OrderLogTypes::DUE_BILL) {
-            return [
-                'id' => $log->id,
-                'log_type' => OrderLogTypes::DUE_BILL,
-                'log_type_show_name' => ['bn' => 'বাকি বিল', 'en' => 'Due Bill'],
-                'old_value' => $old_discounted_price,
-                'new_value' => $new_discounted_price,
-                'created_at' => convertTimezone($log->created_at)?->format('Y-m-d H:i:s'),
-                'created_by_name' => $log->created_by_name,
-                'is_invoice_downloadable' => $this->isInvoiceDownloadable('due_bill')
-            ];
-        } elseif ($log->type == OrderLogTypes::EMI) {
-            return [
-                'id' => $log->id,
-                'log_type' => OrderLogTypes::EMI,
-                'log_type_show_name' => ['bn' => 'কিস্তি - '. $new_value->emi_month .'মাস', 'en' => 'Emi - ' . $new_value->emi_month .'Months'],
-                'old_value' => null,
-                'new_value' => $new_discounted_price,
-                'created_at' => convertTimezone($log->created_at)?->format('Y-m-d H:i:s'),
-                'created_by_name' => $log->created_by_name,
-                'is_invoice_downloadable' => $this->isInvoiceDownloadable(OrderLogTypes::EMI)
-            ];
-        } elseif ($log->type == OrderLogTypes::PAYMENTS) {
-            $payment = $new_value->payments->latest();
-            return [
-                'id' => $log->id,
-                'log_type' => OrderLogTypes::EMI,
-                'log_type_show_name' => [
-                    'bn' => $payment->method==PaymentMethods::CASH_ON_DELIVERY ? 'নগদ  গ্রহণ' : 'অনলাইন গ্রহন',
-                    'en' => $payment->method==PaymentMethods::CASH_ON_DELIVERY ? 'Cash Collection' : 'Online Collection'
-                ],
-                'old_value' => null,
-                'new_value' => $payment->amount,
-                'created_at' => convertTimezone($log->created_at)?->format('Y-m-d H:i:s'),
-                'created_by_name' => $log->created_by_name,
-                'is_invoice_downloadable' => $this->isInvoiceDownloadable(OrderLogTypes::PAYMENTS)
-            ];
-        } elseif ($log->type == OrderLogTypes::PRODUCTS_AND_PRICES) {
-            return [
-                'id' => $log->id,
-                'log_type' => 'payable',
-                'log_type_show_name' => [
-                    'bn' => $old_discounted_price <  $new_discounted_price ? 'অর্ডার আপডেট - দাম বেড়েছে' : 'অর্ডার আপডেট - দাম কমেছে',
-                    'en' => $old_discounted_price <  $new_discounted_price ? 'Order Update - Price Increased' : 'Order Update - Price Decreased'
-                ],
-                'old_value' => null,
-                'new_value' => $old_discounted_price <  $new_discounted_price ? $new_discounted_price - $old_discounted_price : $old_discounted_price - $new_discounted_price,
-                'created_at' => convertTimezone($log->created_at)?->format('Y-m-d H:i:s'),
-                'created_by_name' => $log->created_by_name,
-                'is_invoice_downloadable' => $this->isInvoiceDownloadable('payable')
-            ];
-        } elseif ($log->type == OrderLogTypes::ORDER_STATUS) {
-            return [
-                'id' => $log->id,
-                'log_type' => 'status_update',
-                'log_type_show_name' => [
-                    'bn' => $old_value->status . ' থেকে '  . $new_value->status . ' হয়েছে',
-                    'en' => $old_value->status . ' To ' . $new_value->status
-                ],
-                'old_value' => $old_value->status,
-                'new_value' =>$new_value->status,
-                'created_at' => convertTimezone($log->created_at)?->format('Y-m-d H:i:s'),
-                'created_by_name' => $log->created_by_name,
-                'is_invoice_downloadable' => $this->isInvoiceDownloadable('status_update')
-            ];
-        } else {
-            return null;
-        }
     }
 }
