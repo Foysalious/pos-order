@@ -9,10 +9,12 @@ use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Models\Order;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
+use App\Services\Delivery\Methods;
 use App\Services\Discount\Handler;
 use App\Services\EMI\Calculations as EmiCalculation;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
+use App\Services\Order\Constants\Statuses;
 use App\Services\Order\Refund\AddProductInOrder;
 use App\Services\Order\Refund\DeleteProductFromOrder;
 use App\Services\Order\Refund\OrderUpdateFactory;
@@ -339,6 +341,8 @@ class Updater
             if ($this->paymentMethod == PaymentMethods::EMI) {
                 $this->validateEmiAndCalculateChargesForOrder($order->refresh());
             }
+            if($this->order->status == Statuses::PENDING || $this->order->status == Statuses::PROCESSING)
+                $this->calculateDeliveryChargeAndSave($order);
 
             if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
             DB::commit();
@@ -346,6 +350,17 @@ class Updater
             DB::rollback();
             throw $e;
         }
+    }
+
+    /**
+     * @param Order $order
+     * @return bool
+     */
+    private function calculateDeliveryChargeAndSave(Order $order): bool
+    {
+        /** @var PriceCalculation $priceCalculation */
+        $priceCalculation  = app(PriceCalculation::class);
+        return $priceCalculation->setOrder($order)->calculateDeliveryChargeAndSave();
     }
 
     public function makeData(): array
