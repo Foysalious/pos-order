@@ -21,6 +21,7 @@ class InvoiceService extends BaseService
     use ModificationFields;
 
     private $posOrder;
+    private $order;
 
     public function __construct(protected ApiServerClient $client, private Updater $updater, private OrderRepositoryInterface $orderRepository)
     {
