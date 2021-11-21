@@ -6,6 +6,7 @@ use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\PriceCalculation;
 use App\Services\OrderLog\Objects\Retrieve\OrderObject;
+use App\Services\Transaction\Constants\TransactionTypes;
 
 class OrderLogGenerator
 {
@@ -73,13 +74,25 @@ class OrderLogGenerator
                 'is_invoice_downloadable' => $this->isInvoiceDownloadable(OrderLogTypes::EMI)
             ];
         } elseif ($this->log->type == OrderLogTypes::PAYMENTS) {
-            $payment = $this->newObject->payments->sortByDesc('created_at')->first();
+            $payment = $this->newObject->payments->last();
+            if($payment->transaction_type==TransactionTypes::DEBIT) {
+                $log_type_show_name_bn = 'ফেরত';
+                $log_type_show_name_en = 'Refund';
+            } else {
+                if($payment->method==PaymentMethods::CASH_ON_DELIVERY || $payment->method==PaymentMethods::QR_CODE) {
+                    $log_type_show_name_bn = 'নগদ  গ্রহণ';
+                    $log_type_show_name_en = 'Cash Collection';
+                } else {
+                    $log_type_show_name_bn = 'অনলাইন গ্রহন';
+                    $log_type_show_name_en = 'Online Collection';
+                }
+            }
             return [
                 'id' => $this->log->id,
-                'log_type' => OrderLogTypes::EMI,
+                'log_type' => OrderLogTypes::PAYMENTS,
                 'log_type_show_name' => [
-                    'bn' => $payment->method==PaymentMethods::CASH_ON_DELIVERY ? 'নগদ  গ্রহণ' : 'অনলাইন গ্রহন',
-                    'en' => $payment->method==PaymentMethods::CASH_ON_DELIVERY ? 'Cash Collection' : 'Online Collection'
+                    'bn' => $log_type_show_name_bn,
+                    'en' => $log_type_show_name_en
                 ],
                 'old_value' => null,
                 'new_value' => $payment->amount,
