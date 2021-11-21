@@ -395,13 +395,16 @@ class OrderService extends BaseService
 
     public function generateLogInvoice(int$partner_id, int $order_id, int $log_id): JsonResponse
     {
+        /** @var OrderLog $log */
         $log = $this->orderLogRepository->where('order_id', $order_id)->where('id', $log_id)->first();
+        if($log->invoice) return $this->success(ResponseMessages::SUCCESS, ['link' => $log->invoice]);
         /** @var OrderObjectRetriever $orderObjectRetriever */
         $orderObjectRetriever = app(OrderObjectRetriever::class);
         $newOrderObject = $orderObjectRetriever->setOrder($log->new_value)->get();
         /** @var InvoiceService $invoiceService */
         $invoiceService = app(InvoiceService::class);
         $link = $invoiceService->setOrder($newOrderObject)->generateInvoice();
+        $this->orderLogRepository->update($log, ['invoice' => $link]);
         return $this->success(ResponseMessages::SUCCESS, ['link' => $link]);
     }
 
