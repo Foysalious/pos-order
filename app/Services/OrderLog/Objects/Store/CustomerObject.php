@@ -20,7 +20,6 @@ class CustomerObject implements JsonSerializable
 
     public function jsonSerialize()
     {
-        if(!$this->customer) return null;
         return [
             'id' => $this->customer->id,
             'name' => $this->customer->name,
