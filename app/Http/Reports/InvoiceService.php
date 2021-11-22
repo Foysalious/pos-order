@@ -86,7 +86,6 @@ class InvoiceService extends BaseService
                 'address' => $order->delivery_address
             ];
         }
-       //dd($price_calculator->getPaid(),$price_calculator->getDue(),$price_calculator->getVat());
         $invoice_name = 'pos_order_invoice_' . $order->id;
         $link = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
         if ($order instanceof OrderObject) return $link;
