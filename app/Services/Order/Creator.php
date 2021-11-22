@@ -528,9 +528,9 @@ class Creator
      */
     private function calculateDeliveryChargeAndSave(Order $order): bool
     {
-        /** @var PriceCalculation $priceCalculation */
-        $priceCalculation  = app(PriceCalculation::class);
-        return $priceCalculation->setOrder($order)->calculateDeliveryChargeAndSave();
+        /** @var DeliveryPriceCalculation $deliveryPriceCalculation */
+        $deliveryPriceCalculation  = app(DeliveryPriceCalculation::class);
+        return $deliveryPriceCalculation->setOrder($order)->calculateDeliveryChargeAndSave();
     }
 }
 

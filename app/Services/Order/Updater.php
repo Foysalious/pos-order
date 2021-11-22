@@ -343,7 +343,7 @@ class Updater
                 $this->validateEmiAndCalculateChargesForOrder($this->order->refresh());
             }
             if($this->order->status == Statuses::PENDING || $this->order->status == Statuses::PROCESSING)
-                $this->calculateDeliveryChargeAndSave($order);
+                $this->calculateDeliveryChargeAndSave($this->order);
 
             if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
             DB::commit();
@@ -359,9 +359,9 @@ class Updater
      */
     private function calculateDeliveryChargeAndSave(Order $order): bool
     {
-        /** @var PriceCalculation $priceCalculation */
-        $priceCalculation  = app(PriceCalculation::class);
-        return $priceCalculation->setOrder($order)->calculateDeliveryChargeAndSave();
+        /** @var DeliveryPriceCalculation $deliveryPriceCalculation */
+        $deliveryPriceCalculation  = app(DeliveryPriceCalculation::class);
+        return $deliveryPriceCalculation->setOrder($order)->calculateDeliveryChargeAndSave();
     }
 
     public function makeData(): array
