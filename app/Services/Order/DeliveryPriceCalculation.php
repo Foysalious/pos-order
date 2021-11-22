@@ -52,17 +52,17 @@ class DeliveryPriceCalculation
     {
         $this->setDeliveryMethod($this->getDeliveryMethod());
 
-        if ($this->deliveryMethod == Methods::OWN_DELIVERY && $this->order->deliveryDistrict && $this->order->deliveryThana)
+        if ($this->deliveryMethod == Methods::OWN_DELIVERY && $this->order->delivery_district && $this->order->delivery_thana)
         {
             $this->order->delivery_charge = $this->order->partner->delivery_charge;
             return $this->order->save();
         }
-        if ($this->order->deliveryDistrict && $this->order->deliveryThana)
+        if ($this->order->delivery_district && $this->order->delivery_thana)
         {
             $data = [
                 'weight' => $this->order->getWeight(),
-                'delivery_district' => $this->order->deliveryDistrict,
-                'delivery_thana' => $this->order->deliveryThana,
+                'delivery_district' => $this->order->delivery_district,
+                'delivery_thana' => $this->order->delivery_thana,
                 'partner_id' => $this->order->partner->id,
                 'cod_amount' => $this->getDue()
             ];
