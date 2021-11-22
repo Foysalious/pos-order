@@ -204,7 +204,7 @@ class OrderController extends Controller
      * @param $order_id
      * @return JsonResponse
      */
-    public function show($partner_id, $order_id)
+    public function show($partner_id, $order_id): JsonResponse
     {
         return $this->orderService->getOrderDetails($partner_id, $order_id);
     }
@@ -415,9 +415,9 @@ class OrderController extends Controller
         return $this->orderService->updateOrderStatusByIpn($partner_id, $request);
     }
 
-    public function logs(int $order_id)
+    public function logs(int $partner_id, int $order_id)
     {
-        return $this->orderService->logs($order_id);
+        return $this->orderService->logs($partner_id, $order_id);
     }
 
     /**
@@ -473,9 +473,9 @@ class OrderController extends Controller
         return $this->orderService->getTrendingProducts($partner_id);
     }
 
-    public function generateLogInvoice(int $order, int $log): JsonResponse
+    public function generateLogInvoice(int $partner_id, int $order, int $log): JsonResponse
     {
-        return $this->orderService->generateLogInvoice($order, $log);
+        return $this->orderService->generateLogInvoice($partner_id, $order, $log);
     }
 
     /**

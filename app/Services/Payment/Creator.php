@@ -3,8 +3,11 @@
 
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\PaymentRepositoryInterface;
+use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
+use App\Services\Order\OrderLogCreator;
 use App\Services\Order\PriceCalculation;
+use App\Services\OrderLog\Objects\Store\OrderObject;
 use App\Traits\ModificationFields;
 use Carbon\Carbon;
 
@@ -24,7 +27,10 @@ class Creator
      * Creator constructor.
      * @param PaymentRepositoryInterface $paymentRepositoryInterface
      */
-    public function __construct(PaymentRepositoryInterface $paymentRepositoryInterface, protected OrderRepositoryInterface $orderRepository)
+    public function __construct(
+        PaymentRepositoryInterface $paymentRepositoryInterface,
+        protected OrderRepositoryInterface $orderRepository,
+        private OrderLogCreator $orderLogCreator)
     {
         $this->paymentRepositoryInterface = $paymentRepositoryInterface;
         $this->method = PaymentMethods::CASH_ON_DELIVERY;
@@ -102,7 +108,17 @@ class Creator
 
     public function create()
     {
+        $order = $this->orderRepository->find($this->orderId);
+        $previous_order = $this->setExistingOrder($order);
         $payment = $this->paymentRepositoryInterface->create($this->makeCreateData());
+        /** @var OrderObject $oldOrderObject */
+        $oldOrderObject = app(OrderObject::class);
+        $oldOrderObject->setOrder($previous_order);
+        /** @var OrderObject $oldOrderObject */
+        $newOrderObject = app(OrderObject::class);
+        $newOrderObject->setOrder($order->refresh());
+        $this->orderLogCreator->setOrderId($order->id)->setType(OrderLogTypes::PAYMENTS)->setExistingOrderData(json_encode($oldOrderObject))
+            ->setChangedOrderData(json_encode($newOrderObject))->create();
         $order = $this->orderRepository->find($this->orderId);
         /** @var PriceCalculation $priceCalculation */
         $priceCalculation = app(PriceCalculation::class);
@@ -123,6 +139,17 @@ class Creator
         $data['emi_month'] = $this->emiMonth;
         $data['interest'] = $this->interest;
         return $data + $this->modificationFields(true,false);
+    }
+
+    private function setExistingOrder($order)
+    {
+        $previous_order = clone $order;
+        $order = $previous_order;
+        $order->items = $previous_order->items;
+        $order->customer = $previous_order->customer;
+        $order->payments = $previous_order->payments;
+        $order->discounts = $previous_order->discounts;
+        return $previous_order;
     }
 
 }
