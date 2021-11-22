@@ -88,8 +88,9 @@ class SalesReport
             $pos_order_created_at_formatter = $is_calculating_for_month ? intval($order->created_at->format('d')) : $order->created_at->format('D');
             $day = $order->created_at->format('D');
             $date = $order->created_at->format('d M');
-            if (!array_key_exists($pos_order_created_at_formatter, $this->data))
+            if (!array_key_exists($pos_order_created_at_formatter, $this->data)){
                 $this->data[$pos_order_created_at_formatter] = ["amount" => 0, "value" => 0, "date" => null, "day" => null];
+            }
             $this->data[$pos_order_created_at_formatter]['amount'] = $this->data[$pos_order_created_at_formatter]['amount'] + $order_calculator->getDiscountedPrice();
             $this->data[$pos_order_created_at_formatter]['value'] = $this->data[$pos_order_created_at_formatter]['value'] + 1;
             $this->data[$pos_order_created_at_formatter]['date'] = $date;
