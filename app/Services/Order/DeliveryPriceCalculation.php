@@ -45,12 +45,13 @@ class DeliveryPriceCalculation
     {
         /** @var ApiServerClient $apiServerClient */
         $apiServerClient = app(ApiServerClient::class);
-        return $apiServerClient->get('v1/pos/partners/'. $this->order->partner->id)['partner']['delivery_method'];
+        return $apiServerClient->get('pos/v1/partners/'. $this->order->partner->id)['partner']['delivery_method'];
     }
 
     public function calculateDeliveryChargeAndSave(): bool
     {
         $this->setDeliveryMethod($this->getDeliveryMethod());
+
         if ($this->deliveryMethod == Methods::OWN_DELIVERY && $this->order->deliveryDistrict && $this->order->deliveryThana)
         {
             $this->order->delivery_charge = $this->order->partner->delivery_charge;
