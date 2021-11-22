@@ -275,7 +275,7 @@ class PriceCalculation
     {
         /** @var ApiServerClient $apiServerClient */
         $apiServerClient = app(ApiServerClient::class);
-        return $apiServerClient->get('v1/pos/partners/'. $this->partnerId)['partner']['delivery_method'];
+        return $apiServerClient->get('v1/pos/partners/'. $this->order->partner->id)['partner']['delivery_method'];
     }
 
 }
