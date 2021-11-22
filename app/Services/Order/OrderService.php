@@ -375,7 +375,7 @@ class OrderService extends BaseService
     public function logs(int $partner_id, int $order_id)
     {
         try {
-            $logs = $this->orderLogRepository->where('order_id', $order_id)->get();
+            $logs = $this->orderLogRepository->where('order_id', $order_id)->orderBy('id', 'desc')->get();
             $final_logs = collect();
             foreach ($logs as $log) {
                 /** @var OrderObjectRetriever $orderObjectRetriever */
