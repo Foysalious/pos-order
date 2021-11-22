@@ -209,8 +209,7 @@ class OrderService extends BaseService
 
     public function getOrderInfo($partner_id, $order_id)
     {
-        $order = $this->orderRepository->getOrderDetailsByPartner($partner_id, $order_id);
-        return $order;
+        return $this->orderRepository->getOrderDetailsByPartner($partner_id, $order_id);
     }
 
     public function getWebStoreOrderDetails(int $partner_id, int $order_id, string $customer_id): JsonResponse
