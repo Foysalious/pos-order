@@ -362,12 +362,13 @@ class OrderController extends Controller
 
     /**
      * * @OA\Get(
-     *      path="/api/v1/orders/{order_id}/generate-invoice",
+     *      path="/api/v1/partners/{partner}/orders/{order_id}/generate-invoice",
      *      operationId="getOrderInvoice",
      *      tags={"ORDER API"},
      *      summary="Get an order invoice",
      *      description="Return invoice",
      *      @OA\Parameter(name="order_id", description="order id", required=true, in="path", @OA\Schema(type="integer")),
+     *      @OA\Parameter(name="partner", description="partner id", required=true, in="path", @OA\Schema(type="integer")),
      *      @OA\Response(response=200, description="Successful operation",
      *          @OA\JsonContent(
      *          type="object",
