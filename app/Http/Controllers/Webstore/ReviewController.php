@@ -18,7 +18,7 @@ class ReviewController extends Controller
     {
         $rating = $request->rating;
         $orderBy = $request->order_by;
-        $product_ids = $request->products;
+        $product_ids = json_decode($request->products,true);
         return $this->reviewService->getProductReviews($request, $rating, $orderBy, $product_ids);
     }
 
