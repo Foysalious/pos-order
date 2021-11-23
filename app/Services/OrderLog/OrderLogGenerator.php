@@ -110,7 +110,7 @@ class OrderLogGenerator
                     'en' => $old_discounted_price <  $new_discounted_price ? 'Order Update - Price Increased' : 'Order Update - Price Decreased'
                 ],
                 'old_value' => null,
-                'new_value' => $old_discounted_price <  $new_discounted_price ? $new_discounted_price - $old_discounted_price : $old_discounted_price - $new_discounted_price,
+                'new_value' => $old_discounted_price <  $new_discounted_price ? round($new_discounted_price - $old_discounted_price) : round($old_discounted_price - $new_discounted_price),
                 'created_at' => convertTimezone(Carbon::parse($this->log->created_at))?->format('Y-m-d H:i:s'),
                 'created_by_name' => $this->log->created_by_name,
                 'is_invoice_downloadable' => $this->isInvoiceDownloadable('payable')
