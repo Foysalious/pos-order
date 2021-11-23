@@ -411,11 +411,11 @@
             <td>
                 {{$skus->name}}
                 <hr style="width:50%;text-align:left;margin-left:0">
-                @if(isset($skus['details']))
+                @if(isset($skus->details))
                     @php
-                        $sku_details= json_decode($skus['details'],true);
-                        if (isset($sku_details['name'])){
-                        $sku_name=$sku_details['name'];
+                        $sku_details= json_decode($skus->details,true);
+                        if (isset($sku_details->name)){
+                        $sku_name=$sku_details->name;
                         }
                         else{
                             $sku_name=null;
