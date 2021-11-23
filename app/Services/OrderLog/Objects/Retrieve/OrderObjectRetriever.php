@@ -21,11 +21,11 @@ class OrderObjectRetriever
     {
         if(!$this->order) return null;
         $order = $this->buildOrderObject();
-        $order->items = $this->buildItemsObject();
-        $order->orderSkus = $this->buildItemsObject();
-        $order->customer = $this->buildCustomerObject();
-        $order->payments = $this->buildPaymentsObject();
-        $order->discounts = $this->buildDiscountsObject();
+        $order->items = $this->order->items ? $this->buildItemsObject() : collect();
+        $order->orderSkus = $this->order->items ? $this->buildItemsObject() : collect();
+        $order->customer = $this->order->customer ? $this->buildCustomerObject() : null;
+        $order->payments = $this->order->payments ? $this->buildPaymentsObject() : collect();
+        $order->discounts = $this->order->discounts ? $this->buildDiscountsObject() : collect();
         return $order;
 
     }
