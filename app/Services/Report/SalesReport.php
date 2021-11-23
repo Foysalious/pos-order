@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\App;
 
 class SalesReport
 {
-    const MONTH_BASE = "month";
     protected string $from;
     protected string $to;
     protected int $partner_id;
@@ -90,9 +89,5 @@ class SalesReport
         $data['sales_stat_breakdown'] = $time_duration;
         return $data;
     }
-
-
-
-
 
 }
