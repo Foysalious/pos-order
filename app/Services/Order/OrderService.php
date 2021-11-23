@@ -184,7 +184,12 @@ class OrderService extends BaseService
     public function getTrendingProducts(int $partner_id)
     {
         $trending = $this->orderSkusRepositoryInterface->getTrendingProducts($partner_id);
-        return $trending->count() > 0 ? $this->getSkuDetailsForWebstore($partner_id, $trending) : collect();
+        $products = $this->getSkuDetailsForWebstore($partner_id, $trending);
+        if ($trending->count() > 0) {
+
+            if (empty($products->getData()->data)) return $this->error('no product Found');
+            else return $products;
+        } else return $this->error('no product Found');
     }
 
     public function getOrderInvoice(int $partner_id, int $order_id): JsonResponse
