@@ -257,7 +257,7 @@ class OrderService extends BaseService
      */
     public function update(OrderUpdateRequest $orderUpdateRequest, $partner_id, $order_id): JsonResponse
     {
-        $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id)->load(['items', 'customer', 'payments', 'discounts']);
         if (!$orderDetails) return $this->error("You're not authorized to access this order", 403);
         $this->updater->setPartnerId($partner_id)
             ->setOrderId($order_id)

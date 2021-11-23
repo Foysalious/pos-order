@@ -417,7 +417,6 @@ class Updater
 
     private function setPreviousOrder($order)
     {
-        $order->load(['items', 'customer', 'payments', 'discounts']);
         /** @var OrderObject $orderObject */
         $orderObject = app(OrderObject::class);
         $orderObject->setOrder($order);
