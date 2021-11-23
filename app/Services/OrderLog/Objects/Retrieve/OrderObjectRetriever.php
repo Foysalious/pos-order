@@ -63,7 +63,7 @@ class OrderObjectRetriever
                 ->setWarranty($item->warranty)->setWarrantyUnit($item->warranty_unit)->setNote($item->note)
                 ->setProductImage($item->product_image)->setCreatedByName($item->created_by_name)
                 ->setUpdatedByName($item->updated_by_name)->setCreatedAt($item->created_at)->setUpdatedAt($item->updated_at)
-                ->setDeletedAt($item->deleted_at);
+                ->setDeletedAt($item->deleted_at)->setDiscount($item->discount);
             $items->push($itemObject);
         }
         return $items;
