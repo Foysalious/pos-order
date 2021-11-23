@@ -14,12 +14,11 @@ class ReviewController extends Controller
     {
         $this->reviewService = $reviewService;
     }
-    public function index(Request $request)
+    public function index(Request $request, $product_id)
     {
         $rating = $request->rating;
         $orderBy = $request->order_by;
-        $product_ids = json_decode($request->products,true);
-        return $this->reviewService->getProductReviews($request, $rating, $orderBy, $product_ids);
+        return $this->reviewService->getProductReviews($request, $rating, $orderBy, $product_id);
     }
 
     public function getReviewsByProductIds(Request $request)
