@@ -2,6 +2,7 @@
 
 use App\Constants\ResponseMessages;
 use App\Http\Resources\CustomerReviewResource;
+use App\Http\Resources\Webstore\AverageRatingAndRatingCountResource;
 use App\Http\Resources\Webstore\ReviewResource;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;
@@ -59,6 +60,14 @@ class ReviewService extends BaseService
         $reviews = ReviewResource::collection($reviews);
         $review_statistics = $this->reviewStatistics($product_id);
         return $this->success(ResponseMessages::SUCCESS, ['reviews' => $reviews, 'rating_statistics' => $review_statistics]);
+    }
+
+    public function getReviewsByProductIds(array $productIds): object
+    {
+        $reviews = $this->reviewRepositoryInterface->getReviewsByProductIds($productIds);
+        if (count($reviews) == 0) return $this->error('এই প্রোডাক্ট এর জন্য কোন রিভিউ পাওয়া যায় নি', 404);
+        $reviews = AverageRatingAndRatingCountResource::collection($reviews);
+        return $this->success(ResponseMessages::SUCCESS, ['reviews' => $reviews]);
     }
 
     public function reviewStatistics($productId): array

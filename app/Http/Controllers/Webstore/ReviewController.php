@@ -21,6 +21,12 @@ class ReviewController extends Controller
         return $this->reviewService->getProductReviews($request, $rating, $orderBy, $product_id);
     }
 
+    public function getReviewsByProductIds(Request $request)
+    {
+        $productIds = !is_array($request->product_ids) ? json_decode($request->product_ids,true) : $request->product_ids ;
+        return $this->reviewService->getReviewsByProductIds($productIds);
+    }
+
     public function getCustomerReviewList(int $partner_id,string $customer_id, Request $request)
     {
         $request->validate([

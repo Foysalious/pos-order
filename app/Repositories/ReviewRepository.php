@@ -99,6 +99,10 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         return $query->orderBy('created_at', $orderBy)->offset($offset)->limit($limit)->get();
     }
 
+    public function getReviewsByProductIds(array $productIds)
+    {
+        return $this->model->whereIn('product_id', $productIds)->groupBy('product_id')->select('product_id',DB::raw('count(*) as rating_count'),DB::raw('avg(rating) as avg_rating'))->get();
+    }
     public function getRatingStatistics($productId)
     {
         return $this->model->where('product_id', $productId)->groupBy('rating')->select('rating', DB::raw('count(*) as count'))->pluck('count', 'rating')->all();
