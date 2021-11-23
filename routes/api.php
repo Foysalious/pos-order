@@ -36,6 +36,7 @@ Route::group(['middleware' => 'ip.whitelist'], function () {
             Route::delete('/{customer_id}', [CustomerController::class, 'destroy']);
         });
 
+        Route::get('partners/{partner_id}/sales', [ReportController::class, 'getSalesReport']);
         Route::get('partners/{partner_id}/orders/{order_id}/generate-invoice', [OrderController::class, 'getOrderinvoice']);
         Route::post('partners/{partner_id}/orders/{order}/send-email', [OrderController::class, 'sendEmail']);
         Route::get('partners/{partner}/trending-products', [OrderController::class, 'getTrendingProducts']);
@@ -66,7 +67,7 @@ Route::group(['middleware' => 'ip.whitelist'], function () {
         Route::get('products/{product}/reviews', [ReviewController::class, 'index']);
         Route::get('/products-reviews', [ReviewController::class, 'getReviewsByProductIds']);
         Route::get('/partners/{partner_id}', [PartnerController::class, 'show']);
-        Route::put('partners/{partner_id}', [DataMigrationController::class, 'updatePartnersTable']);
+        Route::put('partners/{partner_id}', [PartnerController::class, 'updatePartnersTable']);
         Route::get('/partners/{partner_id}/customers/{customer_id}/purchase-amount-promo-usage', [CustomerController::class, 'getPurchaseAmountAndPromoUsed']);
         Route::get('/partners/{partner_id}/customers/{customer_id}/orders', [CustomerController::class, 'getOrdersByDateWise']);
         Route::get('partners/{partner_id}/reports/product-wise', [ReportController::class, 'getProductWise']);

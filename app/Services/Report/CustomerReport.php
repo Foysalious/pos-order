@@ -10,14 +10,14 @@ use Illuminate\Support\Facades\App;
 
 class CustomerReport
 {
+    const MONTH_BASE = "month";
     protected string $from;
     protected string $to;
     protected int $partner_id;
 
-    public function __construct(
-        protected OrderRepositoryInterface $orderRepository,
-    )
-    {}
+    public function __construct(protected OrderRepositoryInterface $orderRepository,)
+    {
+    }
 
     /**
      * @param int $partner_id
@@ -28,6 +28,7 @@ class CustomerReport
         $this->partner_id = $partner_id;
         return $this;
     }
+
     /**
      * @param string $from
      * @return CustomerReport
@@ -49,12 +50,10 @@ class CustomerReport
     }
 
 
-
-
     public function create()
     {
         $orders = $this->orderRepository->where('partner_id', $this->partner_id)
-            ->with(['orderSkus','payments','discounts','customer'])
+            ->with(['orderSkus', 'payments', 'discounts', 'customer'])
             ->whereNotNull('customer_id')
             ->whereBetween('created_at', [$this->from, $this->to])
             ->get();
@@ -83,14 +82,13 @@ class CustomerReport
 
     }
 
-
     private function calculateSkusUnderProduct($sku_report, Collection $sku_details)
     {
         $data = [];
         foreach ($sku_report as $each) {
             $product = $sku_details->where('id', $each->service_id)->pluck('product')->first();
             $id = $product['id'] ?? $each->service_id;
-            if(!isset($data[$id])){
+            if (!isset($data[$id])) {
                 $data[$id]['service_id'] = $product['id'];
                 $data[$id]['service_name'] = $product['name'];
                 $data[$id]['total_quantity'] = $each->total_quantity;

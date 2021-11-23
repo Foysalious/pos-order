@@ -32,6 +32,7 @@ class PartnerService extends  BaseService
                 'printer_model' => $request->printer_model ?? null,
                 'qr_code_image'  => $request->qr_code_image ?? null,
                 'qr_code_account_type'  => $request->qr_code_account_type ?? null,
+                'delivery_charge' => $request->delivery_charge ?? null,
             ]);
         if(is_null($partner)) {
             $this->partnerCreator->setPartnerDto($partner_dto)->create();

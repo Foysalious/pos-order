@@ -49,17 +49,17 @@ class ReviewService extends BaseService
      * @param $request
      * @param int $rating
      * @param string $orderBy
-     * @param int $product_id
+     * @param array $product_id
      * @return object
      */
-    public function getProductReviews($request, $rating, $orderBy, int $product_id): object
+    public function getProductReviews($request, $rating, $orderBy, array $product_ids): object
     {
         list($offset, $limit) = calculatePagination($request);
-        $reviews = $this->reviewRepositoryInterface->getReviews($offset, $limit, $product_id, $rating, $orderBy);
+        $reviews = $this->reviewRepositoryInterface->getReviews($offset, $limit, $product_ids, $rating, $orderBy);
         if (count($reviews) == 0) return $this->error('এই প্রোডাক্ট এর জন্য কোন রিভিউ পাওয়া যায় নি', 404);
         $reviews = ReviewResource::collection($reviews);
-        $review_statistics = $this->reviewStatistics($product_id);
-        return $this->success(ResponseMessages::SUCCESS, ['reviews' => $reviews, 'rating_statistics' => $review_statistics]);
+        //$review_statistics = $this->reviewStatistics($product_id);
+        return $this->success(ResponseMessages::SUCCESS, ['reviews' => $reviews]);
     }
 
     public function getReviewsByProductIds(array $productIds): object

@@ -7,13 +7,11 @@ use App\Http\Requests\ProductWiseReportRequest;
 use App\Services\BaseService;
 use Illuminate\Http\JsonResponse;
 
-class ReportService extends  BaseService
+class ReportService extends BaseService
 {
-    public function __construct(
-        protected ProductReport $productReport,
-        protected CustomerReport $customerReport
-    )
-    {}
+    public function __construct(protected ProductReport $productReport, protected CustomerReport $customerReport, protected SalesReport $salesReport)
+    {
+    }
 
     public function getProductReport(int $partner_id, ProductWiseReportRequest $request): JsonResponse
     {
@@ -24,7 +22,7 @@ class ReportService extends  BaseService
             ->setOrder($request->order ?? 'ASC')
             ->create();
 
-        return $this->success(ResponseMessages::SUCCESS, [ 'data' => $report ]);
+        return $this->success(ResponseMessages::SUCCESS, ['data' => $report]);
     }
 
     public function getCustomerReport(int $partner_id, CustomerWiseReportRequest $request)
@@ -34,6 +32,15 @@ class ReportService extends  BaseService
             ->setTo($request->to)
             ->create();
 
-        return $this->success(ResponseMessages::SUCCESS, [ 'data' => $report ]);
+        return $this->success(ResponseMessages::SUCCESS, ['data' => $report]);
+    }
+
+    public function getSalesReport(int $partner_id, CustomerWiseReportRequest $request)
+    {
+        $report = $this->salesReport->setPartnerId($partner_id)
+            ->setFrom($request->from)
+            ->setTo($request->to)
+            ->getSalesReport();
+        return $this->success(ResponseMessages::SUCCESS, ['data' => $report]);
     }
 }

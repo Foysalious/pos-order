@@ -42,6 +42,15 @@ class ItemObject implements JsonSerializable
             'created_at' => $this->orderSku->created_at,
             'updated_at' => $this->orderSku->updated_at,
             'deleted_at' => $this->orderSku->deleted_at,
+            'discount' => $this->orderSku->discount ? $this->getDiscount() : null
         ];
+    }
+
+    private function getDiscount(): DiscountObject
+    {
+        /** @var DiscountObject $discountObject */
+        $discountObject = app(DiscountObject::class);
+        $discountObject->setDiscount($this->orderSku->discount);
+        return $discountObject;
     }
 }
