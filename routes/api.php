@@ -64,8 +64,8 @@ Route::group(['middleware' => 'ip.whitelist'], function () {
         Route::apiResource('payments', PaymentController::class);
         Route::post('payment/delete', [PaymentController::class, 'deletePayment']);
         Route::post('customers/{customer}/orders/{order}/review', [ReviewController::class, 'store']);
-        //Route::get('products/{product}/reviews', [ReviewController::class, 'index']);
-        Route::get('products/reviews', [ReviewController::class, 'index']);
+        Route::get('products/{product}/reviews', [ReviewController::class, 'index']);
+        Route::get('/products-reviews', [ReviewController::class, 'getReviewsByProductIds']);
         Route::get('/partners/{partner_id}', [PartnerController::class, 'show']);
         Route::put('partners/{partner_id}', [PartnerController::class, 'updatePartnersTable']);
         Route::get('/partners/{partner_id}/customers/{customer_id}/purchase-amount-promo-usage', [CustomerController::class, 'getPurchaseAmountAndPromoUsed']);
