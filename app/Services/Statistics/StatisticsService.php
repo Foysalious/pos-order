@@ -18,7 +18,6 @@ class StatisticsService extends BaseService
     public function index(StatisticsRequest $request, int $partnerId)
     {
         $timeFrame = makeTimeFrame($request);
-//        $statuses = new stdClass();
         $statuses = $this->getOrderStatusConstants();
 
         $this->orderRepository->getOrderStatusStatByPartner($partnerId, [SalesChannelIds::WEBSTORE])->each(function ($status) use ($statuses) {
