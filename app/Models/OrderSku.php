@@ -1,6 +1,6 @@
 <?php namespace App\Models;
 
-use App\Http\Resources\ProductIdAndName;
+use App\Http\Resources\ProductRatingReview;
 use App\Services\OrderSku\OrderSkuTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -27,10 +27,10 @@ class OrderSku extends BaseModel
         return $this->hasOne(OrderDiscount::class, 'type_id');
     }
 
-    public function getProductIdAndName($channel_id, $partner_id)
+    public function getProductRatingReview($channel_id, $partner_id)
     {
-        /** @var ProductIdAndName $productIdAndName */
-        $productIdAndName = app(ProductIdAndName::class);
+        /** @var ProductRatingReview $productIdAndName */
+        $productIdAndName = app(ProductRatingReview::class);
         return $productIdAndName->getProductRatingReview($this, $channel_id, $partner_id);
     }
 

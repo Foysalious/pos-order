@@ -7,7 +7,7 @@ use App\Services\BaseService;
 use App\Services\Inventory\InventoryServerClient;
 
 
-class ProductIdAndName extends BaseService
+class ProductRatingReview extends BaseService
 {
     private InventoryServerClient $client;
 
