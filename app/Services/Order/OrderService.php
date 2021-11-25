@@ -43,6 +43,7 @@ use App\Services\Webstore\SettingsSync\WebStoreSettingsSyncTypes;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use App\Services\Order\Constants\Statuses;
@@ -333,13 +334,13 @@ class OrderService extends BaseService
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if (!$order) return $this->error(trans('order.order_not_found'), 404);
         $customer = $this->customerResolver->setCustomerId($customer_id)->setPartnerId($partner_id)->resolveCustomer();
-        if ($this->checkCustomerHasPayment($order_id))
-            $this->updater->setOrderId($order_id)
-                ->setOrder($order)
-                ->setCustomerId($customer->id)
-                ->setOrderLogType(OrderLogTypes::CUSTOMER)
-                ->update();
-        $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        if($customer->id == $order->customer?->id) return $this->error(trans('invalid customer update request'), 400);
+        if (is_null($order->paid_at)) return $this->error(trans('order.update.no_customer_update'), 400);
+        $this->updater->setOrderId($order_id)
+            ->setOrder($order)
+            ->setCustomerId($customer->id)
+            ->setOrderLogType(OrderLogTypes::CUSTOMER)
+            ->updatePaidOrderCustomer();
         return $this->success();
     }
 
@@ -350,14 +351,6 @@ class OrderService extends BaseService
         $resource = new DeliveryResource($order);
         return $this->success(ResponseMessages::SUCCESS, ['order' => $resource]);
 
-    }
-
-
-    private function checkCustomerHasPayment($order_id): bool
-    {
-        $orderPaymentStatus = $this->orderPaymentRepository->where('order_id', $order_id)->get();
-        if (count($orderPaymentStatus) > 0) throw new OrderException(trans('order.update.no_customer_update'));
-        else return true;
     }
 
     public function updateOrderStatus($partner_id, $order_id, OrderStatusUpdateRequest $request): JsonResponse

@@ -1,5 +1,6 @@
 <?php namespace App\Providers;
 
+use App\Events\OrderCustomerUpdated;
 use App\Events\OrderDeleted;
 use App\Events\OrderPlaceTransactionCompleted;
 use App\Events\OrderDueCleared;
@@ -8,6 +9,7 @@ use App\Listeners\AccountingEntryOnOrderCreation;
 use App\Listeners\AccountingEntryOnOrderDelete;
 use App\Listeners\AccountingEntryOnOrderDueCleared;
 use App\Listeners\AccountingEntryOnOrderUpdating;
+use App\Listeners\AccountingEntryOrderCustomerUpdate;
 use App\Listeners\GenerateInvoiceOnOrderCreate;
 use App\Listeners\RewardOnOrderCreate as RewardOnOrderCreateListener;
 use App\Listeners\UsageOnOrderCreate;
@@ -41,6 +43,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         OrderDeleted::class => [
             AccountingEntryOnOrderDelete::class,
+        ],
+        OrderCustomerUpdated::class => [
+            AccountingEntryOrderCustomerUpdate::class
         ]
     ];
 

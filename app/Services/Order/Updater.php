@@ -1,5 +1,6 @@
 <?php namespace App\Services\Order;
 
+use App\Events\OrderCustomerUpdated;
 use App\Events\OrderUpdated;
 use App\Exceptions\OrderException;
 use App\Interfaces\CustomerRepositoryInterface;
@@ -609,5 +610,17 @@ class Updater
         if ($requested_order_sku_ids->diff($current_order_sku_ids)->count() > 0) {
             throw new OrderException('Invalid order sku item given', 400);
         }
+    }
+
+    public function updatePaidOrderCustomer()
+    {
+        DB::beginTransaction();
+        $previous_order = $this->setExistingOrder();
+        $this->updateCustomer();
+        $this->setDeliveryNameAndMobile();
+        $this->orderRepositoryInterface->update($this->order, $this->makeData());
+        $this->createLog($previous_order, $this->order->refresh());
+        event(new OrderCustomerUpdated($this->order->refresh()));
+        DB::commit();
     }
 }

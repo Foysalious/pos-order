@@ -27,7 +27,7 @@ class CreateEntry extends BaseEntry
         $this->accountingRepository->storeEntry($this->order->partner_id, $data);
     }
 
-    private function makeData(): array
+    public function makeData(): array
     {
         $order_price_details = $this->getOrderPriceDetails(new PriceCalculation());
         $customer = $this->order->customer ?? null;
