@@ -5,7 +5,7 @@ use App\Models\OrderLog;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\PriceCalculation;
-use App\Services\OrderLog\Objects\Retrieve\OrderObject;
+use App\Services\OrderLog\Objects\OrderObject;
 use App\Services\Transaction\Constants\TransactionTypes;
 use Carbon\Carbon;
 

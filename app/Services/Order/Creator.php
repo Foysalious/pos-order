@@ -21,7 +21,7 @@ use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
-use App\Services\OrderLog\Objects\Store\OrderObject;
+use App\Services\OrderLog\Objects\OrderObject;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\OrderSku\Creator as OrderSkuCreator;

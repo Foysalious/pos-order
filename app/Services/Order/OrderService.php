@@ -36,7 +36,7 @@ use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\Constants\SalesChannelIds;
-use App\Services\OrderLog\Objects\Retrieve\OrderObjectRetriever;
+use App\Services\OrderLog\Objects\OrderObjectRetriever;
 use App\Services\OrderLog\OrderLogGenerator;
 use App\Services\OrderSms\WebstoreOrderSms;
 use App\Services\Webstore\SettingsSync\WebStoreSettingsSyncTypes;
@@ -283,7 +283,7 @@ class OrderService extends BaseService
             ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
             ->update();
 
-        dispatch(new WebStoreSettingsSyncJob($partner_id, WebStoreSettingsSyncTypes::Order, $orderDetails->id));
+//        dispatch(new WebStoreSettingsSyncJob($partner_id, WebStoreSettingsSyncTypes::Order, $orderDetails->id));
         return $this->success();
     }
 
@@ -386,6 +386,7 @@ class OrderService extends BaseService
             }
             return $this->success(ResponseMessages::SUCCESS, ['logs' => $final_logs->toArray()]);
         } catch (Exception $e) {
+            dd($e);
             return $this->error("Sorry, can't generate logs for this order");
         }
     }

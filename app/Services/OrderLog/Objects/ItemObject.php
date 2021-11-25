@@ -1,30 +1,33 @@
-<?php namespace App\Services\OrderLog\Objects\Retrieve;
+<?php namespace App\Services\OrderLog\Objects;
 
 
-class ItemObject
+use App\Models\OrderSku;
+use JsonSerializable;
+
+class ItemObject implements JsonSerializable
 {
-    private $id;
-    private $order_id;
-    private $name;
+    private ?int $id;
+    private ?int $order_id;
+    private ?string $name;
     private $sku_id;
-    private $details;
-    private $quantity;
-    private $unit_weight;
-    private $unit_price;
-    private $batch_detail;
-    private $is_emi_available;
-    private $unit;
-    private $vat_percentage;
-    private $warranty;
-    private $warranty_unit;
-    private $note;
-    private $product_image;
-    private $created_by_name;
-    private $updated_by_name;
-    private $created_at;
-    private $updated_at;
-    private $deleted_at;
-    private $discount;
+    private ?string $details;
+    private ?float $quantity;
+    private ?float $unit_weight;
+    private ?float $unit_price;
+    private ?string $batch_detail;
+    private ?int $is_emi_available;
+    private ?string $unit;
+    private ?float $vat_percentage;
+    private ?int $warranty;
+    private ?string $warranty_unit;
+    private ?string $note;
+    private ?string $product_image;
+    private ?string $created_by_name;
+    private ?string $updated_by_name;
+    private ?string $created_at;
+    private ?string $updated_at;
+    private ?string $deleted_at;
+    private ?string $discount;
 
     protected $originalPrice;
     protected $discountAmount;
@@ -32,6 +35,19 @@ class ItemObject
     protected $priceWithVat;
     protected $discountedPrice;
     protected $vat;
+
+    private OrderSku $orderSku;
+
+
+    /**
+     * @param OrderSku $orderSku
+     * @return $this
+     */
+    public function setOrderSku(OrderSku $orderSku): ItemObject
+    {
+        $this->orderSku = $orderSku;
+        return $this;
+    }
 
     /**
      * @param mixed $id
@@ -335,6 +351,42 @@ class ItemObject
     public function getDiscountedPrice(): float
     {
         return $this->discountedPrice;
+    }
+
+    public function jsonSerialize()
+    {
+        return [
+            'id' => $this->orderSku->id,
+            'order_id' => $this->orderSku->order_id,
+            'name' => $this->orderSku->name,
+            'sku_id' => $this->orderSku->sku_id,
+            'details' => $this->orderSku->details,
+            'quantity' => $this->orderSku->quantity,
+            'unit_weight' => $this->orderSku->unit_weight,
+            'unit_price' => $this->orderSku->unit_price,
+            'batch_detail' => $this->orderSku->batch_detail,
+            'is_emi_available' => $this->orderSku->is_emi_available,
+            'unit' => $this->orderSku->unit,
+            'vat_percentage' => $this->orderSku->vat_percentage,
+            'warranty' => $this->orderSku->warranty,
+            'warranty_unit' => $this->orderSku->warranty_unit,
+            'note' => $this->orderSku->note,
+            'product_image' => $this->orderSku->product_image,
+            'created_by_name' => $this->orderSku->created_by_name,
+            'updated_by_name' => $this->orderSku->updated_by_name,
+            'created_at' => $this->orderSku->created_at,
+            'updated_at' => $this->orderSku->updated_at,
+            'deleted_at' => $this->orderSku->deleted_at,
+            'discount' => $this->orderSku->discount ? $this->getDiscount() : null
+        ];
+    }
+
+    private function getDiscount(): DiscountObject
+    {
+        /** @var DiscountObject $discountObject */
+        $discountObject = app(DiscountObject::class);
+        $discountObject->setOrderDiscount($this->orderSku->discount);
+        return $discountObject;
     }
 
 

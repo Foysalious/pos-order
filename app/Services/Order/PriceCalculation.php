@@ -5,8 +5,8 @@ use App\Models\OrderSku;
 use App\Services\APIServerClient\ApiServerClient;
 use App\Services\Delivery\Methods;
 use App\Services\Discount\Constants\DiscountTypes;
-use App\Services\OrderLog\Objects\Retrieve\ItemObject;
-use App\Services\OrderLog\Objects\Retrieve\OrderObject;
+use App\Services\OrderLog\Objects\ItemObject;
+use App\Services\OrderLog\Objects\OrderObject;
 
 class PriceCalculation
 {

@@ -10,7 +10,7 @@ use App\Services\APIServerClient\ApiServerClient;
 use App\Services\BaseService;
 use App\Services\Order\PriceCalculation;
 use App\Services\Order\Updater;
-use App\Services\OrderLog\Objects\Retrieve\OrderObject;
+use App\Services\OrderLog\Objects\OrderObject;
 use App\Traits\ModificationFields;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\App;

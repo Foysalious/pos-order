@@ -1,21 +1,36 @@
-<?php namespace App\Services\OrderLog\Objects\Retrieve;
+<?php namespace App\Services\OrderLog\Objects;
 
 
-class PaymentObject
+use App\Models\OrderPayment;
+use JsonSerializable;
+
+class PaymentObject implements JsonSerializable
 {
-    private $id;
-    private $order_id;
-    private $amount;
-    private $transaction_type;
-    private $method;
-    private $method_details;
-    private $emi_month;
-    private $interest;
-    private $created_by_name;
-    private $updated_by_name;
-    private $created_at;
-    private $updated_at;
-    private $deleted_at;
+    private ?int $id;
+    private ?int $order_id;
+    private ?float $amount;
+    private ?string $transaction_type;
+    private ?string $method;
+    private ?string $method_details;
+    private ?int $emi_month;
+    private ?float $interest;
+    private ?string $created_by_name;
+    private ?string $updated_by_name;
+    private ?string $created_at;
+    private ?string $updated_at;
+    private ?string $deleted_at;
+
+    private OrderPayment $payment;
+
+    /**
+     * @param OrderPayment $payment
+     * @return $this
+     */
+    public function setPayment(OrderPayment $payment): PaymentObject
+    {
+        $this->payment = $payment;
+        return $this;
+    }
 
     /**
      * @param mixed $id
@@ -150,6 +165,25 @@ class PaymentObject
     public function __get($value)
     {
         return $this->{$value};
+    }
+
+    public function jsonSerialize()
+    {
+        return [
+            'id' => $this->payment->id,
+            'order_id' => $this->payment->order_id,
+            'amount' => $this->payment->amount,
+            'transaction_type' => $this->payment->transaction_type,
+            'method' => $this->payment->method,
+            'method_details' => $this->payment->method_details,
+            'emi_month' => $this->payment->emi_month,
+            'interest' => $this->payment->interest,
+            'created_by_name' => $this->payment->created_by_name,
+            'updated_by_name' => $this->payment->updated_by_name,
+            'created_at' => $this->payment->created_at,
+            'updated_at' => $this->payment->updated_at,
+            'deleted_at' => $this->payment->deleted_at,
+        ];
     }
 
 }

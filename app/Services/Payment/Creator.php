@@ -7,7 +7,7 @@ use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\OrderLogCreator;
 use App\Services\Order\PriceCalculation;
-use App\Services\OrderLog\Objects\Store\OrderObject;
+use App\Services\OrderLog\Objects\OrderObject;
 use App\Traits\ModificationFields;
 use Carbon\Carbon;
 

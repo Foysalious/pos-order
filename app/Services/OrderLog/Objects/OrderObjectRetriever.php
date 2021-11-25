@@ -1,4 +1,4 @@
-<?php namespace App\Services\OrderLog\Objects\Retrieve;
+<?php namespace App\Services\OrderLog\Objects;
 
 
 use Illuminate\Support\Collection;

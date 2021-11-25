@@ -1,20 +1,35 @@
-<?php namespace App\Services\OrderLog\Objects\Retrieve;
+<?php namespace App\Services\OrderLog\Objects;
 
 
-class CustomerObject
+use App\Models\Customer;
+use JsonSerializable;
+
+class CustomerObject implements JsonSerializable
 {
-    private $id;
-    private $name;
-    private $partner_id;
-    private $is_supplier;
-    private $email;
-    private $mobile;
-    private $pro_pic;
-    private $deleted_at;
-    private $created_at;
-    private $updated_at;
-    private $created_by_name;
-    private $updated_by_name;
+    private ?string $id;
+    private ?string $name;
+    private ?int $partner_id;
+    private ?int $is_supplier;
+    private ?string $email;
+    private ?string $mobile;
+    private ?string $pro_pic;
+    private ?string $deleted_at;
+    private ?string $created_at;
+    private ?string $updated_at;
+    private ?string $created_by_name;
+    private ?string $updated_by_name;
+    private ?Customer $customer;
+
+
+    /**
+     * @param Customer|null $customer
+     * @return $this
+     */
+    public function setCustomer(?Customer $customer): CustomerObject
+    {
+        $this->customer = $customer;
+        return $this;
+    }
 
     /**
      * @param mixed $id
@@ -139,6 +154,24 @@ class CustomerObject
     public function __get($value)
     {
         return $this->{$value};
+    }
+
+    public function jsonSerialize()
+    {
+        return [
+            'id' => $this->customer->id,
+            'name' => $this->customer->name,
+            'partner_id' => $this->customer->partner_id,
+            'is_supplier' => $this->customer->is_supplier,
+            'email' => $this->customer->email,
+            'mobile' => $this->customer->mobile,
+            'pro_pic' => $this->customer->pro_pic,
+            'deleted_at' => $this->customer->deleted_at,
+            'created_at' => $this->customer->created_at,
+            'updated_at' => $this->customer->updated_at,
+            'created_by_name' => $this->customer->created_by_name,
+            'updated_by_name' => $this->customer->updated_by_name,
+        ];
     }
 
 

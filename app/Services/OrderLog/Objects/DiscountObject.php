@@ -1,23 +1,39 @@
-<?php namespace App\Services\OrderLog\Objects\Retrieve;
+<?php namespace App\Services\OrderLog\Objects;
 
 
-class DiscountObject
+use App\Models\OrderDiscount;
+use JsonSerializable;
+
+class DiscountObject implements JsonSerializable
 {
-    private $id;
-    private $order_id;
-    private $type;
-    private $amount;
-    private $original_amount;
-    private $is_percentage;
-    private $cap;
-    private $discount_details;
-    private $discount_id;
-    private $type_id;
-    private $created_by_name;
-    private $updated_by_name;
-    private $created_at;
-    private $updated_at;
-    private $deleted_at;
+    private ?int $id;
+    private ?int $order_id;
+    private ?string $type;
+    private ?float $amount;
+    private ?string $original_amount;
+    private ?int $is_percentage;
+    private ?float $cap;
+    private ?string $discount_details;
+    private ?int $discount_id;
+    private ?string $type_id;
+    private ?string $created_by_name;
+    private ?string $updated_by_name;
+    private ?string $created_at;
+    private ?string $updated_at;
+    private ?string $deleted_at;
+
+    private OrderDiscount $orderDiscount;
+
+
+    /**
+     * @param OrderDiscount $orderDiscount
+     * @return $this
+     */
+    public function setOrderDiscount(OrderDiscount $orderDiscount): DiscountObject
+    {
+        $this->orderDiscount = $orderDiscount;
+        return $this;
+    }
 
     /**
      * @param mixed $id
@@ -182,6 +198,27 @@ class DiscountObject
     public function __get($value)
     {
         return $this->{$value};
+    }
+
+    public function jsonSerialize()
+    {
+        return [
+            'id' => $this->orderDiscount->id,
+            'order_id' => $this->orderDiscount->order_id,
+            'type' => $this->orderDiscount->type,
+            'amount' => $this->orderDiscount->amount,
+            'original_amount' => $this->orderDiscount->original_amount,
+            'is_percentage' => $this->orderDiscount->is_percentage,
+            'cap' => $this->orderDiscount->cap,
+            'discount_details' => $this->orderDiscount->discount_details,
+            'discount_id' => $this->orderDiscount->discount_id,
+            'type_id' => $this->orderDiscount->type_id,
+            'created_by_name' => $this->orderDiscount->created_by_name,
+            'updated_by_name' => $this->orderDiscount->updated_by_name,
+            'created_at' => $this->orderDiscount->created_at,
+            'updated_at' => $this->orderDiscount->updated_at,
+            'deleted_at' => $this->orderDiscount->deleted_at,
+        ];
     }
 
 }

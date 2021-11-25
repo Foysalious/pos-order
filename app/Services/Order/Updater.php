@@ -20,7 +20,7 @@ use App\Services\Order\Refund\AddProductInOrder;
 use App\Services\Order\Refund\DeleteProductFromOrder;
 use App\Services\Order\Refund\OrderUpdateFactory;
 use App\Services\Order\Refund\UpdateProductInOrder;
-use App\Services\OrderLog\Objects\Store\OrderObject;
+use App\Services\OrderLog\Objects\OrderObject;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Product\StockManageByChunk;
 use App\Services\Product\StockManager;
@@ -346,7 +346,7 @@ class Updater
             if($this->order->status == Statuses::PENDING || $this->order->status == Statuses::PROCESSING)
                 $this->calculateDeliveryChargeAndSave($this->order);
 
-            if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
+//            if(!empty($this->orderProductChangeData)) event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();
