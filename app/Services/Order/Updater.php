@@ -360,8 +360,8 @@ class Updater
      */
     private function calculateDeliveryChargeAndSave(Order $order): bool
     {
-        /** @var DeliveryPriceCalculation $deliveryPriceCalculation */
-        $deliveryPriceCalculation  = app(DeliveryPriceCalculation::class);
+        /** @var OrderDeliveryPriceCalculation $deliveryPriceCalculation */
+        $deliveryPriceCalculation  = app(OrderDeliveryPriceCalculation::class);
         $delivery_charge = $deliveryPriceCalculation->setOrder($order)->calculateDeliveryCharge();
         if($delivery_charge)
         {

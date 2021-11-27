@@ -5,7 +5,7 @@ use App\Services\APIServerClient\ApiServerClient;
 use App\Services\Delivery\Methods;
 use Illuminate\Support\Facades\App;
 
-class DeliveryPriceCalculation
+class OrderDeliveryPriceCalculation
 {
 
     private $deliveryMethod;
@@ -15,7 +15,7 @@ class DeliveryPriceCalculation
 
     /**
      * @param mixed $deliveryMethod
-     * @return DeliveryPriceCalculation
+     * @return OrderDeliveryPriceCalculation
      */
     public function setDeliveryMethod(string $deliveryMethod)
     {
@@ -25,9 +25,9 @@ class DeliveryPriceCalculation
 
     /**
      * @param Order $order
-     * @return DeliveryPriceCalculation
+     * @return OrderDeliveryPriceCalculation
      */
-    public function setOrder(Order $order): DeliveryPriceCalculation
+    public function setOrder(Order $order): OrderDeliveryPriceCalculation
     {
         $this->order = $order;
         return $this;
