@@ -48,18 +48,16 @@ class DeliveryPriceCalculation
         return $apiServerClient->get('pos/v1/partners/'. $this->order->partner->id)['partner']['delivery_method'];
     }
 
-    public function calculateDeliveryChargeAndSave(): bool
+    public function calculateDeliveryCharge(): bool
     {
         $this->setDeliveryMethod($this->getDeliveryMethod());
 
-        if ($this->deliveryMethod == Methods::OWN_DELIVERY && $this->order->delivery_district && $this->order->delivery_thana)
-        {
-            $this->order->delivery_charge = $this->order->partner->delivery_charge;
-            return $this->order->save();
-        }
-        if ($this->order->delivery_district && $this->order->delivery_thana)
-        {
-            $data = [
+        if(!$this->order->delivery_district || !$this->order->delivery_thana)
+            return false;
+
+        if ($this->deliveryMethod == Methods::OWN_DELIVERY )
+            return $this->order->delivery_charge;
+        $data = [
                 'weight' => $this->order->getWeight(),
                 'delivery_district' => $this->order->delivery_district,
                 'delivery_thana' => $this->order->delivery_thana,
@@ -68,10 +66,6 @@ class DeliveryPriceCalculation
             ];
             /** @var ApiServerClient $apiServerClient */
             $apiServerClient = app(ApiServerClient::class);
-            $delivery_charge = $apiServerClient->post('v2/pos/delivery/delivery-charge', $data)['delivery_charge'];
-            $this->order->delivery_charge = $delivery_charge;
-            return $this->order->save();
-        }
-        return false;
+            return $apiServerClient->post('v2/pos/delivery/delivery-charge', $data)['delivery_charge'];
     }
 }

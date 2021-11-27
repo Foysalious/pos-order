@@ -362,7 +362,13 @@ class Updater
     {
         /** @var DeliveryPriceCalculation $deliveryPriceCalculation */
         $deliveryPriceCalculation  = app(DeliveryPriceCalculation::class);
-        return $deliveryPriceCalculation->setOrder($order)->calculateDeliveryChargeAndSave();
+        $delivery_charge = $deliveryPriceCalculation->setOrder($order)->calculateDeliveryCharge();
+        if($delivery_charge)
+        {
+            $order->delivery_charge = $delivery_charge;
+            return $order->save();
+        }
+        return false;
     }
 
     public function makeData(): array
