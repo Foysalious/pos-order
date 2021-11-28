@@ -53,16 +53,16 @@ class Updater
     protected ?string $delivery_district;
     private array $stockUpdateEntry = [];
 
-    public function __construct(OrderRepositoryInterface $orderRepositoryInterface,
-                                OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
-                                OrderLogCreator $orderLogCreator, OrderDiscountRepositoryInterface $orderDiscountRepository,
-                                OrderPaymentRepositoryInterface $orderPaymentRepository,
-                                protected Handler $discountHandler,
-                                protected PaymentCreator $paymentCreator,
+    public function __construct(OrderRepositoryInterface              $orderRepositoryInterface,
+                                OrderSkusRepositoryInterface          $orderSkusRepositoryInterface,
+                                OrderLogCreator                       $orderLogCreator, OrderDiscountRepositoryInterface $orderDiscountRepository,
+                                OrderPaymentRepositoryInterface       $orderPaymentRepository,
+                                protected Handler                     $discountHandler,
+                                protected PaymentCreator              $paymentCreator,
                                 protected CustomerRepositoryInterface $customerRepository,
-                                protected PriceCalculation $orderCalculator,
-                                protected EmiCalculation $emiCalculation,
-                                protected StockManageByChunk $stockManager,
+                                protected PriceCalculation            $orderCalculator,
+                                protected EmiCalculation              $emiCalculation,
+                                protected StockManageByChunk          $stockManager,
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -343,7 +343,7 @@ class Updater
             if ($this->paymentMethod == PaymentMethods::EMI) {
                 $this->validateEmiAndCalculateChargesForOrder($this->order->refresh());
             }
-            if($this->order->status == Statuses::PENDING || $this->order->status == Statuses::PROCESSING)
+            if ($this->order->status == Statuses::PENDING || $this->order->status == Statuses::PROCESSING)
                 $this->calculateDeliveryChargeAndSave($this->order);
 
             event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
@@ -361,13 +361,9 @@ class Updater
     private function calculateDeliveryChargeAndSave(Order $order): bool
     {
         /** @var OrderDeliveryPriceCalculation $deliveryPriceCalculation */
-        $deliveryPriceCalculation  = app(OrderDeliveryPriceCalculation::class);
+        $deliveryPriceCalculation = app(OrderDeliveryPriceCalculation::class);
         $delivery_charge = $deliveryPriceCalculation->setOrder($order)->calculateDeliveryCharge();
-        if($delivery_charge)
-        {
-            $order->delivery_charge = $delivery_charge;
-            return $order->save();
-        }
+        if ($delivery_charge) $order->update(['delivery_charge' => $delivery_charge]);
         return false;
     }
 
@@ -475,7 +471,7 @@ class Updater
         }
 
         if (isset($return_data)) {
-            $this->orderProductChangeData['paid_amount'] = is_null($this->paidAmount) ? 0 : $this->paidAmount ;
+            $this->orderProductChangeData['paid_amount'] = is_null($this->paidAmount) ? 0 : $this->paidAmount;
             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
         }
     }
@@ -489,8 +485,8 @@ class Updater
                 ->setTransactionType(TransactionTypes::CREDIT)->create();
             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
         } elseif ($this->paidAmount > 0 && $this->paymentMethod == PaymentMethods::PAYMENT_LINK) {
-                $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod(PaymentMethods::PAYMENT_LINK)
-                    ->setTransactionType(TransactionTypes::CREDIT)->create();
+            $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod(PaymentMethods::PAYMENT_LINK)
+                ->setTransactionType(TransactionTypes::CREDIT)->create();
             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
         }
     }
@@ -550,7 +546,7 @@ class Updater
 
     private function setDeliveryNameAndMobile()
     {
-        $customer = $this->customerRepository->where('id',$this->customer_id)->first();
+        $customer = $this->customerRepository->where('id', $this->customer_id)->first();
         $this->delivery_name = $customer->name;
         $this->delivery_mobile = $customer->mobile;
     }
@@ -561,7 +557,7 @@ class Updater
         $total_paid = $this->orderCalculator->getPaid();
         $total_amount = $this->orderCalculator->getDiscountedPrice();
         $refunded = false;
-        if( $total_paid > $total_amount) {
+        if ($total_paid > $total_amount) {
             $refund_amount = $total_paid - $total_amount;
             $this->paymentCreator->setOrderId($this->order->id);
             $this->paymentCreator->setAmount($refund_amount);
@@ -570,9 +566,9 @@ class Updater
             $this->paymentCreator->create();
             $refunded = true;
         }
-        if(($refunded == false && $this->orderCalculator->getDue() > 0)) {
+        if (($refunded == false && $this->orderCalculator->getDue() > 0)) {
             $this->order->paid_at = null;
-            $this->order->update($this->modificationFields(false,true));
+            $this->order->update($this->modificationFields(false, true));
         }
     }
 
@@ -583,22 +579,22 @@ class Updater
     {
         $amount = $this->orderCalculator->setOrder($order)->getDue();
         $min_emi_amount = config('emi.minimum_emi_amount');
-        if($amount < $min_emi_amount) {
-            throw new OrderException("Emi is not available for order amount less than " .$min_emi_amount, 400);
+        if ($amount < $min_emi_amount) {
+            throw new OrderException("Emi is not available for order amount less than " . $min_emi_amount, 400);
         }
         $data = $this->emiCalculation->setEmiMonth((int)$order->emi_month)->setAmount($amount)->getEmiCharges();
-        $emi_data['interest'] = !is_null($this->interest) ? $this->interest :  $data['total_interest'];
+        $emi_data['interest'] = !is_null($this->interest) ? $this->interest : $data['total_interest'];
         $emi_data['bank_transaction_charge'] = !is_null($this->bank_transaction_charge) ? $this->bank_transaction_charge : $data['bank_transaction_fee'];
         $order->update($this->withUpdateModificationField($emi_data));
     }
 
     public function updateStock()
     {
-        if(count($this->stockUpdateEntry) > 0) {
+        if (count($this->stockUpdateEntry) > 0) {
             foreach ($this->stockUpdateEntry as $each_data) {
-                if($each_data['operation'] == StockManager::STOCK_INCREMENT)
+                if ($each_data['operation'] == StockManager::STOCK_INCREMENT)
                     $this->stockManager->setSku($each_data['sku_detail'])->increaseAndInsertInChunk($each_data['quantity']);
-                if($each_data['operation'] == StockManager::STOCK_DECREMENT)
+                if ($each_data['operation'] == StockManager::STOCK_DECREMENT)
                     $this->stockManager->setSku($each_data['sku_detail'])->decreaseAndInsertInChunk($each_data['quantity']);
             }
             $this->stockManager->updateStock();
@@ -610,7 +606,7 @@ class Updater
      */
     private function validateOrderSkus()
     {
-        $skus = collect(json_decode($this->skus,true));
+        $skus = collect(json_decode($this->skus, true));
         $requested_order_sku_ids = $skus->whereNotNull('order_sku_id')->pluck('order_sku_id');
         $current_order_sku_ids = $this->order->orderSkus->pluck('id');
         if ($requested_order_sku_ids->diff($current_order_sku_ids)->count() > 0) {
