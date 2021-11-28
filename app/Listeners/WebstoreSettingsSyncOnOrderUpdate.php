@@ -1,10 +1,12 @@
 <?php namespace App\Listeners;
 
-use App\Events\OrderUpdated;
-use App\Services\Accounting\Exceptions\AccountingEntryServerError;
-use App\Services\Accounting\UpdateEntry;
 
-class AccountingEntryOnOrderUpdating
+use App\Events\OrderUpdated;
+use App\Jobs\WebStoreSettingsSyncJob;
+use App\Services\Accounting\UpdateEntry;
+use App\Services\Webstore\SettingsSync\WebStoreSettingsSyncTypes;
+
+class WebstoreSettingsSyncOnOrderUpdate
 {
     protected UpdateEntry $updateEntry;
 
@@ -23,15 +25,9 @@ class AccountingEntryOnOrderUpdating
      *
      * @param OrderUpdated $event
      * @return void
-     * @throws AccountingEntryServerError
      */
     public function handle(OrderUpdated $event)
     {
-        if (!empty($event->getOrderProductChangedData())) {
-            $this->updateEntry
-                ->setOrder($event->getOrder())
-                ->setOrderProductChangeData($event->getOrderProductChangedData())
-                ->update();
-        }
+        dispatch(new WebStoreSettingsSyncJob($event->getOrder()->partner_id, WebStoreSettingsSyncTypes::Order, $event->getOrder()->id));
     }
 }
