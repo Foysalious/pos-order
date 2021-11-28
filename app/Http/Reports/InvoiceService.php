@@ -10,7 +10,9 @@ use App\Services\APIServerClient\ApiServerClient;
 use App\Services\BaseService;
 use App\Services\Order\PriceCalculation;
 use App\Services\Order\Updater;
+use App\Services\OrderLog\Objects\OrderObject;
 use App\Traits\ModificationFields;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\App;
 
 
@@ -19,15 +21,16 @@ class InvoiceService extends BaseService
     use ModificationFields;
 
     private $posOrder;
+    private $order;
 
     public function __construct(protected ApiServerClient $client, private Updater $updater, private OrderRepositoryInterface $orderRepository)
     {
 
     }
 
-    public function setOrder($order_id)
+    public function setOrder($order)
     {
-        $this->order = $this->orderRepository->find($order_id);
+        $this->order = $order;
         return $this;
     }
 
@@ -48,16 +51,18 @@ class InvoiceService extends BaseService
         $order = $this->order;
         /** @var PriceCalculation $price_calculator */
         $price_calculator = (App::make(PriceCalculation::class))->setOrder($order);
-        $partner = $this->client->get('v2/partners/' . $order->partner->sub_domain);
+        $sub_domain = Partner::find($order->partner_id)->sub_domain;
+        $partner = $this->client->get('v2/partners/' . $sub_domain);
+        $created_at_formatted = $order->created_at instanceof Carbon ? $order->created_at : Carbon::parse($order->created_at);
         $info = [
             'order_id'=>$order->id,
             'amount' => $price_calculator->getOriginalPrice(),
-            'created_at' => $order->created_at->format('jS M, Y, h:i A'),
+            'created_at' => $created_at_formatted,
             'payment_receiver' => [
-                'name' => $partner["info"]["name"],
-                'image' => $partner["info"]["logo"],
-                'mobile' => $partner["info"]["mobile"],
-                'address' => $partner["info"]["address"],
+                'name' => $partner["info"]["name"] ?? '',
+                'image' => $partner["info"]["logo"] ?? '',
+                'mobile' => $partner["info"]["mobile"] ?? '',
+                'address' => $partner["info"]["address"] ?? '',
             ],
 
             'pos_order' => $order ? [
@@ -65,7 +70,7 @@ class InvoiceService extends BaseService
                 'orderSkusCount'=>count($order->orderSkus),
                 'discount' => $price_calculator->getOrderDiscount(),
                 'total' => $price_calculator->getDiscountedPriceWithoutVat(),
-                'grand_total' => $price_calculator->getDiscountedPriceWithoutVat(),
+                'grand_total' => $price_calculator->getOriginalPrice(),
                 'promo_discount' => $price_calculator->getPromoDiscount(),
                 'paid' => $price_calculator->getPaid(),
                 'due' => $price_calculator->getDue(),
@@ -73,17 +78,17 @@ class InvoiceService extends BaseService
                 'delivery_charge' => $price_calculator->getDeliveryCharge(),
             ] : null
         ];
-
         if ($order->customer_id) {
             $customer = $order->customer;
             $info['user'] = [
                 'name' => $customer->name,
                 'mobile' => $customer->mobile,
-                'address' => $order->address
+                'address' => $order->delivery_address
             ];
         }
         $invoice_name = 'pos_order_invoice_' . $order->id;
         $link = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+        if ($order instanceof OrderObject) return $link;
         $order->invoice=$link;
         $order->save();
         return $this->success(ResponseMessages::SUCCESS, ['invoice' =>  $link]);

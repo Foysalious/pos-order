@@ -27,13 +27,13 @@ class CreateEntry extends BaseEntry
         $this->accountingRepository->storeEntry($this->order->partner_id, $data);
     }
 
-    private function makeData(): array
+    public function makeData(): array
     {
         $order_price_details = $this->getOrderPriceDetails(new PriceCalculation());
         $customer = $this->order->customer ?? null;
         $data = [
             'created_from' => json_encode($this->withBothModificationFields((new RequestIdentification())->get())),
-            'credit_account_key' => Sales::SALES_FROM_POS,
+            'credit_account_key' => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ? Sales::SALES_FROM_ECOM : Sales::SALES_FROM_POS,
             'debit_account_key'  => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ? Accounts::SHEBA_ACCOUNT : Cash::CASH,
             'source_id'          => $this->order->id,
             'note'               => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ?  SalesChannel::WEBSTORE : SalesChannel::POS,

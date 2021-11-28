@@ -27,9 +27,11 @@ class AccountingEntryOnOrderUpdating
      */
     public function handle(OrderUpdated $event)
     {
-        $this->updateEntry
-            ->setOrder($event->getOrder())
-            ->setOrderProductChangeData($event->getOrderProductChangedData())
-            ->update();
+        if (!empty($event->getOrderProductChangedData())) {
+            $this->updateEntry
+                ->setOrder($event->getOrder())
+                ->setOrderProductChangeData($event->getOrderProductChangedData())
+                ->update();
+        }
     }
 }

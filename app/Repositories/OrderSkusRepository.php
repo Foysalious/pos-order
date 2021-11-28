@@ -30,7 +30,7 @@ class OrderSkusRepository extends BaseRepository implements OrderSkusRepositoryI
     public function getTrendingProducts(int $partnerId)
     {
         return $this->model->select('sku_id')->whereHas('order', function ($q) use ($partnerId) {
-            $q->where('partner_id', $partnerId);
+            $q->where('partner_id', $partnerId)->where('sales_channel_id',2);
         })->groupBy('sku_id')
             ->orderByRaw('count(*) DESC')
             ->whereNotNull('sku_id')

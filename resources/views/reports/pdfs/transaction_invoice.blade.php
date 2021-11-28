@@ -4,7 +4,7 @@
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>sm manager</title>
+    <title>Invoice</title>
 
     <style>
         * {
@@ -302,24 +302,32 @@
             color: #00B553;
             margin-right: 5px;
         }
+
+        .inline {
+            display: inline;
+        }
+
+        .v-center {
+            vertical-align: center;
+        }
     </style>
 </head>
 <body>
 <!--header area start-->
 
 <table class="headers">
-    <tbody class="container">
+    <tbody class="container" style="height: 100px">
     <tr>
-        <td scope="col" class="header-left">
-            <img src="https://www.smanager.xyz/wp-content/uploads/2021/01/fav-icon.png" alt="n/a">
-            <div>
-                <h4>{{$payment_receiver['name']}}</h4>
-                <p>{{$payment_receiver['mobile']}}</p>
+        <td>
+            <div class="inline v-center">
+                <img src="https://www.smanager.xyz/wp-content/uploads/2021/01/fav-icon.png" alt="n/a" class="inline">
+                <span class="v-center">
+                    <strong>{{$payment_receiver['name']}}</strong>
+                    <span>{{$payment_receiver['mobile']}}</span>
+                </span>
             </div>
-
         </td>
-        <td scope="col" class="header-right">
-
+        <td class="header-right">
             <img src="{{$payment_receiver['image']}}" style="width:40px;height:40px" alt="n/a">
         </td>
     </tr>
@@ -349,7 +357,6 @@
     <tbody>
     <tr>
         <td class="table-invoice-left">
-            <div>Invoice: # ******</div>
             <div> Order ID: # {{$order_id}}</div>
 
         </td>
@@ -362,8 +369,8 @@
 <table class="table-bill-form-area">
     <thead>
     <tr>
-        <th scope="col">Bill From</th>
-        <th scope="col">Bill To</th>
+        <th scope="col" style="text-align: left">Bill From</th>
+        <th scope="col" style="text-align: left">Bill To</th>
     </tr>
     </thead>
     <tbody>
@@ -376,13 +383,13 @@
     <tr>
         <td>{{$payment_receiver['address']}}</td>
         @if(isset($user['address']))
-        <td>{{$user['address']}}</td>
+            <td>{{$user['address']}}</td>
         @endif
     </tr>
     <tr>
         <td>{{$payment_receiver['mobile']}}</td>
         @if(isset($user['address']))
-        <td>{{$user['mobile']}}</td>
+            <td>{{$user['mobile']}}</td>
         @endif
     </tr>
     </tbody>
@@ -392,34 +399,47 @@
 <table class="bill-calculate-area">
     <thead>
     <tr>
-        <th>Item</th>
-        <th>Quantity</th>
-        <th>Unit Cost</th>
-        <th>Total Price</th>
+        <th style="text-align: left">Item</th>
+        <th style="text-align: left">Quantity</th>
+        <th style="text-align: left">Unit Cost</th>
+        <th style="text-align: left">Total Price</th>
     </tr>
     </thead>
     <tbody>
     @foreach($pos_order['items'] as $key=>$skus)
         <tr>
-            {{--            <td>--}}
-            {{--                {{$skus->name}}--}}
-            {{--                @php--}}
-            {{--                    $sku_details= json_decode($skus['details'],true);--}}
-            {{--                    $sku_name=$sku_details['name'];--}}
-
-            {{--                @endphp--}}
-            {{--                <div class="item-sub-cotent">{{$sku_name}}</div>--}}
-
-            {{--            </td>--}}
+            <td>
+                {{$skus->name}}
+                <hr style="width:50%;text-align:left;margin-left:0">
+                @if(isset($skus->details))
+                    @php
+                        $sku_details= json_decode($skus->details,true);
+                        if (isset($sku_details->name)){
+                        $sku_name=$sku_details->name;
+                        }
+                        else{
+                            $sku_name=null;
+                        }
+                    @endphp
+                    <div class="item-sub-cotent">{{$sku_name}}</div>
+                @endif
+            </td>
             <td>{{$skus->quantity}}</td>
+            <hr style="width:100%;text-align:left;margin-left:0">
+
             <td>৳{{$skus->unit_price}}</td>
+            <hr style="width:100%;text-align:left;margin-left:0">
+
             <td>৳{{$skus->quantity*$skus->unit_price}}</td>
+            <hr style="width:100%;text-align:left;margin-left:0">
+
         </tr>
+
     @endforeach
 
     <tr>
         <td colspan="3">Sub Total</td>
-        <td class="total-price">৳{{$pos_order['total']}}</td>
+        <td class="total-price">৳{{$pos_order['grand_total']}}</td>
     </tr>
 
     <tr class="vat-discount-row border-top">
@@ -468,12 +488,21 @@
     <tr class="vat-discount-row">
         <td colspan="2"></td>
         <td class="last-amount">Need To Pay</td>
-        <td class="last-amount">৳{{$pos_order['due']-$pos_order['total']}}</td>
+        @if($pos_order['due']>0)
+            <td class="last-amount">৳{{$pos_order['due']}}</td>
+
+        @else
+            <td class="last-amount">৳0</td>
+        @endif
+
     </tr>
     </tfoot>
 </table>
 <!--bill-calculation-area end-->
 <!--table footer start-->
+<br>
+<br>
+<br>
 <table class="footers">
     <tbody>
     <tr>
@@ -482,139 +511,12 @@
     </tr>
     </tbody>
 </table>
+
 <!--table footer end-->
 <section class="container">
-    <!-- <div class="invoice-date-area">
-      <div class="d-flex justify-content-between">
-        <div class="invoice-order-area">
-          <div class="invoice">Invoice: # ******</div>
-          <div class="order">Order ID: # ******</div>
-        </div>
-        <div class="date-area">
-          <div class="date">Date: 16th May 2021</div>
-        </div>
-      </div>
-    </div> -->
-    <!-- <div class="bill-from-to-area">
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th scope="col">Bill From</th>
-            <th scope="col">Bill To</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>SR COMPANY</td>
-            <td>Mionel Lessi</td>
-          </tr>
-          <tr>
-            <td>51 Green corner, Green Road Dhanmondi Dhaka</td>
-            <td>51 Green corner, Green Road Dhanmondi Dhaka</td>
-          </tr>
-          <tr>
-            <td>+880 1833 309461</td>
-            <td>+880 1833 309461</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="bill-calculation-area">
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th >Item</th>
-            <th >Quantity</th>
-            <th >Unit Cost</th>
-            <th >Total Price</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>
-              Cyberpunk T-shirt
-              <div class="item-sub-cotent">Black = Double XL = Cotton = Polo </div>
-            </td>
-            <td>1</td>
-            <td>$1,000.00</td>
-            <td>$1,000.00</td>
-          </tr>
-          <tr>
-            <td>
-              Cyberpunk T-shirt
-              <div class="item-sub-cotent">Black = Double XL = Cotton = Polo </div>
-            </td>
-            <td>1</td>
-            <td>$1,000.00</td>
-            <td>$1,000.00</td>
-          </tr>
-          <tr>
-            <td colspan="3">Sub Total </td>
-            <td class="total-price">$2,000.00</td>
-          </tr>
 
-          <tr class="vat-discount-row border-top">
-            <td colspan="2"></td>
-            <td>Vat</td>
-            <td>$20.00</td>
-          </tr>
-          <tr class="vat-discount-row">
-            <td colspan="2"></td>
-            <td>Discount</td>
-            <td>$20.00</td>
-          </tr>
-          <tr class="vat-discount-row">
-            <td colspan="2"></td>
-            <td>Promo</td>
-            <td>$20.00</td>
-          </tr>
-          <tr class="vat-discount-row">
-            <td colspan="2"></td>
-            <td>Delivery Charge</td>
-            <td>$20.00</td>
-          </tr>
-          <tr class="vat-discount-row">
-            <td colspan="2"></td>
-            <td class="border-bottom"></td>
-            <td class="border-bottom"></td>
-          </tr>
-          <tr class="vat-discount-row">
-            <td colspan="2"></td>
-            <td>Paid Amount</td>
-            <td>$20.00</td>
-          </tr>
-          <tr class="vat-discount-row">
-            <td colspan="2"></td>
-            <td>Due Amount</td>
-            <td>$20.00</td>
-          </tr>
-
-          <tr class="vat-discount-row">
-            <td colspan="2"></td>
-            <td class="border-bottom"></td>
-            <td class="border-bottom"></td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr class="vat-discount-row">
-            <td colspan="2"></td>
-            <td class="last-amount">Need To Pay</td>
-            <td class="last-amount">$20.00</td>
-          </tr>
-        </tfoot>
-
-      </table> -->
     </div>
 </section>
-<!--invoice area end-->
-<!--footer area start-->
-<!-- <footer class="footer">
-  <div class="container">
-    <div class="d-flex justify-content-end align-items-center">
-     <a href="#0"> <img src="" alt="n/a"> 16516 </a>
-    </div>
-  </div>
-</footer> -->
-<!--footer area end-->
+
 </body>
 </html>

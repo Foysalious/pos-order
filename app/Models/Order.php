@@ -91,4 +91,13 @@ class Order extends BaseModel
     {
         return new Target(TargetType::POS_ORDER, $this->id);
     }
+
+    public function getWeight()
+    {
+        $totalWeight = 0;
+        ($this->orderSkus)->each(function($sku) use(&$totalWeight){
+            $totalWeight += (double) $sku->unit_weight* $sku->quantity;
+        });
+        return $totalWeight;
+    }
 }

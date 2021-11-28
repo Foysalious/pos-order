@@ -35,14 +35,14 @@ class RewardOnOrderCreate implements ShouldQueue
             'event' => self::ORDER_CREATE_REWARD_EVENT_NAME,
             'rewardable_type' => self::ORDER_CREATE_REWARDABLE_TYPE,
             'rewardable_id' => $order->partner_id,
-            'event_data' => [
+            'event_data' => json_encode([
                 'id' => $order->id,
                 'paymnet_status' => $order->status,
                 'net_bill' => $price_calculator->getOriginalPrice(),
                 'client_pos_order_id' => request()->client_pos_order_id ?? null,
                 'partner_wise_order_id' => $order->partner_wise_order_id,
                 'portal_name' => $order->apiRequest->portal_name
-            ]
+            ])
         ];
         /** @var RewardService $rewardService */
         $rewardService = app(RewardService::class);

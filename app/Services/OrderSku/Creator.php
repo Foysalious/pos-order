@@ -102,7 +102,8 @@ class Creator
         if(count($sku_ids) > 0){
             $sku_details = collect($this->getSkuDetails($sku_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
         }
-        if($this->isPaymentMethodEmi) $this->checkEmiAvailabilityForProducts($skus, $sku_details);
+        //product-wise emi for future
+//        if($this->isPaymentMethodEmi) $this->checkEmiAvailabilityForProducts($skus, $sku_details);
         $this->checkProductAndStockAvailability($skus,$sku_details);
         foreach ($skus as $sku) {
             $sku_data['order_id'] = $this->order->id;
@@ -111,6 +112,7 @@ class Creator
             $sku_data['details'] = isset($sku_details[$sku->id]) && $sku_details[$sku->id]['combination'] ? json_encode($sku_details[$sku->id]['combination']) : null;
             $sku_data['batch_detail'] = $this->makeBatchDetail($sku,$sku_details[$sku->id] ?? null);
             $sku_data['quantity'] = $sku->quantity;
+            $sku_data['unit_weight'] = isset($sku_details[$sku->id]) && $sku_details[$sku->id]['weight'] ? $sku_details[$sku->id]['weight'] : null ;
             $sku_data['unit_price'] = $sku->price ?? $sku_details[$sku->id]['sku_channel'][0]['price'];
             $sku_data['unit'] = $sku->unit ?? (isset($sku_details[$sku->id]) ? ($sku_details[$sku->id]['unit']['name_en'] ?? null) : null);
             $sku_data['warranty'] = $sku->warranty ?? (isset($sku_details[$sku->id]) && $sku_details[$sku->id]['warranty'] ?: 0);
@@ -172,12 +174,10 @@ class Creator
         }
     }
 
-    /**
-     * @throws OrderException
-     */
-    private function checkEmiAvailabilityForProducts(array $skus, array $sku_details)
+    // product-wise emi for future
+    /*
+     private function checkEmiAvailabilityForProducts(array $skus, array $sku_details)
     {
-        return ;
         if($this->order->sales_channel_id == SalesChannelIds::POS) return;
         foreach ($skus as $sku) {
             if(!is_null($sku->id)) {
@@ -193,6 +193,7 @@ class Creator
             }
         }
     }
+    */
 
     private function resolveDiscount(object $sku, array|null $sku_detail)
     {
@@ -208,7 +209,7 @@ class Creator
                 'cap' => $sku->cap ?? 0,
             ];
         } else {
-            $discount_detail = collect($sku_detail['sku_channel'])->pluck('valid_discounts')->collapse()->first();
+            $discount_detail = collect($sku_detail['sku_channel'] ?? [])?->pluck('valid_discounts')?->collapse()?->first();
             if($discount_detail){
                 $discount_data = [
                     'discount' => $discount_detail['amount'],

@@ -2,6 +2,7 @@
 
 use App\Constants\ResponseMessages;
 use App\Http\Resources\CustomerReviewResource;
+use App\Http\Resources\Webstore\AverageRatingAndRatingCountResource;
 use App\Http\Resources\Webstore\ReviewResource;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;
@@ -48,17 +49,24 @@ class ReviewService extends BaseService
      * @param $request
      * @param int $rating
      * @param string $orderBy
-     * @param int $product_id
+     * @param array $product_id
      * @return object
      */
-    public function getProductReviews($request, $rating, $orderBy, int $product_id): object
+    public function getProductReviews($request, $rating, $orderBy,  $product_id): object
     {
         list($offset, $limit) = calculatePagination($request);
         $reviews = $this->reviewRepositoryInterface->getReviews($offset, $limit, $product_id, $rating, $orderBy);
         if (count($reviews) == 0) return $this->error('এই প্রোডাক্ট এর জন্য কোন রিভিউ পাওয়া যায় নি', 404);
         $reviews = ReviewResource::collection($reviews);
         $review_statistics = $this->reviewStatistics($product_id);
-        return $this->success(ResponseMessages::SUCCESS, ['reviews' => $reviews, 'rating_statistics' => $review_statistics]);
+        return $this->success(ResponseMessages::SUCCESS, ['reviews' => $reviews, 'review_statistics'=> $review_statistics]);
+    }
+
+    public function getReviewsByProductIds(array $productIds): object
+    {
+        $reviews = $this->reviewRepositoryInterface->getReviewsByProductIds($productIds);
+        $reviews = AverageRatingAndRatingCountResource::collection($reviews);
+        return $this->success(ResponseMessages::SUCCESS, ['reviews' => $reviews]);
     }
 
     public function reviewStatistics($productId): array
@@ -102,6 +110,6 @@ class ReviewService extends BaseService
             ->setReviewImages($request->review_images)
             ->create();
 
-        return $this->success(ResponseMessages::SUCCESS, null, 201);
+        return $this->success(ResponseMessages::SUCCESS);
     }
 }

@@ -70,7 +70,6 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
     public function getReviewImages($reviewIndex, $reviewImageList, $review_id)
     {
         foreach ($reviewImageList as $imageName => $imageFile) {
-            $reviewIndexFromSingleImage = null;
             if (is_array($imageFile) && $imageFile[0]) {
                 $reviewIndexFromSingleImage = $imageName;
                 $this->getReviewImagesFromArray($imageFile, $reviewIndex, $reviewIndexFromSingleImage, $review_id);
@@ -82,11 +81,10 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
     {
         $reviewList = $data['review'];
         $reviewImageList = $data['review_images'] ?? [];
-
         for ($i = 0; $i < count($reviewList); $i++) {
             $singleReviewData = $this->makeSingleReviewData($data, $reviewList[$i]);
             $review = $this->create($singleReviewData);
-            if (count($reviewImageList) > 0) $this->getReviewImages($i, $reviewImageList, $review->id);
+            if (!empty($reviewImageList[0])) $this->getReviewImages($i, $reviewImageList, $review->id);
         }
     }
 
@@ -101,6 +99,10 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
         return $query->orderBy('created_at', $orderBy)->offset($offset)->limit($limit)->get();
     }
 
+    public function getReviewsByProductIds(array $productIds)
+    {
+        return $this->model->whereIn('product_id', $productIds)->groupBy('product_id')->select('product_id',DB::raw('count(*) as rating_count'),DB::raw('avg(rating) as avg_rating'))->get();
+    }
     public function getRatingStatistics($productId)
     {
         return $this->model->where('product_id', $productId)->groupBy('rating')->select('rating', DB::raw('count(*) as count'))->pluck('count', 'rating')->all();
@@ -120,7 +122,7 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
 
     public function getProductIdsByRating($partnerId, $ratings)
     {
-        return $this->model->where('partner_id', $partnerId)->groupBy('rating')->havingRaw("AVG(rating) in ('".implode("','", $ratings)."')")->pluck('product_id');
+        return $this->model->where('partner_id', $partnerId)->groupBy('rating')->havingRaw("AVG(rating) in ('" . implode("','", $ratings) . "')")->pluck('product_id');
     }
 
 }

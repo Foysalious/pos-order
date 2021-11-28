@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Services\DataMigration\DataMigrationServiceProvider;
+use Clockwork\Support\Laravel\ClockworkServiceProvider;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\UrlGenerator;
 use Illuminate\Support\ServiceProvider;
@@ -17,6 +18,9 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->register(DataMigrationServiceProvider::class);
+        if (($this->app->environment('local') || $this->app->environment('development')) && config('clockwork.enable')) {
+            $this->app->register(ClockworkServiceProvider::class);
+        }
     }
 
     /**

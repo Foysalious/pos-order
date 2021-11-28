@@ -4,6 +4,8 @@ use App\Events\OrderDeleted;
 use App\Events\OrderDueCleared;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Order;
+use App\Services\Order\Constants\DeliveryStatuses;
+use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
@@ -19,13 +21,15 @@ class StatusChanger
     /** @var Order */
     protected Order $order;
     protected string $delivery_request_id;
+    protected string $deliveryStatus;
 
 
     public function __construct(
         protected OrderRepositoryInterface      $orderRepository,
         protected PaymentCreator                $paymentCreator,
         protected StockRefillerForCanceledOrder $stockRefillForCanceledOrder,
-        protected PriceCalculation              $orderCalculator
+        protected PriceCalculation              $orderCalculator,
+        private OrderLogCreator $orderLogCreator
     )
     {}
 
@@ -42,6 +46,16 @@ class StatusChanger
     }
 
     /**
+     * @param string $deliveryStatus
+     * @return StatusChanger
+     */
+    public function setDeliveryStatus(string $deliveryStatus): StatusChanger
+    {
+        $this->deliveryStatus = $deliveryStatus;
+        return $this;
+    }
+
+    /**
      * @param string $delivery_request_id
      * @return StatusChanger
      */
@@ -53,7 +67,10 @@ class StatusChanger
 
     public function changeStatus()
     {
+        $previous_order = $this->setExistingOrder();
         $this->orderRepository->update($this->order, $this->withUpdateModificationField(['status' => $this->status]));
+        $updated_order = $this->order->refresh()->load(['items', 'customer', 'payments', 'discounts']);
+        $this->createLog($previous_order, $updated_order);
         /** @var PriceCalculation $order_calculator */
         $order_calculator = App::make(PriceCalculation::class);
         $order_calculator->setOrder($this->order);
@@ -86,7 +103,12 @@ class StatusChanger
 
     public function updateStatusForIpn()
     {
-        $this->order->update($this->withUpdateModificationField(['status' => Statuses::COMPLETED]));
+        if($this->deliveryStatus == DeliveryStatuses::PICKED_UP)
+            $data = ['status' => Statuses::SHIPPED];
+        elseif ($this->deliveryStatus == DeliveryStatuses::DELIVERED)
+            $data = ['status' => Statuses::COMPLETED];
+        if(isset($data))
+            $this->order->update($this->withUpdateModificationField($data));
     }
 
     private function refundIfEligible()
@@ -102,6 +124,23 @@ class StatusChanger
             $this->order->paid_at = null;
             $this->order->save();
         }
+    }
+
+    private function setExistingOrder()
+    {
+        $previous_order = clone $this->order;
+        $order = $previous_order;
+        $order->items = $previous_order->items;
+        $order->customer = $previous_order->customer;
+        $order->payments = $previous_order->payments;
+        $order->discounts = $previous_order->discounts;
+        return $previous_order;
+    }
+
+    private function createLog($previous_order, $updated_order)
+    {
+        $this->orderLogCreator->setOrderId($this->order->id)->setType(OrderLogTypes::ORDER_STATUS)
+            ->setExistingOrderData($previous_order)->setChangedOrderData($updated_order)->create();
     }
 
 }

@@ -9,34 +9,36 @@ use App\Interfaces\PartnerRepositoryInterface;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Partner;
+use App\Services\APIServerClient\ApiServerClient;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\ClientServer\SmanagerUser\SmanagerUserServerClient;
+use App\Services\Customer\CustomerResolver;
 use App\Services\Delivery\Methods;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\EMI\Calculations as EmiCalculation;
 use App\Services\Inventory\InventoryServerClient;
+use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
+use App\Services\OrderLog\Objects\OrderObject;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\OrderSku\Creator as OrderSkuCreator;
 use App\Services\Product\StockManageByChunk;
 use App\Services\Transaction\Constants\TransactionTypes;
-use App\Traits\ResponseAPI;
 use App\Traits\ModificationFields;
 use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Creator
 {
     use ModificationFields;
 
     private $createValidator;
-    private $partner;
+    private $partnerId;
     /**  @var array */
     private $data;
     private $status;
@@ -75,7 +77,8 @@ class Creator
     private ?string $deliveryAddressId;
     private ?string $deliveryMethod;
     private ?string $totalWeight;
-    private  $deliveryAddressInfo;
+    private ?string $deliveryDistrict;
+    private ?string $deliveryThana;
 
 
     public function __construct(
@@ -91,7 +94,12 @@ class Creator
         protected PriceCalculation $priceCalculation,
         protected EmiCalculation $emiCalculation,
         protected StockRefillerForCanceledOrder $stockRefill,
-        protected StockManageByChunk $stockManager
+        protected StockManageByChunk $stockManager,
+        protected ApiServerClient $apiServerClient,
+        protected CustomerResolver $customerResolver,
+        private  Partner $partner,
+        private OrderLogCreator $orderLogCreator
+
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -103,11 +111,41 @@ class Creator
         $this->orderSkuCreator = $orderSkuCreator;
     }
 
-    public function setPartner($partner): Creator
+    public function setPartnerId($partnerId): Creator
     {
-        $partner = Partner::find($partner);
-        $this->partner = $partner;
+        $this->partnerId = $partnerId;
         return $this;
+    }
+
+    private function setPartner(Partner $partner)
+    {
+        $this->partner = $partner;
+    }
+
+    /**
+     * @throws BaseClientServerError
+     */
+    private function resolvePartner()
+    {
+        $partner = Partner::find($this->partnerId);
+        if (!$partner) {
+            $partnerInfo = $this->getPartnerInfo();
+            $data = [
+                'id' => $this->partnerId,
+                'sub_domain' => $partnerInfo['sub_domain'],
+                'delivery_charge' => $partnerInfo['delivery_charge'],
+            ];
+            $partner = $this->partnerRepositoryInterface->create($data);
+        }
+        $this->setPartner($partner);
+    }
+
+    /**
+     * @throws BaseClientServerError
+     */
+    private function getPartnerInfo()
+    {
+        return $this->apiServerClient->get('pos/v1/partners/'.$this->partnerId)['partner'];
     }
 
     /**
@@ -206,6 +244,19 @@ class Creator
     public function setSalesChannelId(?int $salesChannelId): Creator
     {
         $this->salesChannelId = $salesChannelId;
+        return $this;
+    }
+
+
+    public function setDeliveryDistrict($deliveryDistrict)
+    {
+        $this->deliveryDistrict = $deliveryDistrict;
+        return $this;
+    }
+
+    public function setDeliveryThana($deliveryThana)
+    {
+        $this->deliveryThana = $deliveryThana;
         return $this;
     }
 
@@ -326,6 +377,7 @@ class Creator
     {
         try {
             DB::beginTransaction();
+            $this->resolvePartner();
             $order_data = $this->makeOrderData();
             $order = $this->orderRepositoryInterface->create($order_data);
             $this->orderSkuCreator->setOrder($order)->setIsPaymentMethodEmi($this->paymentMethod == PaymentMethods::EMI)
@@ -339,26 +391,35 @@ class Creator
             }
             if ($this->paymentMethod == PaymentMethods::EMI) {
                 $this->validateEmiAndCalculateChargesForOrder($order, new PriceCalculation());
+                /** @var OrderObject $orderObject */
+                $orderObject = app(OrderObject::class);
+                $orderObject->setOrder($order);
+                $this->orderLogCreator->setOrderId($order->id)->setType(OrderLogTypes::EMI)->setChangedOrderData(json_encode($orderObject))->create();
             }
-            if ($this->paidAmount > 0) {
+            if (isset($this->paymentMethod) && ($this->paymentMethod == PaymentMethods::CASH_ON_DELIVERY || $this->paymentMethod == PaymentMethods::QR_CODE) && $this->paidAmount > 0) {
                 $this->priceCalculation->setOrder($order->refresh());
                 $net_bill = $this->priceCalculation->setOrder($order->refresh())->getDiscountedPrice();
                 if($this->paidAmount > $net_bill ) {
                     $this->paidAmount = $net_bill;
                 }
+                $cash_details = json_encode(['payment_method_en' => 'Cash', 'payment_method_bn' => ' নগদ গ্রহন', 'payment_method_icon' => config('s3.url') . 'pos/payment/cash_v2.png']);
                 $this->paymentCreator->setOrderId($order->id)->setAmount($this->paidAmount)->setMethod($this->paymentMethod)
                     ->setTransactionType(TransactionTypes::CREDIT)->setEmiMonth($order->emi_month)
-                    ->setInterest($order->interest)->create();
+                    ->setInterest($order->interest)->setMethodDetails($cash_details)->create();
             }
             if ($this->hasDueError($order->refresh())) {
                 throw new OrderException("Can not make due order without customer", 403);
             }
 
-            if ($this->deliveryAddressId)
-                $this->calculateDeliveryChargeAndSave($order);
-
-            if ($order) event(new OrderPlaceTransactionCompleted($order));
+            $this->calculateDeliveryChargeAndSave($order);
+            event(new OrderPlaceTransactionCompleted($order));
             $this->updateStock($this->orderSkuCreator->getStockDecreasingData());
+            if ($this->getDueAmount($order) > 0) {
+                /** @var OrderObject $orderObject */
+                $orderObject = app(OrderObject::class);
+                $orderObject->setOrder($order);
+                $this->orderLogCreator->setOrderId($order->id)->setType(OrderLogTypes::DUE_BILL)->setExistingOrderData(null)->setChangedOrderData(json_encode($orderObject))->create();
+            }
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();
@@ -367,32 +428,17 @@ class Creator
         return $order;
     }
 
+
     private function resolveCustomer(): Creator
     {
         if (!isset($this->customerId)) return $this->setCustomer(null);
-        $customer = $this->customerRepository->find($this->customerId);
-        if (!$customer) {
-            $customer = $this->smanagerUserServerClient->get('/api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId);
-            if (!$customer) throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Exists.");
-            $data = [
-                'id' => $customer['_id'],
-                'name' => $customer['name'],
-                'email' => $customer['email'],
-                'partner_id' => $customer['partner_id'],
-                'mobile' => $customer['mobile'],
-                'pro_pic' => $customer['pro_pic'],
-            ];
-            $customer = $this->customerRepository->create($this->withCreateModificationField($data));
-        }
-        if ($customer->partner_id != $this->partner->id) {
-            throw new NotFoundHttpException("Customer #" . $this->customerId . " Doesn't Belong To Partner #" . $this->partner->id);
-        }
+        $customer = $this->customerResolver->setPartnerId($this->partnerId)->setCustomerId($this->customerId)->resolveCustomer();
         return $this->setCustomer($customer);
     }
 
-    private function resolvePartnerWiseOrderId(Partner $partner)
+    private function resolvePartnerWiseOrderId($partnerId)
     {
-        $lastOrder = $partner->orders()->orderBy('id', 'desc')->first();
+        $lastOrder = Order::where('partner_id',$partnerId)->orderBy('id', 'desc')->first();
         $lastOrder_id = $lastOrder ? $lastOrder->partner_wise_order_id : 0;
         return $lastOrder_id + 1;
     }
@@ -413,17 +459,15 @@ class Creator
 
     private function makeOrderData(): array
     {
-        if ($this->deliveryAddressId)
-        $this->deliveryAddressInfo = $this->resolveDeliveryAddress();
         $order_data = [];
-        $order_data['partner_id'] = $this->partner->id;
-        $order_data['partner_wise_order_id'] = $this->resolvePartnerWiseOrderId($this->partner);
+        $order_data['partner_id'] = $this->partnerId;
+        $order_data['partner_wise_order_id'] = $this->resolvePartnerWiseOrderId($this->partnerId);
         $order_data['customer_id'] = $this->customer->id ?? null;
-        $order_data['delivery_name'] = isset($this->deliveryAddressId) ?? $this->deliveryAddressInfo['name'];
-        $order_data['delivery_mobile'] = isset($this->deliveryAddressId) ??  $this->deliveryAddressInfo['mobile'];
-        $order_data['delivery_address'] = isset($this->deliveryAddressId) ?? $this->deliveryAddressInfo['address'];
-        $order_data['delivery_thana'] = isset($this->deliveryAddressId)?? $this->deliveryAddressInfo['address'];
-        $order_data['delivery_district'] = isset($this->deliveryAddressId) ?? $this->deliveryAddressInfo['address'];
+        $order_data['delivery_name'] = $this->resolveDeliveryName();
+        $order_data['delivery_mobile'] = $this->resolveDeliveryMobile();
+        $order_data['delivery_address'] = $this->deliveryAddress;
+        $order_data['delivery_thana'] = $this->deliveryThana;
+        $order_data['delivery_district'] = $this->deliveryDistrict;
         $order_data['sales_channel_id'] = $this->salesChannelId ?: SalesChannelIds::POS;
         $order_data['emi_month'] = ($this->paymentMethod == PaymentMethods::EMI && !is_null($this->emiMonth)) ? $this->emiMonth : null;
         $order_data['status'] = ($this->salesChannelId == SalesChannelIds::POS || is_null($this->salesChannelId)) ? Statuses::COMPLETED : Statuses::PENDING;
@@ -477,29 +521,22 @@ class Creator
        }
     }
 
-    private function calculateDeliveryChargeAndSave($order)
+    /**
+     * @param Order $order
+     * @return bool
+     */
+    private function calculateDeliveryChargeAndSave(Order $order): bool
     {
-        if($this->deliveryMethod == Methods::OWN_DELIVERY)
-            return  $this->partner->delivery_charge;
-
-        $data = [
-            'weight' => $this->totalWeight,
-            'delivery_district' => $this->deliveryAddressInfo['district'],
-            'delivery_thana' => $this->deliveryAddressInfo['thana'],
-            'partner_id' => $this->partner->id,
-            'cod_amount' => $this->getDueAmount($order)
-        ];
-        $delivery_charge = $this->apiServerClient->setBaseUrl()->post('v2/pos/delivery/delivery-charge', $data)['delivery_charge'];
-        $order->delivery_charge = $delivery_charge;
-        $order->save();
+        /** @var OrderDeliveryPriceCalculation $deliveryPriceCalculation */
+        $deliveryPriceCalculation  = app(OrderDeliveryPriceCalculation::class);
+        $delivery_charge = $deliveryPriceCalculation->setOrder($order)->calculateDeliveryCharge();
+        if($delivery_charge)
+        {
+            $order->delivery_charge = $delivery_charge;
+            return $order->save();
+        }
+        return false;
     }
-
-    private function resolveDeliveryAddress()
-    {
-        return $this->smanagerUserServerClient->get('/api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId . '/addresses/'.$this->deliveryAddressId);
-    }
-
-
 }
 
 

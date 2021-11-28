@@ -35,6 +35,6 @@ class OrderInvoice implements ShouldQueue
     {
         /** @var InvoiceService $invoice_service */
         $invoice_service = app(InvoiceService::class);
-        $invoice_service->setOrder($this->order->id)->generateInvoice();
+        $invoice_service->setOrder($this->order)->generateInvoice();
     }
 }

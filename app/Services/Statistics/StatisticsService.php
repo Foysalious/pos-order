@@ -18,8 +18,9 @@ class StatisticsService extends BaseService
     public function index(StatisticsRequest $request, int $partnerId)
     {
         $timeFrame = makeTimeFrame($request);
-        $statuses = new stdClass();
-        $this->orderRepository->getOrderStatusStatByPartner($partnerId)->each(function ($status) use ($statuses) {
+        $statuses = $this->getOrderStatusConstants();
+
+        $this->orderRepository->getOrderStatusStatByPartner($partnerId, [SalesChannelIds::WEBSTORE])->each(function ($status) use ($statuses) {
             $name = $status->status;
             $statuses->$name = $status->count;
         });
@@ -39,6 +40,16 @@ class StatisticsService extends BaseService
         ];
         return $this->success(ResponseMessages::SUCCESS, ['statistics' => $statistics]);
 
+    }
+
+    private function getOrderStatusConstants()
+    {
+        $order_statuses =Statuses::get();
+        $statuses = new stdClass();
+        foreach ($order_statuses as $status) {
+            $statuses->$status = 0;
+        }
+        return $statuses;
     }
 
 

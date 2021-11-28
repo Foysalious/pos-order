@@ -3,6 +3,7 @@
 use App\Constants\ResponseMessages;
 use App\Events\OrderDeleted;
 use App\Http\Reports\InvoiceService;
+use App\Http\Requests\DeliveryStatusUpdateIpnRequest;
 use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
 use App\Http\Requests\OrderFilterRequest;
@@ -14,26 +15,34 @@ use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderWithProductResource;
 use App\Http\Resources\Webstore\CustomerOrderDetailsResource;
 use App\Interfaces\CustomerRepositoryInterface;
+use App\Interfaces\OrderLogRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
+use App\Jobs\Order\OrderEmail;
 use App\Jobs\Order\OrderPlacePushNotification;
-use App\Jobs\WebStoreSettingsSyncJob;
+use App\Models\Order;
+use App\Models\OrderLog;
 use App\Services\AccessManager\AccessManager;
 use App\Services\AccessManager\Features;
 use App\Services\APIServerClient\ApiServerClient;
 use App\Services\BaseService;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
+use App\Services\Customer\CustomerResolver;
 use App\Services\Delivery\Methods;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
+use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\Constants\SalesChannelIds;
+use App\Services\OrderLog\Objects\OrderObjectRetriever;
+use App\Services\OrderLog\OrderLogGenerator;
 use App\Services\OrderSms\WebstoreOrderSms;
 use App\Services\Webstore\SettingsSync\WebStoreSettingsSyncTypes;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use App\Services\Order\Constants\Statuses;
@@ -57,7 +66,7 @@ class OrderService extends BaseService
         OrderSkusRepositoryInterface            $orderSkusRepositoryInterface,
         CustomerRepositoryInterface             $customerRepository,
         Updater                                 $updater,
-        OrderPaymentRepositoryInterface $orderPaymentRepository,
+        OrderPaymentRepositoryInterface         $orderPaymentRepository,
         Creator                                 $creator,
         protected InventoryServerClient         $client,
         protected ApiServerClient               $apiServerClient,
@@ -65,7 +74,10 @@ class OrderService extends BaseService
         protected OrderFilter                   $orderSearch,
         protected StatusChanger                 $orderStatusChanger,
         protected StockRefillerForCanceledOrder $stockRefillerForCanceledOrder,
-        InvoiceService                          $invoiceService
+        InvoiceService                          $invoiceService,
+        protected ApiServerClient               $apiServerClientclient,
+        protected CustomerResolver              $customerResolver,
+        private OrderLogRepositoryInterface     $orderLogRepository
     )
     {
         $this->orderRepository = $orderRepository;
@@ -119,14 +131,15 @@ class OrderService extends BaseService
      */
     public function store($partner, OrderCreateRequest $request): JsonResponse
     {
-        $order = $this->creator->setPartner($partner)
+        $order = $this->creator->setPartnerId($partner)
             ->setCustomerId($request->customer_id)
             ->setDeliveryName($request->delivery_name)
             ->setDeliveryMobile($request->delivery_mobile)
             ->setDeliveryAddress($request->delivery_address)
             ->setCustomerId($request->customer_id)
             ->setSalesChannelId($request->sales_channel_id)
-            ->setDeliveryAddressId($request->delivery_address_id)
+            ->setDeliveryDistrict($request->delivery_district)
+            ->setDeliveryThana($request->delivery_thana)
             ->setTotalWeight($request->total_weight)
             ->setDeliveryMethod($request->delivery_method)
             ->setCodAmount($request->cod_amount)
@@ -139,7 +152,6 @@ class OrderService extends BaseService
             ->setApiRequest($request->api_request->id)
             ->create();
 
-        if ($order) dispatch(new WebStoreSettingsSyncJob($partner, WebStoreSettingsSyncTypes::Order, $order->id));
         if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) {
             dispatch(new OrderPlacePushNotification($order));
             dispatch(new WebstoreOrderSms($partner, $order->id));
@@ -156,20 +168,27 @@ class OrderService extends BaseService
         $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::WEBSTORE)->find($order_id);
         if (!$order) return $this->error('No Order Found', 404);
         if ($order->invoice == null) {
-            return $this->invoiceService->setOrder($order_id)->generateInvoice();
+            return $this->invoiceService->setOrder($order)->generateInvoice();
         }
         return $this->success(ResponseMessages::SUCCESS, ['invoice' => $order->invoice]);
     }
+
     private function getSkuDetailsForWebstore($partner, $sku_ids)
     {
         $url = 'api/v1/partners/' . $partner . '/webstore-skus-details?skus=' . json_encode($sku_ids->toArray()) . '&channel_id=' . 2;
         $sku_details = $this->client->get($url)['skus'] ?? [];
         return $this->success(ResponseMessages::SUCCESS, ['data' => collect($sku_details)]);
     }
+
     public function getTrendingProducts(int $partner_id)
     {
         $trending = $this->orderSkusRepositoryInterface->getTrendingProducts($partner_id);
-        return $trending->count() > 0 ? $this->getSkuDetailsForWebstore($partner_id, $trending) : collect();
+        $products = $this->getSkuDetailsForWebstore($partner_id, $trending);
+        if ($trending->count() > 0) {
+
+            if (empty($products->getData()->data)) return $this->error('no product Found');
+            else return $products;
+        } else return $this->error('no product Found');
     }
 
     public function getOrderInvoice(int $partner_id, int $order_id): JsonResponse
@@ -177,7 +196,7 @@ class OrderService extends BaseService
         $order = $this->orderRepository->where('sales_channel_id', SalesChannelIds::POS)->where('partner_id', $partner_id)->find($order_id);
         if (!$order) return $this->error('No Order Found', 404);
         if ($order->invoice == null) {
-            return $this->invoiceService->setOrder($order_id)->generateInvoice();
+            return $this->invoiceService->setOrder($order)->generateInvoice();
         }
         $this->accessManager->setPartnerId($order->partner_id)->setFeature(Features::INVOICE_DOWNLOAD)->checkAccess();
         return $this->success(ResponseMessages::SUCCESS, ['invoice' => $order->invoice]);
@@ -190,6 +209,11 @@ class OrderService extends BaseService
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $resource = new OrderWithProductResource($order, true);
         return $this->success(ResponseMessages::SUCCESS, ['order' => $resource]);
+    }
+
+    public function getOrderInfo($partner_id, $order_id)
+    {
+        return $this->orderRepository->getOrderDetailsByPartner($partner_id, $order_id);
     }
 
     public function getWebStoreOrderDetails(int $partner_id, int $order_id, string $customer_id): JsonResponse
@@ -232,7 +256,7 @@ class OrderService extends BaseService
      */
     public function update(OrderUpdateRequest $orderUpdateRequest, $partner_id, $order_id): JsonResponse
     {
-        $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id)->load(['items', 'customer', 'payments', 'discounts']);
         if (!$orderDetails) return $this->error("You're not authorized to access this order", 403);
         $this->updater->setPartnerId($partner_id)
             ->setOrderId($order_id)
@@ -250,16 +274,12 @@ class OrderService extends BaseService
             ->setVoucherId($orderUpdateRequest->voucher_id)
             ->setPaidAmount($orderUpdateRequest->paid_amount ?? null)
             ->setPaymentMethod($orderUpdateRequest->payment_method ?? null)
-            ->setPaymentLinkAmount($orderUpdateRequest->payment_link_amount ?? null)
             ->setDiscount($orderUpdateRequest->discount)
-            ->setHeader($orderUpdateRequest->header('Authorization'))
             ->setDeliveryVendorName($orderUpdateRequest->delivery_vendor_name ?? null)
             ->setDeliveryRequestId($orderUpdateRequest->delivery_request_id ?? null)
             ->setDeliveryThana($orderUpdateRequest->delivery_thana ?? null)
             ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
             ->update();
-
-        dispatch(new WebStoreSettingsSyncJob($partner_id, WebStoreSettingsSyncTypes::Order, $orderDetails->id));
         return $this->success();
     }
 
@@ -309,14 +329,14 @@ class OrderService extends BaseService
     {
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if (!$order) return $this->error(trans('order.order_not_found'), 404);
-        if (!$this->customerRepository->find($customer_id)) return $this->error(trans('order.customer_not_found'), 404);
-        if ($this->checkCustomerHasPayment($order_id))
-            $this->updater->setOrderId($order_id)
-                ->setOrder($order)
-                ->setCustomerId($customer_id)
-                ->setOrderLogType(OrderLogTypes::CUSTOMER)
-                ->update();
-        $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        $customer = $this->customerResolver->setCustomerId($customer_id)->setPartnerId($partner_id)->resolveCustomer();
+        if($customer->id == $order->customer?->id) return $this->error(trans('invalid customer update request'), 400);
+        if (is_null($order->paid_at)) return $this->error(trans('order.update.no_customer_update'), 400);
+        $this->updater->setOrderId($order_id)
+            ->setOrder($order)
+            ->setCustomerId($customer->id)
+            ->setOrderLogType(OrderLogTypes::CUSTOMER)
+            ->updatePaidOrderCustomer();
         return $this->success();
     }
 
@@ -329,14 +349,6 @@ class OrderService extends BaseService
 
     }
 
-
-    private function checkCustomerHasPayment($order_id): bool
-    {
-        $orderPaymentStatus = $this->orderPaymentRepository->where('order_id', $order_id)->get();
-        if (count($orderPaymentStatus) > 0) throw new OrderException(trans('order.update.no_customer_update'));
-        else return true;
-    }
-
     public function updateOrderStatus($partner_id, $order_id, OrderStatusUpdateRequest $request): JsonResponse
     {
         $order = $this->orderRepository->where('id', $order_id)->where('partner_id', $partner_id)->first();
@@ -345,97 +357,48 @@ class OrderService extends BaseService
         return $this->success();
     }
 
-    public function updateOrderStatusForIpn(int $partner_id, string $delivery_req_id, Request $request): JsonResponse
+    public function updateOrderStatusByIpn(int $partner_id, DeliveryStatusUpdateIpnRequest $request): JsonResponse
     {
-        $request->validate([
-            'status' => Rule::in(Statuses::COMPLETED)
-        ]);
-        $order = $this->orderRepository->where('delivery_request_id', $delivery_req_id)->where('partner_id', $partner_id)->first();
+        $order = $this->orderRepository->where('delivery_request_id', $request->delivery_req_id)->where('partner_id', $partner_id)->first();
         if (!$order) return $this->error("No Order Found", 404);
-        $this->orderStatusChanger->setDeliveryRequestId($delivery_req_id)->setStatus(Statuses::COMPLETED)->setOrder($order)->updateStatusForIpn();
+        $this->orderStatusChanger->setDeliveryRequestId($request->delivery_req_id)->setDeliveryStatus($request->delivery_status)->setOrder($order)->updateStatusForIpn();
         return $this->success();
     }
 
-    public function logs(int $order_id)
+    public function logs(int $partner_id, int $order_id)
     {
-        $logs = [
-            [
-                'id' => 1,
-                'log_type' => 'due_bill',
-                'log_type_show_name' => ['bn' => 'বাকি বিল', 'en' => 'Due Bill'],
-                'old_value' => null,
-                'new_value' => 500.00,
-                'created_at' => '2020-01-05 12:45:05',
-                'created_by_name' => 'Resource - Abdullah Arnab',
-                'is_invoice_downloadable' => $this->isInvoiceDownloadable('due_bill'),
-            ],
-            [
-                'id' => 2,
-                'log_type' => 'payments',
-                'log_type_show_name' => ['bn' => 'নগদ  গ্রহণ', 'en' => 'Cash Collection'],
-                'old_value' => null,
-                'new_value' => 500.00,
-                'created_at' => '2020-01-05 12:46:05',
-                'created_by_name' => 'Resource - Abdullah Arnab',
-                'is_invoice_downloadable' => $this->isInvoiceDownloadable('payments')
-            ],
-            [
-                'id' => 3,
-                'log_type' => 'payments',
-                'log_type_show_name' => ['bn' => 'অনলাইন গ্রহন', 'en' => 'Online Collection'],
-                'old_value' => null,
-                'new_value' => 500.00,
-                'created_at' => '2020-01-05 12:47:05',
-                'created_by_name' => 'Resource - Abdullah Arnab',
-                'is_invoice_downloadable' => $this->isInvoiceDownloadable('payments'),
-            ],
-            [
-                'id' => 4,
-                'log_type' => 'payable',
-                'log_type_show_name' => ['bn' => 'অর্ডার আপডেট (Increase)', 'en' => 'Order Update (Increase)'],
-                'old_value' => null,
-                'new_value' => 500.00,
-                'created_at' => '2020-01-05 12:48:05',
-                'created_by_name' => 'Resource - Abdullah Arnab',
-                'is_invoice_downloadable' => $this->isInvoiceDownloadable('payable'),
-            ],
-            [
-                'id' => 5,
-                'log_type' => 'payable',
-                'log_type_show_name' => ['bn' => 'অর্ডার আপডেট (Decrease)', 'en' => 'Order Update (Decrease)'],
-                'old_value' => null,
-                'new_value' => 500.00,
-                'created_at' => '2020-01-05 12:49:05',
-                'created_by_name' => 'Resource - Abdullah Arnab',
-                'is_invoice_downloadable' => $this->isInvoiceDownloadable('payable'),
-            ],
-            [
-                'id' => 6,
-                'log_type' => 'emi',
-                'log_type_show_name' => ['bn' => 'কিস্তি - ৩ মাস', 'en' => 'Emi - 3 Months'],
-                'old_value' => null,
-                'new_value' => 5000.00,
-                'created_at' => '2020-01-05 12:45:05',
-                'created_by_name' => 'Resource - Abdullah Arnab',
-                'is_invoice_downloadable' => $this->isInvoiceDownloadable('emi'),
-            ],
-            [
-                'id' => 7,
-                'log_type' => 'status_update',
-                'log_type_show_name' => ['bn' => 'স্ট্যাটাস আপডেট ', 'en' => 'Status Update'],
-                'old_value' => Statuses::PROCESSING,
-                'new_value' => Statuses::SHIPPED,
-                'created_at' => '2020-01-05 12:50:05',
-                'created_by_name' => 'Resource - Abdullah Arnab',
-                'is_invoice_downloadable' => $this->isInvoiceDownloadable('status_update'),
-            ]
-        ];
-        return $this->success(ResponseMessages::SUCCESS, ['logs' => $logs]);
+        try {
+            $logs = $this->orderLogRepository->where('order_id', $order_id)->orderBy('id', 'desc')->get();
+            $final_logs = collect();
+            foreach ($logs as $log) {
+                /** @var OrderObjectRetriever $orderObjectRetriever */
+                $orderObjectRetriever = app(OrderObjectRetriever::class);
+                $oldOrderObject = $log->old_value ? $orderObjectRetriever->setOrder($log->old_value)->get() : null;
+                $newOrderObject = $log->new_value ? $orderObjectRetriever->setOrder($log->new_value)->get() : null;
+                /** @var OrderLogGenerator $orderLogGenerator */
+                $orderLogGenerator = app(OrderLogGenerator::class);
+                $log_details = $orderLogGenerator->setLog($log)->setOldObject($oldOrderObject)->setNewObject($newOrderObject)->getLogDetails();
+                $final_logs->push($log_details);
+            }
+            return $this->success(ResponseMessages::SUCCESS, ['logs' => $final_logs->toArray()]);
+        } catch (Exception $e) {
+            return $this->error("Sorry, can't generate logs for this order");
+        }
     }
 
-    public function generateLogInvoice(int $order_id, int $log_id): JsonResponse
+    public function generateLogInvoice(int $partner_id, int $order_id, int $log_id): JsonResponse
     {
-        return $this->success(ResponseMessages::SUCCESS, ['link' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20211018_pos_order_invoice_18234_report_1634557351.pdf']);
+        /** @var OrderLog $log */
+        $log = $this->orderLogRepository->where('order_id', $order_id)->where('id', $log_id)->first();
+        if ($log->invoice) return $this->success(ResponseMessages::SUCCESS, ['link' => $log->invoice]);
+        /** @var OrderObjectRetriever $orderObjectRetriever */
+        $orderObjectRetriever = app(OrderObjectRetriever::class);
+        $newOrderObject = $orderObjectRetriever->setOrder($log->new_value)->get();
+        /** @var InvoiceService $invoiceService */
+        $invoiceService = app(InvoiceService::class);
+        $link = $invoiceService->setOrder($newOrderObject)->generateInvoice();
+        $this->orderLogRepository->update($log, ['invoice' => $link]);
+        return $this->success(ResponseMessages::SUCCESS, ['link' => $link]);
     }
 
     public function getAllFilteringOptions(): JsonResponse
@@ -445,9 +408,13 @@ class OrderService extends BaseService
         return $this->success(ResponseMessages::SUCCESS, ['filters' => $data]);
     }
 
-    private function isInvoiceDownloadable($log_type): bool
+    public function sendEmail($partner, $order)
     {
-        if ($log_type == 'status_update') return false;
-        return true;
+        $order = Order::where('partner_id', $partner)->find($order);
+        if (!$order) return $this->error('Order Not Found', 404);
+        if (!$order->customer) return $this->error('Customer Not Found', 404);
+        if (!$order->customer->email) return $this->error('Email Not Found', 404);
+        dispatch(new OrderEmail($order));
+        return $this->success();
     }
 }

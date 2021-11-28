@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DataMigrationController;
+use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StatisticsController;
@@ -35,7 +36,9 @@ Route::group(['middleware' => 'ip.whitelist'], function () {
             Route::delete('/{customer_id}', [CustomerController::class, 'destroy']);
         });
 
-        Route::get('orders/{order_id}/generate-invoice', [OrderController::class, 'getOrderinvoice']);
+        Route::get('partners/{partner_id}/sales', [ReportController::class, 'getSalesReport']);
+        Route::get('partners/{partner_id}/orders/{order_id}/generate-invoice', [OrderController::class, 'getOrderinvoice']);
+        Route::post('partners/{partner_id}/orders/{order}/send-email', [OrderController::class, 'sendEmail']);
         Route::get('partners/{partner}/trending-products', [OrderController::class, 'getTrendingProducts']);
         Route::group(['prefix' => 'webstore'], function () {
             Route::get('orders/{order_id}/generate-invoice', [OrderController::class, 'getWebstoreOrderinvoice']);
@@ -62,12 +65,14 @@ Route::group(['middleware' => 'ip.whitelist'], function () {
         Route::post('payment/delete', [PaymentController::class, 'deletePayment']);
         Route::post('customers/{customer}/orders/{order}/review', [ReviewController::class, 'store']);
         Route::get('products/{product}/reviews', [ReviewController::class, 'index']);
-        Route::put('partners/{partner_id}', [DataMigrationController::class, 'updatePartnersTable']);
+        Route::get('/products-reviews', [ReviewController::class, 'getReviewsByProductIds']);
+        Route::get('/partners/{partner_id}', [PartnerController::class, 'show']);
+        Route::put('partners/{partner_id}', [PartnerController::class, 'updatePartnersTable']);
         Route::get('/partners/{partner_id}/customers/{customer_id}/purchase-amount-promo-usage', [CustomerController::class, 'getPurchaseAmountAndPromoUsed']);
         Route::get('/partners/{partner_id}/customers/{customer_id}/orders', [CustomerController::class, 'getOrdersByDateWise']);
         Route::get('partners/{partner_id}/reports/product-wise', [ReportController::class, 'getProductWise']);
         Route::get('partners/{partner_id}/reports/customer-wise', [ReportController::class, 'getCustomerWise']);
-        Route::put('partners/{partner_id}/delivery_req_id/{delivery_req_id}/update-status', [OrderController::class, 'updateOrderStatusForIpn']);
+        Route::put('partners/{partner_id}/update-status-for-ipn', [OrderController::class, 'updateOrderStatusForIpn']);
         Route::get('filters', [OrderController::class, 'getFilteringOptions']);
     });
 });

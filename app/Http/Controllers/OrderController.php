@@ -2,6 +2,7 @@
 
 use App\Exceptions\OrderException;
 use App\Http\Reports\InvoiceService;
+use App\Http\Requests\DeliveryStatusUpdateIpnRequest;
 use App\Http\Requests\OrderCreateRequest;
 use App\Http\Requests\OrderCustomerRequest;
 use App\Http\Requests\OrderFilterRequest;
@@ -203,7 +204,7 @@ class OrderController extends Controller
      * @param $order_id
      * @return JsonResponse
      */
-    public function show($partner_id, $order_id)
+    public function show($partner_id, $order_id): JsonResponse
     {
         return $this->orderService->getOrderDetails($partner_id, $order_id);
     }
@@ -361,12 +362,13 @@ class OrderController extends Controller
 
     /**
      * * @OA\Get(
-     *      path="/api/v1/orders/{order_id}/generate-invoice",
+     *      path="/api/v1/partners/{partner}/orders/{order_id}/generate-invoice",
      *      operationId="getOrderInvoice",
      *      tags={"ORDER API"},
      *      summary="Get an order invoice",
      *      description="Return invoice",
      *      @OA\Parameter(name="order_id", description="order id", required=true, in="path", @OA\Schema(type="integer")),
+     *      @OA\Parameter(name="partner", description="partner id", required=true, in="path", @OA\Schema(type="integer")),
      *      @OA\Response(response=200, description="Successful operation",
      *          @OA\JsonContent(
      *          type="object",
@@ -406,17 +408,39 @@ class OrderController extends Controller
      *
      * @param int $partner_id
      * @param string $delivery_req_id
-     * @param Request $request
+     * @param DeliveryStatusUpdateIpnRequest $request
      * @return JsonResponse
      */
-    public function updateOrderStatusForIpn(int $partner_id, string $delivery_req_id, Request $request)
+    public function updateOrderStatusForIpn(int $partner_id, DeliveryStatusUpdateIpnRequest $request): JsonResponse
     {
-        return $this->orderService->updateOrderStatusForIpn($partner_id, $delivery_req_id, $request);
+        return $this->orderService->updateOrderStatusByIpn($partner_id, $request);
     }
 
-    public function logs(int $order_id)
+    /**
+     * @OA\Get(
+     *      path="/api/v1/partners/{partner}/orders/{order_id}/logs",
+     *      tags={"ORDER API"},
+     *      summary="Order Log List",
+     *      description="Order Log List",
+     *      @OA\Parameter(name="partner",description="partner Id",required=true,in="path", @OA\Schema(type="integer")),
+     *      @OA\Parameter(name="order_id",description="Order Id",required=true,in="path", @OA\Schema(type="integer")),
+     *      @OA\Response(
+     *          response=200,
+     *          description="",
+     *      ),
+     *      @OA\Response(
+     *          response=404,
+     *          description="Message: No Logs found ",
+     *      ),
+     *         @OA\Response(
+     *          response=500,
+     *          description="Message: Internal Server Errorl ",
+     *      )
+     *     )
+     */
+    public function logs(int $partner_id, int $order_id)
     {
-        return $this->orderService->logs($order_id);
+        return $this->orderService->logs($partner_id, $order_id);
     }
 
     /**
@@ -472,9 +496,9 @@ class OrderController extends Controller
         return $this->orderService->getTrendingProducts($partner_id);
     }
 
-    public function generateLogInvoice(int $order, int $log): JsonResponse
+    public function generateLogInvoice(int $partner_id, int $order, int $log): JsonResponse
     {
-        return $this->orderService->generateLogInvoice($order, $log);
+        return $this->orderService->generateLogInvoice($partner_id, $order, $log);
     }
 
     /**
@@ -498,5 +522,10 @@ class OrderController extends Controller
     public function getFilteringOptions(): JsonResponse
     {
         return $this->orderService->getAllFilteringOptions();
+    }
+
+    public function sendEmail($partner, $order)
+    {
+        return $this->orderService->sendEmail($partner, $order);
     }
 }
