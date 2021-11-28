@@ -237,7 +237,7 @@ class OrderService extends BaseService
         $mapped_state = config('mapped_status');
         $mapped_state_tag = config('mapped_state_tag');
         $logs->each(function ($log) use (&$statusHistory, $order, $mapped_state, $mapped_state_tag) {
-            $toStatus = json_decode($log->new_value, true)['to'];
+            $toStatus = json_decode($log->new_value, true)['status'];
             if (in_array($toStatus, [Statuses::PROCESSING, Statuses::SHIPPED, Statuses::COMPLETED])) {
                 $temp['state_text'] = $mapped_state[$toStatus];
                 $temp['state_tag'] = $mapped_state_tag[$temp['state_text']];
