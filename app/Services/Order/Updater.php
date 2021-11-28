@@ -328,7 +328,7 @@ class Updater
     {
         try {
             DB::beginTransaction();
-            $previous_order = $this->setExistingOrder();
+            $previous_order = $this->order->replicate();
             $this->calculateOrderChangesAndUpdateSkus();
             if (isset($this->customer_id)) {
                 $this->updateCustomer();
