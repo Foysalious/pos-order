@@ -2,6 +2,7 @@
 
 use App\Models\Order;
 use App\Repositories\PaymentLinkRepository;
+use App\Services\APIServerClient\ApiServerClient;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
@@ -40,6 +41,7 @@ class OrderWithProductResource extends JsonResource
      */
     public function toArray($request): array
     {
+        list($is_registered_for_sdelivery,$delivery_method) = $this->getDeliveryInformation($this->partner->id);
         $this->orderWithProductResource = [
             'id' => $this->id,
             'created_at' => convertTimezone($this->created_at)?->format('Y-m-d H:i:s'),
@@ -51,6 +53,8 @@ class OrderWithProductResource extends JsonResource
             'sales_channel_id' => $this->sales_channel_id,
             'note' => $this->note,
             'invoice' => $this->invoice,
+            'is_registered_for_sdelivery' => $is_registered_for_sdelivery,
+            'delivery_method' => $delivery_method,
             'items' => OrderSkuResource::collection($this->orderSkus),
             'price' => $this->getOrderPriceRelatedInfo(),
             'customer' => $this->getOrderCustomer(),
@@ -60,6 +64,14 @@ class OrderWithProductResource extends JsonResource
         $this->orderWithProductResource['payment_link'] = $this->getOrderDetailsWithPaymentLink();
         if ($this->addOrderUpdatableFlag) $this->orderWithProductResource['is_updatable'] = $this->isOrderUpdatable();
         return $this->orderWithProductResource;
+    }
+
+    private function getDeliveryInformation($partnerId)
+    {
+        /** @var ApiServerClient $apiServerClient */
+        $apiServerClient = app(ApiServerClient::class);
+        $partnerInfo =  $apiServerClient->get('pos/v1/partners/'. $partnerId)['partner'];
+        return [$partnerInfo['is_registered_for_sdelivery'],$partnerInfo['delivery_method']];
     }
 
     /**

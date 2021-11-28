@@ -39,6 +39,7 @@ use App\Services\OrderLog\Objects\OrderObjectRetriever;
 use App\Services\OrderLog\OrderLogGenerator;
 use App\Services\OrderSms\WebstoreOrderSms;
 use App\Services\Webstore\SettingsSync\WebStoreSettingsSyncTypes;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -231,16 +232,16 @@ class OrderService extends BaseService
         $statusHistory = [];
         $temp['state_text'] = WebStoreStatuses::ORDER_PLACED;
         $temp['state_tag'] = StateTags::ORDER_PLACED;
-        $temp['time_stamp'] = convertTimezone($order->created_at)?->format('Y-m-d H:i:s');;
+        $temp['time_stamp'] = convertTimezone($order->created_at)?->format('Y-m-d H:i:s');
         array_push($statusHistory, $temp);
         $mapped_state = config('mapped_status');
         $mapped_state_tag = config('mapped_state_tag');
         $logs->each(function ($log) use (&$statusHistory, $order, $mapped_state, $mapped_state_tag) {
-            $toStatus = json_decode($log->new_value, true)['to'];
+            $toStatus = json_decode($log->new_value, true)['status'];
             if (in_array($toStatus, [Statuses::PROCESSING, Statuses::SHIPPED, Statuses::COMPLETED])) {
                 $temp['state_text'] = $mapped_state[$toStatus];
                 $temp['state_tag'] = $mapped_state_tag[$temp['state_text']];
-                $temp['time_stamp'] = convertTimezone($log->created_at)?->format('Y-m-d H:i:s');
+                $temp['time_stamp'] = convertTimezone(Carbon::parse($log->created_at))?->format('Y-m-d H:i:s');
                 array_push($statusHistory, $temp);
             }
         });
@@ -330,7 +331,7 @@ class OrderService extends BaseService
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if (!$order) return $this->error(trans('order.order_not_found'), 404);
         $customer = $this->customerResolver->setCustomerId($customer_id)->setPartnerId($partner_id)->resolveCustomer();
-        if($customer->id == $order->customer?->id) return $this->error(trans('invalid customer update request'), 400);
+        if ($customer->id == $order->customer?->id) return $this->error(trans('invalid customer update request'), 400);
         if (is_null($order->paid_at)) return $this->error(trans('order.update.no_customer_update'), 400);
         $this->updater->setOrderId($order_id)
             ->setOrder($order)
@@ -353,8 +354,26 @@ class OrderService extends BaseService
     {
         $order = $this->orderRepository->where('id', $order_id)->where('partner_id', $partner_id)->first();
         if (!$order) return $this->error("No Order Found", 404);
+
+        if (!$this->canChangeToThisStatus($order, $request->status))
+            return $this->error('Not allowed to changed to this status', 403);
         $this->orderStatusChanger->setOrder($order)->setStatus($request->status)->changeStatus();
         return $this->success();
+    }
+
+    private function canChangeToThisStatus(Order $orderBeforeUpdated, $toStatus): bool
+    {
+        if (!$orderBeforeUpdated->isWebStore()) return false;
+        $fromStatus = $orderBeforeUpdated->status;
+        if ($orderBeforeUpdated->delivery_vendor_name == Methods::OWN_DELIVERY) {
+            if ($fromStatus == Statuses::PENDING && in_array($toStatus, [Statuses::PROCESSING, Statuses::DECLINED])) return true;
+            if ($fromStatus == Statuses::PROCESSING && in_array($toStatus, [Statuses::SHIPPED, Statuses::CANCELLED])) return true;
+            if ($fromStatus == Statuses::SHIPPED && $toStatus == Statuses::COMPLETED) return true;
+        } else {
+            if ($fromStatus == Statuses::PENDING && in_array($toStatus, [Statuses::PROCESSING, Statuses::DECLINED])) return true;
+            if ($fromStatus == Statuses::PROCESSING && $toStatus == Statuses::CANCELLED) return true;
+        }
+        return false;
     }
 
     public function updateOrderStatusByIpn(int $partner_id, DeliveryStatusUpdateIpnRequest $request): JsonResponse

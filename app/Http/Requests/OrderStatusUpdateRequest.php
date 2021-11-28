@@ -4,6 +4,7 @@
 namespace App\Http\Requests;
 
 
+use App\Services\Order\Constants\Statuses;
 use Illuminate\Foundation\Http\FormRequest;
 
 class OrderStatusUpdateRequest extends FormRequest
@@ -27,7 +28,7 @@ class OrderStatusUpdateRequest extends FormRequest
     {
         return [
             'emi' => 'sometimes|numeric',
-            'status' => 'required',
+            'status' => 'required|in:' . implode(',', Statuses::get()),
         ];
     }
 }
