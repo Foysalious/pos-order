@@ -367,15 +367,12 @@ class OrderService extends BaseService
         $fromStatus = $orderBeforeUpdated->status;
         if ($orderBeforeUpdated->delivery_vendor_name == Methods::OWN_DELIVERY) {
             if ($fromStatus == Statuses::PENDING && in_array($toStatus, [Statuses::PROCESSING, Statuses::DECLINED])) return true;
+            if ($fromStatus == Statuses::PROCESSING && in_array($toStatus, [Statuses::SHIPPED, Statuses::CANCELLED])) return true;
+            if ($fromStatus == Statuses::SHIPPED && $toStatus == Statuses::COMPLETED) return true;
         } else {
-            ($fromStatus == Statuses::PENDING && in_array($toStatus, [Statuses::PROCESSING, Statuses::DECLINED])) ||
-            ($fromStatus == Statuses::PROCESSING && $toStatus == Statuses::CANCELLED) ||
-            ($deliveryMethod == Methods::OWN_DELIVERY && $fromStatus == Statuses::PROCESSING && in_array($toStatus, [Statuses::SHIPPED, Statuses::CANCELLED])) ||
-            ($deliveryMethod == Methods::OWN_DELIVERY && $fromStatus == Statuses::SHIPPED && in_array($toStatus, [Statuses::COMPLETED, Statuses::CANCELLED]))
-        )
-            return true;
+            if ($fromStatus == Statuses::PENDING && in_array($toStatus, [Statuses::PROCESSING, Statuses::DECLINED])) return true;
+            if ($fromStatus == Statuses::PROCESSING && $toStatus == Statuses::CANCELLED) return true;
         }
-
         return false;
     }
 
