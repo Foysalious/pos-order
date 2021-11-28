@@ -232,7 +232,7 @@ class OrderService extends BaseService
         $statusHistory = [];
         $temp['state_text'] = WebStoreStatuses::ORDER_PLACED;
         $temp['state_tag'] = StateTags::ORDER_PLACED;
-        $temp['time_stamp'] = convertTimezone($order->created_at)?->format('Y-m-d H:i:s');;
+        $temp['time_stamp'] = convertTimezone($order->created_at)?->format('Y-m-d H:i:s');
         array_push($statusHistory, $temp);
         $mapped_state = config('mapped_status');
         $mapped_state_tag = config('mapped_state_tag');
@@ -331,7 +331,7 @@ class OrderService extends BaseService
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if (!$order) return $this->error(trans('order.order_not_found'), 404);
         $customer = $this->customerResolver->setCustomerId($customer_id)->setPartnerId($partner_id)->resolveCustomer();
-        if($customer->id == $order->customer?->id) return $this->error(trans('invalid customer update request'), 400);
+        if ($customer->id == $order->customer?->id) return $this->error(trans('invalid customer update request'), 400);
         if (is_null($order->paid_at)) return $this->error(trans('order.update.no_customer_update'), 400);
         $this->updater->setOrderId($order_id)
             ->setOrder($order)
@@ -355,22 +355,27 @@ class OrderService extends BaseService
         $order = $this->orderRepository->where('id', $order_id)->where('partner_id', $partner_id)->first();
         if (!$order) return $this->error("No Order Found", 404);
 
-        if (!$this->canChangeToThisStatus($order->delivery_vendor_name, $order->status, $request->status))
+        if (!$this->canChangeToThisStatus($order, $request->status))
             return $this->error('Not allowed to changed to this status', 403);
         $this->orderStatusChanger->setOrder($order)->setStatus($request->status)->changeStatus();
         return $this->success();
     }
 
-    private function canChangeToThisStatus($deliveryMethod, $fromStatus, $toStatus): bool
+    private function canChangeToThisStatus(Order $orderBeforeUpdated, $toStatus): bool
     {
-        if (
-
+        if (!$orderBeforeUpdated->isWebStore()) return false;
+        $fromStatus = $orderBeforeUpdated->status;
+        if ($orderBeforeUpdated->delivery_vendor_name == Methods::OWN_DELIVERY) {
+            if ($fromStatus == Statuses::PENDING && in_array($toStatus, [Statuses::PROCESSING, Statuses::DECLINED])) return true;
+        } else {
             ($fromStatus == Statuses::PENDING && in_array($toStatus, [Statuses::PROCESSING, Statuses::DECLINED])) ||
             ($fromStatus == Statuses::PROCESSING && $toStatus == Statuses::CANCELLED) ||
             ($deliveryMethod == Methods::OWN_DELIVERY && $fromStatus == Statuses::PROCESSING && in_array($toStatus, [Statuses::SHIPPED, Statuses::CANCELLED])) ||
             ($deliveryMethod == Methods::OWN_DELIVERY && $fromStatus == Statuses::SHIPPED && in_array($toStatus, [Statuses::COMPLETED, Statuses::CANCELLED]))
         )
             return true;
+        }
+
         return false;
     }
 
