@@ -386,7 +386,6 @@ class OrderService extends BaseService
             }
             return $this->success(ResponseMessages::SUCCESS, ['logs' => $final_logs->toArray()]);
         } catch (Exception $e) {
-            dd($e);
             return $this->error("Sorry, can't generate logs for this order");
         }
     }

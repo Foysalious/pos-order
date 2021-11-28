@@ -23,7 +23,7 @@ class OrderObject implements JsonSerializable
     private ?float $bank_transaction_charge;
     private ?string $delivery_name;
     private ?string $delivery_mobile;
-    private ?float $delivery_address;
+    private ?string $delivery_address;
     private ?string $note;
     private ?int $voucher_id;
     private ?string $paid_at;
