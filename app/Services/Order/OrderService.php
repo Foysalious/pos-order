@@ -242,7 +242,7 @@ class OrderService extends BaseService
             if (in_array($toStatus, [Statuses::PROCESSING, Statuses::SHIPPED, Statuses::COMPLETED])) {
                 $temp['state_text'] = $mapped_state[$toStatus];
                 $temp['state_tag'] = $mapped_state_tag[$temp['state_text']];
-                $temp['time_stamp'] = convertTimezone($log->created_at)?->format('Y-m-d H:i:s');
+               // $temp['time_stamp'] = convertTimezone($log->created_at)?->format('Y-m-d H:i:s');
                 array_push($statusHistory, $temp);
             }
         });
