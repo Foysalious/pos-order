@@ -528,9 +528,15 @@ class Creator
      */
     private function calculateDeliveryChargeAndSave(Order $order): bool
     {
-        /** @var DeliveryPriceCalculation $deliveryPriceCalculation */
-        $deliveryPriceCalculation  = app(DeliveryPriceCalculation::class);
-        return $deliveryPriceCalculation->setOrder($order)->calculateDeliveryChargeAndSave();
+        /** @var OrderDeliveryPriceCalculation $deliveryPriceCalculation */
+        $deliveryPriceCalculation  = app(OrderDeliveryPriceCalculation::class);
+        $delivery_charge = $deliveryPriceCalculation->setOrder($order)->calculateDeliveryCharge();
+        if($delivery_charge)
+        {
+            $order->delivery_charge = $delivery_charge;
+            return $order->save();
+        }
+        return false;
     }
 }
 

@@ -416,6 +416,28 @@ class OrderController extends Controller
         return $this->orderService->updateOrderStatusByIpn($partner_id, $request);
     }
 
+    /**
+     * @OA\Get(
+     *      path="/api/v1/partners/{partner}/orders/{order_id}/logs",
+     *      tags={"ORDER API"},
+     *      summary="Order Log List",
+     *      description="Order Log List",
+     *      @OA\Parameter(name="partner",description="partner Id",required=true,in="path", @OA\Schema(type="integer")),
+     *      @OA\Parameter(name="order_id",description="Order Id",required=true,in="path", @OA\Schema(type="integer")),
+     *      @OA\Response(
+     *          response=200,
+     *          description="",
+     *      ),
+     *      @OA\Response(
+     *          response=404,
+     *          description="Message: No Logs found ",
+     *      ),
+     *         @OA\Response(
+     *          response=500,
+     *          description="Message: Internal Server Errorl ",
+     *      )
+     *     )
+     */
     public function logs(int $partner_id, int $order_id)
     {
         return $this->orderService->logs($partner_id, $order_id);
