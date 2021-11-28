@@ -27,7 +27,7 @@ class ItemObject implements JsonSerializable
     private ?string $created_at;
     private ?string $updated_at;
     private ?string $deleted_at;
-    private ?string $discount;
+    private ?DiscountObject $discount;
 
     protected $originalPrice;
     protected $discountAmount;

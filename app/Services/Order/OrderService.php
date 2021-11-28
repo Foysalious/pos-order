@@ -21,7 +21,6 @@ use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Jobs\Order\OrderEmail;
 use App\Jobs\Order\OrderPlacePushNotification;
-use App\Jobs\WebStoreSettingsSyncJob;
 use App\Models\Order;
 use App\Models\OrderLog;
 use App\Services\AccessManager\AccessManager;
@@ -153,7 +152,6 @@ class OrderService extends BaseService
             ->setApiRequest($request->api_request->id)
             ->create();
 
-        if ($order) dispatch(new WebStoreSettingsSyncJob($partner, WebStoreSettingsSyncTypes::Order, $order->id));
         if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) {
             dispatch(new OrderPlacePushNotification($order));
             dispatch(new WebstoreOrderSms($partner, $order->id));
@@ -282,8 +280,6 @@ class OrderService extends BaseService
             ->setDeliveryThana($orderUpdateRequest->delivery_thana ?? null)
             ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
             ->update();
-
-//        dispatch(new WebStoreSettingsSyncJob($partner_id, WebStoreSettingsSyncTypes::Order, $orderDetails->id));
         return $this->success();
     }
 
@@ -386,7 +382,6 @@ class OrderService extends BaseService
             }
             return $this->success(ResponseMessages::SUCCESS, ['logs' => $final_logs->toArray()]);
         } catch (Exception $e) {
-            dd($e);
             return $this->error("Sorry, can't generate logs for this order");
         }
     }
