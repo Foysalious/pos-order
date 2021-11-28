@@ -529,12 +529,8 @@ class Creator
     {
         /** @var OrderDeliveryPriceCalculation $deliveryPriceCalculation */
         $deliveryPriceCalculation  = app(OrderDeliveryPriceCalculation::class);
-        $delivery_charge = $deliveryPriceCalculation->setOrder($order)->calculateDeliveryCharge();
-        if($delivery_charge)
-        {
-            $order->delivery_charge = $delivery_charge;
-            return $order->save();
-        }
+        list($delivery_method, $delivery_charge) = $deliveryPriceCalculation->setOrder($order)->calculateDeliveryCharge();
+        if ($delivery_charge) $order->update(['delivery_vendor_name'=> $delivery_method, 'delivery_charge' => $delivery_charge]);
         return false;
     }
 }

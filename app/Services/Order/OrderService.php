@@ -354,8 +354,24 @@ class OrderService extends BaseService
     {
         $order = $this->orderRepository->where('id', $order_id)->where('partner_id', $partner_id)->first();
         if (!$order) return $this->error("No Order Found", 404);
+
+        if (!$this->canChangeToThisStatus($order->delivery_vendor_name, $order->status, $request->status))
+            return $this->error('Not allowed to changed to this status', 403);
         $this->orderStatusChanger->setOrder($order)->setStatus($request->status)->changeStatus();
         return $this->success();
+    }
+
+    private function canChangeToThisStatus($deliveryMethod, $fromStatus, $toStatus): bool
+    {
+        if (
+
+            ($fromStatus == Statuses::PENDING && in_array($toStatus, [Statuses::PROCESSING, Statuses::DECLINED])) ||
+            ($fromStatus == Statuses::PROCESSING && $toStatus == Statuses::CANCELLED) ||
+            ($deliveryMethod == Methods::OWN_DELIVERY && $fromStatus == Statuses::PROCESSING && in_array($toStatus, [Statuses::SHIPPED, Statuses::CANCELLED])) ||
+            ($deliveryMethod == Methods::OWN_DELIVERY && $fromStatus == Statuses::SHIPPED && in_array($toStatus, [Statuses::COMPLETED, Statuses::CANCELLED]))
+        )
+            return true;
+        return false;
     }
 
     public function updateOrderStatusByIpn(int $partner_id, DeliveryStatusUpdateIpnRequest $request): JsonResponse
