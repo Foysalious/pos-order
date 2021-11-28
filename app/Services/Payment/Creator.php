@@ -10,6 +10,7 @@ use App\Services\Order\PriceCalculation;
 use App\Services\OrderLog\Objects\OrderObject;
 use App\Traits\ModificationFields;
 use Carbon\Carbon;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Creator
 {
@@ -109,6 +110,8 @@ class Creator
     public function create()
     {
         $order = $this->orderRepository->find($this->orderId);
+        if(!$order)
+            throw new NotFoundHttpException("No order Found");
         $previous_order = $this->setExistingOrder($order);
         $payment = $this->paymentRepositoryInterface->create($this->makeCreateData());
         /** @var OrderObject $oldOrderObject */
