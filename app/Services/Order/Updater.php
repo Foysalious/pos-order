@@ -346,7 +346,7 @@ class Updater
             if ($this->order->status == Statuses::PENDING || $this->order->status == Statuses::PROCESSING)
                 $this->calculateDeliveryChargeAndSave($this->order);
 
-            event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
+            event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData ?? []));
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();
