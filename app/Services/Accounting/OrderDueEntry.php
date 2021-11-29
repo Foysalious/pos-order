@@ -18,6 +18,7 @@ class OrderDueEntry extends BaseEntry
     public function create()
     {
         $data = $this->makeData();
+        dd($data);
         $this->accountingRepository->updateEntryBySource($data, $this->order->id, $this->order->partner_id);
     }
 
@@ -41,6 +42,8 @@ class OrderDueEntry extends BaseEntry
             'interest'           => (double) $this->order->interest ??  0,
             'note'               => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ?  SalesChannel::WEBSTORE : SalesChannel::POS,
             'entry_at'           => $this->order->updated_at->format('Y-m-d H:i:s'),
+            'reconcile_amount'   => $this->paidAmount,
+            'inventory_'    => '',
         ];
 
         return array_merge($data,$this->makeCustomerData($customer));

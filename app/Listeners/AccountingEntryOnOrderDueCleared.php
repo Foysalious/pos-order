@@ -20,6 +20,7 @@ class AccountingEntryOnOrderDueCleared
      */
     public function handle(OrderDueCleared $event)
     {
+        dd($event, 'here');
         $this->dueEntry->setOrder($event->getOrder())->create();
     }
 }
