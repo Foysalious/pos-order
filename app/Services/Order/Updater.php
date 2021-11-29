@@ -30,6 +30,7 @@ use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use function PHPUnit\Framework\isEmpty;
 
 class Updater
 {
@@ -345,9 +346,14 @@ class Updater
             }
             if ($this->order->status == Statuses::PENDING || $this->order->status == Statuses::PROCESSING)
                 $this->calculateDeliveryChargeAndSave($this->order);
-
-            event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
-            DB::commit();
+//            event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
+            event(new OrderUpdated([
+                'order' => $this->order->refresh(),
+                'orderProductChangeData' => $this->orderProductChangeData ?? [],
+                'payment_info' => ['payment_method' => $this->paymentMethod, 'paid_amount' => $this->paidAmount]
+            ]));
+            dd('after accounting hit');
+//            DB::commit();
         } catch (Exception $e) {
             DB::rollback();
             throw $e;
@@ -479,14 +485,23 @@ class Updater
 
     private function updateOrderPayments()
     {
-        if (isset($this->paymentMethod) && ($this->paymentMethod == PaymentMethods::CASH_ON_DELIVERY || $this->paymentMethod == PaymentMethods::QR_CODE) && $this->paidAmount > 0) {
-            $cash_details = json_encode(['payment_method_en' => 'Cash', 'payment_method_bn' => ' নগদ গ্রহন', 'payment_method_icon' => config('s3.url') . 'pos/payment/cash_v2.png']);
+
+        $cash_details = json_encode(['payment_method_en' => 'Cash', 'payment_method_bn' => ' নগদ গ্রহন', 'payment_method_icon' => config('s3.url') . 'pos/payment/cash_v2.png']);
+        $digital_payment_details = json_encode(['payment_method_en' => 'Digital Payment', 'payment_method_bn' => 'ডিজিটাল পেমেন্ট', 'payment_method_icon' => config('s3.url') . 'pos/payment/digital_collection_v2.png']);
+        $other_details = json_encode(['payment_method_en' => 'Others', 'payment_method_bn' => 'অন্যান্য', 'payment_method_icon' => config('s3.url') . 'pos/payment/others_v2.png']);
+
+        if (isset($this->paymentMethod) && ($this->paymentMethod == PaymentMethods::CASH_ON_DELIVERY) && $this->paidAmount > 0) {
             $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod(PaymentMethods::CASH_ON_DELIVERY)->setMethodDetails($cash_details)
                 ->setTransactionType(TransactionTypes::CREDIT)->create();
             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
         } elseif ($this->paidAmount > 0 && $this->paymentMethod == PaymentMethods::PAYMENT_LINK) {
-            $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod(PaymentMethods::PAYMENT_LINK)
-                ->setTransactionType(TransactionTypes::CREDIT)->create();
+            $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod(PaymentMethods::PAYMENT_LINK)->setMethodDetails($digital_payment_details)->setTransactionType(TransactionTypes::CREDIT)->create();
+            $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
+        } elseif ($this->paidAmount > 0 && $this->paymentMethod ==  PaymentMethods::QR_CODE) {
+            $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod(PaymentMethods::QR_CODE)->setMethodDetails($cash_details)->setTransactionType(TransactionTypes::CREDIT)->create();
+            $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
+        } elseif ($this->paidAmount > 0 && $this->paymentMethod ==  PaymentMethods::ADVANCE_BALANCE) {
+            $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod(PaymentMethods::ADVANCE_BALANCE)->setMethodDetails($cash_details)->setTransactionType(TransactionTypes::CREDIT)->create();
             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
         }
     }

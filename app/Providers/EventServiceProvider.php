@@ -8,6 +8,7 @@ use App\Events\OrderUpdated;
 use App\Listeners\AccountingEntryOnOrderCreation;
 use App\Listeners\AccountingEntryOnOrderDelete;
 use App\Listeners\AccountingEntryOnOrderDueCleared;
+use App\Listeners\AccountingEntryOnOrderPayments;
 use App\Listeners\AccountingEntryOnOrderUpdating;
 use App\Listeners\AccountingEntryOrderCustomerUpdate;
 use App\Listeners\GenerateInvoiceOnOrderCreate;
@@ -39,6 +40,7 @@ class EventServiceProvider extends ServiceProvider
         ],
         OrderUpdated::class => [
             AccountingEntryOnOrderUpdating::class,
+            AccountingEntryOnOrderDueCleared::class,
             GenerateInvoiceOnOrderCreate::class,
             WebstoreSettingsSyncOnOrderUpdate::class
         ],
