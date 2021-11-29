@@ -328,7 +328,7 @@ class OrderService extends BaseService
      */
     public function updateCustomer($customer_id, $partner_id, $order_id): JsonResponse
     {
-        $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id)->load(['items', 'customer', 'payments', 'discounts']);
         if (!$order) return $this->error(trans('order.order_not_found'), 404);
         $customer = $this->customerResolver->setCustomerId($customer_id)->setPartnerId($partner_id)->resolveCustomer();
         if ($customer->id == $order->customer?->id) return $this->error(trans('invalid customer update request'), 400);
