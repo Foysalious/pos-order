@@ -397,7 +397,7 @@ class OrderService extends BaseService
                 /** @var OrderLogGenerator $orderLogGenerator */
                 $orderLogGenerator = app(OrderLogGenerator::class);
                 $log_details = $orderLogGenerator->setLog($log)->setOldObject($oldOrderObject)->setNewObject($newOrderObject)->getLogDetails();
-                $final_logs->push($log_details);
+                if ($log_details) $final_logs->push($log_details);
             }
             return $this->success(ResponseMessages::SUCCESS, ['logs' => $final_logs->toArray()]);
         } catch (Exception $e) {

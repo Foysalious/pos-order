@@ -398,10 +398,10 @@ class Updater
     private function setExistingOrder()
     {
         $order = clone $this->order;
-        $order->items = $this->order->items ? clone $this->order->items : null;
+        $order->items = clone $this->order->items;
         $order->customer = $this->order->customer ? clone $this->order->customer : null;
-        $order->payments = $this->order->payments ? clone $this->order->payments : null;
-        $order->discounts = $this->order->discounts ? clone $this->order->discounts : null;
+        $order->payments = clone $this->order->payments;
+        $order->discounts = clone $this->order->discounts;
         return $order;
     }
 
