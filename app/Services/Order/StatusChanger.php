@@ -98,7 +98,7 @@ class StatusChanger
         $this->paymentCreator->setOrderId($order->id)->setAmount($order_calculator->getDue())->setMethod(PaymentMethods::CASH_ON_DELIVERY)
             ->setTransactionType(TransactionTypes::CREDIT)->setEmiMonth($order->emi_month)
             ->setInterest($order->interest)->create();
-        event(new OrderDueCleared($order));
+        event(new OrderDueCleared(['order' => $order, 'paid_amount' => $order_calculator->getDue()]));
     }
 
     public function updateStatusForIpn()
