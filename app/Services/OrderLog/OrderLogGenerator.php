@@ -70,7 +70,7 @@ class OrderLogGenerator
                 'log_type_show_name' => ['bn' => 'কিস্তি - '. $this->newObject->emi_month .'মাস', 'en' => 'Emi - ' . $this->newObject->emi_month .'Months'],
                 'old_value' => null,
                 'new_value' => $new_discounted_price,
-                'created_at' => convertTimezone($this->log->created_at)?->format('Y-m-d H:i:s'),
+                'created_at' => $this->log->created_at,
                 'created_by_name' => $this->log->created_by_name,
                 'is_invoice_downloadable' => $this->isInvoiceDownloadable(OrderLogTypes::EMI)
             ];
