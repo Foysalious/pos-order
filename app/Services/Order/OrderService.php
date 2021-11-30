@@ -257,7 +257,9 @@ class OrderService extends BaseService
      */
     public function update(OrderUpdateRequest $orderUpdateRequest, $partner_id, $order_id): JsonResponse
     {
-        $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id)->load(['items', 'customer', 'payments', 'discounts']);
+        $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id)->load(['items' => function($q) {
+            $q->with('discount');
+        }, 'customer', 'payments', 'discounts']);
         if (!$orderDetails) return $this->error("You're not authorized to access this order", 403);
         $this->updater->setPartnerId($partner_id)
             ->setOrderId($order_id)
@@ -328,7 +330,7 @@ class OrderService extends BaseService
      */
     public function updateCustomer($customer_id, $partner_id, $order_id): JsonResponse
     {
-        $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id)->load(['items', 'customer', 'payments', 'discounts']);
         if (!$order) return $this->error(trans('order.order_not_found'), 404);
         $customer = $this->customerResolver->setCustomerId($customer_id)->setPartnerId($partner_id)->resolveCustomer();
         if ($customer->id == $order->customer?->id) return $this->error(trans('invalid customer update request'), 400);
@@ -397,7 +399,7 @@ class OrderService extends BaseService
                 /** @var OrderLogGenerator $orderLogGenerator */
                 $orderLogGenerator = app(OrderLogGenerator::class);
                 $log_details = $orderLogGenerator->setLog($log)->setOldObject($oldOrderObject)->setNewObject($newOrderObject)->getLogDetails();
-                $final_logs->push($log_details);
+                if ($log_details) $final_logs->push($log_details);
             }
             return $this->success(ResponseMessages::SUCCESS, ['logs' => $final_logs->toArray()]);
         } catch (Exception $e) {

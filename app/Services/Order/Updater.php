@@ -328,7 +328,7 @@ class Updater
     {
         try {
             DB::beginTransaction();
-            $previous_order = $this->order->replicate();
+            $previous_order = $this->setExistingOrder();
             $this->calculateOrderChangesAndUpdateSkus();
             if (isset($this->customer_id)) {
                 $this->updateCustomer();
@@ -346,7 +346,7 @@ class Updater
             if ($this->order->status == Statuses::PENDING || $this->order->status == Statuses::PROCESSING)
                 $this->calculateDeliveryChargeAndSave($this->order);
 
-            event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData));
+            event(new OrderUpdated($this->order->refresh(), $this->orderProductChangeData ?? []));
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();
@@ -397,13 +397,12 @@ class Updater
 
     private function setExistingOrder()
     {
-        $previous_order = clone $this->order;
-        $order = $previous_order;
-        $order->items = $previous_order->items;
-        $order->customer = $previous_order->customer;
-        $order->payments = $previous_order->payments;
-        $order->discounts = $previous_order->discounts;
-        return $previous_order;
+        $order = clone $this->order;
+        $order->items = clone $this->order->items;
+        $order->customer = $this->order->customer ? clone $this->order->customer : null;
+        $order->payments = clone $this->order->payments;
+        $order->discounts = clone $this->order->discounts;
+        return $order;
     }
 
     private function createLog($previous_order, $updated_order)
