@@ -5,12 +5,11 @@ use App\Events\OrderDeleted;
 use App\Events\OrderPlaceTransactionCompleted;
 use App\Events\OrderDueCleared;
 use App\Events\OrderUpdated;
-use App\Listeners\AccountingEntryOnOrderCreation;
-use App\Listeners\AccountingEntryOnOrderDelete;
-use App\Listeners\AccountingEntryOnOrderDueCleared;
-use App\Listeners\AccountingEntryOnOrderPayments;
-use App\Listeners\AccountingEntryOnOrderUpdating;
-use App\Listeners\AccountingEntryOrderCustomerUpdate;
+use App\Listeners\Accounting\EntryOnOrderCreation;
+use App\Listeners\Accounting\EntryOnOrderDelete;
+use App\Listeners\Accounting\EntryOnOrderDueCleared;
+use App\Listeners\Accounting\EntryOnOrderUpdating;
+use App\Listeners\Accounting\EntryOnOrderCustomerUpdate;
 use App\Listeners\GenerateInvoiceOnOrderCreate;
 use App\Listeners\RewardOnOrderCreate as RewardOnOrderCreateListener;
 use App\Listeners\UsageOnOrderCreate;
@@ -32,26 +31,26 @@ class EventServiceProvider extends ServiceProvider
             SendEmailVerificationNotification::class,
         ],
         OrderPlaceTransactionCompleted::class => [
-            AccountingEntryOnOrderCreation::class,
+            EntryOnOrderCreation::class,
             RewardOnOrderCreateListener::class,
             UsageOnOrderCreate::class,
             GenerateInvoiceOnOrderCreate::class,
             WebstoreSettingsSyncOnOrderCreate::class
         ],
         OrderUpdated::class => [
-            AccountingEntryOnOrderUpdating::class,
-            AccountingEntryOnOrderDueCleared::class,
+            EntryOnOrderUpdating::class,
+            EntryOnOrderDueCleared::class,
             GenerateInvoiceOnOrderCreate::class,
             WebstoreSettingsSyncOnOrderUpdate::class
         ],
         OrderDueCleared::class => [
-            AccountingEntryOnOrderDueCleared::class,
+            EntryOnOrderDueCleared::class,
         ],
         OrderDeleted::class => [
-            AccountingEntryOnOrderDelete::class,
+            EntryOnOrderDelete::class,
         ],
         OrderCustomerUpdated::class => [
-            AccountingEntryOrderCustomerUpdate::class
+            EntryOnOrderCustomerUpdate::class
         ]
     ];
 

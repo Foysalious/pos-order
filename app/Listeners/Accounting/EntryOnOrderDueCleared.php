@@ -1,11 +1,11 @@
-<?php namespace App\Listeners;
+<?php namespace App\Listeners\Accounting;
 
 use App\Events\OrderDueCleared;
 use App\Events\OrderUpdated;
 use App\Services\Accounting\Exceptions\AccountingEntryServerError;
 use App\Services\Accounting\OrderDueEntry;
 
-class AccountingEntryOnOrderDueCleared
+class EntryOnOrderDueCleared
 {
     protected OrderDueEntry $dueEntry;
 
