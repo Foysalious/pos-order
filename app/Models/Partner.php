@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Partner extends BaseModel
 {
@@ -8,7 +9,7 @@ class Partner extends BaseModel
     protected $primaryKey = 'id';
     public $incrementing = false;
 
-    use HasFactory;
+    use HasFactory,SoftDeletes;
 
     public function orders()
     {
