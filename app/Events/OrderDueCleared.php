@@ -9,6 +9,7 @@ class OrderDueCleared
     use Dispatchable, SerializesModels;
 
     protected Order $order;
+    protected float $paidAmount;
 
     /**
      * @return mixed
@@ -19,13 +20,24 @@ class OrderDueCleared
     }
 
     /**
+     * @return float
+     */
+    public function getPaidAmount(): float
+    {
+        return $this->paidAmount;
+    }
+
+
+
+    /**
      * Create a new event instance.
      *
      * @return void
      */
-    public function __construct(Order $order)
+    public function __construct(array $event_data)
     {
-        $this->order = $order;
+        $this->order = $event_data['order'];
+        $this->paidAmount = $event_data['paid_amount'];
     }
 
 }
