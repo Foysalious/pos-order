@@ -1,11 +1,11 @@
-<?php namespace App\Listeners;
+<?php namespace App\Listeners\Accounting;
 
 use App\Events\OrderPlaceTransactionCompleted;
 use App\Services\Accounting\CreateEntry;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
-class AccountingEntryOnOrderCreation
+class EntryOnOrderCreation
 {
     protected CreateEntry $createEntry;
 

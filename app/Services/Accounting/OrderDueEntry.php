@@ -12,6 +12,17 @@ use App\Services\Order\PriceCalculation;
 
 class OrderDueEntry extends BaseEntry
 {
+    protected float $paidAmount;
+
+    /**
+     * @param float $paidAmount
+     * @return OrderDueEntry
+     */
+    public function setPaidAmount(float $paidAmount)
+    {
+        $this->paidAmount = $paidAmount;
+        return $this;
+    }
     /**
      * @throws Exceptions\AccountingEntryServerError
      */
@@ -41,6 +52,8 @@ class OrderDueEntry extends BaseEntry
             'interest'           => (double) $this->order->interest ??  0,
             'note'               => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ?  SalesChannel::WEBSTORE : SalesChannel::POS,
             'entry_at'           => $this->order->updated_at->format('Y-m-d H:i:s'),
+            'reconcile_amount'   => $this->paidAmount,
+            'inventory_products' => null,
         ];
 
         return array_merge($data,$this->makeCustomerData($customer));

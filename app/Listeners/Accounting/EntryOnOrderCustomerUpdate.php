@@ -1,10 +1,10 @@
-<?php namespace App\Listeners;
+<?php namespace App\Listeners\Accounting;
 
 use App\Events\OrderCustomerUpdated;
 use App\Services\Accounting\CustomerUpdateEntry;
 use App\Services\Accounting\Exceptions\AccountingEntryServerError;
 
-class AccountingEntryOrderCustomerUpdate
+class EntryOnOrderCustomerUpdate
 {
     protected CustomerUpdateEntry $updateEntry;
 

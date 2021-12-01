@@ -1,10 +1,9 @@
-<?php namespace App\Listeners;
-
+<?php namespace App\Listeners\Accounting;
 
 use App\Events\OrderDeleted;
 use App\Services\Accounting\DeleteEntry;
 
-class AccountingEntryOnOrderDelete
+class EntryOnOrderDelete
 {
     protected DeleteEntry $deleteEntry;
 
