@@ -272,7 +272,7 @@
             width: 100%;
             margin: 30px auto;
             text-align: left;
-            border-spacing: 0px;
+            border-spacing: 10px;
             border-collapse: collapse;
             padding: 15px 0;
             background-color: #D8F3DC;
@@ -505,9 +505,9 @@
 <br>
 <table class="footers">
     <tbody>
+{{--    <img src="https://www.smanager.xyz/wp-content/uploads/2021/01/fav-icon.png" alt="n/a" class="inline">--}}
     <tr>
-        <td><img src=" https://cdn-shebadev.s3.ap-south-1.amazonaws.com/phone_24px.png" alt="n/a"> <a
-                href="#0">16516</a href="#0"></td>
+        <td><a href=""><span>✆</span>16516</a></td>
     </tr>
     </tbody>
 </table>
@@ -519,4 +519,7 @@
 </section>
 
 </body>
+<?php
+dd(1)
+?>
 </html>
