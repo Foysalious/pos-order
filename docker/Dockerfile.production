@@ -78,11 +78,12 @@ RUN chmod -R g+w /var/www/bootstrap
 WORKDIR /var/www
 
 # Laravel specific file permission
-RUN find ./ -type f -exec chmod 664 {} \;
-RUN find ./ -type d -exec chmod 775 {} \;
-RUN chgrp -R www-data storage bootstrap/cache
-RUN chmod -R ug+rwx storage bootstrap/cache
+# RUN find ./ -type f -exec chmod 664 {} \;
+# RUN find ./ -type d -exec chmod 775 {} \;
+# RUN chgrp -R www-data storage bootstrap/cache
+# RUN chmod -R ug+rwx storage bootstrap/cache
 
+# Clockwork Specific Permission
 RUN touch storage/clockwork/index
 RUN chown www-data:www-data storage/clockwork/index
 
