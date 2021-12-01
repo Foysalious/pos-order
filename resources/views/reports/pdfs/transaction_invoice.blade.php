@@ -519,7 +519,5 @@
 </section>
 
 </body>
-<?php
-dd(1)
-?>
+
 </html>
