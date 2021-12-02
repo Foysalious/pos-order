@@ -52,8 +52,4 @@ class OrderController extends Controller
         return $this->orderService->getWebStoreOrderDetails($partner_id, $order_id,$customer_id);
     }
 
-    public function trending($partner_id, $order_id,$customer_id)
-    {
-        return $this->orderService->getWebStoreOrderDetails($partner_id, $order_id,$customer_id);
-    }
 }

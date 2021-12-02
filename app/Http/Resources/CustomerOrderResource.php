@@ -24,6 +24,7 @@ class CustomerOrderResource extends JsonResource
             'status' => $this->status,
             'date' => convertTimezone($this->created_at)?->format('d,M,Y'),
             'discounted_price' => $price_calculator->getDiscountedPrice(),
+            'partner_wise_order_id'=> $this->partner_wise_order_id
         ];
     }
 }
