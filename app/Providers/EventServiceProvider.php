@@ -31,26 +31,26 @@ class EventServiceProvider extends ServiceProvider
             SendEmailVerificationNotification::class,
         ],
         OrderPlaceTransactionCompleted::class => [
-            EntryOnOrderCreation::class,
+//            EntryOnOrderCreation::class,
             RewardOnOrderCreateListener::class,
             UsageOnOrderCreate::class,
             GenerateInvoiceOnOrderCreate::class,
             WebstoreSettingsSyncOnOrderCreate::class
         ],
         OrderUpdated::class => [
-            EntryOnOrderUpdating::class,
-            EntryOnOrderDueCleared::class,
+//            EntryOnOrderUpdating::class,
+//            EntryOnOrderDueCleared::class,
             GenerateInvoiceOnOrderCreate::class,
             WebstoreSettingsSyncOnOrderUpdate::class
         ],
         OrderDueCleared::class => [
-            EntryOnOrderDueCleared::class,
+//            EntryOnOrderDueCleared::class,
         ],
         OrderDeleted::class => [
-            EntryOnOrderDelete::class,
+//            EntryOnOrderDelete::class,
         ],
         OrderCustomerUpdated::class => [
-            EntryOnOrderCustomerUpdate::class
+//            EntryOnOrderCustomerUpdate::class
         ]
     ];
 
