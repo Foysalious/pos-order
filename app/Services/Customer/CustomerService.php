@@ -36,7 +36,7 @@ class CustomerService extends BaseService
     public function update(string $customer_id, CustomerUpdateDto $updateDto, $partner_id): JsonResponse
     {
         $customerDetails = $this->customerRepository->where('partner_id', $partner_id)->find($customer_id);
-        if (!$customerDetails) return $this->error('Customer Not Found', 404);
+        if (!$customerDetails) return $this->success();
         $this->customerRepository->update($customerDetails, $this->makeData($updateDto));
         return $this->success();
     }

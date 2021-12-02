@@ -272,7 +272,7 @@
             width: 100%;
             margin: 30px auto;
             text-align: left;
-            border-spacing: 0px;
+            border-spacing: 10px;
             border-collapse: collapse;
             padding: 15px 0;
             background-color: #D8F3DC;
@@ -318,15 +318,15 @@
 <table class="headers">
     <tbody class="container" style="height: 100px">
     <tr>
-        <td>
-            <div class="inline v-center">
-                <img src="https://www.smanager.xyz/wp-content/uploads/2021/01/fav-icon.png" alt="n/a" class="inline">
-                <span class="v-center">
-                    <strong>{{$payment_receiver['name']}}</strong>
-                    <span>{{$payment_receiver['mobile']}}</span>
-                </span>
-            </div>
-        </td>
+        {{--        <td>--}}
+        {{--            <div class="inline v-center">--}}
+        {{--                <img src="https://www.smanager.xyz/wp-content/uploads/2021/01/fav-icon.png" alt="n/a" class="inline">--}}
+        {{--                <span class="v-center">--}}
+        {{--                    <strong>{{$payment_receiver['name']}}</strong>--}}
+        {{--                    <span>{{$payment_receiver['mobile']}}</span>--}}
+        {{--                </span>--}}
+        {{--            </div>--}}
+        {{--        </td>--}}
         <td class="header-right">
             <img src="{{$payment_receiver['image']}}" style="width:40px;height:40px" alt="n/a">
         </td>
@@ -449,8 +449,13 @@
     </tr>
     <tr class="vat-discount-row">
         <td colspan="2"></td>
-        <td>Discount</td>
-        <td>৳{{$pos_order['discount']}}</td>
+        <td>Order Discount</td>
+        <td>৳{{$pos_order['order_discount']}}</td>
+    </tr>
+    <tr class="vat-discount-row">
+        <td colspan="2"></td>
+        <td>Product Discount</td>
+        <td>৳{{$pos_order['product_discount']}}</td>
     </tr>
     <tr class="vat-discount-row">
         <td colspan="2"></td>
@@ -503,11 +508,18 @@
 <br>
 <br>
 <br>
-<table class="footers">
-    <tbody>
+<table class="headers">
+    <tbody class="container" style="height: 100px">
     <tr>
-        <td><img src=" https://cdn-shebadev.s3.ap-south-1.amazonaws.com/phone_24px.png" alt="n/a"> <a
-                href="#0">16516</a href="#0"></td>
+        <td>
+            <div class="inline v-center">
+                <img style="padding: 10px" src="https://www.smanager.xyz/wp-content/uploads/2021/01/fav-icon.png"
+                     alt="n/a" class="inline">
+            </div>
+        </td>
+        <td class="header-right">
+            <p><span>✆</span>16516</p>
+        </td>
     </tr>
     </tbody>
 </table>
@@ -517,6 +529,5 @@
 
     </div>
 </section>
-
 </body>
 </html>

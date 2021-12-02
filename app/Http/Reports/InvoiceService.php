@@ -68,7 +68,8 @@ class InvoiceService extends BaseService
             'pos_order' => $order ? [
                 'items' => $order->orderSkus,
                 'orderSkusCount'=>count($order->orderSkus),
-                'discount' => $price_calculator->getOrderDiscount(),
+                'order_discount' => $price_calculator->getOrderDiscount(),
+                'product_discount' => $price_calculator->getProductDiscount(),
                 'total' => $price_calculator->getDiscountedPriceWithoutVat(),
                 'grand_total' => $price_calculator->getOriginalPrice(),
                 'promo_discount' => $price_calculator->getPromoDiscount(),

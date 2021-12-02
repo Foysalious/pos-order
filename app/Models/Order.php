@@ -2,6 +2,8 @@
 
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Order\Constants\OrderLogTypes;
+use App\Services\Order\Constants\SalesChannel;
+use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\PaymentLink\Constants\TargetType;
 use App\Services\PaymentLink\Target;
 use App\Services\Transaction\Constants\TransactionTypes;
@@ -13,6 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Order extends BaseModel
 {
     use HasFactory, SoftDeletes, CascadeSoftDeletes;
+
     protected $guarded = ['id'];
     protected $cascadeDeletes = ['orderSkus', 'discounts', 'logs', 'payments'];
 
@@ -30,6 +33,7 @@ class Order extends BaseModel
     {
         return $this->hasMany(OrderSku::class);
     }
+
     public function payments()
     {
         return $this->hasMany(OrderPayment::class);
@@ -72,7 +76,7 @@ class Order extends BaseModel
 
     public function statusChangeLogs(): HasMany
     {
-        return $this->logs()->where('type',OrderLogTypes::ORDER_STATUS);
+        return $this->logs()->where('type', OrderLogTypes::ORDER_STATUS);
     }
 
     public function paymentMethod()
@@ -81,7 +85,7 @@ class Order extends BaseModel
         return $lastPayment ? $lastPayment->method : 'cod';
     }
 
-    public function isUpdated() : bool
+    public function isUpdated(): bool
     {
         $type = $this->logs->where('type', 'products_and_prices')->first();
         return !empty($type);
@@ -95,9 +99,14 @@ class Order extends BaseModel
     public function getWeight()
     {
         $totalWeight = 0;
-        ($this->orderSkus)->each(function($sku) use(&$totalWeight){
-            $totalWeight += (double) $sku->unit_weight* $sku->quantity;
+        ($this->orderSkus)->each(function ($sku) use (&$totalWeight) {
+            $totalWeight += (double)$sku->unit_weight * $sku->quantity;
         });
         return $totalWeight;
+    }
+
+    public function isWebStore()
+    {
+        return $this->sales_channel_id = SalesChannelIds::WEBSTORE;
     }
 }
