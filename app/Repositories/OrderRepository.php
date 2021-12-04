@@ -5,6 +5,7 @@ use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Order;
 use App\Services\APIServerClient\ApiServerClient;
 use App\Services\Order\Constants\SalesChannelIds;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
 class OrderRepository extends BaseRepository implements OrderRepositoryInterface
@@ -54,5 +55,21 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
             ->whereBetween('created_at', $time_frame->getArray())
             ->with('orderSkus', 'payments', 'discounts')
             ->get();
+    }
+
+
+    public function getAllOrdersOfPartnersCustomer(int $partner_id, int $customer_id, $sort_order = false, $limit = false, $skip = false)
+    {
+        return $this->model->with(['orderSkus' => function($q){
+            $q->with('discount');
+        }, 'payments', 'discounts'])
+            ->where('partner_id', $partner_id)->where('customer_id', $customer_id)
+            ->when($sort_order, function ($q) use ($sort_order){
+                $q->orderBy('created_at', $sort_order);
+            })->when($limit, function ($q) use ($limit){
+                $q->limit($limit);
+            })->when($limit, function ($q) use ($skip){
+                $q->skip($skip);
+            })->get();
     }
 }

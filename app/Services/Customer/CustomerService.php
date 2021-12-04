@@ -4,10 +4,10 @@ use App\Constants\ResponseMessages;
 use App\Http\Requests\CustomerOrderListRequest;
 use App\Http\Resources\Webstore\Customer\NotRatedSkuResource;
 use App\Interfaces\CustomerRepositoryInterface;
+use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;
 use App\Models\Customer;
-use App\Models\Order;
 use App\Repositories\Accounting\AccountingRepository;
 use App\Services\BaseService;
 use App\Services\Order\Constants\PaymentStatuses;
@@ -28,7 +28,8 @@ class CustomerService extends BaseService
         private ReviewRepositoryInterface $reviewRepositoryInterface,
         private Updater $updater,
         private OrderSkuRepositoryInterface $orderSkuRepositoryInterface,
-        private AccountingRepository $accountingRepository
+        private AccountingRepository $accountingRepository,
+        protected OrderRepositoryInterface $orderRepository
     )
     {
     }
@@ -80,8 +81,7 @@ class CustomerService extends BaseService
             $customer = $this->customerRepository->find($customer_id);
             if (!$customer) return $this->error('Customer Not Found', 404);
             DB::beginTransaction();
-            /** Turned OFF Accounting Hit for the time being as customer Id type string not supported in Accounting */
-            //$this->accountingRepository->deleteCustomer($partner_id, $customer->id);
+            $this->accountingRepository->deleteCustomer($partner_id, $customer->id);
             $customer->delete();
             DB::commit();
             return $this->success();
@@ -99,10 +99,10 @@ class CustomerService extends BaseService
             'total_purchase_amount' => 0,
             'total_used_promo' => 0
         ];
-        $all_orders = Order::with('orderSkus', 'payments', 'discounts')->where('partner_id', $partner_id)->where('customer_id', $customer->id)->get();
+        $orders = $this->orderRepository->getAllOrdersOfPartnersCustomer($partner_id,$customer_id);
         /** @var PriceCalculation $order_calculator */
         $order_calculator = App::make(PriceCalculation::class);
-        $all_orders->each(function ($order) use (&$return_data, $order_calculator) {
+        $orders->each(function ($order) use (&$return_data, $order_calculator) {
             $order_calculator->setOrder($order);
             $return_data['total_purchase_amount'] += $order_calculator->getDiscountedPrice();
             $return_data['total_used_promo'] += $order_calculator->getPromoDiscount();
@@ -113,19 +113,15 @@ class CustomerService extends BaseService
     }
 
 
-    public function getOrdersByDateWise(CustomerOrderListRequest $request, int $partner_id, string $customer_id)
+    public function getOrdersByDateWise(CustomerOrderListRequest $request, int $partner_id, string $customer_id): JsonResponse
     {
         $customer = $this->findTheCustomer($partner_id, $customer_id);
         if (!$customer) return $this->error('No order belongs to this customer', 404);
         $status = $request->status ?? null;
         list($offset, $limit) = calculatePagination($request);
         $order_list = [];
-        $all_orders = Order::with('orderSkus', 'payments', 'discounts')
-            ->where('customer_id', $customer->id)
-            ->where('partner_id', $partner_id)
-            ->orderBy('created_at', 'desc')
-            ->skip($offset)->take($limit)->get();
-        foreach ($all_orders as $order) {
+        $orders = $this->orderRepository->getAllOrdersOfPartnersCustomer($partner_id,$customer_id, 'desc', $limit, $offset);
+        foreach ($orders as $order) {
             $date = convertTimezone($order->created_at)?->format('Y-m-d');
             $order_list[$date]['total_sale'] = $order_list[$date]['total_sale'] ?? 0;
             $order_list[$date]['total_due'] = $order_list[$date]['total_due'] ?? 0;
