@@ -170,7 +170,7 @@ class Handler
                 $amount = ($amount > $discount['cap']) ? $discount['cap'] : $amount;
             }
         } else {
-            $amount = $discount['discount'];
+            $amount = $discount * $quantity;
         }
 
         return ($amount < 0) ? 0 : (float)$amount;
