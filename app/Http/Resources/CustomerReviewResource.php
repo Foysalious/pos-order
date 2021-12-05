@@ -24,7 +24,7 @@ class CustomerReviewResource extends JsonResource
             'rating'                => $this->rating,
             'created_at'            => convertTimezone($this->created_at)?->format('Y-m-d H:i:s'),
             'product_name'          => $this->orderSku->name,
-            'product_image'         => $this->images
+            'product_image'         => $this->orderSku->product_image,
         ];
     }
 
