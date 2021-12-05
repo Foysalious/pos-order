@@ -4,7 +4,7 @@ use App\Exceptions\OrderException;
 use App\Http\Reports\InvoiceService;
 use App\Http\Requests\DeliveryStatusUpdateIpnRequest;
 use App\Http\Requests\OrderCreateRequest;
-use App\Http\Requests\OrderCustomerRequest;
+use App\Http\Requests\OrderCustomerUpdateRequest;
 use App\Http\Requests\OrderFilterRequest;
 use App\Http\Requests\OrderStatusUpdateRequest;
 use App\Http\Requests\OrderUpdateRequest;
@@ -277,9 +277,9 @@ class OrderController extends Controller
      *     @OA\Response(response="403", description="কাস্টমার পরিবর্তন করতে পারবেন না"),
      * )
      */
-    public function updateCustomer(OrderCustomerRequest $request, $partner_id, $order_id)
+    public function updateCustomer(OrderCustomerUpdateRequest $request, $partner_id, $order_id)
     {
-        return $this->orderService->updateCustomer($request->validated()['customer_id'], $partner_id, $order_id);
+        return $this->orderService->updateCustomer($partner_id, $order_id, $request);
     }
 
     /**

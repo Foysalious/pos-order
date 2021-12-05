@@ -557,8 +557,8 @@ class Updater
     private function setDeliveryNameAndMobile()
     {
         $customer = $this->customerRepository->where('id', $this->customer_id)->first();
-        $this->delivery_name = $customer->name;
-        $this->delivery_mobile = $customer->mobile;
+        $this->delivery_name = $customer->name ?? null;
+        $this->delivery_mobile = $customer->mobile ?? null;
     }
 
     private function refundIfEligible()
@@ -628,11 +628,19 @@ class Updater
     {
         DB::beginTransaction();
         $previous_order = $this->setExistingOrder();
-        $this->updateCustomer();
         $this->setDeliveryNameAndMobile();
-        $this->orderRepositoryInterface->update($this->order, $this->makeData());
+        $this->orderRepositoryInterface->update($this->order, $this->makeCustomerUpdateData());
         $this->createLog($previous_order, $this->order->refresh());
         event(new OrderCustomerUpdated($this->order->refresh()));
         DB::commit();
+    }
+
+    private function makeCustomerUpdateData()
+    {
+        return [
+            'customer_id' => $this->customer_id,
+            'delivery_name' => $this->delivery_name,
+            'delivery_mobile' => $this->delivery_mobile,
+            ] + $this->modificationFields(false, true);
     }
 }
