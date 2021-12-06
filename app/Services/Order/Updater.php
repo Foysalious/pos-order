@@ -348,7 +348,7 @@ class Updater
             event(new OrderUpdated([
                 'order' => $this->order->refresh(),
                 'order_product_change_data' => $this->orderProductChangeData ?? [],
-                'payment_info' => ['payment_method' => $this->paymentMethod, 'paid_amount' => $this->paidAmount],
+                'payment_info' => ['payment_method' => $this->paymentMethod, 'paid_amount' => $this->paidAmount ?? null],
                 'stock_update_data' => $this->stockUpdateEntry
             ]));
             DB::commit();
