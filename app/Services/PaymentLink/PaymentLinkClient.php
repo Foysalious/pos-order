@@ -8,7 +8,6 @@ class PaymentLinkClient
 {
     /** @var string */
     private string $baseUrl;
-    private string $partnerPaymentUrl;
     /**
      * @var Client
      */
@@ -17,7 +16,6 @@ class PaymentLinkClient
     public function __construct(Client $client)
     {
         $this->baseUrl = config('pos.payment_link_url') . '/api/v1/payment-links';
-        $this->partnerPaymentUrl = config('pos.payment_link_url') . '/api/v1/partner-payment-links';
         $this->client = $client;
     }
 
