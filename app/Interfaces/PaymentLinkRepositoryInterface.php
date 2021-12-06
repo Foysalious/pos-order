@@ -10,14 +10,4 @@ interface PaymentLinkRepositoryInterface
      */
     public function getActivePaymentLinkByPosOrder(Target $target);
 
-    /**
-     * @param array $attributes
-     * @return \stdClass|null
-     * @throws \GuzzleHttp\Exception\GuzzleException
-     */
-    public function create(array $attributes);
-    /**
-     * @param $target Target
-     */
-    public function getPaymentLinksByPosOrders(array $targets);
 }
