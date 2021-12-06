@@ -2,6 +2,7 @@
 
 use App\Constants\ResponseMessages;
 use App\Events\OrderDeleted;
+use App\Events\OrderPlaceTransactionCompleted;
 use App\Http\Reports\InvoiceService;
 use App\Http\Requests\DeliveryStatusUpdateIpnRequest;
 use App\Http\Requests\OrderCreateRequest;
@@ -153,11 +154,7 @@ class OrderService extends BaseService
             ->setVoucherId($request->voucher_id)
             ->setApiRequest($request->api_request->id)
             ->create();
-
-        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) {
-            dispatch(new OrderPlacePushNotification($order));
-            dispatch(new WebstoreOrderSms($partner, $order->id));
-        }
+        event(new OrderPlaceTransactionCompleted($order, $this->creator->getStockUptaingData()));
         return $this->success(ResponseMessages::SUCCESS, ['order' => ['id' => $order->id]]);
     }
 

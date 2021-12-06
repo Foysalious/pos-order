@@ -11,7 +11,7 @@ class OrderUpdated
     protected Order $order;
     protected array $orderProductChangeData;
     protected array $payment_info;
-
+    protected array $stockUpdateData;
     /**
      * @return mixed
      */
@@ -35,6 +35,14 @@ class OrderUpdated
     {
         return $this->payment_info;
     }
+
+    /**
+     * @return mixed
+     */
+    public function getStockUpdateData(): mixed
+    {
+        return $this->stockUpdateData;
+    }
     /**
      * Create a new event instance.
      *
@@ -43,9 +51,9 @@ class OrderUpdated
     public function __construct(array $event_data)
     {
         $this->order = $event_data['order'];
-        $this->orderProductChangeData = $event_data['orderProductChangeData'];
+        $this->orderProductChangeData = $event_data['order_product_change_data'];
         $this->payment_info = $event_data['payment_info'];
-
+        $this->stockUpdateData = $event_data['stock_update_data'];
     }
 
 }
