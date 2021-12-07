@@ -17,6 +17,8 @@ pull_from_docker_registry() {
     docker pull registry.sheba.xyz/"${CONTAINER_NAME}"
 
     ./bin/dcup.sh prod -d
+    ./bin/composer.sh install --no-interaction --ignore-platform-reqs
+    ./bin/pre_deployment_script_for_all_branch.sh
     # ./bin/sentry_release_with_redis_entry_script.sh
 }
 
@@ -26,6 +28,7 @@ run_on_local() {
     ./bin/dcup.sh local -d
     ./bin/composer.sh install
     ./bin/composer.sh update
+    ./bin/pre_deployment_script_for_all_branch.sh
 }
 
 # USE ON DEVELOPMENT
@@ -38,9 +41,10 @@ run_on_development() {
     . ./bin/parse_env.sh
     ./bin/dcup.sh dev -d
 
-    ./bin/composer.sh install --no-interaction
+    ./bin/composer.sh install --no-interaction --ignore-platform-reqs
     ./bin/composer.sh update
     ./bin/config_clear.sh
+    ./bin/pre_deployment_script_for_all_branch.sh
 }
 
 branch=$1
