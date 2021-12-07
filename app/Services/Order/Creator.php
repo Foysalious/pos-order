@@ -412,7 +412,7 @@ class Creator
             }
 
             $this->calculateDeliveryChargeAndSave($order);
-           // event(new OrderPlaceTransactionCompleted($order));
+            event(new OrderPlaceTransactionCompleted($order));
             $this->updateStock($this->orderSkuCreator->getStockDecreasingData());
             if ($this->getDueAmount($order) > 0) {
                 /** @var OrderObject $orderObject */
