@@ -36,7 +36,7 @@ abstract class BaseClientServer implements BaseClientServerInterface
             $http_code = !is_null($res) ? $res->getStatusCode() : null;
             $message = !is_null($res) ? $res->getBody()->getContents() : null;
             if ($http_code > 399 && $http_code < 500) {
-                $message = $message ?? get_called_class() .' not working as expected.';
+                $message = $message ?: class_basename(get_called_class()) .' got unexpected response';
                 throw new BaseClientServerError($message, $http_code);
             }
             throw new BaseClientServerError($e->getMessage() . " ". get_called_class()." " , $http_code);
