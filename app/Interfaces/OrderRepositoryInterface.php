@@ -12,4 +12,5 @@ interface OrderRepositoryInterface extends BaseRepositoryInterface
     public function getOrderDetailsByPartner(int $partnerId, int $orderId);
     public function getOrderStatusStatByPartner(int $partnerId, $salesChannelIds = [SalesChannelIds::POS, SalesChannelIds::WEBSTORE]);
     public function getOrdersBetweenDatesByPartner(int $partnerId, TimeFrame $time_frame, $salesChannelIds = [SalesChannelIds::POS, SalesChannelIds::WEBSTORE]);
+    public function getAllOrdersOfPartnersCustomer(int $partner_id, $customer_id, $sort_order, $limit, $skip);
 }

@@ -3,7 +3,6 @@
 
 class OrderPaymentLinkObject
 {
-    protected $paymentLinkDetails;
     protected ?int $id;
     protected ?string $status;
     protected ?string $link;

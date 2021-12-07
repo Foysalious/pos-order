@@ -347,8 +347,9 @@ class Updater
                 $this->calculateDeliveryChargeAndSave($this->order);
             event(new OrderUpdated([
                 'order' => $this->order->refresh(),
-                'orderProductChangeData' => $this->orderProductChangeData ?? [],
-                'payment_info' => ['payment_method' => $this->paymentMethod, 'paid_amount' => $this->paidAmount]
+                'order_product_change_data' => $this->orderProductChangeData ?? [],
+                'payment_info' => ['payment_method' => $this->paymentMethod, 'paid_amount' => $this->paidAmount ?? null],
+                'stock_update_data' => $this->stockUpdateEntry
             ]));
             DB::commit();
         } catch (Exception $e) {
@@ -471,7 +472,6 @@ class Updater
             $this->orderProductChangeData['refund_exchanged'] = $return_data;
             $this->stockUpdateEntry = array_merge($this->stockUpdateEntry, $updater->getStockUpdateData());
         }
-
         if (isset($return_data)) {
             $this->orderProductChangeData['paid_amount'] = is_null($this->paidAmount) ? 0 : $this->paidAmount;
             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
@@ -557,8 +557,8 @@ class Updater
     private function setDeliveryNameAndMobile()
     {
         $customer = $this->customerRepository->where('id', $this->customer_id)->first();
-        $this->delivery_name = $customer->name;
-        $this->delivery_mobile = $customer->mobile;
+        $this->delivery_name = $customer->name ?? null;
+        $this->delivery_mobile = $customer->mobile ?? null;
     }
 
     private function refundIfEligible()
@@ -628,11 +628,19 @@ class Updater
     {
         DB::beginTransaction();
         $previous_order = $this->setExistingOrder();
-        $this->updateCustomer();
         $this->setDeliveryNameAndMobile();
-        $this->orderRepositoryInterface->update($this->order, $this->makeData());
+        $this->orderRepositoryInterface->update($this->order, $this->makeCustomerUpdateData());
         $this->createLog($previous_order, $this->order->refresh());
         event(new OrderCustomerUpdated($this->order->refresh()));
         DB::commit();
+    }
+
+    private function makeCustomerUpdateData()
+    {
+        return [
+            'customer_id' => $this->customer_id,
+            'delivery_name' => $this->delivery_name,
+            'delivery_mobile' => $this->delivery_mobile,
+            ] + $this->modificationFields(false, true);
     }
 }

@@ -141,7 +141,7 @@ class Handler
     {
         $order_discount = new SkuParam();
         $order_discount->setType($this->type)
-            ->setAmount($this->skuData['discount']['discount'] * $this->skuData['quantity'])
+            ->setAmount($this->getDiscount())
             ->setOriginalAmount($this->skuData['discount']['discount'])
             ->setIsPercentage($this->skuData['discount']['is_discount_percentage'])
             ->setOrderSkuId($this->orderSkuId);
@@ -157,5 +157,22 @@ class Handler
             ->setIsPercentage($this->data['voucher']['is_amount_percentage'])
             ->setDiscountDetails([ 'promo_code' => $this->data['voucher']['code'] ]);
         return $order_discount;
+    }
+
+    public function getDiscount()
+    {
+        $unit_price = $this->skuData['unit_price'];
+        $quantity = $this->skuData['quantity'];
+        $discount = $this->skuData['discount'];
+        if ($discount['is_discount_percentage']) {
+            $amount = (($unit_price * $quantity) * $discount['discount']) / 100;
+            if ($discount['cap']) {
+                $amount = ($amount > $discount['cap']) ? $discount['cap'] : $amount;
+            }
+        } else {
+            $amount = $discount['discount'] * $quantity;
+        }
+
+        return ($amount < 0) ? 0 : (float)$amount;
     }
 }

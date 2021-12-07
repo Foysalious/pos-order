@@ -244,7 +244,6 @@ class CustomerController extends Controller
      * @param string $customer_id
      * @return JsonResponse
      *
-     * @throws CustomerNotFound
      * @OA\GET(
      *     path="/api/v1/partners/{partner}/customers/{customer}/orders",
      *     tags={"Customer API"},

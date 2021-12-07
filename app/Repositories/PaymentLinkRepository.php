@@ -27,7 +27,7 @@ class PaymentLinkRepository implements PaymentLinkRepositoryInterface
      */
     public function getActivePaymentLinkByPosOrder(Target $target): mixed
     {
-        $links = $this->paymentLinkClient->getActivePaymentLinkByPosOrder($target);
+        $links = $this->paymentLinkClient->getActivePaymentLinksByPosOrders([$target]);
         $payment_link = $this->formatPaymentLinkTransformers($links);
         $key = $target->toString();
         if (array_key_exists($key, $payment_link)) {
@@ -50,24 +50,4 @@ class PaymentLinkRepository implements PaymentLinkRepositoryInterface
         return $result;
     }
 
-    public function create(array $attributes)
-    {
-        return $this->paymentLinkClient->storePaymentLink($attributes);
-    }
-
-    public function statusUpdate($link, $status)
-    {
-        return $this->paymentLinkClient->paymentLinkStatusChange($link, $status);
-    }
-
-    public function getPaymentLinksByPosOrders(array $targets)
-    {
-        $links = $this->paymentLinkClient->getPaymentLinksByPosOrders($targets);
-        return $this->formatPaymentLinkTransformers($links);
-    }
-
-    public function getPaymentLinksByPosOrder($target)
-    {
-        return $this->getPaymentLinksByPosOrders([$target]);
-    }
 }

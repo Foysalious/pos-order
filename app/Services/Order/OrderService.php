@@ -2,10 +2,12 @@
 
 use App\Constants\ResponseMessages;
 use App\Events\OrderDeleted;
+use App\Events\OrderPlaceTransactionCompleted;
 use App\Http\Reports\InvoiceService;
 use App\Http\Requests\DeliveryStatusUpdateIpnRequest;
 use App\Http\Requests\OrderCreateRequest;
 use App\Exceptions\OrderException;
+use App\Http\Requests\OrderCustomerUpdateRequest;
 use App\Http\Requests\OrderFilterRequest;
 use App\Http\Requests\OrderStatusUpdateRequest;
 use App\Http\Resources\CustomerOrderResource;
@@ -152,11 +154,7 @@ class OrderService extends BaseService
             ->setVoucherId($request->voucher_id)
             ->setApiRequest($request->api_request->id)
             ->create();
-
-        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) {
-            dispatch(new OrderPlacePushNotification($order));
-            dispatch(new WebstoreOrderSms($partner, $order->id));
-        }
+        event(new OrderPlaceTransactionCompleted($order, $this->creator->getStockUptaingData()));
         return $this->success(ResponseMessages::SUCCESS, ['order' => ['id' => $order->id]]);
     }
 
@@ -325,19 +323,21 @@ class OrderService extends BaseService
     }
 
     /**
-     * @throws OrderException
      * @throws Exception
      */
-    public function updateCustomer($customer_id, $partner_id, $order_id): JsonResponse
+    public function updateCustomer($partner_id, $order_id, OrderCustomerUpdateRequest $request): JsonResponse
     {
+        $customer_id = $request->customer_id;
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id)->load(['items', 'customer', 'payments', 'discounts']);
         if (!$order) return $this->error(trans('order.order_not_found'), 404);
-        $customer = $this->customerResolver->setCustomerId($customer_id)->setPartnerId($partner_id)->resolveCustomer();
-        if ($customer->id == $order->customer?->id) return $this->error(trans('invalid customer update request'), 400);
+        if(!is_null($customer_id)) {
+            $customer = $this->customerResolver->setCustomerId($customer_id)->setPartnerId($partner_id)->resolveCustomer();
+            if ($customer->id == $order->customer?->id) return $this->error(trans('invalid customer update request'), 400);
+        }
         if (is_null($order->paid_at)) return $this->error(trans('order.update.no_customer_update'), 400);
         $this->updater->setOrderId($order_id)
             ->setOrder($order)
-            ->setCustomerId($customer->id)
+            ->setCustomerId($customer_id)
             ->setOrderLogType(OrderLogTypes::CUSTOMER)
             ->updatePaidOrderCustomer();
         return $this->success();
