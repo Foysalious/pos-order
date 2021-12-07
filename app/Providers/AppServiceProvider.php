@@ -18,9 +18,6 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->register(DataMigrationServiceProvider::class);
-        if (($this->app->environment('local') || $this->app->environment('development')) && config('clockwork.enable')) {
-            $this->app->register(ClockworkServiceProvider::class);
-        }
     }
 
     /**

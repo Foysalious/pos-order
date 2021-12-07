@@ -83,6 +83,10 @@ WORKDIR /var/www
 # RUN chgrp -R www-data storage bootstrap/cache
 # RUN chmod -R ug+rwx storage bootstrap/cache
 
+# Clockwork Specific Permission
+RUN touch storage/clockwork/index
+RUN chown www-data:www-data storage/clockwork/index
+
 # Make sentry cli script executable
 RUN chmod +x ./bin/sentry_release.sh
 
