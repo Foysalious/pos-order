@@ -34,19 +34,14 @@ use App\Services\Customer\CustomerResolver;
 use App\Services\Delivery\Methods;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
-use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\OrderLog\Objects\OrderObjectRetriever;
 use App\Services\OrderLog\OrderLogGenerator;
-use App\Services\OrderSms\WebstoreOrderSms;
-use App\Services\Webstore\SettingsSync\WebStoreSettingsSyncTypes;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Webstore\Order\States as WebStoreStatuses;
@@ -281,6 +276,7 @@ class OrderService extends BaseService
             ->setDeliveryThana($orderUpdateRequest->delivery_thana ?? null)
             ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
             ->update();
+        $this->logRequest();
         return $this->success();
     }
 
@@ -437,5 +433,17 @@ class OrderService extends BaseService
         if (!$order->customer->email) return $this->error('Email Not Found', 404);
         dispatch(new OrderEmail($order));
         return $this->success();
+    }
+
+    public function logRequest()
+    {
+        $data = [
+            'Request Method' => request()->method(),
+            'Request Path' => request()->path(),
+            'Request Params' => request()->all(),
+            'Request IP' => request()->ip(),
+            'Origin' => request()->header('host'),
+        ];
+        Log::info(json_encode($data));
     }
 }
