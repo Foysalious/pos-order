@@ -366,8 +366,19 @@ class Updater
         /** @var OrderDeliveryPriceCalculation $deliveryPriceCalculation */
         $deliveryPriceCalculation = app(OrderDeliveryPriceCalculation::class);
         list($delivery_method, $delivery_charge) = $deliveryPriceCalculation->setOrder($order)->calculateDeliveryCharge();
-        if ($delivery_charge) $order->update(['delivery_vendor_name'=> $delivery_method, 'delivery_charge' => $delivery_charge]);
+        $delivery_vendor = $this->createDeliveryVendor($delivery_method);
+        if ($delivery_charge) $order->update(['delivery_vendor'=> $delivery_vendor, 'delivery_charge' => $delivery_charge]);
         return false;
+    }
+
+    private function createDeliveryVendor($deliveryMethod)
+    {
+        if($deliveryMethod == Methods::SDELIVERY)
+            $deliveryMethod = Methods::PAPERFLY;
+        $delivery_methods = config('delivery');
+        $delivery_vendor['name'] = isset($delivery_methods[$deliveryMethod]) ? $delivery_methods[$deliveryMethod]['name'] : null;
+        $delivery_vendor['image'] = isset($delivery_methods[$deliveryMethod]) ? $delivery_methods[$deliveryMethod]['image'] : null;
+        return json_encode($delivery_vendor);
     }
 
     public function makeData(): array
@@ -385,7 +396,6 @@ class Updater
         if (isset($this->delivery_mobile)) $data['delivery_mobile'] = $this->delivery_mobile;
         if (isset($this->delivery_address)) $data['delivery_address'] = $this->delivery_address;
         if (isset($this->note)) $data['note'] = $this->note;
-        if (isset($this->delivery_vendor_name)) $data['delivery_vendor_name'] = $this->delivery_vendor_name;
         if (isset($this->delivery_request_id)) $data['delivery_request_id'] = $this->delivery_request_id;
         if (isset($this->delivery_thana)) $data['delivery_thana'] = $this->delivery_thana;
         if (isset($this->delivery_district)) $data['delivery_district'] = $this->delivery_district;
@@ -397,6 +407,7 @@ class Updater
 
         return $data + $this->modificationFields(false, true);
     }
+
 
     private function setExistingOrder()
     {

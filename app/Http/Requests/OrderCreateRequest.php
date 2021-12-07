@@ -37,6 +37,7 @@ class OrderCreateRequest extends FormRequest
             'discount'          => 'sometimes|JSON',
             'voucher_id'        => 'sometimes|numeric',
             'skus'              => 'required|json',
+            'delivery_vendor_name' => 'sometimes'
 
         ];
     }

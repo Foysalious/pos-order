@@ -16,7 +16,6 @@ class OrderObject implements JsonSerializable
     private ?int $emi_month;
     private ?int $interest;
     private ?float $delivery_charge;
-    private ?string $delivery_vendor_name;
     private ?string $delivery_request_id;
     private ?string $delivery_thana;
     private ?string $delivery_district;
@@ -35,6 +34,7 @@ class OrderObject implements JsonSerializable
     private ?string $updated_at;
 
     private Order $order;
+    private $delivery_vendor;
 
 
     /**
@@ -148,12 +148,12 @@ class OrderObject implements JsonSerializable
     }
 
     /**
-     * @param mixed $delivery_vendor_name
+     * @param $delivery_vendor
      * @return OrderObject
      */
-    public function setDeliveryVendorName($delivery_vendor_name)
+    public function setDeliveryVendor($delivery_vendor)
     {
-        $this->delivery_vendor_name = $delivery_vendor_name;
+        $this->delivery_vendor = $delivery_vendor;
         return $this;
     }
 
@@ -335,7 +335,7 @@ class OrderObject implements JsonSerializable
             'emi_month' => $this->order->emi_month,
             'interest' => $this->order->interest,
             'delivery_charge' => $this->order->delivery_charge,
-            'delivery_vendor_name' => $this->order->delivery_vendor_name,
+            'delivery_vendor' => $this->order->delivery_vendor,
             'delivery_request_id' => $this->order->delivery_request_id,
             'delivery_thana' => $this->order->delivery_thana,
             'delivery_district' => $this->order->delivery_district,

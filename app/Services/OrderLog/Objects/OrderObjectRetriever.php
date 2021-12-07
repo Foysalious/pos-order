@@ -39,7 +39,7 @@ class OrderObjectRetriever
             ->setPartnerId($this->order->partner_id)->setCustomerId($this->order->customer_id)
             ->setStatus($this->order->status)->setSalesChannelId($this->order->sales_channel_id)
             ->setInvoice($this->order->invoice)->setEmiMonth($this->order->emi_month)->setInterest($this->order->interest)
-            ->setDeliveryCharge($this->order->delivery_charge)->setDeliveryVendorName($this->order->delivery_vendor_name)
+            ->setDeliveryCharge($this->order->delivery_charge)->setDeliveryVendor($this->order->delivery_vendor)
             ->setDeliveryRequestId($this->order->delivery_request_id)->setDeliveryThana($this->order->delivery_thana)
             ->setDeliveryDistrict($this->order->delivery_district)->setBankTransactionCharge($this->order->bank_transaction_charge)
             ->setDeliveryName($this->order->delivery_name)->setDeliveryMobile($this->order->delivery_mobile)

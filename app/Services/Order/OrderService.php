@@ -370,7 +370,8 @@ class OrderService extends BaseService
     {
         if (!$orderBeforeUpdated->isWebStore()) return false;
         $fromStatus = $orderBeforeUpdated->status;
-        if ($orderBeforeUpdated->delivery_vendor_name == Methods::OWN_DELIVERY) {
+        $delivery_vendor_name = $orderBeforeUpdated->delivery_vendor && isset(json_decode($orderBeforeUpdated->delivery_vendor,true)['name']) ? json_decode($orderBeforeUpdated->delivery_vendor,true)['name'] : null;
+        if ($delivery_vendor_name == Methods::OWN_DELIVERY) {
             if ($fromStatus == Statuses::PENDING && in_array($toStatus, [Statuses::PROCESSING, Statuses::DECLINED])) return true;
             if ($fromStatus == Statuses::PROCESSING && in_array($toStatus, [Statuses::SHIPPED, Statuses::CANCELLED])) return true;
             if ($fromStatus == Statuses::SHIPPED && $toStatus == Statuses::COMPLETED) return true;

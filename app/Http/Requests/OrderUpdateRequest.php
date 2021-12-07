@@ -40,6 +40,7 @@ class OrderUpdateRequest extends FormRequest
             'payment_link_amount' => 'sometimes|numeric',
             'paid_amount' => 'sometimes|numeric',
             'invoice' => 'sometimes|string',
+            'delivery_vendor_name' => 'sometimes'
         ];
     }
 }

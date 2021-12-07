@@ -23,7 +23,7 @@ class DeliveryResource extends JsonResource
             'delivery_name' => $this->delivery_name,
             'delivery_address' => $this->delivery_address,
             'delivery_mobile' => $this->delivery_mobile,
-            'delivery_vendor_name' => $this->delivery_vendor_name,
+            'delivery_vendor' => $this->delivery_vendor ? json_decode($this->delivery_vendor, true) : null,
             'delivery_request_id' => $this->delivery_request_id,
             'delivery_thana' => $this->delivery_thana,
             'delivery_district' => $this->delivery_district,
