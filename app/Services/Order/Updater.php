@@ -11,6 +11,7 @@ use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Models\Order;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Delivery\Methods;
+use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Discount\Handler;
 use App\Services\EMI\Calculations as EmiCalculation;
 use App\Services\Order\Constants\OrderLogTypes;
@@ -345,6 +346,7 @@ class Updater
             }
             if ($this->order->status == Statuses::PENDING || $this->order->status == Statuses::PROCESSING)
                 $this->calculateDeliveryChargeAndSave($this->order);
+            dd('before commit');
             event(new OrderUpdated([
                 'order' => $this->order->refresh(),
                 'order_product_change_data' => $this->orderProductChangeData ?? [],
@@ -507,7 +509,16 @@ class Updater
         $discountData = json_decode($this->discount);
         $originalAmount = $discountData->original_amount;
         $hasDiscount = $this->validateDiscountData($originalAmount);
-        if ($hasDiscount) $this->orderDiscountRepository->where('order_id', $this->order_id)->update($this->withUpdateModificationField($this->makeOrderDiscountData($discountData)));
+        if ($hasDiscount) {
+            $order_discount = $this->orderDiscountRepository->where('order_id', $this->order_id)
+                ->where('type', DiscountTypes::ORDER)
+                ->first();
+            if($order_discount) {
+                $order_discount->update($this->withUpdateModificationField($this->makeOrderDiscountData($discountData)));
+            } else {
+                $this->orderDiscountRepository->create($this->withCreateModificationField($this->makeOrderDiscountData($discountData)));
+            }
+        }
         $this->setOrderLogType(OrderLogTypes::PRODUCTS_AND_PRICES);
     }
 
@@ -527,11 +538,12 @@ class Updater
         $data['discount_details'] = $discountData->discount_details;
         $data['discount_id'] = $discountData->discount_id ?? null;
         $data['type_id'] = $discountData->item_id ?? null;
+        $data['type'] = DiscountTypes::ORDER;
         if ($discountData->is_percentage) {
             /** @var PriceCalculation $orderPriceCalculation */
             $orderPriceCalculation = app(PriceCalculation::class);
             $orderTotalBill = $orderPriceCalculation->setOrder($this->order)->getProductDiscountedPrice();
-            $data['amount'] = ($orderTotalBill * $discountData->is_percentage) / 100.00;
+            $data['amount'] = ($orderTotalBill * $discountData->original_amount) / 100.00;
         } else {
             $data['amount'] = $discountData->original_amount;
         }
