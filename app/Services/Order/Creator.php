@@ -69,6 +69,7 @@ class Creator
     private $isDiscountPercentage;
     private $paidAmount;
     private $paymentMethod;
+    private array $stockDecreasingData;
     /**
      * @var OrderSkuCreator
      */
@@ -367,6 +368,21 @@ class Creator
         return $this;
     }
 
+    /**
+     * @param array $stockDecreasingData
+     */
+    private function setStockDecreasingData(array $stockDecreasingData): void
+    {
+        $this->stockDecreasingData = $stockDecreasingData;
+    }
+
+    /**
+     * @return array
+     */
+    public function getStockUptaingData(): array
+    {
+        return $this->stockDecreasingData;
+    }
 
     /**
      * @return mixed
@@ -412,8 +428,7 @@ class Creator
             }
 
             $this->calculateDeliveryChargeAndSave($order);
-            event(new OrderPlaceTransactionCompleted($order));
-            $this->updateStock($this->orderSkuCreator->getStockDecreasingData());
+            $this->setStockDecreasingData($this->orderSkuCreator->getStockDecreasingData());
             if ($this->getDueAmount($order) > 0) {
                 /** @var OrderObject $orderObject */
                 $orderObject = app(OrderObject::class);
@@ -421,11 +436,11 @@ class Creator
                 $this->orderLogCreator->setOrderId($order->id)->setType(OrderLogTypes::DUE_BILL)->setExistingOrderData(null)->setChangedOrderData(json_encode($orderObject))->create();
             }
             DB::commit();
+            return $order->refresh();
         } catch (Exception $e) {
             DB::rollback();
             throw $e;
         }
-        return $order;
     }
 
 

@@ -9,7 +9,7 @@ class OrderDueCleared
     use Dispatchable, SerializesModels;
 
     protected Order $order;
-    protected float $paidAmount;
+    protected ?float $paidAmount;
 
     /**
      * @return mixed
@@ -20,9 +20,9 @@ class OrderDueCleared
     }
 
     /**
-     * @return float
+     * @return float|null
      */
-    public function getPaidAmount(): float
+    public function getPaidAmount(): float|null
     {
         return $this->paidAmount;
     }

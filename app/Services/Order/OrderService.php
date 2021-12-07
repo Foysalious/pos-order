@@ -2,6 +2,7 @@
 
 use App\Constants\ResponseMessages;
 use App\Events\OrderDeleted;
+use App\Events\OrderPlaceTransactionCompleted;
 use App\Http\Reports\InvoiceService;
 use App\Http\Requests\DeliveryStatusUpdateIpnRequest;
 use App\Http\Requests\OrderCreateRequest;
@@ -33,19 +34,14 @@ use App\Services\Customer\CustomerResolver;
 use App\Services\Delivery\Methods;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
-use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\OrderLog\Objects\OrderObjectRetriever;
 use App\Services\OrderLog\OrderLogGenerator;
-use App\Services\OrderSms\WebstoreOrderSms;
-use App\Services\Webstore\SettingsSync\WebStoreSettingsSyncTypes;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Webstore\Order\States as WebStoreStatuses;
@@ -153,11 +149,7 @@ class OrderService extends BaseService
             ->setVoucherId($request->voucher_id)
             ->setApiRequest($request->api_request->id)
             ->create();
-
-        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) {
-            dispatch(new OrderPlacePushNotification($order));
-            dispatch(new WebstoreOrderSms($partner, $order->id));
-        }
+        event(new OrderPlaceTransactionCompleted($order, $this->creator->getStockUptaingData()));
         return $this->success(ResponseMessages::SUCCESS, ['order' => ['id' => $order->id]]);
     }
 
@@ -284,6 +276,7 @@ class OrderService extends BaseService
             ->setDeliveryThana($orderUpdateRequest->delivery_thana ?? null)
             ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
             ->update();
+        $this->logRequest();
         return $this->success();
     }
 
@@ -407,7 +400,7 @@ class OrderService extends BaseService
             }
             return $this->success(ResponseMessages::SUCCESS, ['logs' => $final_logs->toArray()]);
         } catch (Exception $e) {
-            return $this->error("Sorry, can't generate logs for this order");
+            return $this->error("Sorry, can't generate logs for this order",200);
         }
     }
 
@@ -441,5 +434,17 @@ class OrderService extends BaseService
         if (!$order->customer->email) return $this->error('Email Not Found', 404);
         dispatch(new OrderEmail($order));
         return $this->success();
+    }
+
+    public function logRequest()
+    {
+        $data = [
+            'Request Method' => request()->method(),
+            'Request Path' => request()->path(),
+            'Request Params' => request()->all(),
+            'Request IP' => request()->ip(),
+            'Origin' => request()->header('host'),
+        ];
+        Log::info(json_encode($data));
     }
 }
