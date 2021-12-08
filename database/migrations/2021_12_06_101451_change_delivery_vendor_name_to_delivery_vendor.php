@@ -29,9 +29,7 @@ class ChangeDeliveryVendorNameToDeliveryVendor extends Migration
     {
         Schema::table('orders', function (Blueprint $table) {
             $table->dropColumn('delivery_vendor');
+            $table->enum('delivery_vendor_name', Methods::get())->after('delivery_charge')->nullable();
         });
-        $methods = Methods::get();
-        $methods = "'" . implode("', '", $methods) . "'";
-        DB::statement("ALTER TABLE orders CHANGE COLUMN `delivery_vendor` `delivery_vendor_name` ENUM($methods) DEFAULT NULL;");
     }
 }
