@@ -25,7 +25,6 @@ use App\Services\OrderLog\Objects\OrderObject;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\OrderSku\Creator as OrderSkuCreator;
-use App\Services\Product\StockManageByChunk;
 use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ModificationFields;
 use Exception;
@@ -69,7 +68,6 @@ class Creator
     private $isDiscountPercentage;
     private $paidAmount;
     private $paymentMethod;
-    private array $stockDecreasingData;
     /**
      * @var OrderSkuCreator
      */
@@ -94,8 +92,6 @@ class Creator
         protected SmanagerUserServerClient    $smanagerUserServerClient,
         protected PriceCalculation $priceCalculation,
         protected EmiCalculation $emiCalculation,
-        protected StockRefillerForCanceledOrder $stockRefill,
-        protected StockManageByChunk $stockManager,
         protected ApiServerClient $apiServerClient,
         protected CustomerResolver $customerResolver,
         private  Partner $partner,
@@ -369,22 +365,6 @@ class Creator
     }
 
     /**
-     * @param array $stockDecreasingData
-     */
-    private function setStockDecreasingData(array $stockDecreasingData): void
-    {
-        $this->stockDecreasingData = $stockDecreasingData;
-    }
-
-    /**
-     * @return array
-     */
-    public function getStockUptaingData(): array
-    {
-        return $this->stockDecreasingData;
-    }
-
-    /**
      * @return mixed
      * @throws OrderException
      * @throws ValidationException|BaseClientServerError
@@ -428,13 +408,13 @@ class Creator
             }
 
             $this->calculateDeliveryChargeAndSave($order);
-            $this->setStockDecreasingData($this->orderSkuCreator->getStockDecreasingData());
             if ($this->getDueAmount($order) > 0) {
                 /** @var OrderObject $orderObject */
                 $orderObject = app(OrderObject::class);
                 $orderObject->setOrder($order);
                 $this->orderLogCreator->setOrderId($order->id)->setType(OrderLogTypes::DUE_BILL)->setExistingOrderData(null)->setChangedOrderData(json_encode($orderObject))->create();
             }
+            event(new OrderPlaceTransactionCompleted($order));
             DB::commit();
             return $order->refresh();
         } catch (Exception $e) {
@@ -524,16 +504,6 @@ class Creator
         $order->interest = $data['total_interest'];
         $order->bank_transaction_charge = $data['bank_transaction_fee'];
         $order->save();
-    }
-
-    private function updateStock(array $stockDecreasingData)
-    {
-       if(count($stockDecreasingData) > 0) {
-           foreach ($stockDecreasingData as $each_data) {
-               $this->stockManager->setSku($each_data['sku_detail'])->decreaseAndInsertInChunk($each_data['quantity']);
-           }
-           $this->stockManager->updateStock();
-       }
     }
 
     /**

@@ -12,7 +12,8 @@ use App\Listeners\Accounting\EntryOnOrderUpdating;
 use App\Listeners\Accounting\EntryOnOrderCustomerUpdate;
 use App\Listeners\GenerateInvoiceOnOrderCreate;
 use App\Listeners\InventoryStockUpdate;
-use App\Listeners\InventoryStockUpdater;
+use App\Listeners\InventoryStockUpdateOnOrderUpdate;
+use App\Listeners\InventoryStockUpdateOnOrderPlace;
 use App\Listeners\PushNotificationForOrder;
 use App\Listeners\RewardOnOrderCreate as RewardOnOrderCreateListener;
 use App\Listeners\UsageOnOrderCreate;
@@ -40,7 +41,7 @@ class EventServiceProvider extends ServiceProvider
             UsageOnOrderCreate::class,
             GenerateInvoiceOnOrderCreate::class,
             WebstoreSettingsSyncOnOrderCreate::class,
-            InventoryStockUpdater::class,
+            InventoryStockUpdateOnOrderPlace::class,
             PushNotificationForOrder::class,
             WebstoreSmsSendForOrder::class
         ],
@@ -49,7 +50,7 @@ class EventServiceProvider extends ServiceProvider
             EntryOnOrderDueCleared::class,
             GenerateInvoiceOnOrderCreate::class,
             WebstoreSettingsSyncOnOrderUpdate::class,
-            InventoryStockUpdater::class,
+            InventoryStockUpdateOnOrderUpdate::class,
         ],
         OrderDueCleared::class => [
             EntryOnOrderDueCleared::class,

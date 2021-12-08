@@ -9,7 +9,6 @@ class OrderPlaceTransactionCompleted
     use Dispatchable, SerializesModels;
 
     protected Order $order;
-    protected array $stockUpdateData;
 
     /**
      * @return mixed
@@ -20,21 +19,13 @@ class OrderPlaceTransactionCompleted
     }
 
     /**
-     * @return array
-     */
-    public function getStockUpdateData(): array
-    {
-        return $this->stockUpdateData;
-    }
-    /**
      * Create a new event instance.
      *
      * @return void
      */
-    public function __construct(Order $order, array $stock_update_data)
+    public function __construct(Order $order)
     {
         $this->order = $order;
-        $this->stockUpdateData = $stock_update_data;
     }
 
 }

@@ -2,7 +2,6 @@
 
 use App\Constants\ResponseMessages;
 use App\Events\OrderDeleted;
-use App\Events\OrderPlaceTransactionCompleted;
 use App\Http\Reports\InvoiceService;
 use App\Http\Requests\DeliveryStatusUpdateIpnRequest;
 use App\Http\Requests\OrderCreateRequest;
@@ -41,6 +40,7 @@ use App\Services\OrderLog\OrderLogGenerator;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use App\Services\Order\Constants\Statuses;
@@ -149,7 +149,6 @@ class OrderService extends BaseService
             ->setVoucherId($request->voucher_id)
             ->setApiRequest($request->api_request->id)
             ->create();
-        event(new OrderPlaceTransactionCompleted($order, $this->creator->getStockUptaingData()));
         return $this->success(ResponseMessages::SUCCESS, ['order' => ['id' => $order->id]]);
     }
 
@@ -283,11 +282,13 @@ class OrderService extends BaseService
 
     public function delete($partner_id, $order_id): JsonResponse
     {
+        DB::beginTransaction();
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $this->stockRefillerForCanceledOrder->setOrder($order)->refillStock();
         event(new OrderDeleted($order));
         $order->delete();
+        DB::commit();
         return $this->success();
     }
 

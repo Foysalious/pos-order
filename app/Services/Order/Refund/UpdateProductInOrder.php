@@ -8,7 +8,6 @@ use App\Services\Order\Refund\Objects\ProductChangeTracker;
 use App\Services\OrderSku\BatchManipulator;
 use App\Services\Product\StockManager;
 use App\Traits\ModificationFields;
-use App\Traits\ResponseAPI;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -139,7 +138,6 @@ class UpdateProductInOrder extends ProductOrder
             /** @var $product ProductChangeTracker */
             if ($product->getSkuId() == null) continue;
             $product_detail = $skus_details->where('id', $product->getSkuId())->first();
-            $this->stockManager->setOrder($this->order)->setSku($product_detail);
             if ($product->isQuantityIncreased()) {
                 $this->stockUpdateData [] = [
                     'sku_detail' => $product_detail,

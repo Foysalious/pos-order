@@ -10,7 +10,6 @@ use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Models\Order;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
-use App\Services\Delivery\Methods;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Discount\Handler;
 use App\Services\EMI\Calculations as EmiCalculation;
@@ -23,8 +22,6 @@ use App\Services\Order\Refund\OrderUpdateFactory;
 use App\Services\Order\Refund\UpdateProductInOrder;
 use App\Services\OrderLog\Objects\OrderObject;
 use App\Services\Payment\Creator as PaymentCreator;
-use App\Services\Product\StockManageByChunk;
-use App\Services\Product\StockManager;
 use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ModificationFields;
 use Exception;
@@ -63,7 +60,6 @@ class Updater
                                 protected CustomerRepositoryInterface $customerRepository,
                                 protected PriceCalculation            $orderCalculator,
                                 protected EmiCalculation              $emiCalculation,
-                                protected StockManageByChunk          $stockManager,
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -635,17 +631,6 @@ class Updater
         $current_order_sku_ids = $this->order->orderSkus->pluck('id');
         if ($requested_order_sku_ids->diff($current_order_sku_ids)->count() > 0) {
             throw new OrderException('Invalid order sku item given', 400);
-        }
-    }
-
-    public function updatePaidOrderCustomer($event_fire = false)
-    {
-        $previous_order = $this->setExistingOrder();
-        $this->setDeliveryNameAndMobile();
-        $this->orderRepositoryInterface->update($this->order, $this->makeCustomerUpdateData());
-        $this->createLog($previous_order, $this->order->refresh());
-        if ($event_fire) {
-            event(new OrderCustomerUpdated($this->order->refresh()));
         }
     }
 }
