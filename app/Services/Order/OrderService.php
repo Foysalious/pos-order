@@ -275,6 +275,7 @@ class OrderService extends BaseService
             ->setDeliveryRequestId($orderUpdateRequest->delivery_request_id ?? null)
             ->setDeliveryThana($orderUpdateRequest->delivery_thana ?? null)
             ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
+            ->setCustomerId($orderUpdateRequest->customer_id)
             ->update();
         $this->logRequest();
         return $this->success();
@@ -330,12 +331,11 @@ class OrderService extends BaseService
             $customer = $this->customerResolver->setCustomerId($customer_id)->setPartnerId($partner_id)->resolveCustomer();
             if ($customer->id == $order->customer?->id) return $this->error(trans('invalid customer update request'), 400);
         }
-        if (is_null($order->paid_at)) return $this->error(trans('order.update.no_customer_update'), 400);
         $this->updater->setOrderId($order_id)
             ->setOrder($order)
             ->setCustomerId($customer_id)
             ->setOrderLogType(OrderLogTypes::CUSTOMER)
-            ->updatePaidOrderCustomer();
+            ->updateCustomer(true);
         return $this->success();
     }
 

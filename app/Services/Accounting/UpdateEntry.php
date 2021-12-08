@@ -69,7 +69,7 @@ class UpdateEntry extends BaseEntry
             'delivery_charge' => (double)$this->order->delivery_charge ?? 0,
             'bank_transaction_charge' => (double)$this->order->bank_transaction_charge ?? 0,
             'interest' => (double)$this->order->interest ?? 0,
-            'updated_entry' => 'to_be_decided',
+            'updated_entry' => 0,
             'inventory_products' => json_encode($inventory_products),
         ];
         return array_merge($data,$this->makeCustomerData($customer));

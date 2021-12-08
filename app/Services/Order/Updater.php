@@ -330,11 +330,11 @@ class Updater
         try {
             DB::beginTransaction();
             $previous_order = $this->setExistingOrder();
-            $this->calculateOrderChangesAndUpdateSkus();
             if (isset($this->customer_id)) {
                 $this->updateCustomer();
-                $this->setDeliveryNameAndMobile();
             }
+            $this->calculateOrderChangesAndUpdateSkus();
+
             $this->orderRepositoryInterface->update($this->order, $this->makeData());
             if (isset($this->voucher_id)) $this->updateVoucherDiscount();
             $this->updateOrderPayments();
@@ -560,16 +560,32 @@ class Updater
         }
     }
 
-    private function updateCustomer()
+    /**
+     * @throws OrderException
+     */
+    public function updateCustomer($event_fire = false)
     {
-        return $this->orderRepositoryInterface->where('id', $this->order->id)->update($this->withUpdateModificationField(['customer_id' => $this->customer_id]));
+        if (is_null($this->order->paid_at)) {
+            throw new OrderException(trans('order.update.no_customer_update'), 400);
+        }
+        $previous_order = $this->setExistingOrder();
+        $this->setDeliveryNameAndMobile();
+        $this->orderRepositoryInterface->update($this->order, [
+                'customer_id' => $this->customer_id,
+                'delivery_name' => $this->delivery_name,
+                'delivery_mobile' => $this->delivery_mobile,
+            ] + $this->modificationFields(false, true));
+        $this->createLog($previous_order, $this->order->refresh());
+        if ($event_fire) {
+            event(new OrderCustomerUpdated($this->order->refresh()));
+        }
     }
 
     private function setDeliveryNameAndMobile()
     {
         $customer = $this->customerRepository->where('id', $this->customer_id)->first();
-        $this->delivery_name = $customer->name ?? null;
-        $this->delivery_mobile = $customer->mobile ?? null;
+        $this->delivery_name = $this->delivery_name ?? $customer->name ?? null;
+        $this->delivery_mobile = $this->delivery_mobile ?? $customer->mobile ?? null;
     }
 
     private function refundIfEligible()
@@ -609,19 +625,6 @@ class Updater
         $order->update($this->withUpdateModificationField($emi_data));
     }
 
-    public function updateStock()
-    {
-        if (count($this->stockUpdateEntry) > 0) {
-            foreach ($this->stockUpdateEntry as $each_data) {
-                if ($each_data['operation'] == StockManager::STOCK_INCREMENT)
-                    $this->stockManager->setSku($each_data['sku_detail'])->increaseAndInsertInChunk($each_data['quantity']);
-                if ($each_data['operation'] == StockManager::STOCK_DECREMENT)
-                    $this->stockManager->setSku($each_data['sku_detail'])->decreaseAndInsertInChunk($each_data['quantity']);
-            }
-            $this->stockManager->updateStock();
-        }
-    }
-
     /**
      * @throws OrderException
      */
@@ -635,23 +638,14 @@ class Updater
         }
     }
 
-    public function updatePaidOrderCustomer()
+    public function updatePaidOrderCustomer($event_fire = false)
     {
-        DB::beginTransaction();
         $previous_order = $this->setExistingOrder();
         $this->setDeliveryNameAndMobile();
         $this->orderRepositoryInterface->update($this->order, $this->makeCustomerUpdateData());
         $this->createLog($previous_order, $this->order->refresh());
-        event(new OrderCustomerUpdated($this->order->refresh()));
-        DB::commit();
-    }
-
-    private function makeCustomerUpdateData()
-    {
-        return [
-            'customer_id' => $this->customer_id,
-            'delivery_name' => $this->delivery_name,
-            'delivery_mobile' => $this->delivery_mobile,
-            ] + $this->modificationFields(false, true);
+        if ($event_fire) {
+            event(new OrderCustomerUpdated($this->order->refresh()));
+        }
     }
 }
