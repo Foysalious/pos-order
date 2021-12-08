@@ -552,7 +552,6 @@ class Creator
 
     private function createDeliveryVendor($deliveryMethod)
     {
-
         if($deliveryMethod == Methods::SDELIVERY)
             $deliveryMethod = Methods::PAPERFLY;
         $delivery_methods = config('delivery');

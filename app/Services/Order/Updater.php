@@ -368,19 +368,8 @@ class Updater
         /** @var OrderDeliveryPriceCalculation $deliveryPriceCalculation */
         $deliveryPriceCalculation = app(OrderDeliveryPriceCalculation::class);
         list($delivery_method, $delivery_charge) = $deliveryPriceCalculation->setOrder($order)->calculateDeliveryCharge();
-        $delivery_vendor = $this->createDeliveryVendor($delivery_method);
-        if ($delivery_charge) $order->update(['delivery_vendor'=> $delivery_vendor, 'delivery_charge' => $delivery_charge]);
+        if ($delivery_charge) $order->update(['delivery_charge' => $delivery_charge]);
         return false;
-    }
-
-    private function createDeliveryVendor($deliveryMethod)
-    {
-        if($deliveryMethod == Methods::SDELIVERY)
-            $deliveryMethod = Methods::PAPERFLY;
-        $delivery_methods = config('delivery');
-        $delivery_vendor['name'] = isset($delivery_methods[$deliveryMethod]) ? $delivery_methods[$deliveryMethod]['name'] : null;
-        $delivery_vendor['image'] = isset($delivery_methods[$deliveryMethod]) ? $delivery_methods[$deliveryMethod]['image'] : null;
-        return json_encode($delivery_vendor);
     }
 
     public function makeData(): array
