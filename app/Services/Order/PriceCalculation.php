@@ -199,7 +199,13 @@ class PriceCalculation
 
     private function orderDiscount()
     {
-        return $this->order->discounts->where('type', DiscountTypes::ORDER)->sum('amount');
+        $amount = 0;
+        $this->order->discounts->filter(function($item) use (&$amount) {
+            if ($item->type == DiscountTypes::ORDER) {
+                $amount += $item->amount;
+            }
+        });
+        return $amount;
     }
 
     private function promoDiscount()
