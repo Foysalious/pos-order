@@ -133,7 +133,7 @@ class CustomerController extends Controller
      *      tags={"Partners Products Which is not Rated"},
      *      summary="Get Products List for POS by Partner",
      *      description="",
-     *      @OA\Parameter(name="customer_id", description="customer_id", required=true, in="path", @OA\Schema(type="integer")),
+     *      @OA\Parameter(name="customer_id", description="customer_id", required=true, in="path", @OA\Schema(type="string")),
      *      @OA\Parameter(name="offset", description="pagination offset", required=false, in="query", @OA\Schema(type="integer")),
      *      @OA\Parameter(name="limit", description="pagination limit", required=false, in="query", @OA\Schema(type="integer")),
      *      @OA\Response(response=200, description="Successful operation",
