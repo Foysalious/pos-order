@@ -23,7 +23,7 @@ class IpWhitelistMiddleware
                 in_array(getIp(), json_decode($redis->get(config('sheba.whitelisted_ip_redis_key_name')))))) {
             return $next($request);
         }
-        throw new AuthorizationException(getIp() . ',' . json_encode(json_decode($redis->get(config('sheba.whitelisted_ip_redis_key_name')))));
+        throw new AuthorizationException();
     }
 
     private function runningUnitTests(): bool
