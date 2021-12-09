@@ -200,7 +200,7 @@ class PriceCalculation
     private function orderDiscount()
     {
         $amount = 0;
-        $this->order->discounts->filter(function($item) use (&$amount) {
+        $this->order->discounts->each(function($item) use (&$amount) {
             if ($item->type == DiscountTypes::ORDER) {
                 $amount += $item->amount;
             }

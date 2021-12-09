@@ -563,6 +563,8 @@ class Updater
     {
         if (is_null($this->order->paid_at)) {
             throw new OrderException(trans('order.update.no_customer_update'), 400);
+        } else if ($this->customer_id == $this->order->customer_id) {
+            return;
         }
         $previous_order = $this->setExistingOrder();
         $this->setDeliveryNameAndMobile();
