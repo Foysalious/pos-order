@@ -25,7 +25,6 @@ use App\Services\OrderLog\Objects\OrderObject;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\OrderSku\Creator as OrderSkuCreator;
-use App\Services\Product\StockManageByChunk;
 use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ModificationFields;
 use Exception;
@@ -93,8 +92,6 @@ class Creator
         protected SmanagerUserServerClient    $smanagerUserServerClient,
         protected PriceCalculation $priceCalculation,
         protected EmiCalculation $emiCalculation,
-        protected StockRefillerForCanceledOrder $stockRefill,
-        protected StockManageByChunk $stockManager,
         protected ApiServerClient $apiServerClient,
         protected CustomerResolver $customerResolver,
         private  Partner $partner,
@@ -367,7 +364,6 @@ class Creator
         return $this;
     }
 
-
     /**
      * @return mixed
      * @throws OrderException
@@ -412,20 +408,19 @@ class Creator
             }
 
             $this->calculateDeliveryChargeAndSave($order);
-            event(new OrderPlaceTransactionCompleted($order));
-            $this->updateStock($this->orderSkuCreator->getStockDecreasingData());
             if ($this->getDueAmount($order) > 0) {
                 /** @var OrderObject $orderObject */
                 $orderObject = app(OrderObject::class);
                 $orderObject->setOrder($order);
                 $this->orderLogCreator->setOrderId($order->id)->setType(OrderLogTypes::DUE_BILL)->setExistingOrderData(null)->setChangedOrderData(json_encode($orderObject))->create();
             }
+            event(new OrderPlaceTransactionCompleted($order));
             DB::commit();
+            return $order->refresh();
         } catch (Exception $e) {
             DB::rollback();
             throw $e;
         }
-        return $order;
     }
 
 
@@ -511,16 +506,6 @@ class Creator
         $order->save();
     }
 
-    private function updateStock(array $stockDecreasingData)
-    {
-       if(count($stockDecreasingData) > 0) {
-           foreach ($stockDecreasingData as $each_data) {
-               $this->stockManager->setSku($each_data['sku_detail'])->decreaseAndInsertInChunk($each_data['quantity']);
-           }
-           $this->stockManager->updateStock();
-       }
-    }
-
     /**
      * @param Order $order
      * @return bool
@@ -530,8 +515,19 @@ class Creator
         /** @var OrderDeliveryPriceCalculation $deliveryPriceCalculation */
         $deliveryPriceCalculation  = app(OrderDeliveryPriceCalculation::class);
         list($delivery_method, $delivery_charge) = $deliveryPriceCalculation->setOrder($order)->calculateDeliveryCharge();
-        if ($delivery_charge) $order->update(['delivery_vendor_name'=> $delivery_method, 'delivery_charge' => $delivery_charge]);
+        $delivery_vendor = $this->createDeliveryVendor($delivery_method);
+        if ($delivery_charge) $order->update(['delivery_vendor'=> $delivery_vendor, 'delivery_charge' => $delivery_charge]);
         return false;
+    }
+
+    private function createDeliveryVendor($deliveryMethod)
+    {
+        if($deliveryMethod == Methods::SDELIVERY)
+            $deliveryMethod = Methods::PAPERFLY;
+        $delivery_methods = config('delivery');
+        $delivery_vendor['name'] = isset($delivery_methods[$deliveryMethod]) ? $delivery_methods[$deliveryMethod]['name'] : null;
+        $delivery_vendor['image'] = isset($delivery_methods[$deliveryMethod]) ? $delivery_methods[$deliveryMethod]['image'] : null;
+        return json_encode($delivery_vendor);
     }
 }
 

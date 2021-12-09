@@ -11,9 +11,14 @@ use App\Listeners\Accounting\EntryOnOrderDueCleared;
 use App\Listeners\Accounting\EntryOnOrderUpdating;
 use App\Listeners\Accounting\EntryOnOrderCustomerUpdate;
 use App\Listeners\GenerateInvoiceOnOrderCreate;
+use App\Listeners\InventoryStockUpdate;
+use App\Listeners\InventoryStockUpdateOnOrderUpdate;
+use App\Listeners\InventoryStockUpdateOnOrderPlace;
+use App\Listeners\PushNotificationForOrder;
 use App\Listeners\RewardOnOrderCreate as RewardOnOrderCreateListener;
 use App\Listeners\UsageOnOrderCreate;
 use App\Listeners\WebstoreSettingsSyncOnOrderCreate;
+use App\Listeners\WebstoreSmsSendForOrder;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -31,26 +36,30 @@ class EventServiceProvider extends ServiceProvider
             SendEmailVerificationNotification::class,
         ],
         OrderPlaceTransactionCompleted::class => [
-//            EntryOnOrderCreation::class,
+            EntryOnOrderCreation::class,
             RewardOnOrderCreateListener::class,
             UsageOnOrderCreate::class,
             GenerateInvoiceOnOrderCreate::class,
-            WebstoreSettingsSyncOnOrderCreate::class
+            WebstoreSettingsSyncOnOrderCreate::class,
+            InventoryStockUpdateOnOrderPlace::class,
+            PushNotificationForOrder::class,
+            WebstoreSmsSendForOrder::class
         ],
         OrderUpdated::class => [
-//            EntryOnOrderUpdating::class,
-//            EntryOnOrderDueCleared::class,
+            EntryOnOrderUpdating::class,
+            EntryOnOrderDueCleared::class,
             GenerateInvoiceOnOrderCreate::class,
-            WebstoreSettingsSyncOnOrderUpdate::class
+            WebstoreSettingsSyncOnOrderUpdate::class,
+            InventoryStockUpdateOnOrderUpdate::class,
         ],
         OrderDueCleared::class => [
-//            EntryOnOrderDueCleared::class,
+            EntryOnOrderDueCleared::class,
         ],
         OrderDeleted::class => [
-//            EntryOnOrderDelete::class,
+            EntryOnOrderDelete::class,
         ],
         OrderCustomerUpdated::class => [
-//            EntryOnOrderCustomerUpdate::class
+            EntryOnOrderCustomerUpdate::class
         ]
     ];
 

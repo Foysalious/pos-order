@@ -2,6 +2,8 @@
 
 use App\Constants\ResponseMessages;
 use App\Http\Requests\CustomerOrderListRequest;
+use App\Http\Resources\OrderResource;
+use App\Http\Resources\OrderWithProductResource;
 use App\Http\Resources\Webstore\Customer\NotRatedSkuResource;
 use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
@@ -136,7 +138,7 @@ class CustomerService extends BaseService
                 if ($order->due > 0) {
                     $temp = $order->only(['id', 'partner_wise_order_id', 'status', 'discounted_price', 'due', 'created_at']);
                     $temp['created_at'] = convertTimezone($order->created_at)?->format('d,M,Y');
-                    $order_list[$date]['orders'][] = $temp;
+                    $order_list[$date]['orders'][] = new OrderWithProductResource($order);
                 }
             } else {
                 $temp = $order->only(['id', 'partner_wise_order_id', 'status', 'discounted_price', 'due', 'created_at']);
@@ -144,7 +146,12 @@ class CustomerService extends BaseService
                 $order_list[$date]['orders'][] = $temp;
             }
         }
-        return $this->success(ResponseMessages::SUCCESS, ['data' => $order_list]);
+        //no datwise format needed
+        $final_report = [];
+        collect($order_list)->each(function ($value,$date_key) use (&$final_report) {
+           $final_report [] = array_merge(['date' => $date_key], $value);
+        });
+        return $this->success(ResponseMessages::SUCCESS, ['data' => $final_report]);
 
     }
 

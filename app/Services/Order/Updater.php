@@ -10,7 +10,7 @@ use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkusRepositoryInterface;
 use App\Models\Order;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
-use App\Services\Delivery\Methods;
+use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Discount\Handler;
 use App\Services\EMI\Calculations as EmiCalculation;
 use App\Services\Order\Constants\OrderLogTypes;
@@ -22,8 +22,6 @@ use App\Services\Order\Refund\OrderUpdateFactory;
 use App\Services\Order\Refund\UpdateProductInOrder;
 use App\Services\OrderLog\Objects\OrderObject;
 use App\Services\Payment\Creator as PaymentCreator;
-use App\Services\Product\StockManageByChunk;
-use App\Services\Product\StockManager;
 use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ModificationFields;
 use Exception;
@@ -62,7 +60,6 @@ class Updater
                                 protected CustomerRepositoryInterface $customerRepository,
                                 protected PriceCalculation            $orderCalculator,
                                 protected EmiCalculation              $emiCalculation,
-                                protected StockManageByChunk          $stockManager,
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
@@ -329,11 +326,11 @@ class Updater
         try {
             DB::beginTransaction();
             $previous_order = $this->setExistingOrder();
-            $this->calculateOrderChangesAndUpdateSkus();
-            if (isset($this->customer_id)) {
+            if (isset($this->customer_id) && ($this->customer_id != $this->order->customer_id)) {
                 $this->updateCustomer();
-                $this->setDeliveryNameAndMobile();
             }
+            $this->calculateOrderChangesAndUpdateSkus();
+
             $this->orderRepositoryInterface->update($this->order, $this->makeData());
             if (isset($this->voucher_id)) $this->updateVoucherDiscount();
             $this->updateOrderPayments();
@@ -347,8 +344,9 @@ class Updater
                 $this->calculateDeliveryChargeAndSave($this->order);
             event(new OrderUpdated([
                 'order' => $this->order->refresh(),
-                'orderProductChangeData' => $this->orderProductChangeData ?? [],
-                'payment_info' => ['payment_method' => $this->paymentMethod, 'paid_amount' => $this->paidAmount]
+                'order_product_change_data' => $this->orderProductChangeData ?? [],
+                'payment_info' => ['payment_method' => $this->paymentMethod, 'paid_amount' => $this->paidAmount ?? null],
+                'stock_update_data' => $this->stockUpdateEntry
             ]));
             DB::commit();
         } catch (Exception $e) {
@@ -366,7 +364,7 @@ class Updater
         /** @var OrderDeliveryPriceCalculation $deliveryPriceCalculation */
         $deliveryPriceCalculation = app(OrderDeliveryPriceCalculation::class);
         list($delivery_method, $delivery_charge) = $deliveryPriceCalculation->setOrder($order)->calculateDeliveryCharge();
-        if ($delivery_charge) $order->update(['delivery_vendor_name'=> $delivery_method, 'delivery_charge' => $delivery_charge]);
+        if ($delivery_charge) $order->update(['delivery_charge' => $delivery_charge]);
         return false;
     }
 
@@ -385,7 +383,6 @@ class Updater
         if (isset($this->delivery_mobile)) $data['delivery_mobile'] = $this->delivery_mobile;
         if (isset($this->delivery_address)) $data['delivery_address'] = $this->delivery_address;
         if (isset($this->note)) $data['note'] = $this->note;
-        if (isset($this->delivery_vendor_name)) $data['delivery_vendor_name'] = $this->delivery_vendor_name;
         if (isset($this->delivery_request_id)) $data['delivery_request_id'] = $this->delivery_request_id;
         if (isset($this->delivery_thana)) $data['delivery_thana'] = $this->delivery_thana;
         if (isset($this->delivery_district)) $data['delivery_district'] = $this->delivery_district;
@@ -397,6 +394,7 @@ class Updater
 
         return $data + $this->modificationFields(false, true);
     }
+
 
     private function setExistingOrder()
     {
@@ -471,7 +469,6 @@ class Updater
             $this->orderProductChangeData['refund_exchanged'] = $return_data;
             $this->stockUpdateEntry = array_merge($this->stockUpdateEntry, $updater->getStockUpdateData());
         }
-
         if (isset($return_data)) {
             $this->orderProductChangeData['paid_amount'] = is_null($this->paidAmount) ? 0 : $this->paidAmount;
             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
@@ -507,7 +504,16 @@ class Updater
         $discountData = json_decode($this->discount);
         $originalAmount = $discountData->original_amount;
         $hasDiscount = $this->validateDiscountData($originalAmount);
-        if ($hasDiscount) $this->orderDiscountRepository->where('order_id', $this->order_id)->update($this->withUpdateModificationField($this->makeOrderDiscountData($discountData)));
+        if ($hasDiscount) {
+            $order_discount = $this->orderDiscountRepository->where('order_id', $this->order_id)
+                ->where('type', DiscountTypes::ORDER)
+                ->first();
+            if($order_discount) {
+                $order_discount->update($this->withUpdateModificationField($this->makeOrderDiscountData($discountData)));
+            } else {
+                $this->orderDiscountRepository->create($this->withCreateModificationField($this->makeOrderDiscountData($discountData)));
+            }
+        }
         $this->setOrderLogType(OrderLogTypes::PRODUCTS_AND_PRICES);
     }
 
@@ -527,11 +533,12 @@ class Updater
         $data['discount_details'] = $discountData->discount_details;
         $data['discount_id'] = $discountData->discount_id ?? null;
         $data['type_id'] = $discountData->item_id ?? null;
+        $data['type'] = DiscountTypes::ORDER;
         if ($discountData->is_percentage) {
             /** @var PriceCalculation $orderPriceCalculation */
             $orderPriceCalculation = app(PriceCalculation::class);
             $orderTotalBill = $orderPriceCalculation->setOrder($this->order)->getProductDiscountedPrice();
-            $data['amount'] = ($orderTotalBill * $discountData->is_percentage) / 100.00;
+            $data['amount'] = ($orderTotalBill * $discountData->original_amount) / 100.00;
         } else {
             $data['amount'] = $discountData->original_amount;
         }
@@ -549,16 +556,32 @@ class Updater
         }
     }
 
-    private function updateCustomer()
+    /**
+     * @throws OrderException
+     */
+    public function updateCustomer($event_fire = false)
     {
-        return $this->orderRepositoryInterface->where('id', $this->order->id)->update($this->withUpdateModificationField(['customer_id' => $this->customer_id]));
+        if (is_null($this->order->paid_at)) {
+            throw new OrderException(trans('order.update.no_customer_update'), 400);
+        }
+        $previous_order = $this->setExistingOrder();
+        $this->setDeliveryNameAndMobile();
+        $this->orderRepositoryInterface->update($this->order, [
+                'customer_id' => $this->customer_id,
+                'delivery_name' => $this->delivery_name,
+                'delivery_mobile' => $this->delivery_mobile,
+            ] + $this->modificationFields(false, true));
+        $this->createLog($previous_order, $this->order->refresh());
+        if ($event_fire) {
+            event(new OrderCustomerUpdated($this->order->refresh()));
+        }
     }
 
     private function setDeliveryNameAndMobile()
     {
         $customer = $this->customerRepository->where('id', $this->customer_id)->first();
-        $this->delivery_name = $customer->name ?? null;
-        $this->delivery_mobile = $customer->mobile ?? null;
+        $this->delivery_name = $this->delivery_name ?? $customer->name ?? null;
+        $this->delivery_mobile = $this->delivery_mobile ?? $customer->mobile ?? null;
     }
 
     private function refundIfEligible()
@@ -598,19 +621,6 @@ class Updater
         $order->update($this->withUpdateModificationField($emi_data));
     }
 
-    public function updateStock()
-    {
-        if (count($this->stockUpdateEntry) > 0) {
-            foreach ($this->stockUpdateEntry as $each_data) {
-                if ($each_data['operation'] == StockManager::STOCK_INCREMENT)
-                    $this->stockManager->setSku($each_data['sku_detail'])->increaseAndInsertInChunk($each_data['quantity']);
-                if ($each_data['operation'] == StockManager::STOCK_DECREMENT)
-                    $this->stockManager->setSku($each_data['sku_detail'])->decreaseAndInsertInChunk($each_data['quantity']);
-            }
-            $this->stockManager->updateStock();
-        }
-    }
-
     /**
      * @throws OrderException
      */
@@ -622,25 +632,5 @@ class Updater
         if ($requested_order_sku_ids->diff($current_order_sku_ids)->count() > 0) {
             throw new OrderException('Invalid order sku item given', 400);
         }
-    }
-
-    public function updatePaidOrderCustomer()
-    {
-        DB::beginTransaction();
-        $previous_order = $this->setExistingOrder();
-        $this->setDeliveryNameAndMobile();
-        $this->orderRepositoryInterface->update($this->order, $this->makeCustomerUpdateData());
-        $this->createLog($previous_order, $this->order->refresh());
-        event(new OrderCustomerUpdated($this->order->refresh()));
-        DB::commit();
-    }
-
-    private function makeCustomerUpdateData()
-    {
-        return [
-            'customer_id' => $this->customer_id,
-            'delivery_name' => $this->delivery_name,
-            'delivery_mobile' => $this->delivery_mobile,
-            ] + $this->modificationFields(false, true);
     }
 }

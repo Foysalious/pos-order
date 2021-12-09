@@ -53,22 +53,23 @@ class UpdateEntry extends BaseEntry
 
         $customer = $this->order->customer ?? null;
         $inventory_products = $this->makeInventoryProducts();
-        $data =  [
+        $data = [
             'created_from' => json_encode($this->withBothModificationFields((new RequestIdentification())->get())),
             'credit_account_key' => Sales::SALES_FROM_POS,
-            'debit_account_key'  => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ? Accounts::SHEBA_ACCOUNT : Cash::CASH,
-            'source_id'          => $this->order->id,
-            'source_type'        => EntryTypes::POS,
-            'note'               => $this->getNote(),
-            'amount'             => $order_price_details->getDiscountedPrice(),
-            'amount_cleared'     => abs((float) $this->orderProductChangeData['paid_amount']),
-            'reconcile_amount'   => (float) $this->calculateAmountChange($inventory_products),
-            'total_discount'     => $order_price_details->getDiscount(),
-            'total_vat'          => $order_price_details->getVat(),
+            'debit_account_key' => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ? Accounts::SHEBA_ACCOUNT : Cash::CASH,
+            'source_id' => $this->order->id,
+            'source_type' => EntryTypes::POS,
+            'note' => $this->getNote(),
+            'amount' => $order_price_details->getDiscountedPrice(),
+            'amount_cleared' => $order_price_details->getPaid(),
+            'reconcile_amount' => (float)$this->calculateAmountChange($inventory_products),
+            'total_discount' => $order_price_details->getDiscount(),
+            'total_vat' => $order_price_details->getVat(),
             'entry_at' => convertTimezone($this->order->created_at)?->format('Y-m-d H:i:s'),
-            'delivery_charge'    => (double) $this->order->delivery_charge ??  0,
-            'bank_transaction_charge' => (double) $this->order->bank_transaction_charge ??  0,
-            'interest'           => (double) $this->order->interest ??  0,
+            'delivery_charge' => (double)$this->order->delivery_charge ?? 0,
+            'bank_transaction_charge' => (double)$this->order->bank_transaction_charge ?? 0,
+            'interest' => (double)$this->order->interest ?? 0,
+            'updated_entry' => 0,
             'inventory_products' => json_encode($inventory_products),
         ];
         return array_merge($data,$this->makeCustomerData($customer));

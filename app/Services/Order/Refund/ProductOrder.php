@@ -34,9 +34,6 @@ abstract class ProductOrder
     /** @var InventoryServerClient */
     protected InventoryServerClient $client;
 
-    /** @var StockManager $stockManager */
-    protected StockManager $stockManager;
-
     protected bool $isPaymentMethodEmi;
 
 
@@ -45,7 +42,7 @@ abstract class ProductOrder
      * @param Updater $updater
      */
     public function __construct(Updater $updater, OrderSkuRepositoryInterface $orderSkuRepository,
-                                InventoryServerClient $client, StockManager $stockManager,
+                                InventoryServerClient $client,
                                 PaymentCreator $paymentCreator,
                                 protected Creator $orderSkuCreator,
                                 protected OrderDiscountRepositoryInterface $discountRepository
@@ -54,7 +51,6 @@ abstract class ProductOrder
         $this->updater = $updater;
         $this->orderSkuRepository = $orderSkuRepository;
         $this->client = $client;
-        $this->stockManager = $stockManager;
         $this->paymentCreator = $paymentCreator;
     }
 

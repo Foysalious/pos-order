@@ -17,6 +17,7 @@ class OrderPlaceTransactionCompleted
     {
         return $this->order;
     }
+
     /**
      * Create a new event instance.
      *

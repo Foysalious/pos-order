@@ -129,14 +129,11 @@ class Creator
                 $this->discountHandler->create();
             }
             if(isset($sku_details[$sku->id])) {
-                $is_stock_maintainable = $this->stockManager->setSku($sku_details[$sku->id])->setOrder($this->order)->isStockMaintainable();
-                if ($is_stock_maintainable) {
                     $this->stockDecreasingData [] = [
                         'sku_detail' => $sku_details[$sku->id],
                         'quantity' => (float) $sku->quantity,
                         'operation' => StockManager::STOCK_DECREMENT
                     ];
-                }
             }
         }
         return $created_skus;

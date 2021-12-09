@@ -58,7 +58,7 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
     }
 
 
-    public function getAllOrdersOfPartnersCustomer(int $partner_id, int $customer_id, $sort_order = false, $limit = false, $skip = false)
+    public function getAllOrdersOfPartnersCustomer(int $partner_id, $customer_id, $sort_order = false, $limit = false, $skip = false)
     {
         return $this->model->with(['orderSkus' => function($q){
             $q->with('discount');

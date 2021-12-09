@@ -33,19 +33,15 @@ use App\Services\Customer\CustomerResolver;
 use App\Services\Delivery\Methods;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\OrderLogTypes;
-use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\OrderLog\Objects\OrderObjectRetriever;
 use App\Services\OrderLog\OrderLogGenerator;
-use App\Services\OrderSms\WebstoreOrderSms;
-use App\Services\Webstore\SettingsSync\WebStoreSettingsSyncTypes;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Webstore\Order\States as WebStoreStatuses;
@@ -153,11 +149,6 @@ class OrderService extends BaseService
             ->setVoucherId($request->voucher_id)
             ->setApiRequest($request->api_request->id)
             ->create();
-
-        if ($request->sales_channel_id == SalesChannelIds::WEBSTORE) {
-            dispatch(new OrderPlacePushNotification($order));
-            dispatch(new WebstoreOrderSms($partner, $order->id));
-        }
         return $this->success(ResponseMessages::SUCCESS, ['order' => ['id' => $order->id]]);
     }
 
@@ -283,17 +274,21 @@ class OrderService extends BaseService
             ->setDeliveryRequestId($orderUpdateRequest->delivery_request_id ?? null)
             ->setDeliveryThana($orderUpdateRequest->delivery_thana ?? null)
             ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
+            ->setCustomerId($orderUpdateRequest->customer_id)
             ->update();
+        $this->logRequest();
         return $this->success();
     }
 
     public function delete($partner_id, $order_id): JsonResponse
     {
+        DB::beginTransaction();
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
         $this->stockRefillerForCanceledOrder->setOrder($order)->refillStock();
         event(new OrderDeleted($order));
         $order->delete();
+        DB::commit();
         return $this->success();
     }
 
@@ -337,12 +332,11 @@ class OrderService extends BaseService
             $customer = $this->customerResolver->setCustomerId($customer_id)->setPartnerId($partner_id)->resolveCustomer();
             if ($customer->id == $order->customer?->id) return $this->error(trans('invalid customer update request'), 400);
         }
-        if (is_null($order->paid_at)) return $this->error(trans('order.update.no_customer_update'), 400);
         $this->updater->setOrderId($order_id)
             ->setOrder($order)
             ->setCustomerId($customer_id)
             ->setOrderLogType(OrderLogTypes::CUSTOMER)
-            ->updatePaidOrderCustomer();
+            ->updateCustomer(true);
         return $this->success();
     }
 
@@ -370,7 +364,8 @@ class OrderService extends BaseService
     {
         if (!$orderBeforeUpdated->isWebStore()) return false;
         $fromStatus = $orderBeforeUpdated->status;
-        if ($orderBeforeUpdated->delivery_vendor_name == Methods::OWN_DELIVERY) {
+        $delivery_vendor_name = $orderBeforeUpdated->delivery_vendor && isset(json_decode($orderBeforeUpdated->delivery_vendor,true)['name']) ? json_decode($orderBeforeUpdated->delivery_vendor,true)['name'] : null;
+        if ($delivery_vendor_name == Methods::OWN_DELIVERY) {
             if ($fromStatus == Statuses::PENDING && in_array($toStatus, [Statuses::PROCESSING, Statuses::DECLINED])) return true;
             if ($fromStatus == Statuses::PROCESSING && in_array($toStatus, [Statuses::SHIPPED, Statuses::CANCELLED])) return true;
             if ($fromStatus == Statuses::SHIPPED && $toStatus == Statuses::COMPLETED) return true;
@@ -406,7 +401,7 @@ class OrderService extends BaseService
             }
             return $this->success(ResponseMessages::SUCCESS, ['logs' => $final_logs->toArray()]);
         } catch (Exception $e) {
-            return $this->error("Sorry, can't generate logs for this order");
+            return $this->error("Sorry, can't generate logs for this order",200);
         }
     }
 
@@ -440,5 +435,17 @@ class OrderService extends BaseService
         if (!$order->customer->email) return $this->error('Email Not Found', 404);
         dispatch(new OrderEmail($order));
         return $this->success();
+    }
+
+    public function logRequest()
+    {
+        $data = [
+            'Request Method' => request()->method(),
+            'Request Path' => request()->path(),
+            'Request Params' => request()->all(),
+            'Request IP' => request()->ip(),
+            'Origin' => request()->header('host'),
+        ];
+        Log::info(json_encode($data));
     }
 }
