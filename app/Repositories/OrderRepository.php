@@ -68,7 +68,7 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
                 $q->orderBy('created_at', $sort_order);
             })->when($limit, function ($q) use ($limit){
                 $q->limit($limit);
-            })->when($limit, function ($q) use ($skip){
+            })->when($skip, function ($q) use ($skip){
                 $q->skip($skip);
             })->get();
     }
