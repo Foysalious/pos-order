@@ -58,6 +58,6 @@ class CustomerResolver
 
     private function getCustomerFromSmanagerUserProject()
     {
-        return $this->smanagerUserServerClient->get('/api/v1/partners/' . $this->partnerId . '/users/' . $this->customerId);
+        return $this->smanagerUserServerClient->get('api/v1/partners/' . $this->partnerId . '/users/' . $this->customerId);
     }
 }
