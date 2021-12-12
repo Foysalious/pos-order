@@ -258,6 +258,11 @@ class OrderController extends Controller
         return $this->orderService->getOrderInfoForPaymentLink($order_id);
     }
 
+    public function getOrderInfoByPartnerWiseOrderId($partnerId,$partnerWiseOrderId)
+    {
+        return $this->orderService->getOrderInfoByPartnerWiseOrderId($partnerId,$partnerWiseOrderId);
+    }
+
     /**
      * @OA\Put(
      *     path="/api/v1/partners/{partner}/orders/{order}/update-customer",

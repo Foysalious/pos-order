@@ -15,14 +15,14 @@ class OrderSkuRepository extends BaseRepository implements OrderSkuRepositoryInt
     public function getNotRatedOrderSkuListOfCustomer($partner_id, $customerId, int $offset, int $limit, string $order)
     {
         return $this->model->whereHas('order', function ($q) use ($customerId, $partner_id) {
-            $q->where('customer_id', $customerId)->where('partner_id', $partner_id)->where('sales_channel_id', 2);
+            $q->where('customer_id', $customerId)->where('partner_id', $partner_id)->where('sales_channel_id', 2)->where('status','Completed');
         })->doesntHave('review')->offset($offset)->limit($limit)->orderBy('created_at', $order)->get();
     }
 
     public function getNotRatedOrderSkuListOfCustomerCount($partner_id, $customerId, string $order)
     {
-        return $this->model->whereHas('order', function ($q) use ($customerId) {
-            $q->where('customer_id', $customerId);
+        return $this->model->whereHas('order', function ($q) use ($partner_id, $customerId) {
+            $q->where('customer_id', $customerId)->where('partner_id', $partner_id)->where('sales_channel_id', 2)->where('status','Completed');
         })->doesntHave('review')->orderBy('created_at', $order)->get();
     }
 
