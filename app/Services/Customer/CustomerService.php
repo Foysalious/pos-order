@@ -2,6 +2,7 @@
 
 use App\Constants\ResponseMessages;
 use App\Http\Requests\CustomerOrderListRequest;
+use App\Http\Resources\CustomerOrderResourceForPos;
 use App\Http\Resources\Webstore\Customer\NotRatedSkuResource;
 use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
@@ -9,6 +10,7 @@ use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;
 use App\Models\Customer;
 use App\Repositories\Accounting\AccountingRepository;
+use App\Services\APIServerClient\ApiServerClient;
 use App\Services\BaseService;
 use App\Services\Order\Constants\PaymentStatuses;
 use App\Services\Order\PriceCalculation;
@@ -116,6 +118,7 @@ class CustomerService extends BaseService
     public function getOrdersByDateWise(CustomerOrderListRequest $request, int $partner_id, string $customer_id): JsonResponse
     {
         $customer = $this->findTheCustomer($partner_id, $customer_id);
+        $delivery_info = $this->getDeliveryInformation($partner_id);
         if (!$customer) return $this->error('No order belongs to this customer', 404);
         $status = $request->status ?? null;
         list($offset, $limit) = calculatePagination($request);
@@ -133,18 +136,19 @@ class CustomerService extends BaseService
             $order_list[$date]['total_sale'] += $order->discounted_price;
             $order_list[$date]['total_due'] += $order->due;
             if (!is_null($status) && ($status == PaymentStatuses::DUE || $status == 'Due')) {
-                if ($order->due > 0) {
-                    $temp = $order->only(['id', 'partner_wise_order_id', 'status', 'discounted_price', 'due', 'created_at']);
-                    $temp['created_at'] = convertTimezone($order->created_at)?->format('d,M,Y');
-                    $order_list[$date]['orders'][] = $temp;
+                if (is_null($order->paid_at)) {
+                    $order_list[$date]['orders'][] = new CustomerOrderResourceForPos($order,$delivery_info);
                 }
             } else {
-                $temp = $order->only(['id', 'partner_wise_order_id', 'status', 'discounted_price', 'due', 'created_at']);
-                $temp['created_at'] = convertTimezone($order->created_at)?->format('d,M,Y');
-                $order_list[$date]['orders'][] = $temp;
+                $order_list[$date]['orders'][] = new CustomerOrderResourceForPos($order,$delivery_info);
             }
         }
-        return $this->success(ResponseMessages::SUCCESS, ['data' => $order_list]);
+        //no datwise format needed
+        $final_report = [];
+        collect($order_list)->each(function ($value,$date_key) use (&$final_report) {
+           $final_report [] = array_merge(['date' => $date_key], $value);
+        });
+        return $this->success(ResponseMessages::SUCCESS, ['data' => $final_report]);
 
     }
 
@@ -152,6 +156,17 @@ class CustomerService extends BaseService
     {
         $customer = $this->customerRepository->where('id', $customer_id)->where('partner_id', $partner_id)->first();
         return is_null($customer) ? false : $customer;
+    }
+
+    private function getDeliveryInformation($partnerId)
+    {
+        /** @var ApiServerClient $apiServerClient */
+        $apiServerClient = app(ApiServerClient::class);
+        $partnerInfo =  $apiServerClient->get('pos/v1/partners/'. $partnerId)['partner'];
+        return [
+            'delivery_method' => $partnerInfo['delivery_method'],
+            'is_registered_for_sdelivery' => $partnerInfo['is_registered_for_sdelivery'],
+        ];
     }
 }
 
