@@ -1,23 +1,14 @@
 <?php namespace App\Listeners\Accounting;
 
 use App\Events\OrderCustomerUpdated;
-use App\Services\Accounting\CustomerUpdateEntry;
 use App\Services\Accounting\Exceptions\AccountingEntryServerError;
+use App\Jobs\Order\Accounting\EntryOnOrderCustomerUpdate as CustomerUpdateEntryJob;
+use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Queue\SerializesModels;
 
 class EntryOnOrderCustomerUpdate
 {
-    protected CustomerUpdateEntry $updateEntry;
-
-    /**
-     * AccountingEntryOnOrderUpdating constructor.
-     * @param CustomerUpdateEntry $updateEntry
-     */
-    public function __construct(CustomerUpdateEntry $updateEntry)
-    {
-        $this->updateEntry = $updateEntry;
-    }
-
-
+    use DispatchesJobs,SerializesModels;
     /**
      * Handle the event.
      *
@@ -27,8 +18,6 @@ class EntryOnOrderCustomerUpdate
      */
     public function handle(OrderCustomerUpdated $event)
     {
-        $this->updateEntry
-            ->setOrder($event->getOrder())
-            ->customerUpdateEntry();
+        $this->dispatch(new CustomerUpdateEntryJob($event->getOrder()));
     }
 }
