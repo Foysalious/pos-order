@@ -6,4 +6,5 @@ return [
     'notification_services_app_secret' => env('SHEBA_NOTIFICATION_SERVICES_APP_SECRET', 'sheba1234'),
     'api_url' => env('SHEBA_API_URL'),
     'smanager_settings_api_url' => env('SMANAGER_SETTINGS_SERVICE_API_URL', 'https://settings-smanager-webstore.dev-sheba.xyz'),
+    'horizon_secret' => env('HORIZON_SECRET')
 ];
