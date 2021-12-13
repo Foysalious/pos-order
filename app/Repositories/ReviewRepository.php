@@ -122,7 +122,7 @@ class ReviewRepository extends BaseRepository implements ReviewRepositoryInterfa
 
     public function getProductIdsByRating($partnerId, $ratings)
     {
-        return $this->model->where('partner_id', $partnerId)->groupBy('rating')->havingRaw("AVG(rating) in ('" . implode("','", $ratings) . "')")->pluck('product_id');
+        return $this->model->where('partner_id', $partnerId)->groupBy('product_id')->havingRaw("ROUND(AVG(rating)) in ('" . implode("','", $ratings) . "')")->pluck('product_id');
     }
 
 }

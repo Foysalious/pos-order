@@ -62,13 +62,20 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
     {
         return $this->model->with(['orderSkus' => function($q){
             $q->with('discount');
-        }, 'payments', 'discounts'])
+        }, 'payments' => function($q){
+            $q->select('id','amount','transaction_type','method','interest');
+        }, 'discounts' => function($q){
+            $q->select('id', 'order_id', 'type', 'amount', 'original_amount', 'is_percentage', 'cap', 'discount_details', 'discount_id', 'type_id');
+        },
+            'customer' => function($q) {
+            $q->select('id','name','pro_pic','mobile');
+        }])
             ->where('partner_id', $partner_id)->where('customer_id', $customer_id)
             ->when($sort_order, function ($q) use ($sort_order){
                 $q->orderBy('created_at', $sort_order);
             })->when($limit, function ($q) use ($limit){
                 $q->limit($limit);
-            })->when($limit, function ($q) use ($skip){
+            })->when($skip, function ($q) use ($skip){
                 $q->skip($skip);
             })->get();
     }
