@@ -23,9 +23,10 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
                 return true;
             } elseif (config('app.env') == 'local' || config('app.env') == 'development')  {
                 return true;
-            } else if (isset($request->secret) && $request->secret == config('sheba.horizon_secret')){
+            } else if (isset($request->secret) && $request->secret == config('sheba.horizon_secret')
+                && getIp() == config('sheba.whitelisted_horizon_ip')){
                 return true;
-            }else{
+            } else{
                 throw new UnauthorizedHttpException('Unauthorized');
             }
         });
