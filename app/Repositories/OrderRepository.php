@@ -27,7 +27,7 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 
     public function getCustomerOrderCount($customer_id)
     {
-        return $this->model->where('customer_id', $customer_id)->get();
+        return $this->model->where('customer_id', $customer_id)->where('sales_channel_id', 2)->get();
     }
 
     public function getVoucherInformation($voucher_id)
