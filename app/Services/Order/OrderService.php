@@ -295,12 +295,19 @@ class OrderService extends BaseService
     public function getOrderInfoForPaymentLink($order_id): JsonResponse
     {
         $orderDetails = $this->orderRepository->find($order_id);
+        if (!$orderDetails) return $this->error("Order Not Found", 404);
+        $order = $this->getOrderData($orderDetails);
+        return $this->success(ResponseMessages::SUCCESS, ['order' => $order]);
+    }
+
+    private function getOrderData($orderDetails)
+    {
         /** @var PriceCalculation $price_calculator */
         $price_calculator = app(PriceCalculation::class);
         $due = $price_calculator->setOrder($orderDetails)->getDue();
-        if (!$orderDetails) return $this->error("Order Not Found", 404);
-        $order = [
+        return [
             'id' => $orderDetails->id,
+            'partner_wise_order_id' => $orderDetails->partner_wise_order_id,
             'sales_channel' => $orderDetails->sales_channel_id == 1 ? 'pos' : 'webstore',
             'created_at' => $orderDetails->created_at,
             'partner_id' => $orderDetails->partner_id,
@@ -317,7 +324,6 @@ class OrderService extends BaseService
             ],
             'due' => $due
         ];
-        return $this->success(ResponseMessages::SUCCESS, ['order' => $order]);
     }
 
     public function getOrderInfoByPartnerWiseOrderId($partnerId,$partnerWiseOrderId)
@@ -325,28 +331,8 @@ class OrderService extends BaseService
         $orderDetails = $this->orderRepository
             ->where('partner_wise_order_id',$partnerWiseOrderId)
             ->where('partner_id',$partnerId)->first();
-        /** @var PriceCalculation $price_calculator */
-        $price_calculator = app(PriceCalculation::class);
-        $due = $price_calculator->setOrder($orderDetails)->getDue();
         if (!$orderDetails) return $this->error("Order Not Found", 404);
-        $order = [
-            'id' => $orderDetails->id,
-            'sales_channel' => $orderDetails->sales_channel_id == 1 ? 'pos' : 'webstore',
-            'created_at' => $orderDetails->created_at,
-            'partner_id' => $orderDetails->partner_id,
-            'customer_id' => $orderDetails->customer_id,
-            'emi_month' => $orderDetails->emi_month,
-            'customer' => [
-                'id' => $orderDetails->customer_id,
-                'name' => $orderDetails?->customer?->name,
-                'mobile' => $orderDetails?->customer?->mobile
-            ],
-            'partner' => [
-                'id' => $orderDetails?->partner?->id,
-                'sub_domain' => $orderDetails?->partner?->sub_domain
-            ],
-            'due' => $due
-        ];
+        $order = $this->getOrderData($orderDetails);
         return $this->success(ResponseMessages::SUCCESS, ['order' => $order]);
     }
 
