@@ -21,7 +21,7 @@ class OrderPlacePushNotificationHandler
 
     public function handle()
     {
-        $topic = config('notification.push_notification_topic_name.manager') . $this->order->partner_id;
+        $topic = config('notification.push_notification_topic_name.manager_new') . $this->order->partner_id;
         $channel = config('notification.push_notification_channel_name.manager');
         $sound = config('notification.push_notification_sound.manager');
         /** @var PriceCalculation $priceCalculation */

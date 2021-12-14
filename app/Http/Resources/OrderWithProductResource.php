@@ -55,6 +55,7 @@ class OrderWithProductResource extends JsonResource
             'invoice' => $this->invoice,
             'is_registered_for_sdelivery' => $is_registered_for_sdelivery,
             'delivery_method' => $delivery_method,
+            'delivery_request_id' => $this->delivery_request_id,
             'items' => OrderSkuResource::collection($this->orderSkus),
             'price' => $this->getOrderPriceRelatedInfo(),
             'customer' => $this->getOrderCustomer(),
