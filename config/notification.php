@@ -8,7 +8,8 @@ return [
     'push_notification_topic_name' => [
         'customer' => env('CUSTOMER_TOPIC_NAME', 'customer_'),
         'resource' => env('RESOURCE_TOPIC_NAME', 'resource_'),
-        'manager' => env('MANAGER_TOPIC_NAME', 'manager_dev_new'),
+        'manager' => env('MANAGER_TOPIC_NAME', 'manager_'),
+        'manager_new' => env('MANAGER_TOPIC_NAME_NEW', 'manager_new_'),
         'employee' => env('EMPLOYEE_TOPIC_NAME', 'employee_'),
         'affiliate' => env('AFFILIATE_TOPIC_NAME', 'affiliate_')
     ],
