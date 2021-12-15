@@ -200,6 +200,9 @@ class OrderService extends BaseService
     {
         $order = $this->orderRepository->getOrderDetailsByPartner($partner_id, $order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
+        if ($order->invoice == null) {
+             app(InvoiceService::class)->setOrder($order)->generateInvoice();
+        }
         $resource = new OrderWithProductResource($order, true);
         return $this->success(ResponseMessages::SUCCESS, ['order' => $resource]);
     }
