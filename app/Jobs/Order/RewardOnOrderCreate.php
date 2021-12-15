@@ -11,6 +11,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\App;
+use Throwable;
 
 class RewardOnOrderCreate implements ShouldQueue
 {
@@ -29,7 +30,7 @@ class RewardOnOrderCreate implements ShouldQueue
 
     public function handle()
     {
-        $order =  $this->model;
+        $order = $this->model;
         $price_calculator = (App::make(PriceCalculation::class))->setOrder($order);
         $data = [
             'event' => self::ORDER_CREATE_REWARD_EVENT_NAME,
@@ -57,6 +58,17 @@ class RewardOnOrderCreate implements ShouldQueue
     public function getRawBody()
     {
         // TODO: Implement getRawBody() method.
+    }
+
+    /**
+     * Handle a job failure.
+     *
+     * @param Throwable $exception
+     * @return void
+     */
+    public function failed(Throwable $exception)
+    {
+        app('sentry')->captureException($exception);
     }
 
 }

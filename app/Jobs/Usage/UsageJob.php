@@ -6,6 +6,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 class UsageJob implements ShouldQueue
 {
@@ -34,5 +35,16 @@ class UsageJob implements ShouldQueue
     {
         $usageService = app(UsageService::class);
         $usageService->setUserId($this->partnerId)->setUsageType($this->usageType)->store();
+    }
+
+    /**
+     * Handle a job failure.
+     *
+     * @param Throwable $exception
+     * @return void
+     */
+    public function failed(Throwable $exception)
+    {
+        app('sentry')->captureException($exception);
     }
 }

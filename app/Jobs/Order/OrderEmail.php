@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 class OrderEmail implements ShouldQueue
 {
@@ -39,5 +40,16 @@ class OrderEmail implements ShouldQueue
         if ($this->attempts() <= 2) {
             $handler->setOrder($this->order)->handle();
         }
+    }
+
+    /**
+     * Handle a job failure.
+     *
+     * @param Throwable $exception
+     * @return void
+     */
+    public function failed(Throwable $exception)
+    {
+        app('sentry')->captureException($exception);
     }
 }
