@@ -6,10 +6,12 @@ use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 class WebstoreOrderSms extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
+
     const SMS_TYPE = 'web_store_order';
 
     private $orderId;
@@ -18,8 +20,7 @@ class WebstoreOrderSms extends Job implements ShouldQueue
     private $partnerId;
 
 
-
-    public function __construct($partnerId,$orderId)
+    public function __construct($partnerId, $orderId)
     {
         $this->orderId = $orderId;
         $this->partnerId = $partnerId;
@@ -38,6 +39,17 @@ class WebstoreOrderSms extends Job implements ShouldQueue
             $client->post(config('sheba.api_url') . '/pos/v1/send-sms', $data);
         } catch (GuzzleException $e) {
         }
+    }
+
+    /**
+     * Handle a job failure.
+     *
+     * @param Throwable $exception
+     * @return void
+     */
+    public function failed(Throwable $exception)
+    {
+        app('sentry')->captureException($exception);
     }
 
 }

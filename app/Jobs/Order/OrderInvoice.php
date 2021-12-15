@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 class OrderInvoice implements ShouldQueue
 {
@@ -36,5 +37,16 @@ class OrderInvoice implements ShouldQueue
         /** @var InvoiceService $invoice_service */
         $invoice_service = app(InvoiceService::class);
         $invoice_service->setOrder($this->order)->generateInvoice();
+    }
+
+    /**
+     * Handle a job failure.
+     *
+     * @param Throwable $exception
+     * @return void
+     */
+    public function failed(Throwable $exception)
+    {
+        app('sentry')->captureException($exception);
     }
 }
