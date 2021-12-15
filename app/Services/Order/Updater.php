@@ -363,7 +363,7 @@ class Updater
     {
         /** @var OrderDeliveryPriceCalculation $deliveryPriceCalculation */
         $deliveryPriceCalculation = app(OrderDeliveryPriceCalculation::class);
-        list($delivery_method, $delivery_charge) = $deliveryPriceCalculation->setOrder($order)->calculateDeliveryCharge();
+        $delivery_charge = $deliveryPriceCalculation->setOrder($order)->calculateDeliveryCharge();
         if ($delivery_charge) $order->update(['delivery_charge' => $delivery_charge]);
         return false;
     }
@@ -484,17 +484,15 @@ class Updater
         $other_details = json_encode(['payment_method_en' => 'Others', 'payment_method_bn' => 'অন্যান্য', 'payment_method_icon' => config('s3.url') . 'pos/payment/others_v2.png']);
 
         if (isset($this->paymentMethod) && $this->paidAmount > 0) {
-            if (in_array($this->paymentMethod,[PaymentMethods::ADVANCE_BALANCE,PaymentMethods::CASH_ON_DELIVERY,PaymentMethods::QR_CODE])) {
+            if (in_array($this->paymentMethod, [PaymentMethods::ADVANCE_BALANCE, PaymentMethods::CASH_ON_DELIVERY, PaymentMethods::QR_CODE])) {
                 $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod($this->paymentMethod)->setMethodDetails($cash_details)
                     ->setTransactionType(TransactionTypes::CREDIT)->create();
-            }
-            elseif ($this->paymentMethod == PaymentMethods::PAYMENT_LINK) {
+            } elseif ($this->paymentMethod == PaymentMethods::PAYMENT_LINK) {
                 $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod(PaymentMethods::PAYMENT_LINK)->setMethodDetails($digital_payment_details)->setTransactionType(TransactionTypes::CREDIT)->create();
-            }
-            elseif (in_array($this->paymentMethod,[PaymentMethods::OTHERS])) {
+            } elseif (in_array($this->paymentMethod, [PaymentMethods::OTHERS])) {
                 $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod($this->paymentMethod)->setMethodDetails($other_details)->setTransactionType(TransactionTypes::CREDIT)->create();
             }
-             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
+            $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
         }
     }
 
@@ -508,7 +506,7 @@ class Updater
             $order_discount = $this->orderDiscountRepository->where('order_id', $this->order_id)
                 ->where('type', DiscountTypes::ORDER)
                 ->first();
-            if($order_discount) {
+            if ($order_discount) {
                 $order_discount->update($this->withUpdateModificationField($this->makeOrderDiscountData($discountData)));
             } else {
                 $this->orderDiscountRepository->create($this->withCreateModificationField($this->makeOrderDiscountData($discountData)));

@@ -87,6 +87,10 @@ WORKDIR /var/www
 RUN touch storage/clockwork/index
 RUN chown www-data:www-data storage/clockwork/index
 
+# Laravel Log Specific Permission
+RUN touch storage/logs/laravel.log
+RUN chown www-data:www-data storage/logs/laravel.log
+
 # Make sentry cli script executable
 RUN chmod +x ./bin/sentry_release.sh
 
