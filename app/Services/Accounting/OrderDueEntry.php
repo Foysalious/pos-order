@@ -53,7 +53,7 @@ class OrderDueEntry extends BaseEntry
             'note' => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ? SalesChannel::WEBSTORE : SalesChannel::POS,
             'entry_at' => $this->order->updated_at->format('Y-m-d H:i:s'),
             'reconcile_amount' => $this->paidAmount,
-            'updated_entry' => 'to_be_decided',
+//            'updated_entry' => 'to_be_decided',
             'inventory_products' => null,
         ];
 
