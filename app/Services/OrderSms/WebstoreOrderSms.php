@@ -34,11 +34,8 @@ class WebstoreOrderSms extends Job implements ShouldQueue
             'type_id' => $this->orderId,
             'partner_id' => $this->partnerId
         ];
-        try {
-            $client = new Client();
-            $client->post(config('sheba.api_url') . '/pos/v1/send-sms', $data);
-        } catch (GuzzleException $e) {
-        }
+        $client = new Client();
+        $client->post(config('sheba.api_url') . '/pos/v1/send-sms', $data);
     }
 
     /**
