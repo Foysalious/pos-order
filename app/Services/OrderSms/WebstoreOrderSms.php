@@ -1,6 +1,7 @@
 <?php namespace App\Services\OrderSms;
 
 use App\Jobs\Job;
+use App\Services\APIServerClient\ApiServerClient;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -34,11 +35,15 @@ class WebstoreOrderSms extends Job implements ShouldQueue
             'type_id' => $this->orderId,
             'partner_id' => $this->partnerId
         ];
-        try {
+
+        /** @var ApiServerClient $client */
+        $client = app(ApiServerClient::class);
+        $client->post('pos/v1/send-sms',$data);
+      /*  try {
             $client = new Client();
             $client->post(config('sheba.api_url') . '/pos/v1/send-sms', $data);
         } catch (GuzzleException $e) {
-        }
+        }*/
     }
 
     /**
