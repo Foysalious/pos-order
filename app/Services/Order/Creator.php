@@ -377,9 +377,8 @@ class Creator
             DB::beginTransaction();
             $this->resolvePartner();
             $order_data = $this->makeOrderData();
-            if ($order_data['sales_channel_id'] == SalesChannelIds::WEBSTORE) $order['delivery_vendor'] = $this->createDeliveryVendor($this->getDeliveryMethod());
+            if ($order_data['sales_channel_id'] == SalesChannelIds::WEBSTORE) $order_data['delivery_vendor'] = $this->createDeliveryVendor($this->getDeliveryMethod());
             $order = $this->orderRepositoryInterface->create($order_data);
-
             $this->orderSkuCreator->setOrder($order)->setIsPaymentMethodEmi($this->paymentMethod == PaymentMethods::EMI)
                 ->setSkus($this->skus)->create();
             $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($order_data);
