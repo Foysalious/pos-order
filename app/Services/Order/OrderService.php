@@ -322,7 +322,8 @@ class OrderService extends BaseService
             'customer' => [
                 'id' => $orderDetails->customer_id,
                 'name' => $orderDetails?->customer?->name,
-                'mobile' => $orderDetails?->customer?->mobile
+                'mobile' => $orderDetails?->customer?->mobile,
+                'pro_pic' => $orderDetails?->customer?->pro_pic,
             ],
             'partner' => [
                 'id' => $orderDetails?->partner?->id,

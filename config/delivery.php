@@ -7,6 +7,6 @@ return [
     ],
     'paperfly' => [
        'name' => 'paperfly',
-       'image' => 'pos/paperfly.png'
+       'image' => env('S3_URL').'pos/paperfly.png'
     ]
 ];
