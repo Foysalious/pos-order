@@ -8,21 +8,7 @@ use Illuminate\Support\Facades\App;
 
 class OrderDeliveryPriceCalculation
 {
-
-    private $deliveryMethod;
     private Order $order;
-
-
-
-    /**
-     * @param mixed $deliveryMethod
-     * @return OrderDeliveryPriceCalculation
-     */
-    public function setDeliveryMethod(string $deliveryMethod)
-    {
-        $this->deliveryMethod = $deliveryMethod;
-        return $this;
-    }
 
     /**
      * @param Order $order
@@ -42,22 +28,14 @@ class OrderDeliveryPriceCalculation
         return $order_bill->getDue();
     }
 
-    private function getDeliveryMethod()
-    {
-        /** @var ApiServerClient $apiServerClient */
-        $apiServerClient = app(ApiServerClient::class);
-        return $apiServerClient->get('pos/v1/partners/'. $this->order->partner->id)['partner']['delivery_method'];
-    }
+
 
     public function calculateDeliveryCharge()
     {
-        $this->setDeliveryMethod($this->getDeliveryMethod());
-
         if ($this->order->sales_channel_id != SalesChannelIds::WEBSTORE)
-            return [false,false];
+            return null;
 
-        if ($this->deliveryMethod == Methods::OWN_DELIVERY)
-            return [Methods::OWN_DELIVERY, $this->order->partner->delivery_charge];
+        if ($this->order->getDeliveryVendor() == Methods::OWN_DELIVERY) return $this->order->partner->delivery_charge;
         $data = [
             'weight' => $this->order->getWeight(),
             'delivery_district' => $this->order->delivery_district,
@@ -67,7 +45,7 @@ class OrderDeliveryPriceCalculation
         ];
         /** @var ApiServerClient $apiServerClient */
         $apiServerClient = app(ApiServerClient::class);
-        $delivery_charge = $apiServerClient->post('v2/pos/delivery/delivery-charge', $data)['delivery_charge'];
-        return [Methods::SDELIVERY, $delivery_charge];
+        return  $apiServerClient->post('v2/pos/delivery/delivery-charge', $data)['delivery_charge'];
+
     }
 }
