@@ -515,6 +515,7 @@ class Creator
         /** @var OrderDeliveryPriceCalculation $deliveryPriceCalculation */
         $deliveryPriceCalculation  = app(OrderDeliveryPriceCalculation::class);
         list($delivery_method, $delivery_charge) = $deliveryPriceCalculation->setOrder($order)->calculateDeliveryCharge();
+        if($delivery_method)
         $delivery_vendor = $this->createDeliveryVendor($delivery_method);
         if ($delivery_charge) $order->update(['delivery_vendor'=> $delivery_vendor, 'delivery_charge' => $delivery_charge]);
         return false;

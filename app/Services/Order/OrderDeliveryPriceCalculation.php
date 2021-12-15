@@ -3,6 +3,7 @@
 use App\Models\Order;
 use App\Services\APIServerClient\ApiServerClient;
 use App\Services\Delivery\Methods;
+use App\Services\Order\Constants\SalesChannelIds;
 use Illuminate\Support\Facades\App;
 
 class OrderDeliveryPriceCalculation
@@ -52,8 +53,8 @@ class OrderDeliveryPriceCalculation
     {
         $this->setDeliveryMethod($this->getDeliveryMethod());
 
-        if (!$this->order->delivery_district || !$this->order->delivery_thana)
-            return false;
+        if ($this->order->sales_channel_id != SalesChannelIds::WEBSTORE)
+            return [false,false];
 
         if ($this->deliveryMethod == Methods::OWN_DELIVERY)
             return [Methods::OWN_DELIVERY, $this->order->partner->delivery_charge];
