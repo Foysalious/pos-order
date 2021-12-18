@@ -93,7 +93,7 @@ class Handler
     {
         if ($this->type == DiscountTypes::ORDER) {
             return isset($this->data['discount']) && $this->data['discount'] > 0;
-        } else if ($this->type == DiscountTypes::SKU) {
+        } else if ($this->type == DiscountTypes::ORDER_SKU) {
             return $this->skuData['discount']['discount'] && $this->skuData['discount']['discount'] > 0;
         }
         return false;
@@ -112,7 +112,7 @@ class Handler
         $order_discount = null;
         if ($this->type == DiscountTypes::ORDER) {
             $order_discount = $this->getOrderDiscount();
-        } else if ($this->type == DiscountTypes::SKU) {
+        } else if ($this->type == DiscountTypes::ORDER_SKU) {
             $order_discount = $this->getSkuDiscount();
         } else if($this->type == DiscountTypes::VOUCHER) {
             $order_discount = $this->getVoucherDiscount();

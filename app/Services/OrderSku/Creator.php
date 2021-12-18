@@ -124,7 +124,7 @@ class Creator
             $sku_data['is_emi_available'] = $this->isPaymentMethodEmi;
             $order_sku = $this->orderSkuRepository->create($this->withCreateModificationField($sku_data));
             $created_skus [] = $order_sku;
-            $this->discountHandler->setType(DiscountTypes::SKU)->setOrder($this->order)->setSkuData($sku_data)->setOrderSkuId($order_sku->id);
+            $this->discountHandler->setType(DiscountTypes::ORDER_SKU)->setOrder($this->order)->setSkuData($sku_data)->setOrderSkuId($order_sku->id);
             if ($this->discountHandler->hasDiscount()) {
                 $this->discountHandler->create();
             }
@@ -194,6 +194,7 @@ class Creator
 
     private function resolveDiscount(object $sku, array|null $sku_detail)
     {
+        $discount_detail = collect($sku_detail['sku_channel'] ?? [])?->pluck('valid_discounts')?->collapse()?->first();
         $discount_data = [
             'discount' => 0,
             'is_discount_percentage' => 0,
@@ -201,12 +202,12 @@ class Creator
         ];
         if($this->order->sales_channel_id == SalesChannelIds::POS) {
             $discount_data = [
-                'discount' => $sku->discount ?? 0,
-                'is_discount_percentage' => $sku->is_discount_percentage ?? 0,
-                'cap' => $sku->cap ?? 0,
+                'discount' => $sku->discount ?? $discount_detail['amount'] ?? 0,
+                'is_discount_percentage' => $sku->is_discount_percentage ?? $discount_detail['is_amount_percentage'] ?? 0,
+                'cap' => $sku->cap ?? $discount_detail['cap'] ?? 0,
             ];
         } else {
-            $discount_detail = collect($sku_detail['sku_channel'] ?? [])?->pluck('valid_discounts')?->collapse()?->first();
+
             if($discount_detail){
                 $discount_data = [
                     'discount' => $discount_detail['amount'],
