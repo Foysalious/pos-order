@@ -84,12 +84,14 @@ class OrderComparator
         }
     }
 
+    /**
+     * @throws OrderException
+     */
     private function checkForUpdatesInExistingOrderItems() {
         $current_products = $this->order->orderSkus;
         $request_products = collect(json_decode($this->skus, true));
-        $current_products->each(/**
-         * @throws OrderException
-         */ function ($current_product) use ($request_products){
+        $this->validateSkusData($request_products);
+        $current_products->each( function ($current_product) use ($request_products){
             if ($request_products->contains('order_sku_id',$current_product->id)) {
                 $updating_product = $request_products->where('order_sku_id', $current_product->id)->first();
                 /** @var ProductChangeTracker $product_obj */
@@ -179,6 +181,17 @@ class OrderComparator
                 {
                     throw new OrderException('discount should not be equal or greater than product price per unit', 403);
                 }
+            }
+        }
+    }
+
+    private function validateSkusData(Collection $request_products)
+    {
+        $required = ['id','order_sku_id','price', 'quantity', 'discount', 'is_discount_percentage', 'vat_percentage'];
+        foreach ($request_products as $sku){
+            $missing_keys = array_diff($required,array_keys($sku));
+            if($missing_keys) {
+                throw new OrderException(implode(', ', $missing_keys) . ' field(s) missing in order skus', 403);
             }
         }
     }

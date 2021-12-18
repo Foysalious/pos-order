@@ -8,7 +8,7 @@ class DiscountTypes
     use ConstGetter;
 
     const ORDER = 'order';
-    const SKU = 'sku';
+    const ORDER_SKU = 'order_sku';
     const VOUCHER = 'voucher';
 
     /**
