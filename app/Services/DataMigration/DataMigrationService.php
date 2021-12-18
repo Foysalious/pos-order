@@ -166,7 +166,22 @@ class DataMigrationService extends BaseService
 
     private function migrateOrderDiscountsData()
     {
-        $this->discountRepositoryInterface->insert($this->discounts);
+        foreach ($this->discounts as $discount) {
+            $order_sku = $this->orderSkusRepositoryInterface->where('order_id', $discount['order_id'])
+                ->where('sku_id', $discount['sku_id'])->select('id', 'sku_id')->first();
+            $order_discount['order_id'] = $discount['order_id'];
+            $order_discount['type'] = $discount['type'];
+            $order_discount['type_id'] = $discount['type_id'] ? $order_sku->id : null;
+            $order_discount['amount'] = $discount['amount'];
+            $order_discount['original_amount'] = $discount['original_amount'];
+            $order_discount['is_percentage'] = $discount['is_percentage'];
+            $order_discount['cap'] = $discount['cap'];
+            $order_discount['created_by_name'] = $discount['created_by_name'];
+            $order_discount['updated_by_name'] = $discount['updated_by_name'];
+            $order_discount['created_at'] = $discount['created_at'];
+            $order_discount['updated_at'] = $discount['updated_at'];
+            $this->discountRepositoryInterface->insert($order_discount);
+        }
     }
 
     private function migrateOrderLogsData()
