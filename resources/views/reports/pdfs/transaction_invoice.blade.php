@@ -442,11 +442,13 @@
         <td class="total-price">৳{{$pos_order['grand_total']}}</td>
     </tr>
 
+    @if((int)$pos_order['vat'] != 0)
     <tr class="vat-discount-row border-top">
         <td colspan="2"></td>
         <td>Vat</td>
         <td>৳{{$pos_order['vat']}}</td>
     </tr>
+    @endif
     <tr class="vat-discount-row">
         <td colspan="2"></td>
         <td>Order Discount</td>
