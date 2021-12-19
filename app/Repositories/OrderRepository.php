@@ -65,7 +65,7 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
         }, 'payments' => function ($q) {
             $q->select('id', 'amount', 'transaction_type', 'method', 'interest');
         }, 'discounts' => function ($q) {
-            $q->select('id', 'order_id', 'type', 'amount', 'original_amount', 'is_percentage', 'cap', 'discount_details', 'discount_id', 'type_id');
+            $q->select('id', 'order_id', 'type', 'amount', 'original_amount', 'is_percentage', 'cap', 'discount_details', 'type_id');
         },
             'customer' => function ($q) {
                 $q->select('id', 'name', 'pro_pic', 'mobile');

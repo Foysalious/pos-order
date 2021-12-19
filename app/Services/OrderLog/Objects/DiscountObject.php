@@ -14,7 +14,6 @@ class DiscountObject implements JsonSerializable
     private ?int $is_percentage;
     private ?float $cap;
     private ?string $discount_details;
-    private ?int $discount_id;
     private ?string $type_id;
     private ?string $created_by_name;
     private ?string $updated_by_name;
@@ -126,16 +125,6 @@ class DiscountObject implements JsonSerializable
     }
 
     /**
-     * @param mixed $discount_id
-     * @return DiscountObject
-     */
-    public function setDiscountId($discount_id)
-    {
-        $this->discount_id = $discount_id;
-        return $this;
-    }
-
-    /**
      * @param mixed $type_id
      * @return DiscountObject
      */
@@ -211,7 +200,6 @@ class DiscountObject implements JsonSerializable
             'is_percentage' => $this->orderDiscount->is_percentage,
             'cap' => $this->orderDiscount->cap,
             'discount_details' => $this->orderDiscount->discount_details,
-            'discount_id' => $this->orderDiscount->discount_id,
             'type_id' => $this->orderDiscount->type_id,
             'created_by_name' => $this->orderDiscount->created_by_name,
             'updated_by_name' => $this->orderDiscount->updated_by_name,

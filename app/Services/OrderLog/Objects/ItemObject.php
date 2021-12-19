@@ -271,7 +271,7 @@ class ItemObject implements JsonSerializable
             $discountObject->setId($discount->id)->setOrderId($discount->order_id)->setType($discount->type)
                 ->setAmount($discount->amount)->setOriginalAmount($discount->original_amount)
                 ->setIsPercentage($discount->is_percentage)->setCap($discount->cap)->setDiscountDetails($discount->discount_details)
-                ->setDiscountId($discount->discount_id)->setTypeId($discount->type_id)->setCreatedByName($discount->created_by_name)
+                ->setTypeId($discount->type_id)->setCreatedByName($discount->created_by_name)
                 ->setUpdatedByName($discount->updated_by_name)->setCreatedAt($discount->created_at)->setUpdatedAt($discount->updated_at)
                 ->setDeletedAt($discount->deleted_at);
             $this->discount = $discountObject;
