@@ -37,7 +37,7 @@ class CustomerOrderResourceForPos extends JsonResource
             'payment_status' => $this->paid_at ? PaymentStatuses::PAID : PaymentStatuses::DUE,
             'sales_channel' => $this->sales_channel_id == SalesChannelIds::POS ? 'pos' : 'webstore',
             'created_by_name' => $this->created_by_name,
-            'created_at' => convertTimezone($this->created_at)?->format('Y-m-d h:m a'),
+            'created_at' => convertTimezone($this->created_at)?->format('Y-m-d h:m A'),
             'date' => convertTimezone($this->created_at)?->format('Y-m-d'),
             'vat' => $price_info->vat,
             'discount_amount' => 0,
@@ -92,7 +92,7 @@ class CustomerOrderResourceForPos extends JsonResource
                 'method_en' =>  $details ? $details->payment_method_en : null,
                 'method_bn' => $details ? $details->payment_method_bn : null,
                 'method_icon' => $details ? $details->payment_method_icon : null,
-                'created_at' => convertTimezone($each->created_at)?->format('Y-m-d h:m a'),
+                'created_at' => convertTimezone($each->created_at)?->format('Y-m-d h:m A'),
             ];
         });
     }
