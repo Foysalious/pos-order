@@ -529,7 +529,6 @@ class Updater
         $data['is_percentage'] = $discountData->is_percentage;
         $data['cap'] = $discountData->cap ?? null;
         $data['discount_details'] = $discountData->discount_details;
-        $data['discount_id'] = $discountData->discount_id ?? null;
         $data['type_id'] = $discountData->item_id ?? null;
         $data['type'] = DiscountTypes::ORDER;
         if ($discountData->is_percentage) {
