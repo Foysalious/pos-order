@@ -282,7 +282,6 @@ class OrderService extends BaseService
             ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
             ->setCustomerId($orderUpdateRequest->customer_id)
             ->update();
-        $this->logRequest();
         return $this->success();
     }
 
@@ -458,17 +457,5 @@ class OrderService extends BaseService
         if (!$order->customer->email) return $this->error('Email Not Found', 404);
         dispatch(new OrderEmail($order));
         return $this->success();
-    }
-
-    public function logRequest()
-    {
-        $data = [
-            'Request Method' => request()->method(),
-            'Request Path' => request()->path(),
-            'Request Params' => request()->all(),
-            'Request IP' => request()->ip(),
-            'Origin' => request()->header('host'),
-        ];
-        Log::info(json_encode($data));
     }
 }
