@@ -410,12 +410,26 @@
         <tr>
             <td>
                 {{$skus->name}}
-                <hr style="width:50%;text-align:left;margin-left:0">
+
                 @if(isset($skus->details))
                     @php
                         $sku_details= json_decode($skus->details,true);
-                        if (isset($sku_details->name)){
-                        $sku_name=$sku_details->name;
+                        $first_sku='';
+                        $second_sku='';
+                        $third_sku='';
+                        if (is_array($sku_details)){
+                        if (isset($sku_details[0]['option_value_name'])){
+                            $first_sku=$sku_details[0]['option_value_name'];
+                             $sku_name= $first_sku ;
+                        }
+                        if (isset($sku_details[1]['option_value_name'])){
+                            $second_sku=$sku_details[1]['option_value_name'];
+                            $sku_name= $first_sku . ' . ' .$second_sku;
+                        }
+                        if (isset($sku_details[2]['option_value_name'])){
+                            $third_sku=$sku_details[2]['option_value_name'];
+                            $sku_name= $first_sku . ' . ' .$second_sku. ' . ' .$third_sku;
+                        }
                         }
                         else{
                             $sku_name=null;
@@ -423,10 +437,10 @@
                     @endphp
                     <div class="item-sub-cotent">{{$sku_name}}</div>
                 @endif
+                <hr style="width:50%;text-align:left;margin-left:0">
             </td>
             <td>{{$skus->quantity}}</td>
             <hr style="width:100%;text-align:left;margin-left:0">
-
             <td>৳{{$skus->unit_price}}</td>
             <hr style="width:100%;text-align:left;margin-left:0">
 
@@ -443,11 +457,11 @@
     </tr>
 
     @if((int)$pos_order['vat'] != 0)
-    <tr class="vat-discount-row border-top">
-        <td colspan="2"></td>
-        <td>Vat</td>
-        <td>৳{{$pos_order['vat']}}</td>
-    </tr>
+        <tr class="vat-discount-row border-top">
+            <td colspan="2"></td>
+            <td>Vat</td>
+            <td>৳{{$pos_order['vat']}}</td>
+        </tr>
     @endif
     <tr class="vat-discount-row">
         <td colspan="2"></td>
