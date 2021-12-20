@@ -53,7 +53,7 @@ class InvoiceService extends BaseService
         $price_calculator = (App::make(PriceCalculation::class))->setOrder($order);
         $sub_domain = Partner::find($order->partner_id)->sub_domain;
         $partner = $this->client->get('v2/partners/' . $sub_domain);
-        $created_at_formatted = $order->created_at instanceof Carbon ? $order->created_at : Carbon::parse($order->created_at);
+        $created_at_formatted = convertTimezone($order->created_at)?->format('Y-m-d H:i:s');
         $info = [
             'order_id' => $order->id,
             'amount' => $price_calculator->getOriginalPrice(),
