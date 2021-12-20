@@ -401,7 +401,7 @@
     <tr>
         <th style="text-align: left">Item</th>
         <th style="text-align: left">Quantity</th>
-        <th style="text-align: left">Unit Cost</th>
+        <th style="text-align: left">Unit Price</th>
         <th style="text-align: left">Total Price</th>
     </tr>
     </thead>
