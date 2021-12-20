@@ -199,7 +199,7 @@ class OrderFilter
     private function filterBySearchQueryInOrder(Builder $query)
     {
         return $query->when($this->queryString, function ($q) {
-            $q->orWhere(function($q) {
+            $q->where(function($q) {
                 $q->orWhere('partner_wise_order_id', 'LIKE', '%' . $this->queryString . '%' );
                 $q->orWhere('delivery_name', 'LIKE', '%' .$this->queryString .'%');
                 $q->orWhere('delivery_mobile', 'LIKE', '%' .$this->queryString .'%');
