@@ -41,7 +41,6 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Webstore\Order\States as WebStoreStatuses;
@@ -71,7 +70,6 @@ class OrderService extends BaseService
         protected AccessManager                 $accessManager,
         protected OrderFilter                   $orderSearch,
         protected StatusChanger                 $orderStatusChanger,
-        protected StockRefillerForCanceledOrder $stockRefillerForCanceledOrder,
         InvoiceService                          $invoiceService,
         protected ApiServerClient               $apiServerClientclient,
         protected CustomerResolver              $customerResolver,
@@ -290,9 +288,8 @@ class OrderService extends BaseService
         DB::beginTransaction();
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
-        $this->stockRefillerForCanceledOrder->setOrder($order)->refillStock();
-        event(new OrderDeleted($order));
         $order->delete();
+        event(new OrderDeleted($order));
         DB::commit();
         return $this->success();
     }
