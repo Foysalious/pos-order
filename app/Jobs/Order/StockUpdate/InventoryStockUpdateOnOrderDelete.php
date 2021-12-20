@@ -1,11 +1,13 @@
 <?php namespace App\Jobs\Order\StockUpdate;
 
+use App\Jobs\Job;
 use App\Models\Order;
 use App\Services\Product\StockManager;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class InventoryStockUpdateOnOrderDelete
+class InventoryStockUpdateOnOrderDelete extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
@@ -24,7 +26,8 @@ class InventoryStockUpdateOnOrderDelete
     public function handle(StockManager $stock_manager)
     {
         if ($this->attempts() > 2) return;
-        $this->order->orderSkus->each(function ($order_sku) use (&$data, $stock_manager){
+        $order_skus = $this->order->orderSkus()->withTrashed();
+        $order_skus->each(function ($order_sku) use (&$data, $stock_manager){
             if(!is_null($order_sku->sku_id)) {
                 $stock_manager->setSkuId($order_sku->sku_id)->increaseAndInsertInChunk($order_sku->quantity);
             }

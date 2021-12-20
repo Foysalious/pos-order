@@ -118,6 +118,8 @@ class StockManager
 
     public function updateStock()
     {
-        $this->client->put($this->uri,[ 'data' => json_encode($this->data) ]);
+        if($this->data){
+            $this->client->put($this->uri,[ 'data' => json_encode($this->data) ]);
+        }
     }
 }
