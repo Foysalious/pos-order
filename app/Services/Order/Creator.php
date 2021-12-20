@@ -90,12 +90,12 @@ class Creator
         OrderSkuCreator                       $orderSkuCreator,
         protected CustomerRepositoryInterface $customerRepository,
         protected SmanagerUserServerClient    $smanagerUserServerClient,
-        protected PriceCalculation $priceCalculation,
-        protected EmiCalculation $emiCalculation,
-        protected ApiServerClient $apiServerClient,
-        protected CustomerResolver $customerResolver,
-        private  Partner $partner,
-        private OrderLogCreator $orderLogCreator
+        protected PriceCalculation            $priceCalculation,
+        protected EmiCalculation              $emiCalculation,
+        protected ApiServerClient             $apiServerClient,
+        protected CustomerResolver            $customerResolver,
+        private Partner                       $partner,
+        private OrderLogCreator               $orderLogCreator
 
     )
     {
@@ -142,7 +142,7 @@ class Creator
      */
     private function getPartnerInfo()
     {
-        return $this->apiServerClient->get('pos/v1/partners/'.$this->partnerId)['partner'];
+        return $this->apiServerClient->get('pos/v1/partners/' . $this->partnerId)['partner'];
     }
 
     /**
@@ -165,11 +165,12 @@ class Creator
         $this->customer = $customer;
         return $this;
     }
+
     /**
      * @param mixed $deliveryAddressId
      * @return Creator
      */
-    public function setDeliveryAddressId( ? string $deliveryAddressId): Creator
+    public function setDeliveryAddressId(?string $deliveryAddressId): Creator
     {
         $this->deliveryAddressId = $deliveryAddressId;
         return $this;
@@ -179,7 +180,7 @@ class Creator
      * @param string|null $totalWeight
      * @return Creator
      */
-    public function setTotalWeight( ? string $totalWeight): Creator
+    public function setTotalWeight(?string $totalWeight): Creator
     {
         $this->totalWeight = $totalWeight;
         return $this;
@@ -194,6 +195,7 @@ class Creator
         $this->deliveryMethod = $deliveryMethod;
         return $this;
     }
+
     /**
      * @param string|null $deliveryName
      * @return Creator
@@ -375,6 +377,7 @@ class Creator
             DB::beginTransaction();
             $this->resolvePartner();
             $order_data = $this->makeOrderData();
+            if ($order_data['sales_channel_id'] == SalesChannelIds::WEBSTORE) $order_data['delivery_vendor'] = $this->createDeliveryVendor($this->getDeliveryMethod());
             $order = $this->orderRepositoryInterface->create($order_data);
             $this->orderSkuCreator->setOrder($order)->setIsPaymentMethodEmi($this->paymentMethod == PaymentMethods::EMI)
                 ->setSkus($this->skus)->create();
@@ -395,7 +398,7 @@ class Creator
             if (isset($this->paymentMethod) && ($this->paymentMethod == PaymentMethods::CASH_ON_DELIVERY || $this->paymentMethod == PaymentMethods::QR_CODE) && $this->paidAmount > 0) {
                 $this->priceCalculation->setOrder($order->refresh());
                 $net_bill = $this->priceCalculation->setOrder($order->refresh())->getDiscountedPrice();
-                if($this->paidAmount > $net_bill ) {
+                if ($this->paidAmount > $net_bill) {
                     $this->paidAmount = $net_bill;
                 }
                 $cash_details = json_encode(['payment_method_en' => 'Cash', 'payment_method_bn' => ' নগদ গ্রহন', 'payment_method_icon' => config('s3.url') . 'pos/payment/cash_v2.png']);
@@ -433,7 +436,7 @@ class Creator
 
     private function resolvePartnerWiseOrderId($partnerId)
     {
-        $lastOrder = Order::where('partner_id',$partnerId)->orderBy('id', 'desc')->first();
+        $lastOrder = Order::where('partner_id', $partnerId)->orderBy('id', 'desc')->first();
         $lastOrder_id = $lastOrder ? $lastOrder->partner_wise_order_id : 0;
         return $lastOrder_id + 1;
     }
@@ -470,7 +473,7 @@ class Creator
         $order_data['is_discount_percentage'] = json_decode($this->discount)->is_percentage ?? 0;
         $order_data['voucher_id'] = $this->voucher_id;
         $order_data['api_request_id'] = $this->apiRequest;
-        return $order_data + $this->modificationFields(true,false);
+        return $order_data + $this->modificationFields(true, false);
     }
 
     private function hasDueError(Order $order): bool
@@ -497,8 +500,8 @@ class Creator
     {
         $total_amount = $price_calculator->setOrder($order)->getDiscountedPrice();
         $min_emi_amount = config('emi.minimum_emi_amount');
-        if($total_amount < $min_emi_amount) {
-            throw new OrderException("Emi is not available for order amount less than " .$min_emi_amount, 400);
+        if ($total_amount < $min_emi_amount) {
+            throw new OrderException("Emi is not available for order amount less than " . $min_emi_amount, 400);
         }
         $data = $this->emiCalculation->setEmiMonth($this->emiMonth)->setAmount($total_amount)->getEmiCharges();
         $order->interest = $data['total_interest'];
@@ -513,21 +516,27 @@ class Creator
     private function calculateDeliveryChargeAndSave(Order $order): bool
     {
         /** @var OrderDeliveryPriceCalculation $deliveryPriceCalculation */
-        $deliveryPriceCalculation  = app(OrderDeliveryPriceCalculation::class);
-        list($delivery_method, $delivery_charge) = $deliveryPriceCalculation->setOrder($order)->calculateDeliveryCharge();
-        $delivery_vendor = $this->createDeliveryVendor($delivery_method);
-        if ($delivery_charge) $order->update(['delivery_vendor'=> $delivery_vendor, 'delivery_charge' => $delivery_charge]);
+        $deliveryPriceCalculation = app(OrderDeliveryPriceCalculation::class);
+        $delivery_charge = $deliveryPriceCalculation->setOrder($order)->calculateDeliveryCharge();
+        if ($delivery_charge) $order->update(['delivery_charge' => $delivery_charge]);
         return false;
     }
 
     private function createDeliveryVendor($deliveryMethod)
     {
-        if($deliveryMethod == Methods::SDELIVERY)
+        if ($deliveryMethod == Methods::SDELIVERY)
             $deliveryMethod = Methods::PAPERFLY;
         $delivery_methods = config('delivery');
         $delivery_vendor['name'] = isset($delivery_methods[$deliveryMethod]) ? $delivery_methods[$deliveryMethod]['name'] : null;
         $delivery_vendor['image'] = isset($delivery_methods[$deliveryMethod]) ? $delivery_methods[$deliveryMethod]['image'] : null;
         return json_encode($delivery_vendor);
+    }
+
+    private function getDeliveryMethod()
+    {
+        /** @var ApiServerClient $apiServerClient */
+        $apiServerClient = app(ApiServerClient::class);
+        return $apiServerClient->get('pos/v1/partners/' . $this->partner->id)['partner']['delivery_method'];
     }
 }
 

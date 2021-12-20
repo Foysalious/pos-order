@@ -55,7 +55,7 @@ class InvoiceService extends BaseService
         $partner = $this->client->get('v2/partners/' . $sub_domain);
         $created_at_formatted = $order->created_at instanceof Carbon ? $order->created_at : Carbon::parse($order->created_at);
         $info = [
-            'order_id'=>$order->id,
+            'order_id' => $order->id,
             'amount' => $price_calculator->getOriginalPrice(),
             'created_at' => $created_at_formatted,
             'payment_receiver' => [
@@ -67,7 +67,7 @@ class InvoiceService extends BaseService
 
             'pos_order' => $order ? [
                 'items' => $order->orderSkus,
-                'orderSkusCount'=>count($order->orderSkus),
+                'orderSkusCount' => count($order->orderSkus),
                 'order_discount' => $price_calculator->getOrderDiscount(),
                 'product_discount' => $price_calculator->getProductDiscount(),
                 'total' => $price_calculator->getDiscountedPriceWithoutVat(),
@@ -79,19 +79,16 @@ class InvoiceService extends BaseService
                 'delivery_charge' => $price_calculator->getDeliveryCharge(),
             ] : null
         ];
-        if ($order->customer_id) {
-            $customer = $order->customer;
-            $info['user'] = [
-                'name' => $customer->name,
-                'mobile' => $customer->mobile,
-                'address' => $order->delivery_address
-            ];
-        }
+        $info['user'] = [
+            'name' => $order->delivery_name ?? '',
+            'mobile' => $order->delivery_mobile ?? '',
+            'address' => $order->delivery_address ?? ''
+        ];
         $invoice_name = 'pos_order_invoice_' . $order->id;
         $link = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
         if ($order instanceof OrderObject) return $link;
-        $order->invoice=$link;
+        $order->invoice = $link;
         $order->save();
-        return $this->success(ResponseMessages::SUCCESS, ['invoice' =>  $link]);
+        return $this->success(ResponseMessages::SUCCESS, ['invoice' => $link]);
     }
 }

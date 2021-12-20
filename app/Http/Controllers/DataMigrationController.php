@@ -44,6 +44,7 @@ class DataMigrationController extends Controller
             DB::commit();
         } catch (Exception $e){
             DB::rollBack();
+            app('sentry')->captureException($e);
             throw $e;
         }
         return $this->success();

@@ -20,14 +20,14 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 
     public function getCustomerOrderList($customer_id, $offset, $limit, $orderBy, $order)
     {
-        $query = $this->model->where('customer_id', $customer_id);
+        $query = $this->model->where('customer_id', $customer_id)->where('sales_channel_id', 2);
         if ($orderBy && $order) $query = $query->orderBy($orderBy, $order);
         return $query->offset($offset)->limit($limit)->get();
     }
 
     public function getCustomerOrderCount($customer_id)
     {
-        return $this->model->where('customer_id', $customer_id)->get();
+        return $this->model->where('customer_id', $customer_id)->where('sales_channel_id', 2)->get();
     }
 
     public function getVoucherInformation($voucher_id)
@@ -60,22 +60,22 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 
     public function getAllOrdersOfPartnersCustomer(int $partner_id, $customer_id, $sort_order = false, $limit = false, $skip = false)
     {
-        return $this->model->with(['orderSkus' => function($q){
+        return $this->model->with(['orderSkus' => function ($q) {
             $q->with('discount');
-        }, 'payments' => function($q){
-            $q->select('id','amount','transaction_type','method','interest');
-        }, 'discounts' => function($q){
-            $q->select('id', 'order_id', 'type', 'amount', 'original_amount', 'is_percentage', 'cap', 'discount_details', 'discount_id', 'type_id');
+        }, 'payments' => function ($q) {
+            $q->select('id', 'amount', 'transaction_type', 'method', 'interest');
+        }, 'discounts' => function ($q) {
+            $q->select('id', 'order_id', 'type', 'amount', 'original_amount', 'is_percentage', 'cap', 'discount_details', 'type_id');
         },
-            'customer' => function($q) {
-            $q->select('id','name','pro_pic','mobile');
-        }])
+            'customer' => function ($q) {
+                $q->select('id', 'name', 'pro_pic', 'mobile');
+            }])
             ->where('partner_id', $partner_id)->where('customer_id', $customer_id)
-            ->when($sort_order, function ($q) use ($sort_order){
+            ->when($sort_order, function ($q) use ($sort_order) {
                 $q->orderBy('created_at', $sort_order);
-            })->when($limit, function ($q) use ($limit){
+            })->when($limit, function ($q) use ($limit) {
                 $q->limit($limit);
-            })->when($skip, function ($q) use ($skip){
+            })->when($skip, function ($q) use ($skip) {
                 $q->skip($skip);
             })->get();
     }

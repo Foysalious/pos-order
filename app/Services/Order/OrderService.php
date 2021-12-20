@@ -200,6 +200,12 @@ class OrderService extends BaseService
     {
         $order = $this->orderRepository->getOrderDetailsByPartner($partner_id, $order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
+        if ($order->invoice == null) {
+            try {
+                app(InvoiceService::class)->setOrder($order)->generateInvoice();
+            } catch (Exception $exception) {
+            }
+        }
         $resource = new OrderWithProductResource($order, true);
         return $this->success(ResponseMessages::SUCCESS, ['order' => $resource]);
     }
@@ -249,7 +255,7 @@ class OrderService extends BaseService
      */
     public function update(OrderUpdateRequest $orderUpdateRequest, $partner_id, $order_id): JsonResponse
     {
-        $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id)->load(['items' => function($q) {
+        $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id)->load(['items' => function ($q) {
             $q->with('discount');
         }, 'customer', 'payments', 'discounts']);
         if (!$orderDetails) return $this->error("You're not authorized to access this order", 403);
@@ -294,42 +300,19 @@ class OrderService extends BaseService
     public function getOrderInfoForPaymentLink($order_id): JsonResponse
     {
         $orderDetails = $this->orderRepository->find($order_id);
-        /** @var PriceCalculation $price_calculator */
-        $price_calculator = app(PriceCalculation::class);
-        $due = $price_calculator->setOrder($orderDetails)->getDue();
         if (!$orderDetails) return $this->error("Order Not Found", 404);
-        $order = [
-            'id' => $orderDetails->id,
-            'sales_channel' => $orderDetails->sales_channel_id == 1 ? 'pos' : 'webstore',
-            'created_at' => $orderDetails->created_at,
-            'partner_id' => $orderDetails->partner_id,
-            'customer_id' => $orderDetails->customer_id,
-            'emi_month' => $orderDetails->emi_month,
-            'customer' => [
-                'id' => $orderDetails->customer_id,
-                'name' => $orderDetails?->customer?->name,
-                'mobile' => $orderDetails?->customer?->mobile
-            ],
-            'partner' => [
-                'id' => $orderDetails?->partner?->id,
-                'sub_domain' => $orderDetails?->partner?->sub_domain
-            ],
-            'due' => $due
-        ];
+        $order = $this->getOrderData($orderDetails);
         return $this->success(ResponseMessages::SUCCESS, ['order' => $order]);
     }
 
-    public function getOrderInfoByPartnerWiseOrderId($partnerId,$partnerWiseOrderId)
+    private function getOrderData($orderDetails)
     {
-        $orderDetails = $this->orderRepository
-            ->where('partner_wise_order_id',$partnerWiseOrderId)
-            ->where('partner_id',$partnerId)->first();
         /** @var PriceCalculation $price_calculator */
         $price_calculator = app(PriceCalculation::class);
         $due = $price_calculator->setOrder($orderDetails)->getDue();
-        if (!$orderDetails) return $this->error("Order Not Found", 404);
-        $order = [
+        return [
             'id' => $orderDetails->id,
+            'partner_wise_order_id' => $orderDetails->partner_wise_order_id,
             'sales_channel' => $orderDetails->sales_channel_id == 1 ? 'pos' : 'webstore',
             'created_at' => $orderDetails->created_at,
             'partner_id' => $orderDetails->partner_id,
@@ -338,7 +321,8 @@ class OrderService extends BaseService
             'customer' => [
                 'id' => $orderDetails->customer_id,
                 'name' => $orderDetails?->customer?->name,
-                'mobile' => $orderDetails?->customer?->mobile
+                'mobile' => $orderDetails?->customer?->mobile,
+                'pro_pic' => $orderDetails?->customer?->pro_pic,
             ],
             'partner' => [
                 'id' => $orderDetails?->partner?->id,
@@ -346,6 +330,15 @@ class OrderService extends BaseService
             ],
             'due' => $due
         ];
+    }
+
+    public function getOrderInfoByPartnerWiseOrderId($partnerId, $partnerWiseOrderId)
+    {
+        $orderDetails = $this->orderRepository
+            ->where('partner_wise_order_id', $partnerWiseOrderId)
+            ->where('partner_id', $partnerId)->first();
+        if (!$orderDetails) return $this->error("Order Not Found", 404);
+        $order = $this->getOrderData($orderDetails);
         return $this->success(ResponseMessages::SUCCESS, ['order' => $order]);
     }
 
@@ -357,7 +350,7 @@ class OrderService extends BaseService
         $customer_id = $request->customer_id;
         $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id)->load(['items', 'customer', 'payments', 'discounts']);
         if (!$order) return $this->error(trans('order.order_not_found'), 404);
-        if(!is_null($customer_id)) {
+        if (!is_null($customer_id)) {
             $customer = $this->customerResolver->setCustomerId($customer_id)->setPartnerId($partner_id)->resolveCustomer();
             if ($customer->id == $order->customer?->id) return $this->error(trans('invalid customer update request'), 400);
         }
@@ -393,7 +386,7 @@ class OrderService extends BaseService
     {
         if (!$orderBeforeUpdated->isWebStore()) return false;
         $fromStatus = $orderBeforeUpdated->status;
-        $delivery_vendor_name = $orderBeforeUpdated->delivery_vendor && isset(json_decode($orderBeforeUpdated->delivery_vendor,true)['name']) ? json_decode($orderBeforeUpdated->delivery_vendor,true)['name'] : null;
+        $delivery_vendor_name = $orderBeforeUpdated->delivery_vendor && isset(json_decode($orderBeforeUpdated->delivery_vendor, true)['name']) ? json_decode($orderBeforeUpdated->delivery_vendor, true)['name'] : null;
         if ($delivery_vendor_name == Methods::OWN_DELIVERY) {
             if ($fromStatus == Statuses::PENDING && in_array($toStatus, [Statuses::PROCESSING, Statuses::DECLINED])) return true;
             if ($fromStatus == Statuses::PROCESSING && in_array($toStatus, [Statuses::SHIPPED, Statuses::CANCELLED])) return true;
@@ -430,7 +423,7 @@ class OrderService extends BaseService
             }
             return $this->success(ResponseMessages::SUCCESS, ['logs' => $final_logs->toArray()]);
         } catch (Exception $e) {
-            return $this->error("Sorry, can't generate logs for this order",200);
+            return $this->error("Sorry, can't generate logs for this order", 200);
         }
     }
 

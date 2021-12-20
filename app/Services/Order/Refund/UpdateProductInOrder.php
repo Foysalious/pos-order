@@ -107,6 +107,9 @@ class UpdateProductInOrder extends ProductOrder
             $order_sku->batch_detail = $this->calculateUpdatedBatchDetail($product,$sku_details['batches'],$order_sku);
         }
         $order_sku->save();
+        if(!$product->isDiscountChanged()){
+            $this->updateDiscount($product);
+        }
         if ($product->isQuantityDecreased()) {
             $this->refunded_items_obj [] = $this->makeObject($product, $old_order_sku, $order_sku);
         } else {
@@ -227,7 +230,7 @@ class UpdateProductInOrder extends ProductOrder
             if($discount_detail['discount'] > 0) {
                 $this->discountRepository->create($this->withCreateModificationField([
                     'order_id' => $this->order->id,
-                    'type' => DiscountTypes::SKU,
+                    'type' => DiscountTypes::ORDER_SKU,
                     'amount' => $amount,
                     'original_amount' => $original_amount,
                     'is_percentage' => $is_percentage,

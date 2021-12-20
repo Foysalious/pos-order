@@ -26,11 +26,11 @@ class EntryOnOrderDueCleared
         if (get_class($event) == OrderUpdated::class) {
             if(empty($event->getOrderProductChangedData()) && !empty($event->getPaymentInfo())) {
                 $paid_amount = $event->getPaymentInfo()['paid_amount'];
-                if (is_null($paid_amount)) return;
+                if (is_null($paid_amount) || $paid_amount == 0) return;
                 $this->dueEntry->setOrder($event->getOrder())->setPaidAmount($paid_amount)->create();
             }
         } elseif (get_class($event) == OrderDueCleared::class){
-            if (!$event->getPaidAmount()) return;
+            if (!$event->getPaidAmount() || $event->getPaidAmount() == 0) return;
             $this->dueEntry->setOrder($event->getOrder())->setPaidAmount($event->getPaidAmount())->create();
         }
 

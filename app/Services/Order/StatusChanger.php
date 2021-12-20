@@ -9,6 +9,7 @@ use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
+use App\Services\OrderSms\WebstoreOrderSms;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ModificationFields;
@@ -82,6 +83,7 @@ class StatusChanger
               else if ($this->status == Statuses::COMPLETED && $order_calculator->getDue() > 0) {
                   $this->collectPayment($this->order, $order_calculator );
               }
+            $this->sendSmsForStatusChange();
           }
     }
 
@@ -98,7 +100,7 @@ class StatusChanger
         $this->paymentCreator->setOrderId($order->id)->setAmount($order_calculator->getDue())->setMethod(PaymentMethods::CASH_ON_DELIVERY)
             ->setTransactionType(TransactionTypes::CREDIT)->setEmiMonth($order->emi_month)
             ->setInterest($order->interest)->create();
-        event(new OrderDueCleared(['order' => $order, 'paid_amount' => $order_calculator->getDue()]));
+        event(new OrderDueCleared(['order' => $order->refresh(), 'paid_amount' => $order_calculator->getDue()]));
     }
 
     public function updateStatusForIpn()
@@ -107,8 +109,10 @@ class StatusChanger
             $data = ['status' => Statuses::SHIPPED];
         elseif ($this->deliveryStatus == DeliveryStatuses::DELIVERED)
             $data = ['status' => Statuses::COMPLETED];
-        if(isset($data))
+        if(isset($data)){
             $this->order->update($this->withUpdateModificationField($data));
+            $this->sendSmsForStatusChange();
+        }
     }
 
     private function refundIfEligible()
@@ -141,6 +145,13 @@ class StatusChanger
     {
         $this->orderLogCreator->setOrderId($this->order->id)->setType(OrderLogTypes::ORDER_STATUS)
             ->setExistingOrderData($previous_order)->setChangedOrderData($updated_order)->create();
+    }
+
+    private function sendSmsForStatusChange()
+    {
+        if(array_key_exists('status',$this->order->getChanges())) {
+            dispatch(new WebstoreOrderSms($this->order->partner_id, $this->order->id));
+        }
     }
 
 }

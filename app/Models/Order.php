@@ -109,4 +109,10 @@ class Order extends BaseModel
     {
         return $this->sales_channel_id = SalesChannelIds::WEBSTORE;
     }
+
+    public function getDeliveryVendor()
+    {
+        if (!$this->delivery_vendor) return null;
+        return json_decode($this->delivery_vendor)->name;
+    }
 }

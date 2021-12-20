@@ -55,7 +55,6 @@ class Sku extends SetParams
     public function getData()
     {
         return [
-            'discount_id' => $this->discount->id ?? null,
             'type' => $this->type,
             'amount' => $this->amount,
             'original_amount' => $this->originalAmount,

@@ -37,21 +37,23 @@ class CustomerOrderResourceForPos extends JsonResource
             'payment_status' => $this->paid_at ? PaymentStatuses::PAID : PaymentStatuses::DUE,
             'sales_channel' => $this->sales_channel_id == SalesChannelIds::POS ? 'pos' : 'webstore',
             'created_by_name' => $this->created_by_name,
-            'created_at' => convertTimezone($this->created_at)?->format('Y-m-d H:i:s'),
+            'created_at' => convertTimezone($this->created_at)?->format('Y-m-d h:m A'),
             'date' => convertTimezone($this->created_at)?->format('Y-m-d'),
             'vat' => $price_info->vat,
-            'discount_amount' => 0,
             'paid' => $price_info->paid,
             'status' => $this->paid_at ? PaymentStatuses::PAID : PaymentStatuses::DUE,
             'due' => $price_info->due,
             'delivery_charge' => $price_info->delivery_charge,
             'address' => $this->delivery_address,
             'total_weight' => $this->getWeight(),
-            'is_refundable' => true,
+            'is_refundable' => false,
             'refund_status' => null,
             'return_orders' => [],
             'selected_delivery_method' => $this->delivery_info['delivery_method'] ?? null,
             'delivery_by_third_party' => $this->delivery_info['is_registered_for_sdelivery'] ? 1 : 0,
+            'original_price' => $price_info->original_price,
+            'price' => $price_info->discounted_price,
+            'discount_amount' => $price_info->discount_amount,
             'items' => $this->formatOrderSkus(),
             'customer' => $this->getOrderCustomer(),
             'payments' => $this->getPayments(),
@@ -77,6 +79,7 @@ class CustomerOrderResourceForPos extends JsonResource
             'discounted_price' => $price_calculator->getDiscountedPrice(),
             'paid' => $price_calculator->getPaid(),
             'due' => $price_calculator->getDue(),
+            'discount_amount' => $price_calculator->getDiscount()
         ];
     }
 
@@ -92,7 +95,7 @@ class CustomerOrderResourceForPos extends JsonResource
                 'method_en' =>  $details ? $details->payment_method_en : null,
                 'method_bn' => $details ? $details->payment_method_bn : null,
                 'method_icon' => $details ? $details->payment_method_icon : null,
-                'created_at' => convertTimezone($each->created_at)?->format('Y-m-d H:i:s'),
+                'created_at' => convertTimezone($each->created_at)?->format('Y-m-d h:m A'),
             ];
         });
     }
