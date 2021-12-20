@@ -360,7 +360,7 @@
             <div> Order ID: # {{$order_id}}</div>
 
         </td>
-        <td class="table-invoice-right">Date: {{$created_at}}</td>
+        <td class="table-invoice-right">Order Date: {{$created_at}}</td>
     </tr>
     </tbody>
 </table>
