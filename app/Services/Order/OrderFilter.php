@@ -140,6 +140,9 @@ class OrderFilter
         $query = $this->filterByType($query);
         $query = $this->filterByPaymentStatus($query);
         $query = $this->filterBySalesChannelId($query);
+        $query = $this->filterBySearchQueryInOrder($query);
+        $query = $this->filterBySearchQueryInCustomer($query);
+        $query = $this->sortByCustomerName($query);
         $query = $this->filterByOrderStatus($query);
         $query = $this->filterBySearchQueryInOrder($query);
         $query = $this->filterBySearchQueryInCustomer($query);
@@ -210,9 +213,9 @@ class OrderFilter
     private function filterBySearchQueryInCustomer(mixed $query)
     {
         return $query->when( $this->queryString, function ($q) {
-            $q->whereHas( 'customer', function ($q) {
+            $q->orWhereHas('customer', function ($q) {
                 $q->where('partner_id', $this->partnerId);
-                $q->orWhere(function ($q){
+                $q->where(function ($q){
                     $q->orWhere('name', 'LIKE', '%' . $this->queryString . '%');
                     $q->orWhere('email', 'LIKE', '%' . $this->queryString . '%');
                     $q->orWhere('mobile', 'LIKE', '%' . $this->queryString . '%');
