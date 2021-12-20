@@ -24,6 +24,7 @@ use App\Services\OrderLog\Objects\OrderObject;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ModificationFields;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -335,13 +336,13 @@ class Updater
             if (isset($this->voucher_id)) $this->updateVoucherDiscount();
             $this->updateOrderPayments();
             if (isset($this->discount)) $this->updateDiscount();
-            $this->refundIfEligible();
             $this->createLog($previous_order, $this->order->refresh());
             if ($this->paymentMethod == PaymentMethods::EMI) {
                 $this->validateEmiAndCalculateChargesForOrder($this->order->refresh());
             }
             if ($this->order->status == Statuses::PENDING || $this->order->status == Statuses::PROCESSING)
                 $this->calculateDeliveryChargeAndSave($this->order);
+            $this->refundIfEligible();
             event(new OrderUpdated([
                 'order' => $this->order->refresh(),
                 'order_product_change_data' => $this->orderProductChangeData ?? [],
@@ -598,6 +599,9 @@ class Updater
         }
         if (($refunded == false && $this->orderCalculator->getDue() > 0)) {
             $this->order->paid_at = null;
+            $this->order->update($this->modificationFields(false, true));
+        } else if ($this->orderCalculator->getDue() == 0) {
+            $this->order->paid_at = Carbon::now();
             $this->order->update($this->modificationFields(false, true));
         }
     }
