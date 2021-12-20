@@ -140,9 +140,6 @@ class OrderFilter
         $query = $this->filterByType($query);
         $query = $this->filterByPaymentStatus($query);
         $query = $this->filterBySalesChannelId($query);
-        $query = $this->filterBySearchQueryInOrder($query);
-        $query = $this->filterBySearchQueryInCustomer($query);
-        $query = $this->sortByCustomerName($query);
         $query = $this->filterByOrderStatus($query);
         $query = $this->filterBySearchQueryInOrder($query);
         $query = $this->filterBySearchQueryInCustomer($query);
