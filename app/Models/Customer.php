@@ -9,9 +9,6 @@ class Customer extends BaseModel
 {
     use HasFactory, SoftDeletes, CascadeSoftDeletes;
 
-    protected $guarded = [];
-    protected $casts = ['id' => 'string'];
-    protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';
     protected $cascadeDeletes = ['orders'];
