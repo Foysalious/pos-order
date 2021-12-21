@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Customer extends BaseModel
 {
     use HasFactory, SoftDeletes, CascadeSoftDeletes;
-    protected $guarded = ['id'];
+    protected $guarded = [];
     public $incrementing = false;
     protected $keyType = 'string';
     protected $cascadeDeletes = ['orders'];
