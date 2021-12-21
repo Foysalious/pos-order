@@ -9,13 +9,16 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class CustomerResolver
 {
     use ModificationFields;
+
     private string $customerId;
     private int $partnerId;
 
     public function __construct(
         protected CustomerRepositoryInterface $customerRepository,
-        protected SmanagerUserServerClient $smanagerUserServerClient
-    ){}
+        protected SmanagerUserServerClient    $smanagerUserServerClient
+    )
+    {
+    }
 
     /**
      * @param string $customerId
@@ -37,9 +40,9 @@ class CustomerResolver
         return $this;
     }
 
-    public function resolveCustomer() : Customer
+    public function resolveCustomer(): Customer
     {
-        $customer = $this->customerRepository->where('id',$this->customerId)->where('partner_id', $this->partnerId)->first();
+        $customer = $this->customerRepository->where('id', $this->customerId)->where('partner_id', $this->partnerId)->first();
         if (!$customer) {
             $customer = $this->getCustomerFromSmanagerUserProject();
             if (!$customer) throw new NotFoundHttpException(trans('order.customer_not_found'));
