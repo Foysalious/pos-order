@@ -51,7 +51,7 @@ class CustomerResolver
                 'mobile' => $customer['mobile'],
                 'pro_pic' => $customer['pro_pic'],
             ];
-            return $this->customerRepository->create($this->withCreateModificationField($data));
+            return $this->customerRepository->firstOrCreate($this->withCreateModificationField($data));
         }
         return $customer;
     }
