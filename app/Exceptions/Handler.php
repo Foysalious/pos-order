@@ -74,7 +74,7 @@ class Handler extends ExceptionHandler
             return $this->error($e->getMessage(), $e->getCode());
         } else {
             $response = [];
-            $response['message'] = $e->getMessage();
+            $response['message'] = 'Something went wrong';
             if ($this->wantsTrace()) {
                 $response['exception'] = [
                     'message' => $e->getMessage(),
