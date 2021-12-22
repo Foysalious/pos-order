@@ -24,7 +24,8 @@ class OrderUpdateRequest extends FormRequest
         return [
             'skus' => 'sometimes|string|json',
             'sales_channel_id' => 'sometimes|string',
-            'interest' => 'sometimes|string',
+            'interest' => 'sometimes|numeric',
+            'bank_transaction_charge' => 'sometimes|numeric',
             'delivery_charge' => 'sometimes|numeric',
             'delivery_name' => 'sometimes|string',
             'delivery_address' => 'sometimes|string',
