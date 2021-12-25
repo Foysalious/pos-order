@@ -169,6 +169,7 @@ class OrderWithProductResource extends JsonResource
         if($this->sales_channel_id == SalesChannelIds::POS) {
             if(($delivery_integrated && in_array($this->status, [Statuses::PENDING, Statuses::PROCESSING])) || !$delivery_integrated) return true;
         } else {
+            if ($delivery_integrated && $this->status == Statuses::PROCESSING) return false;
             if (in_array($this->status, [Statuses::PENDING, Statuses::PROCESSING])) return true;
         }
         return false;
