@@ -69,17 +69,18 @@ class CustomerOrderResourceForPos extends JsonResource
         $price_calculator = (App::make(PriceCalculation::class))->setOrder($this->resource);
 
         return [
-            'original_price' => $price_calculator->getOriginalPrice(),
-            'discounted_price_without_vat' => $price_calculator->getDiscountedPriceWithoutVat(),
-            'product_discount' => $price_calculator->getProductDiscount(),
-            'promo_discount' => $price_calculator->getPromoDiscount(),
-            'order_discount' => $price_calculator->getOrderDiscount(),
-            'vat' => $price_calculator->getVat(),
-            'delivery_charge' => $price_calculator->getDeliveryCharge(),
-            'discounted_price' => $price_calculator->getDiscountedPrice(),
-            'paid' => $price_calculator->getPaid(),
-            'due' => $price_calculator->getDue(),
-            'discount_amount' => $price_calculator->getDiscount()
+
+            'original_price' => (float) formatTakaToDecimal($price_calculator->getOriginalPrice()),
+            'discounted_price_without_vat' => (float) formatTakaToDecimal($price_calculator->getDiscountedPriceWithoutVat()),
+            'product_discount' => (float) formatTakaToDecimal($price_calculator->getProductDiscount()),
+            'promo_discount' => (float) formatTakaToDecimal($price_calculator->getPromoDiscount()),
+            'order_discount' => (float) formatTakaToDecimal($price_calculator->getOrderDiscount()),
+            'vat' => (float) formatTakaToDecimal($price_calculator->getVat()),
+            'delivery_charge' => (float) formatTakaToDecimal($price_calculator->getDeliveryCharge()),
+            'discounted_price' => (float) formatTakaToDecimal($price_calculator->getDiscountedPrice()),
+            'paid' => (float) formatTakaToDecimal($price_calculator->getPaid()),
+            'due' => (float) formatTakaToDecimal($price_calculator->getDue()),
+            'discount_amount' => (float) formatTakaToDecimal($price_calculator->getDiscount())
         ];
     }
 
