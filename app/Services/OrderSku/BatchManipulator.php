@@ -6,7 +6,7 @@ namespace App\Services\OrderSku;
 
 class BatchManipulator
 {
-    protected array $batchDetail;
+    protected ?array $batchDetail;
     protected array $oldBatchDetails;
     protected float $updatedQuantity;
     protected float $previousQuantity;
@@ -17,7 +17,7 @@ class BatchManipulator
     /**
      * @param mixed $batch_detail
      */
-    public function setBatchDetail(string $batch_detail) : BatchManipulator
+    public function setBatchDetail(?string $batch_detail) : BatchManipulator
     {
         $this->batchDetail = json_decode($batch_detail,true);
         $this->oldBatchDetails = $this->batchDetail;
