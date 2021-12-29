@@ -352,7 +352,7 @@ class Updater
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();
-            throw $e;
+            app('sentry')->captureException($e);
         }
     }
 

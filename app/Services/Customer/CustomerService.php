@@ -89,7 +89,7 @@ class CustomerService extends BaseService
             return $this->success();
         } catch (Exception $e) {
             DB::rollback();
-            throw $e;
+            app('sentry')->captureException($e);
         }
     }
 
