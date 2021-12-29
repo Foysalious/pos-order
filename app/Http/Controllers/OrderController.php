@@ -258,9 +258,9 @@ class OrderController extends Controller
         return $this->orderService->getOrderInfoForPaymentLink($order_id);
     }
 
-    public function getOrderInfoByPartnerWiseOrderId($partnerId,$partnerWiseOrderId)
+    public function getOrderInfoByPartnerWiseOrderId($partnerId, $partnerWiseOrderId)
     {
-        return $this->orderService->getOrderInfoByPartnerWiseOrderId($partnerId,$partnerWiseOrderId);
+        return $this->orderService->getOrderInfoByPartnerWiseOrderId($partnerId, $partnerWiseOrderId);
     }
 
     /**
@@ -532,5 +532,10 @@ class OrderController extends Controller
     public function sendEmail($partner, $order)
     {
         return $this->orderService->sendEmail($partner, $order);
+    }
+
+    public function getOrderCount($partner)
+    {
+        return $this->orderService->getOrderCount($partner);
     }
 }

@@ -457,4 +457,9 @@ class OrderService extends BaseService
         dispatch(new OrderEmail($order));
         return $this->success();
     }
+
+    public function getOrderCount($partner)
+    {
+        return $this->success(ResponseMessages::SUCCESS, ['count' => Order::where('partner_id', $partner)->withTrashed()->count()]);
+    }
 }
