@@ -2,20 +2,19 @@
 
 namespace App\Jobs\Order;
 
+use App\Jobs\Job;
 use App\Models\Order;
 use App\Models\Partner;
-use App\Services\APIServerClient\ApiServerClient;
 use App\Services\Order\EmailHandler;
-use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Throwable;
 
-class OrderEmail implements ShouldQueue
+
+class OrderEmail extends Job implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, SerializesModels;
 
     private Order $order;
     private Partner $partner;
@@ -40,16 +39,5 @@ class OrderEmail implements ShouldQueue
         if ($this->attempts() <= 2) {
             $handler->setOrder($this->order)->handle();
         }
-    }
-
-    /**
-     * Handle a job failure.
-     *
-     * @param Throwable $exception
-     * @return void
-     */
-    public function failed(Throwable $exception)
-    {
-        app('sentry')->captureException($exception);
     }
 }
