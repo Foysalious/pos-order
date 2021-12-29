@@ -50,7 +50,7 @@ class SalesReport
     public function getSalesReport()
     {
        $from= Carbon::parse($this->from." 00:00:00")->format('Y-m-d H:s:i');
-       $to= Carbon::parse($this->to." 11:59:00")->format('Y-m-d H:s:i');
+       $to= Carbon::parse($this->to." 23:59:59")->format('Y-m-d H:s:i');
         $orders = $this->orderRepository->builder()->where('partner_id', $this->partner_id)
             ->with(['orderSkus' => function($q){
                 $q->with('discount');
@@ -69,12 +69,14 @@ class SalesReport
             $time_duration[$time->format('Y-m-d')] = ["amount" => 0, "orders" => 0, "date" => $time->format('d M'), "day" => $time->format('D')];
         }
         foreach ($orders as $order) {
+            $this->orderCalculation=\app(PriceCalculation::class);
             $this->orderCalculation->setOrder($order);
 
             $time_duration[$order->created_at->toDateString()]['amount']+=$this->orderCalculation->getDiscountedPrice();
             $time_duration[$order->created_at->toDateString()]['orders']+=1;
             $order['discounted_price'] = $this->orderCalculation->getDiscountedPrice();
             $net_bill = $net_bill + $order['discounted_price'];
+
             $due = $due + $this->orderCalculation->getDue();
             $paid = $paid + $this->orderCalculation->getPaid();
             if ($this->orderCalculation->getPaid() > 0)
