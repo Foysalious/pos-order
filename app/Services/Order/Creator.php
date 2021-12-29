@@ -422,7 +422,7 @@ class Creator
             return $order->refresh();
         } catch (Exception $e) {
             DB::rollback();
-            app('sentry')->captureException($e);
+            throw $e;
         }
     }
 
