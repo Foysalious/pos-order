@@ -49,12 +49,13 @@ class SalesReport
 
     public function getSalesReport()
     {
-        $orders = $this->orderRepository->where('partner_id', $this->partner_id)
+       $from= Carbon::parse($this->from." 00:00:00")->format('Y-m-d H:s:i');
+       $to= Carbon::parse($this->to." 11:59:00")->format('Y-m-d H:s:i');
+        $orders = $this->orderRepository->builder()->where('partner_id', $this->partner_id)
             ->with(['orderSkus' => function($q){
                 $q->with('discount');
             }, 'payments', 'discounts', 'customer'])
-            ->whereNotNull('customer_id')
-            ->whereBetween('created_at', [$this->from, $this->to])
+            ->whereBetween('created_at', [$from, $to])
             ->get();
         $paid = 0;
         $paid_count = 0;
