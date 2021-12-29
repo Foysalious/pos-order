@@ -50,7 +50,9 @@ class SalesReport
     public function getSalesReport()
     {
         $orders = $this->orderRepository->where('partner_id', $this->partner_id)
-            ->with(['orderSkus', 'payments', 'discounts', 'customer'])
+            ->with(['orderSkus' => function($q){
+                $q->with('discount');
+            }, 'payments', 'discounts', 'customer'])
             ->whereNotNull('customer_id')
             ->whereBetween('created_at', [$this->from, $this->to])
             ->get();
