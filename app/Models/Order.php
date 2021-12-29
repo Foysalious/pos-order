@@ -17,7 +17,6 @@ class Order extends BaseModel
 {
     use HasFactory, SoftDeletes, CascadeSoftDeletes;
 
-    public static $savedEventClass = OrderUpdated::class;
     protected $guarded = ['id'];
     protected $cascadeDeletes = ['orderSkus', 'discounts', 'logs', 'payments'];
 
