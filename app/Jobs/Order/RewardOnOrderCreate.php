@@ -30,6 +30,7 @@ class RewardOnOrderCreate implements ShouldQueue
 
     public function handle()
     {
+        if($this->attempts() > 2) return;
         $order = $this->model;
         $price_calculator = (App::make(PriceCalculation::class))->setOrder($order);
         $data = [

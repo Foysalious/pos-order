@@ -34,6 +34,7 @@ class OrderInvoice implements ShouldQueue
      */
     public function handle()
     {
+        if($this->attempts() > 2) return;
         /** @var InvoiceService $invoice_service */
         $invoice_service = app(InvoiceService::class);
         $invoice_service->setOrder($this->order)->generateInvoice();
