@@ -19,7 +19,7 @@ trait OrderSkuTrait
         $this->discountedPriceWithoutVat = $this->originalPrice - $this->discountAmount;
         $this->vat = ($this->discountedPriceWithoutVat * $this->vat_percentage) / 100;
         $this->discountedPrice = $this->discountedPriceWithoutVat + $this->vat;
-        $this->formatAllToTaka();
+//        $this->formatAllToTaka();
         return $this;
     }
 

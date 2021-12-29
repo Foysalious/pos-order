@@ -34,9 +34,8 @@ class PartnerService extends  BaseService
                 'qr_code_account_type'  => $request->qr_code_account_type ?? null,
                 'delivery_charge' => $request->delivery_charge ?? null,
             ]);
-        if(is_null($partner)) {
-            $this->partnerCreator->setPartnerDto($partner_dto)->create();
-        } else {
+
+        if($partner) {
             $this->partnerUpdater->setPartner($partner)
                 ->setPartnerDto($partner_dto)
                 ->update();

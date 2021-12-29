@@ -406,11 +406,10 @@ class Creator
                     ->setTransactionType(TransactionTypes::CREDIT)->setEmiMonth($order->emi_month)
                     ->setInterest($order->interest)->setMethodDetails($cash_details)->create();
             }
+            $this->calculateDeliveryChargeAndSave($order);
             if ($this->hasDueError($order->refresh())) {
                 throw new OrderException("Can not make due order without customer", 403);
             }
-
-            $this->calculateDeliveryChargeAndSave($order);
             if ($this->getDueAmount($order) > 0) {
                 /** @var OrderObject $orderObject */
                 $orderObject = app(OrderObject::class);

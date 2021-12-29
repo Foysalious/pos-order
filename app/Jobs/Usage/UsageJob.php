@@ -1,16 +1,16 @@
 <?php namespace App\Jobs\Usage;
 
+use App\Jobs\Job;
 use App\Services\Usage\UsageService;
-use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
 
-class UsageJob implements ShouldQueue
+class UsageJob extends Job implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, SerializesModels;
 
     private int $partnerId;
     private string $usageType;
@@ -35,16 +35,5 @@ class UsageJob implements ShouldQueue
     {
         $usageService = app(UsageService::class);
         $usageService->setUserId($this->partnerId)->setUsageType($this->usageType)->store();
-    }
-
-    /**
-     * Handle a job failure.
-     *
-     * @param Throwable $exception
-     * @return void
-     */
-    public function failed(Throwable $exception)
-    {
-        app('sentry')->captureException($exception);
     }
 }

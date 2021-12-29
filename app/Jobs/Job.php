@@ -3,6 +3,7 @@
 
 namespace App\Jobs;
 use Illuminate\Bus\Queueable;
+use Throwable;
 
 
 abstract class Job
@@ -19,4 +20,15 @@ abstract class Job
     */
 
     use Queueable;
+
+    /**
+     * Handle a job failure.
+     *
+     * @param Throwable $exception
+     * @return void
+     */
+    public function failed(Throwable $exception)
+    {
+        app('sentry')->captureException($exception);
+    }
 }
