@@ -59,8 +59,7 @@ class EventServiceProvider extends ServiceProvider
             EntryOnOrderDelete::class,
         ],
         OrderCustomerUpdated::class => [
-            EntryOnOrderCustomerUpdate::class,
-            GenerateInvoiceOnOrderCreate::class
+            EntryOnOrderCustomerUpdate::class
         ]
     ];
 
