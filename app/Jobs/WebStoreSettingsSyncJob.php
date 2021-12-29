@@ -1,20 +1,19 @@
 <?php namespace App\Jobs;
 
 use App\Services\Webstore\SettingsSync\WebStoreSettingsSyncService;
-use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Throwable;
 
-class WebStoreSettingsSyncJob implements ShouldQueue
+
+class WebStoreSettingsSyncJob extends Job implements ShouldQueue
 {
     protected string $type;
     protected int $typeId;
     protected int $partnerId;
 
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, SerializesModels;
 
 
 
@@ -31,17 +30,6 @@ class WebStoreSettingsSyncJob implements ShouldQueue
         /** @var WebStoreSettingsSyncService $service */
         $service = app(WebStoreSettingsSyncService::class);
         $service->setPartner($this->partnerId)->setType($this->type)->setTypeId($this->typeId)->sync();
-    }
-
-    /**
-     * Handle a job failure.
-     *
-     * @param Throwable $exception
-     * @return void
-     */
-    public function failed(Throwable $exception)
-    {
-        app('sentry')->captureException($exception);
     }
 
 }

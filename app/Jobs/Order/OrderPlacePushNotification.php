@@ -7,7 +7,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Services\Order\Notification\OrderPlacePushNotificationHandler;
-use Throwable;
 
 class OrderPlacePushNotification extends Job implements ShouldQueue
 {
@@ -29,16 +28,5 @@ class OrderPlacePushNotification extends Job implements ShouldQueue
     {
         if ($this->attempts() > 2) return;
         $handler->setOrder($this->order)->handle();
-    }
-
-    /**
-     * Handle a job failure.
-     *
-     * @param Throwable $exception
-     * @return void
-     */
-    public function failed(Throwable $exception)
-    {
-        app('sentry')->captureException($exception);
     }
 }
