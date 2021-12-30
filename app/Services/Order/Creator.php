@@ -416,6 +416,7 @@ class Creator
                 $orderObject->setOrder($order);
                 $this->orderLogCreator->setOrderId($order->id)->setType(OrderLogTypes::DUE_BILL)->setExistingOrderData(null)->setChangedOrderData(json_encode($orderObject))->create();
             }
+            DB::commit();
         } catch (Exception $e) {
             DB::rollback();
             throw $e;
