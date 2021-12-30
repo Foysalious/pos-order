@@ -416,13 +416,12 @@ class Creator
                 $orderObject->setOrder($order);
                 $this->orderLogCreator->setOrderId($order->id)->setType(OrderLogTypes::DUE_BILL)->setExistingOrderData(null)->setChangedOrderData(json_encode($orderObject))->create();
             }
-            event(new OrderPlaceTransactionCompleted($order));
-            DB::commit();
-            return $order->refresh();
         } catch (Exception $e) {
             DB::rollback();
             throw $e;
         }
+        event(new OrderPlaceTransactionCompleted($order));
+        return $order->refresh();
     }
 
 

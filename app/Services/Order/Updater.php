@@ -343,17 +343,17 @@ class Updater
             if ($this->order->status == Statuses::PENDING || $this->order->status == Statuses::PROCESSING)
                 $this->calculateDeliveryChargeAndSave($this->order);
             $this->refundIfEligible();
-            event(new OrderUpdated([
-                'order' => $this->order->refresh(),
-                'order_product_change_data' => $this->orderProductChangeData ?? [],
-                'payment_info' => ['payment_method' => $this->paymentMethod, 'paid_amount' => $this->paidAmount ?? null],
-                'stock_update_data' => $this->stockUpdateEntry
-            ]));
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();
             throw $e;
         }
+        event(new OrderUpdated([
+            'order' => $this->order->refresh(),
+            'order_product_change_data' => $this->orderProductChangeData ?? [],
+            'payment_info' => ['payment_method' => $this->paymentMethod, 'paid_amount' => $this->paidAmount ?? null],
+            'stock_update_data' => $this->stockUpdateEntry
+        ]));
     }
 
     /**
