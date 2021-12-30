@@ -7,7 +7,7 @@ namespace App\Services\OrderSku;
 class BatchManipulator
 {
     protected ?array $batchDetail;
-    protected array $oldBatchDetails;
+    protected ?array $oldBatchDetails;
     protected float $updatedQuantity;
     protected float $previousQuantity;
     protected array $skuBatch;
