@@ -1,10 +1,12 @@
 <?php namespace App\Jobs\Order\StockUpdate;
 
+use App\Jobs\Job;
 use App\Services\Product\StockManager;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class InventoryStockUpdateForOrderUpdate
+class InventoryStockUpdateForOrderUpdate extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
