@@ -1,18 +1,13 @@
 <?php namespace App\Listeners\Accounting;
 
 use App\Events\OrderPlaceTransactionCompleted;
-use App\Services\Accounting\CreateEntry;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
+use App\Jobs\Order\Accounting\EntryOnOrderCreate;
+use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Queue\SerializesModels;
 
 class EntryOnOrderCreation
 {
-    protected CreateEntry $createEntry;
-
-    public function __construct(CreateEntry $createEntry)
-    {
-        $this->createEntry = $createEntry;
-    }
+    use DispatchesJobs,SerializesModels;
 
     /**
      * Handle the event.
@@ -22,6 +17,6 @@ class EntryOnOrderCreation
      */
     public function handle(OrderPlaceTransactionCompleted $event)
     {
-        $this->createEntry->setOrder($event->getOrder())->create();
+        $this->dispatch(new EntryOnOrderCreate($event->getOrder()));
     }
 }

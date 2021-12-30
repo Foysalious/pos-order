@@ -28,7 +28,6 @@ class StatusChanger
     public function __construct(
         protected OrderRepositoryInterface      $orderRepository,
         protected PaymentCreator                $paymentCreator,
-        protected StockRefillerForCanceledOrder $stockRefillForCanceledOrder,
         protected PriceCalculation              $orderCalculator,
         private OrderLogCreator $orderLogCreator
     )
@@ -90,7 +89,6 @@ class StatusChanger
 
     private function cancelOrder()
     {
-        $this->stockRefillForCanceledOrder->setOrder($this->order)->refillStock();
         $this->refundIfEligible();
         event(new OrderDeleted($this->order));
     }

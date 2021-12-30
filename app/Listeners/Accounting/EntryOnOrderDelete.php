@@ -1,16 +1,14 @@
 <?php namespace App\Listeners\Accounting;
 
 use App\Events\OrderDeleted;
-use App\Services\Accounting\DeleteEntry;
+use App\Jobs\Order\Accounting\EntryOnOrderDelete as OrderDeleteEntryJob;
+use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Queue\SerializesModels;
 
 class EntryOnOrderDelete
 {
-    protected DeleteEntry $deleteEntry;
+    use DispatchesJobs,SerializesModels;
 
-    public function __construct(DeleteEntry $deleteEntry)
-    {
-        $this->deleteEntry = $deleteEntry;
-    }
 
     /**
      * Handle the event.
@@ -20,6 +18,6 @@ class EntryOnOrderDelete
      */
     public function handle(OrderDeleted $event)
     {
-        $this->deleteEntry->setOrder($event->getOrder())->delete();
+        $this->dispatch(new OrderDeleteEntryJob($event->getOrder()));
     }
 }

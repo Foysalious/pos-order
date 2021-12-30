@@ -11,7 +11,7 @@ use App\Listeners\Accounting\EntryOnOrderDueCleared;
 use App\Listeners\Accounting\EntryOnOrderUpdating;
 use App\Listeners\Accounting\EntryOnOrderCustomerUpdate;
 use App\Listeners\GenerateInvoiceOnOrderCreate;
-use App\Listeners\InventoryStockUpdate;
+use App\Listeners\InventoryStockUpdateOnOrderDelete;
 use App\Listeners\InventoryStockUpdateOnOrderUpdate;
 use App\Listeners\InventoryStockUpdateOnOrderPlace;
 use App\Listeners\PushNotificationForOrder;
@@ -57,6 +57,7 @@ class EventServiceProvider extends ServiceProvider
         ],
         OrderDeleted::class => [
             EntryOnOrderDelete::class,
+            InventoryStockUpdateOnOrderDelete::class,
         ],
         OrderCustomerUpdated::class => [
             EntryOnOrderCustomerUpdate::class
