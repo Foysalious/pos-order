@@ -69,9 +69,9 @@ class CreateEntry extends BaseEntry
                         'id' => $sku_details[$sku->sku_id]['product_id'],
                         'sku_id' => $sku->sku_id,
                         'name' => $sku->name,
-                        'unit_price' => (double) $batch['cost'],
-                        'selling_price' => (double)$sku->unit_price,
-                        'quantity' => (double) $batch['quantity']
+                        'unit_price' => (double) $batch['cost'] ?? $sku->unit_price,
+                        'selling_price' => (double)$sku->unit_price ?? $sku->unit_price,
+                        'quantity' => (double) $batch['quantity'] ?? $sku->quantity
                     ];
                 }
 

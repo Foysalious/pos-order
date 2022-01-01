@@ -117,7 +117,7 @@ class BatchManipulator
         return $this->mergeBatchDetailIfSame($batch_detail, $this->oldBatchDetails);
     }
 
-    private function mergeBatchDetailIfSame(array $added_batch_detail, array $old_batch_details): array
+    private function mergeBatchDetailIfSame(array $added_batch_detail, ?array $old_batch_details): array
     {
         $old_batch_details = collect($old_batch_details);
         $new_batch_details = [];
@@ -141,9 +141,9 @@ class BatchManipulator
     }
 
     /**
-     * @return array
+     * @return array|null
      */
-    public function getBatchDetails(): array
+    public function getBatchDetails(): ?array
     {
         return $this->oldBatchDetails;
     }
