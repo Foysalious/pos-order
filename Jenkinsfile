@@ -93,7 +93,7 @@ pipeline {
                 }
             }
         }
-        stage('DEPLOY TO PRODUCTION - FOR PRODUCTION SERVER') {
+        stage('DEPLOY TO PRODUCTION - Smanager Sales Server 2') {
             when { branch 'master' }
             steps {
                 script {
@@ -165,7 +165,7 @@ pipeline {
                 }
             }
         }
-        stage('DELETE DOCKER DANGLING IMAGES') {
+        stage('DELETE DOCKER DANGLING IMAGES - Smanager Sales Server 2') {
             when { branch 'master' }
             steps {
                 script {
