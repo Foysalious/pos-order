@@ -60,7 +60,8 @@ class EventServiceProvider extends ServiceProvider
             InventoryStockUpdateOnOrderDelete::class,
         ],
         OrderCustomerUpdated::class => [
-            EntryOnOrderCustomerUpdate::class
+            GenerateInvoiceOnOrderCreate::class,
+            EntryOnOrderCustomerUpdate::class,
         ]
     ];
 

@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use App\Events\OrderUpdated;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\SalesChannel;
