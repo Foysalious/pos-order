@@ -93,6 +93,36 @@ pipeline {
                 }
             }
         }
+        stage('DEPLOY TO PRODUCTION - FOR PRODUCTION SERVER') {
+            when { branch 'master' }
+            steps {
+                script {
+                    sshPublisher(publishers: [
+                        sshPublisherDesc(configName: 'smanager-sales-server-02',
+                            transfers: [
+                                sshTransfer(
+                                    cleanRemote: false,
+                                    excludes: '',
+                                    execCommand: 'cd /var/www/pos-order && ./bin/deploy.sh master',
+                                    execTimeout: 300000,
+                                    flatten: false,
+                                    makeEmptyDirs: false,
+                                    noDefaultExcludes: false,
+                                    patternSeparator: '[, ]+',
+                                    remoteDirectory: '',
+                                    remoteDirectorySDF: false,
+                                    removePrefix: '',
+                                    sourceFiles: ''
+                                )
+                            ],
+                            usePromotionTimestamp: false,
+                            useWorkspaceInPromotion: false,
+                            verbose: true
+                        )]
+                    )
+                }
+            }
+        }
         stage('CLEAN UP BUILD') {
             when { branch 'master' }
             steps {
@@ -111,6 +141,36 @@ pipeline {
                 script {
                     sshPublisher(publishers: [
                         sshPublisherDesc(configName: 'smanager-sales-server',
+                            transfers: [
+                                sshTransfer(
+                                    cleanRemote: false,
+                                    excludes: '',
+                                    execCommand: 'cd /var/www/pos-order && ./bin/remove_dangling_images.sh',
+                                    execTimeout: 300000,
+                                    flatten: false,
+                                    makeEmptyDirs: false,
+                                    noDefaultExcludes: false,
+                                    patternSeparator: '[, ]+',
+                                    remoteDirectory: '',
+                                    remoteDirectorySDF: false,
+                                    removePrefix: '',
+                                    sourceFiles: ''
+                                )
+                            ],
+                            usePromotionTimestamp: false,
+                            useWorkspaceInPromotion: false,
+                            verbose: true
+                        )]
+                    )
+                }
+            }
+        }
+        stage('DELETE DOCKER DANGLING IMAGES') {
+            when { branch 'master' }
+            steps {
+                script {
+                    sshPublisher(publishers: [
+                        sshPublisherDesc(configName: 'smanager-sales-server-02',
                             transfers: [
                                 sshTransfer(
                                     cleanRemote: false,
