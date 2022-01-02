@@ -12,7 +12,6 @@ class StockManager
     protected $sku;
     protected int $skuId;
     protected Order $order;
-    private string $uri = 'api/v1/partners/{partner_id}/stock-update';
     protected array $data = [];
 
     const STOCK_INCREMENT = 'increment';
@@ -25,10 +24,6 @@ class StockManager
     public function __construct(InventoryServerClient $client)
     {
         $this->client = $client;
-    }
-
-    private function setPartnerInUri(){
-        $this->uri = str_replace('{partner_id}', $this->order->partner_id, $this->uri);
     }
 
     /**
@@ -57,7 +52,6 @@ class StockManager
     public function setOrder(Order $order)
     {
         $this->order = $order;
-        $this->setPartnerInUri();
         return $this;
     }
 
@@ -79,7 +73,7 @@ class StockManager
             'operation' => self::STOCK_INCREMENT,
             'quantity' => $quantity
         ];
-        $this->client->put($this->uri,$data);
+        $this->client->put($this->getUri(),$data);
     }
 
     /**
@@ -95,7 +89,7 @@ class StockManager
             'operation' => self::STOCK_DECREMENT,
             'quantity' => $quantity
         ];
-        $this->client->put($this->uri,$data);
+        $this->client->put($this->getUri(),$data);
     }
 
     public function increaseAndInsertInChunk($quantity)
@@ -119,7 +113,12 @@ class StockManager
     public function updateStock()
     {
         if($this->data){
-            $this->client->put($this->uri,[ 'data' => json_encode($this->data) ]);
+            $this->client->put($this->getUri(),[ 'data' => json_encode($this->data) ]);
         }
+    }
+
+    private function getUri(): string
+    {
+        return 'api/v1/partners/' . $this->order->partner_id . '/stock-update';
     }
 }
