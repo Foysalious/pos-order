@@ -31,7 +31,7 @@ class InventoryStockUpdateOnOrderCreate extends Job implements ShouldQueue
                 $stock_manager->setSkuId($order_sku->sku_id)->decreaseAndInsertInChunk($order_sku->quantity);
             }
         });
-        $stock_manager->updateStock();
+        $stock_manager->setPartnerId($this->order->partner_id)->updateStock();
 
     }
 }

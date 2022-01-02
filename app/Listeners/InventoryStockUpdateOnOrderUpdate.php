@@ -12,7 +12,7 @@ class InventoryStockUpdateOnOrderUpdate
     public function handle(OrderUpdated $event)
     {
         if(!empty($event->getStockUpdateData())) {
-            $this->dispatch(new InventoryStockUpdateForOrderUpdate($event->getStockUpdateData()));
+            $this->dispatch(new InventoryStockUpdateForOrderUpdate($event->getStockUpdateData(), $event->getOrder()->partner_id));
         }
     }
 }

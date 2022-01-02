@@ -12,14 +12,16 @@ class InventoryStockUpdateForOrderUpdate extends Job implements ShouldQueue
 
     private array $stockUpdateData;
     protected int $tries = 1;
+    private int $partnerId;
 
     /**
      * Create a new job instance.
      * @param array $stock_update_data
      */
-    public function __construct(array $stock_update_data)
+    public function __construct(array $stock_update_data, int $partnerId)
     {
         $this->stockUpdateData = $stock_update_data;
+        $this->partnerId = $partnerId;
     }
 
     public function handle(StockManager $stock_manager)
@@ -31,7 +33,7 @@ class InventoryStockUpdateForOrderUpdate extends Job implements ShouldQueue
                 if ($item['operation'] == StockManager::STOCK_DECREMENT)
                     $stock_manager->setSkuId($item['sku_detail']['id'])->decreaseAndInsertInChunk($item['quantity']);
             }
-            $stock_manager->updateStock();
+            $stock_manager->setPartnerId($this->partnerId)->updateStock();
         }
 
     }

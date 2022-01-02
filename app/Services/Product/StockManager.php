@@ -4,15 +4,16 @@ use App\Models\Order;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\SalesChannelIds;
+use Exception;
 
 class StockManager
 {
     /** @var InventoryServerClient */
-    protected InventoryServerClient $client;
-    protected $sku;
-    protected int $skuId;
-    protected Order $order;
-    protected array $data = [];
+    private InventoryServerClient $client;
+    private array $sku;
+    private int $skuId;
+    private int $partnerId;
+    private array $data = [];
 
     const STOCK_INCREMENT = 'increment';
     const STOCK_DECREMENT = 'decrement';
@@ -28,8 +29,9 @@ class StockManager
 
     /**
      * @param array $sku
+     * @return StockManager
      */
-    public function setSku($sku)
+    public function setSku(array $sku): static
     {
         $this->sku = $sku;
         return $this;
@@ -39,7 +41,7 @@ class StockManager
      * @param int $skuId
      * @return StockManager
      */
-    public function setSkuId(int $skuId)
+    public function setSkuId(int $skuId): static
     {
         $this->skuId = $skuId;
         return $this;
@@ -49,16 +51,27 @@ class StockManager
      * @param Order $order
      * @return $this
      */
-    public function setOrder(Order $order)
+    public function setOrder(Order $order): static
     {
         $this->order = $order;
         return $this;
     }
 
-    public function isStockMaintainable()
+    public function isStockMaintainable(): bool
     {
         return !is_null($this->sku['stock']);
     }
+
+    /**
+     * @param int $partnerId
+     * @return StockManager
+     */
+    public function setPartnerId(int $partnerId): StockManager
+    {
+        $this->partnerId = $partnerId;
+        return $this;
+    }
+
 
     /**
      * @param $quantity
@@ -119,6 +132,7 @@ class StockManager
 
     private function getUri(): string
     {
-        return 'api/v1/partners/' . $this->order->partner_id . '/stock-update';
+        if (!$this->partnerId) throw new Exception('Partner id is not set');
+        return 'api/v1/partners/' . $this->partnerId . '/stock-update';
     }
 }
