@@ -45,6 +45,7 @@ use Illuminate\Validation\ValidationException;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Webstore\Order\States as WebStoreStatuses;
 use App\Services\Webstore\Order\StateTags;
+use Illuminate\Support\Facades\Cache;
 
 class OrderService extends BaseService
 {
@@ -59,21 +60,21 @@ class OrderService extends BaseService
     private InvoiceService $invoiceService;
 
     public function __construct(
-        OrderRepositoryInterface                $orderRepository,
-        OrderSkusRepositoryInterface            $orderSkusRepositoryInterface,
-        CustomerRepositoryInterface             $customerRepository,
-        Updater                                 $updater,
-        OrderPaymentRepositoryInterface         $orderPaymentRepository,
-        Creator                                 $creator,
-        protected InventoryServerClient         $client,
-        protected ApiServerClient               $apiServerClient,
-        protected AccessManager                 $accessManager,
-        protected OrderFilter                   $orderSearch,
-        protected StatusChanger                 $orderStatusChanger,
-        InvoiceService                          $invoiceService,
-        protected ApiServerClient               $apiServerClientclient,
-        protected CustomerResolver              $customerResolver,
-        private OrderLogRepositoryInterface     $orderLogRepository
+        OrderRepositoryInterface            $orderRepository,
+        OrderSkusRepositoryInterface        $orderSkusRepositoryInterface,
+        CustomerRepositoryInterface         $customerRepository,
+        Updater                             $updater,
+        OrderPaymentRepositoryInterface     $orderPaymentRepository,
+        Creator                             $creator,
+        protected InventoryServerClient     $client,
+        protected ApiServerClient           $apiServerClient,
+        protected AccessManager             $accessManager,
+        protected OrderFilter               $orderSearch,
+        protected StatusChanger             $orderStatusChanger,
+        InvoiceService                      $invoiceService,
+        protected ApiServerClient           $apiServerClientclient,
+        protected CustomerResolver          $customerResolver,
+        private OrderLogRepositoryInterface $orderLogRepository
     )
     {
         $this->orderRepository = $orderRepository;
@@ -170,12 +171,19 @@ class OrderService extends BaseService
         return $this->success(ResponseMessages::SUCCESS, ['data' => collect($sku_details)]);
     }
 
+    public function getCachedTrendingProducts(int $partner_id)
+    {
+        $key = "trending_products_{$partner_id}";
+        $trending = Cache::get($key);
+        if (!$trending) return $this->getTrendingProducts($partner_id);
+        return $trending;
+    }
+
     public function getTrendingProducts(int $partner_id)
     {
         $trending = $this->orderSkusRepositoryInterface->getTrendingProducts($partner_id);
         $products = $this->getSkuDetailsForWebstore($partner_id, $trending);
         if ($trending->count() > 0) {
-
             if (empty($products->getData()->data)) return $this->error('no product Found');
             else return $products;
         } else return $this->error('no product Found');
