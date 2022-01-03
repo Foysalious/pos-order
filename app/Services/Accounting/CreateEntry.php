@@ -1,6 +1,7 @@
 <?php namespace App\Services\Accounting;
 
 use App\Helper\Miscellaneous\RequestIdentification;
+use App\Models\Customer;
 use App\Repositories\Accounting\AccountingRepository;
 use App\Repositories\Accounting\Constants\EntryTypes;
 use App\Services\Accounting\Constants\Accounts;
@@ -30,7 +31,7 @@ class CreateEntry extends BaseEntry
     public function makeData(): array
     {
         $order_price_details = $this->getOrderPriceDetails(new PriceCalculation());
-        $customer = $this->order->customer ?? null;
+        $customer = Customer::where('id', $this->order->customer_id)->where('partner_id', $this->order->partner_id)->first();
         $data = [
             'created_from' => json_encode($this->withBothModificationFields((new RequestIdentification())->get())),
             'credit_account_key' => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ? Sales::SALES_FROM_ECOM : Sales::SALES_FROM_POS,
