@@ -2,6 +2,7 @@
 
 use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkuRepositoryInterface;
+use App\Models\Customer;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Order\PriceCalculation;
@@ -53,13 +54,13 @@ class CustomerReport
     public function create()
     {
         $orders = $this->orderRepository->where('partner_id', $this->partner_id)
-            ->with(['orderSkus' => function($q){
+            ->with(['orderSkus' => function ($q) {
                 $q->with('discount');
             }, 'payments', 'discounts', 'customer'])
             ->whereNotNull('customer_id')
             ->whereBetween('created_at', [$this->from, $this->to])
             ->get();
-
+        $customers = count($orders) > 0 ? Customer::whereIn('id', $orders->pluck('customer_id')->unique()->toArray())->where('partner_id', $orders[0]->partner_id)->get() : [];
         $report = [];
         $order_calculator = App::make(PriceCalculation::class);
         foreach ($orders as $order) {
@@ -69,8 +70,9 @@ class CustomerReport
             $customer_id = $order->customer_id;
 
             if (!isset($report[$customer_id])) {
+                $customer = $customers->where('id', $customer_id)->first();
                 $report[$customer_id]['customer_id'] = $customer_id;
-                $report[$customer_id]['customer_name'] = $order->customer->name;
+                $report[$customer_id]['customer_name'] = $customer?->name;
                 $report[$customer_id]['order_count'] = 1;
                 $report[$customer_id]['sales_amount'] = $net_bill;
                 $report[$customer_id]['sales_due'] = $due;
