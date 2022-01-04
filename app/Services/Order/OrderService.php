@@ -19,7 +19,7 @@ use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderLogRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
-use App\Interfaces\OrderSkusRepositoryInterface;
+use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Jobs\Order\OrderEmail;
 use App\Jobs\Order\OrderPlacePushNotification;
 use App\Models\Order;
@@ -28,6 +28,9 @@ use App\Services\AccessManager\AccessManager;
 use App\Services\AccessManager\Features;
 use App\Services\APIServerClient\ApiServerClient;
 use App\Services\BaseService;
+use App\Services\Cache\CacheAside;
+use App\Services\Cache\CacheRequest;
+use App\Services\Cache\Product\Trending\TrendingCacheRequest;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Customer\CustomerResolver;
 use App\Services\Delivery\Methods;
@@ -41,6 +44,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Webstore\Order\States as WebStoreStatuses;
@@ -50,7 +54,7 @@ use Illuminate\Support\Facades\Cache;
 class OrderService extends BaseService
 {
     protected $orderRepository, $orderPaymentRepository, $customerRepository;
-    protected $orderSkusRepositoryInterface;
+    protected $OrderSkuRepositoryInterface;
     protected $updater, $orderFilter;
     /** @var Creator */
     protected Creator $creator;
@@ -61,7 +65,7 @@ class OrderService extends BaseService
 
     public function __construct(
         OrderRepositoryInterface            $orderRepository,
-        OrderSkusRepositoryInterface        $orderSkusRepositoryInterface,
+        OrderSkuRepositoryInterface         $OrderSkuRepositoryInterface,
         CustomerRepositoryInterface         $customerRepository,
         Updater                             $updater,
         OrderPaymentRepositoryInterface     $orderPaymentRepository,
@@ -78,7 +82,7 @@ class OrderService extends BaseService
     )
     {
         $this->orderRepository = $orderRepository;
-        $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
+        $this->OrderSkuRepositoryInterface = $OrderSkuRepositoryInterface;
         $this->updater = $updater;
         $this->creator = $creator;
         $this->orderPaymentRepository = $orderPaymentRepository;
@@ -164,7 +168,7 @@ class OrderService extends BaseService
         return $this->success(ResponseMessages::SUCCESS, ['invoice' => $order->invoice]);
     }
 
-    private function getSkuDetailsForWebstore($partner, $sku_ids)
+    public function getSkuDetailsForWebstore($partner, $sku_ids)
     {
         $url = 'api/v1/partners/' . $partner . '/webstore-skus-details?skus=' . json_encode($sku_ids->toArray()) . '&channel_id=' . 2;
         $sku_details = $this->client->get($url)['skus'] ?? [];
@@ -173,23 +177,26 @@ class OrderService extends BaseService
 
     public function getCachedTrendingProducts(int $partner_id)
     {
-        $key = "trending_products_{$partner_id}";
-        $trending = Cache::get($key);
-        if (!$trending) return $this->getTrendingProducts($partner_id);
-        if (empty($trending)) return $this->error('no product Found');
-        return $this->success(ResponseMessages::SUCCESS, ['data' => $trending]);
+        /** @var TrendingCacheRequest $cache_aside */
+        $trending_cache_request = app(TrendingCacheRequest::class);
+        $trending_cache_request->setPartnerId($partner_id);
+        /** @var CacheAside $cache_aside */
+        $cache_aside = app(CacheAside::class);
+        $cache_aside->setCacheRequest($trending_cache_request);
+        $data = $cache_aside->getMyEntity();
+        return $this->success(ResponseMessages::SUCCESS, ['data' => $data]);
     }
 
     public function getTrendingProductList(int $partner_id)
     {
-        $trending = $this->orderSkusRepositoryInterface->getTrendingProducts($partner_id);
+        $trending = $this->OrderSkuRepositoryInterface->getTrendingProducts($partner_id);
         $products = $this->getSkuDetailsForWebstore($partner_id, $trending);
         return $products->getData()->data;
     }
 
     public function getTrendingProducts(int $partner_id)
     {
-        $trending = $this->orderSkusRepositoryInterface->getTrendingProducts($partner_id);
+        $trending = $this->OrderSkuRepositoryInterface->getTrendingProducts($partner_id);
         $products = $this->getSkuDetailsForWebstore($partner_id, $trending);
         if ($trending->count() > 0) {
             if (empty($products->getData()->data)) return $this->error('no product Found');

@@ -13,7 +13,7 @@ use App\Interfaces\PaymentLinkRepositoryInterface;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Interfaces\ReviewImageRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;
-use App\Interfaces\OrderSkusRepositoryInterface;
+use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Interfaces\PartnerRepositoryInterface;
 use App\Repositories\ApiRequestRepository;
 use App\Repositories\OrderDiscountRepository;
@@ -22,7 +22,6 @@ use App\Repositories\OrderLogRepository;
 use App\Repositories\DiscountRepository;
 use App\Repositories\LogRepository;
 use App\Repositories\OrderPaymentsRepository;
-use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Repositories\OrderPaymentRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\PaymentLinkRepository;
@@ -54,7 +53,6 @@ class RepositoryServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->app->singleton(OrderRepositoryInterface::class, OrderRepository::class);
-        $this->app->singleton(OrderSkusRepositoryInterface::class, OrderSkusRepository::class);
         $this->app->singleton(PartnerRepositoryInterface::class, PartnerRepository::class);
         $this->app->singleton(DiscountRepositoryInterface::class, DiscountRepository::class);
         $this->app->singleton(OrderPaymentsRepositoryInterface::class, OrderPaymentsRepository::class);
@@ -63,7 +61,6 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->singleton(ReviewImageRepositoryInterface::class, ReviewImageRepository::class);
         $this->app->singleton(PartnerRepositoryInterface::class,PartnerRepository::class);
         $this->app->singleton(OrderRepositoryInterface::class,OrderRepository::class);
-        $this->app->singleton(OrderSkuRepositoryInterface::class,OrderSkuRepository::class);
         $this->app->singleton(OrderPaymentRepositoryInterface::class,OrderPaymentRepository::class);
         $this->app->singleton(PaymentRepositoryInterface::class,PaymentRepository::class);
         $this->app->singleton(PaymentLinkRepositoryInterface::class,PaymentLinkRepository::class);
@@ -71,6 +68,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->singleton(CustomerRepositoryInterface::class,CustomerRepository::class);
         $this->app->singleton(OrderDiscountRepositoryInterface::class,OrderDiscountRepository::class);
         $this->app->singleton(ApiRequestRepositoryInterface::class,ApiRequestRepository::class);
+        $this->app->singleton(OrderSkuRepositoryInterface::class,OrderSkuRepository::class);
     }
 
 }

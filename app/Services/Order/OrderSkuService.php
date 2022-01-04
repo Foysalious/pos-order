@@ -4,15 +4,15 @@
 namespace App\Services\Order;
 
 
-use App\Interfaces\OrderSkusRepositoryInterface;
+use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Services\BaseService;
 
 class OrderSkuService extends BaseService
 {
-    public $orderSkusRepositoryInterface;
+    public $OrderSkuRepositoryInterface;
 
-    public function __construct(OrderSkusRepositoryInterface $orderSkusRepositoryInterface)
+    public function __construct(OrderSkuRepositoryInterface $OrderSkuRepositoryInterface)
     {
-        $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
+        $this->OrderSkuRepositoryInterface = $OrderSkuRepositoryInterface;
     }
 }

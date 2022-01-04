@@ -5,7 +5,7 @@ use App\Interfaces\DiscountRepositoryInterface;
 use App\Interfaces\LogRepositoryInterface;
 use App\Interfaces\OrderPaymentsRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
-use App\Interfaces\OrderSkusRepositoryInterface;
+use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Interfaces\PartnerRepositoryInterface;
 use App\Services\BaseService;
 use App\Services\ClientServer\SmanagerUser\SmanagerUserServerClient;
@@ -21,8 +21,8 @@ class DataMigrationService extends BaseService
     /** @var OrderRepositoryInterface */
     private OrderRepositoryInterface $orderRepositoryInterface;
     private $orderSkus;
-    /** @var OrderSkusRepositoryInterface */
-    private OrderSkusRepositoryInterface $orderSkusRepositoryInterface;
+    /** @var OrderSkuRepositoryInterface */
+    private OrderSkuRepositoryInterface $OrderSkuRepositoryInterface;
     /** @var OrderPaymentsRepositoryInterface */
     private OrderPaymentsRepositoryInterface $orderPaymentsRepositoryInterface;
     private $orderPayments;
@@ -37,7 +37,7 @@ class DataMigrationService extends BaseService
     public function __construct(PartnerRepositoryInterface $partnerRepositoryInterface,
                                 DiscountRepositoryInterface $discountRepositoryInterface,
                                 OrderRepositoryInterface $orderRepositoryInterface,
-                                OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
+                                OrderSkuRepositoryInterface $OrderSkuRepositoryInterface,
                                 OrderPaymentsRepositoryInterface $orderPaymentsRepositoryInterface,
                                 LogRepositoryInterface $logRepositoryInterface,
                                 private CustomerRepositoryInterface $customerRepository,
@@ -46,7 +46,7 @@ class DataMigrationService extends BaseService
         $this->discountRepositoryInterface = $discountRepositoryInterface;
         $this->partnerRepositoryInterface = $partnerRepositoryInterface;
         $this->orderRepositoryInterface = $orderRepositoryInterface;
-        $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
+        $this->OrderSkuRepositoryInterface = $OrderSkuRepositoryInterface;
         $this->orderPaymentsRepositoryInterface = $orderPaymentsRepositoryInterface;
         $this->logRepositoryInterface = $logRepositoryInterface;
     }
@@ -156,7 +156,7 @@ class DataMigrationService extends BaseService
 
     private function migrateOrderSkusData()
     {
-        $this->orderSkusRepositoryInterface->insert($this->orderSkus);
+        $this->OrderSkuRepositoryInterface->insert($this->orderSkus);
     }
 
     private function migrateOrderPaymentsData()
@@ -167,7 +167,7 @@ class DataMigrationService extends BaseService
     private function migrateOrderDiscountsData()
     {
         foreach ($this->discounts as $discount) {
-            $order_sku = $this->orderSkusRepositoryInterface->where('order_id', $discount['order_id'])
+            $order_sku = $this->OrderSkuRepositoryInterface->where('order_id', $discount['order_id'])
                 ->where('sku_id', $discount['sku_id'])->select('id', 'sku_id')->first();
             $order_discount['order_id'] = $discount['order_id'];
             $order_discount['type'] = $discount['type'];

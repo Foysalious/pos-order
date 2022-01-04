@@ -2,7 +2,7 @@
 
 
 use App\Interfaces\OrderPaymentsRepositoryInterface;
-use App\Interfaces\OrderSkusRepositoryInterface;
+use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Models\OrderPayment;
 
 class OrderPaymentsRepository extends BaseRepository implements OrderPaymentsRepositoryInterface

@@ -27,4 +27,29 @@ class OrderSkuRepository extends BaseRepository implements OrderSkuRepositoryInt
     }
 
 
+    public function updateOrderSkus($partner_id, $skus, $order_id)
+    {
+        foreach ($skus as $skuDetails) {
+            if ($skuDetails->quantity == 0) {
+                $this->model->find($skuDetails->id)->delete();
+                continue;
+            }
+            $this->model->where('id', $skuDetails->id)
+                ->where('order_id', $order_id)
+                ->update([
+                    'name' => $skuDetails->name,
+                    'quantity' => $skuDetails->quantity
+                ]);
+        }
+    }
+
+    public function getTrendingProducts(int $partnerId)
+    {
+        return $this->model->select('sku_id')->whereHas('order', function ($q) use ($partnerId) {
+            $q->where('partner_id', $partnerId)->where('sales_channel_id',2);
+        })->groupBy('sku_id')
+            ->orderByRaw('count(*) DESC')
+            ->whereNotNull('sku_id')
+            ->take(10)->pluck('sku_id');
+    }
 }

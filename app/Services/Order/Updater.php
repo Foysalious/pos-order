@@ -7,7 +7,7 @@ use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderDiscountRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
-use App\Interfaces\OrderSkusRepositoryInterface;
+use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Models\Order;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Discount\Constants\DiscountTypes;
@@ -39,7 +39,7 @@ class Updater
     protected $skus, $existingOrder;
     protected Order $order;
     protected $orderLogCreator;
-    protected $orderRepositoryInterface, $orderSkusRepositoryInterface, $orderPaymentRepository;
+    protected $orderRepositoryInterface, $OrderSkuRepositoryInterface, $orderPaymentRepository;
     protected $orderDiscountRepository;
     protected $orderPaymentCreator;
     protected $paymentMethod;
@@ -53,7 +53,7 @@ class Updater
     private array $stockUpdateEntry = [];
 
     public function __construct(OrderRepositoryInterface              $orderRepositoryInterface,
-                                OrderSkusRepositoryInterface          $orderSkusRepositoryInterface,
+                                OrderSkuRepositoryInterface          $OrderSkuRepositoryInterface,
                                 OrderLogCreator                       $orderLogCreator, OrderDiscountRepositoryInterface $orderDiscountRepository,
                                 OrderPaymentRepositoryInterface       $orderPaymentRepository,
                                 protected Handler                     $discountHandler,
@@ -64,11 +64,11 @@ class Updater
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
-        $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
+        $this->OrderSkuRepositoryInterface = $OrderSkuRepositoryInterface;
         $this->orderLogCreator = $orderLogCreator;
-        $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
+        $this->OrderSkuRepositoryInterface = $OrderSkuRepositoryInterface;
         $this->orderPaymentRepository = $orderPaymentRepository;
-        $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
+        $this->OrderSkuRepositoryInterface = $OrderSkuRepositoryInterface;
         $this->orderDiscountRepository = $orderDiscountRepository;
     }
 

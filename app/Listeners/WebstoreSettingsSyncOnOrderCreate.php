@@ -2,7 +2,7 @@
 
 
 use App\Events\OrderPlaceTransactionCompleted;
-use App\Jobs\TrendingProductsCacheJob;
+use App\Jobs\Product\CacheTrendingProductsJob;
 use App\Jobs\WebStoreSettingsSyncJob;
 use App\Services\Accounting\UpdateEntry;
 use App\Services\Webstore\SettingsSync\WebStoreSettingsSyncTypes;
@@ -29,6 +29,6 @@ class WebstoreSettingsSyncOnOrderCreate
      */
     public function handle(OrderPlaceTransactionCompleted $event)
     {
-        TrendingProductsCacheJob::withChain([new WebStoreSettingsSyncJob($event->getOrder()->partner_id, WebStoreSettingsSyncTypes::Order, $event->getOrder()->id)])->dispatch($event->getOrder()->partner_id);
+        CacheTrendingProductsJob::withChain([new WebStoreSettingsSyncJob($event->getOrder()->partner_id, WebStoreSettingsSyncTypes::Order, $event->getOrder()->id)])->dispatch($event->getOrder()->partner_id);
     }
 }
