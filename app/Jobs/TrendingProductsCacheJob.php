@@ -36,7 +36,7 @@ class TrendingProductsCacheJob implements ShouldQueue
         if ($this->attempts() > 2) return;
         /** @var OrderService $service */
         $service = app(OrderService::class);
-        $products = $service->getTrendingProducts($this->partnerId);
+        $products = $service->getTrendingProductList($this->partnerId);
         $key = "trending_products_{$this->partnerId}";
         Cache::put($key, $products, now()->addHours(24));
     }

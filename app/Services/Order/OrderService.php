@@ -176,7 +176,15 @@ class OrderService extends BaseService
         $key = "trending_products_{$partner_id}";
         $trending = Cache::get($key);
         if (!$trending) return $this->getTrendingProducts($partner_id);
-        return $trending;
+        if (empty($trending)) return $this->error('no product Found');
+        return $this->success(ResponseMessages::SUCCESS, ['data' => $trending]);
+    }
+
+    public function getTrendingProductList(int $partner_id)
+    {
+        $trending = $this->orderSkusRepositoryInterface->getTrendingProducts($partner_id);
+        $products = $this->getSkuDetailsForWebstore($partner_id, $trending);
+        return $products->getData()->data;
     }
 
     public function getTrendingProducts(int $partner_id)
