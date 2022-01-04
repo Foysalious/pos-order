@@ -54,7 +54,7 @@ class SalesReport
         $orders = $this->orderRepository->builder()->where('partner_id', $this->partner_id)
             ->with(['orderSkus' => function($q){
                 $q->with('discount');
-            }, 'payments', 'discounts', 'customer'])
+            }, 'payments', 'discounts'])
             ->whereBetween('created_at', [$from, $to])
             ->get();
         $paid = 0;
@@ -79,16 +79,16 @@ class SalesReport
 
             $due = $due + $this->orderCalculation->getDue();
             $paid = $paid + $this->orderCalculation->getPaid();
-            if ($this->orderCalculation->getPaid() > 0)
+            if (!is_null($order->paid_at))
                 $paid_count = $paid_count + 1;
             if ($this->orderCalculation->getDue() > 0)
                 $due_count = $due_count + 1;
         }
-        $data['paid'] = $paid;
+        $data['paid'] = (float) formatTakaToDecimal($paid);
         $data['paid_count'] = $paid_count;
-        $data['due'] = $due;
+        $data['due'] = (float) formatTakaToDecimal($due);
         $data['due_count'] = $due_count;
-        $data['net_bill'] = $net_bill;
+        $data['net_bill'] = (float) formatTakaToDecimal($net_bill);
         $data['net_bill_count'] = $order_count;
         $data['order_count'] = $order_count;
         $data['sales_stat_breakdown'] = $time_duration;
