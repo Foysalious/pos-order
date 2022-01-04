@@ -577,7 +577,7 @@ class Updater
 
     private function setDeliveryNameAndMobile()
     {
-        $customer = $this->customerRepository->where('id', $this->customer_id)->first();
+        $customer = $this->customerRepository->where('id', $this->customer_id)->where('partner_id',$this->partner_id)->first();
         $this->delivery_name = $this->delivery_name ?? $customer->name ?? null;
         $this->delivery_mobile = $this->delivery_mobile ?? $customer->mobile ?? null;
     }
