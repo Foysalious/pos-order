@@ -20,8 +20,8 @@ class EntryOnOrderCreate extends Job implements ShouldQueue
      */
     public function __construct(Order $order)
     {
-        $this->connection = 'accounting_queue';
-        $this->queue = 'accounting_queue';
+        $this->connection = 'pos_order_accounting_queue';
+        $this->queue = 'pos_order_accounting_queue';
         $this->order = $order;
     }
 

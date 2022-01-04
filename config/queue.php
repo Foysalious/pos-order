@@ -69,10 +69,10 @@ return [
             'block_for' => null,
             'after_commit' => false,
         ],
-        'accounting_queue' => [
+        'pos_order_accounting_queue' => [
             'driver' => 'redis',
             'connection' => 'default',
-            'queue' => 'accounting_queue',
+            'queue' => 'pos_order_accounting_queue',
             'retry_after' => 90,
             'block_for' => null,
             'after_commit' => false,
