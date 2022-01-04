@@ -142,14 +142,16 @@ class OrderWithProductResource extends JsonResource
 
     private function getOrderCustomer()
     {
-        if (empty($this->customer)) {
+        /** @var Order $this */
+        $customer = $this->getCustomer();
+        if (is_null($customer)) {
             return null;
         } else {
             return [
-                'id' => $this->customer->id,
-                'name' => $this->delivery_name ?? $this->customer->name,
-                'mobile' => $this->delivery_mobile ?? $this->customer->mobile,
-                'pro_pic' => $this->customer->pro_pic,
+                'id' => $customer->id,
+                'name' => $this->delivery_name ?? $customer->name,
+                'mobile' => $this->delivery_mobile ?? $customer->mobile,
+                'pro_pic' => $customer->pro_pic,
                 'address' => $this->delivery_address,
             ];
         }

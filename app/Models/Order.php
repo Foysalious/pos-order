@@ -116,4 +116,9 @@ class Order extends BaseModel
         if (!$this->delivery_vendor) return null;
         return json_decode($this->delivery_vendor)->name;
     }
+
+    public function getCustomer()
+    {
+        return Customer::where('id',$this->customer_id)->where('partner_id', $this->partner_id)->first();
+    }
 }
