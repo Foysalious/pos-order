@@ -20,6 +20,8 @@ class EntryOnOrderCustomerUpdate extends Job implements ShouldQueue
      */
     public function __construct(Order $order)
     {
+        $this->connection = 'accounting_queue';
+        $this->queue = 'accounting_queue';
         $this->order = $order;
     }
 
