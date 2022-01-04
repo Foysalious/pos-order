@@ -14,6 +14,7 @@ class ReviewController extends Controller
     {
         $this->reviewService = $reviewService;
     }
+
     public function index(Request $request, $product_id)
     {
         $rating = $request->rating;
@@ -21,13 +22,13 @@ class ReviewController extends Controller
         return $this->reviewService->getProductReviews($request, $rating, $orderBy, $product_id);
     }
 
-    public function getReviewsByProductIds(Request $request)
+    public function getReviewsByProductIds($partner_id, Request $request)
     {
-        $productIds = !is_array($request->product_ids) ? json_decode($request->product_ids,true) : $request->product_ids ;
-        return $this->reviewService->getReviewsByProductIds($productIds);
+        $productIds = !is_array($request->product_ids) ? json_decode($request->product_ids, true) : $request->product_ids;
+        return $this->reviewService->getReviewsByProductIds($partner_id,$productIds);
     }
 
-    public function getCustomerReviewList(int $partner_id,string $customer_id, Request $request)
+    public function getCustomerReviewList(int $partner_id, string $customer_id, Request $request)
     {
         $request->validate([
             'order' => 'sometimes|in:asc,desc',
@@ -80,7 +81,7 @@ class ReviewController extends Controller
         return $this->reviewService->create($request, $customer_id, (int)$order_id);
     }
 
-    public function getProductIdsByRating($partner_id,Request $request)
+    public function getProductIdsByRating($partner_id, Request $request)
     {
         return $this->reviewService->setPartnerId($partner_id)->setRatings($request->ratings)->getProductIdsByRating();
     }

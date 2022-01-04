@@ -62,9 +62,9 @@ class ReviewService extends BaseService
         return $this->success(ResponseMessages::SUCCESS, ['reviews' => $reviews, 'review_statistics'=> $review_statistics]);
     }
 
-    public function getReviewsByProductIds(array $productIds): object
+    public function getReviewsByProductIds($partner_id,array $productIds): object
     {
-        $reviews = $this->reviewRepositoryInterface->getReviewsByProductIds($productIds);
+        $reviews = $this->reviewRepositoryInterface->getReviewsByProductIds($partner_id,$productIds);
         $reviews = AverageRatingAndRatingCountResource::collection($reviews);
         return $this->success(ResponseMessages::SUCCESS, ['reviews' => $reviews]);
     }

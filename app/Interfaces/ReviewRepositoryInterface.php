@@ -6,7 +6,7 @@ interface ReviewRepositoryInterface extends BaseRepositoryInterface
 
     public function getReviews($offset, $limit, $product_id, $rating, $orderBy);
 
-    public function getReviewsByProductIds(array $productIds);
+    public function getReviewsByProductIds($partner_id, array $productIds);
 
     public function getCustomerReviews(string $customer_id, int $offset, int $limit, $order);
 
