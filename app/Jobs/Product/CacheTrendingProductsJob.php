@@ -35,12 +35,14 @@ class CacheTrendingProductsJob implements ShouldQueue
     public function handle()
     {
         if ($this->attempts() > 2) return;
-        /** @var TrendingCacheRequest $cache_aside */
+        /** @var TrendingCacheRequest $trending_cache_request */
         $trending_cache_request = app(TrendingCacheRequest::class);
         $trending_cache_request->setPartnerId($this->partnerId);
         /** @var CacheAside $cache_aside */
         $cache_aside = app(CacheAside::class);
         $cache_aside->setCacheRequest($trending_cache_request);
+        $cache_aside->deleteEntity();
         $cache_aside->getMyEntity();
+
     }
 }
