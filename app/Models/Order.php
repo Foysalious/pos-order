@@ -22,7 +22,7 @@ class Order extends BaseModel
 
     public function customer()
     {
-        return $this->belongsTo(Customer::class, 'customer_id', 'id')->where('partner_id', $this->partner_id);
+        return $this->belongsTo(Customer::class, 'customer_id', 'id');
     }
 
     public function partner()
