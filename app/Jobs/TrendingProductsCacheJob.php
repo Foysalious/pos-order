@@ -38,6 +38,6 @@ class TrendingProductsCacheJob implements ShouldQueue
         $service = app(OrderService::class);
         $products = $service->getTrendingProducts($this->partnerId);
         $key = "trending_products_{$this->partnerId}";
-        Cache::put($key,$products);
+        Cache::put($key, $products);
     }
 }

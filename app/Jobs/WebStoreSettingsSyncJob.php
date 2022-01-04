@@ -16,7 +16,6 @@ class WebStoreSettingsSyncJob extends Job implements ShouldQueue
     use Dispatchable, InteractsWithQueue, SerializesModels;
 
 
-
     public function __construct(int $partner_id, string $type, int $type_id)
     {
         $this->type = $type;
@@ -31,5 +30,4 @@ class WebStoreSettingsSyncJob extends Job implements ShouldQueue
         $service = app(WebStoreSettingsSyncService::class);
         $service->setPartner($this->partnerId)->setType($this->type)->setTypeId($this->typeId)->sync();
     }
-
 }

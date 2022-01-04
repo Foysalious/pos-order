@@ -29,7 +29,6 @@ class WebstoreSettingsSyncOnOrderCreate
      */
     public function handle(OrderPlaceTransactionCompleted $event)
     {
-        dispatch(new TrendingProductsCacheJob($event->getOrder()->partner_id));
-        dispatch(new WebStoreSettingsSyncJob($event->getOrder()->partner_id, WebStoreSettingsSyncTypes::Order, $event->getOrder()->id));
+        TrendingProductsCacheJob::withChain([new WebStoreSettingsSyncJob($event->getOrder()->partner_id, WebStoreSettingsSyncTypes::Order, $event->getOrder()->id)])->dispatch($event->getOrder()->partner_id);
     }
 }
