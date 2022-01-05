@@ -13,6 +13,7 @@ use App\Services\Order\PriceCalculation;
 
 class OrderDueEntry extends BaseEntry
 {
+    const REFUND = 'refund';
     protected float $paidAmount;
 
     /**
@@ -51,7 +52,7 @@ class OrderDueEntry extends BaseEntry
             'delivery_charge' => (double)$this->order->delivery_charge ?? 0,
             'bank_transaction_charge' => (double)$this->order->bank_transaction_charge ?? 0,
             'interest' => (double)$this->order->interest ?? 0,
-            'note' => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ? SalesChannel::WEBSTORE : SalesChannel::POS,
+            'note' => self::REFUND,
             'entry_at' => $this->order->updated_at->format('Y-m-d H:i:s'),
             'reconcile_amount' => $this->paidAmount,
 //            'updated_entry' => 'to_be_decided',
