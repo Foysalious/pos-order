@@ -174,6 +174,15 @@ return [
             'tries' => 1,
             'nice' => 0,
         ],
+        'pos-order-accounting-queue' => [
+            'connection' => 'pos_order_accounting_queue',
+            'queue' => ['pos_order_accounting_queue'],
+            'balance' => 'auto',
+            'maxProcesses' => 1,
+            'memory' => 128,
+            'tries' => 1,
+            'nice' => 0,
+        ],
     ],
 
     'environments' => [
@@ -183,10 +192,18 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
+            'pos-order-accounting-queue' => [
+                'maxProcesses' => 10,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 3,
+            ],
         ],
 
         'local' => [
             'supervisor-1' => [
+                'maxProcesses' => 3,
+            ],
+            'pos-order-accounting-queue' => [
                 'maxProcesses' => 3,
             ],
         ],
