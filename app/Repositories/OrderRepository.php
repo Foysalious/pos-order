@@ -39,7 +39,7 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
     {
         return $this->model->where('partner_id', $partnerId)->with(['orderSkus' => function ($q) {
             $q->with('discount');
-        }, 'discounts', 'payments'])->with('orderSkus')->find($orderId);
+        }, 'discounts', 'payments'])->find($orderId);
     }
 
     public function getOrderStatusStatByPartner(int $partnerId, $salesChannelIds = [SalesChannelIds::POS, SalesChannelIds::WEBSTORE])

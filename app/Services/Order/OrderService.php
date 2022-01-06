@@ -183,7 +183,7 @@ class OrderService extends BaseService
 
     public function getOrderInvoice(int $partner_id, int $order_id): JsonResponse
     {
-        $order = $this->orderRepository->where('partner_id', $partner_id)->find($order_id);
+        $order = $this->orderRepository->getOrderDetailsByPartner($partner_id, $order_id);
         if (!$order) return $this->error('No Order Found', 404);
         if ($order->invoice == null) {
             return $this->invoiceService->setOrder($order)->generateInvoice();
