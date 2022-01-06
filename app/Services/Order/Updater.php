@@ -15,6 +15,7 @@ use App\Services\Discount\Handler;
 use App\Services\EMI\Calculations as EmiCalculation;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
+use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Order\Refund\AddProductInOrder;
 use App\Services\Order\Refund\DeleteProductFromOrder;
@@ -560,6 +561,9 @@ class Updater
     public function updateCustomer($event_fire = false)
     {
         if (is_null($this->order->paid_at)) {
+            throw new OrderException(trans('order.update.no_customer_update'), 400);
+        }
+        if($this->order->sales_channel_id == SalesChannelIds::WEBSTORE && !$this->customer_id) {
             throw new OrderException(trans('order.update.no_customer_update'), 400);
         }
         $previous_order = $this->setExistingOrder();
