@@ -13,6 +13,7 @@ use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\PriceCalculation;
 use App\Services\OrderSku\BatchManipulator;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Redis;
 
 class CreateEntry extends BaseEntry
 {
@@ -25,6 +26,7 @@ class CreateEntry extends BaseEntry
     public function create()
     {
         $data = $this->makeData();
+        Redis::set('order_' . $this->order->id, json_encode($data));
         $this->accountingRepository->storeEntry($this->order->partner_id, $data);
     }
 
@@ -49,7 +51,7 @@ class CreateEntry extends BaseEntry
             'interest' => (double)$this->order->interest ?? 0,
             'inventory_products' => $this->getOrderedItemsData(),
         ];
-        return array_merge($data,$this->makeCustomerData($customer));
+        return array_merge($data, $this->makeCustomerData($customer));
     }
 
     private function getOrderedItemsData(): bool|string|null
@@ -70,9 +72,9 @@ class CreateEntry extends BaseEntry
                         'id' => $sku_details[$sku->sku_id]['product_id'],
                         'sku_id' => $sku->sku_id,
                         'name' => $sku->name,
-                        'unit_price' => (double) $batch['cost'] ?? $sku->unit_price,
+                        'unit_price' => (double)$batch['cost'] ?? $sku->unit_price,
                         'selling_price' => (double)$sku->unit_price ?? $sku->unit_price,
-                        'quantity' => (double) $batch['quantity'] ?? $sku->quantity
+                        'quantity' => (double)$batch['quantity'] ?? $sku->quantity
                     ];
                 }
 
@@ -82,7 +84,7 @@ class CreateEntry extends BaseEntry
                     'name' => 'Custom Amount',
                     'unit_price' => (double)$sku->unit_price,
                     'selling_price' => (double)$sku->unit_price,
-                    'quantity' => (double) $sku->quantity
+                    'quantity' => (double)$sku->quantity
                 ];
             }
         }
