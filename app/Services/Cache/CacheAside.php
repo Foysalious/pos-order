@@ -3,6 +3,10 @@
 use Illuminate\Contracts\Cache\Repository;
 use Cache;
 use Illuminate\Support\Facades\Redis;
+use App\Services\Cache\CacheObject;
+use App\Services\Cache\CacheFactory;
+use App\Services\Cache\CacheRequest;
+use App\Services\Cache\DataStoreObject;
 use App\Services\Cache\Exceptions\CacheGenerationException;
 use App\Services\Cache\Exceptions\CacheStoreException;
 use Throwable;
@@ -59,7 +63,7 @@ class CacheAside
     /**
      * @return array|null
      */
-    public function getGeneratedEntity()
+    public function getMyEntity()
     {
         $data = null;
         try {
@@ -73,6 +77,16 @@ class CacheAside
         } catch (CacheStoreException $exception) {
             return $data;
         }
+    }
+
+    /**
+     * @return array|null
+     */
+    public function getReGeneratedEntity()
+    {
+        $data = $this->dataStoreObject->generate();
+        $this->setOnCache($data);
+        return $data;
     }
 
     /**
@@ -97,7 +111,7 @@ class CacheAside
 
     public function deleteEntity()
     {
-        $regex = config('app.name') . "_cache:" . $this->cacheObject->getAllKeysRegularExpression();
+        $regex = "laravel:" . $this->cacheObject->getAllKeysRegularExpression();
         $keys = Redis::keys($regex);
         foreach ($keys as $key) {
             Redis::del($key);

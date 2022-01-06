@@ -11,7 +11,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use function app;
 
 
-class CacheTrendingProductsJob implements ShouldQueue
+class CacheTrendingProductsJob
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
@@ -41,7 +41,7 @@ class CacheTrendingProductsJob implements ShouldQueue
         /** @var CacheAside $cache_aside */
         $cache_aside = app(CacheAside::class);
         $cache_aside->setCacheRequest($trending_cache_request);
-        $cache_aside->getGeneratedEntity();
-
+        $cache_aside->getReGeneratedEntity();
+        $cache_aside->getMyEntity();
     }
 }
