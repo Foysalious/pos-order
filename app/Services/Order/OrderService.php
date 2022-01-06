@@ -183,7 +183,9 @@ class OrderService extends BaseService
         /** @var CacheAside $cache_aside */
         $cache_aside = app(CacheAside::class);
         $cache_aside->setCacheRequest($trending_cache_request);
-        $data = $cache_aside->getMyEntity();
+        $data = $cache_aside->getGeneratedEntity();
+        if (!$data) return $this->getTrendingProducts($partner_id);
+        if (empty($data)) return $this->error('no product Found');
         return $this->success(ResponseMessages::SUCCESS, ['data' => $data]);
     }
 

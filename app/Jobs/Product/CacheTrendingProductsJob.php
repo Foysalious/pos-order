@@ -41,8 +41,7 @@ class CacheTrendingProductsJob implements ShouldQueue
         /** @var CacheAside $cache_aside */
         $cache_aside = app(CacheAside::class);
         $cache_aside->setCacheRequest($trending_cache_request);
-        $cache_aside->deleteEntity();
-        $cache_aside->getMyEntity();
+        $cache_aside->getGeneratedEntity();
 
     }
 }

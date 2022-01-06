@@ -59,7 +59,7 @@ class CacheAside
     /**
      * @return array|null
      */
-    public function getMyEntity()
+    public function getGeneratedEntity()
     {
         $data = null;
         try {
