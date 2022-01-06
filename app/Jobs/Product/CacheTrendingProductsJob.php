@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Product;
 
+use App\Jobs\Job;
 use App\Services\Cache\CacheAside;
 use App\Services\Cache\Product\Trending\TrendingCacheRequest;
 use Illuminate\Bus\Queueable;
@@ -11,7 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use function app;
 
 
-class CacheTrendingProductsJob
+class CacheTrendingProductsJob extends Job implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
