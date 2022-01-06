@@ -21,6 +21,7 @@ class AccountingRepository extends BaseRepository
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($partner_id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
+            app('sentry')->captureException($e);
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
@@ -33,7 +34,7 @@ class AccountingRepository extends BaseRepository
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function updateEntryBySource(array $data, int $order_id, int $partner_id, string $sourceType='pos')
+    public function updateEntryBySource(array $data, int $order_id, int $partner_id, string $sourceType = 'pos')
     {
 
         $url = "api/entries/source/" . $sourceType . '/' . $order_id;
