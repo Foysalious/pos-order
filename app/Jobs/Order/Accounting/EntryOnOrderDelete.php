@@ -12,7 +12,7 @@ class EntryOnOrderDelete  extends Job implements ShouldQueue
     use InteractsWithQueue, SerializesModels;
 
     private Order $order;
-    protected int $tries = 1;
+    protected int $tries = 3;
 
     public function __construct(Order $order)
     {

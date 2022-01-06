@@ -173,6 +173,7 @@ return [
             'memory' => 128,
             'tries' => 1,
             'nice' => 0,
+            'timeout' => 120,
         ],
         'pos-order-accounting-queue' => [
             'connection' => 'pos_order_accounting_queue',
@@ -180,8 +181,9 @@ return [
             'balance' => 'auto',
             'maxProcesses' => 1,
             'memory' => 128,
-            'tries' => 1,
+            'tries' => 3,
             'nice' => 0,
+            'timeout' => 180,
         ],
     ],
 

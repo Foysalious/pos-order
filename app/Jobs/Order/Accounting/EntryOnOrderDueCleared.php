@@ -14,7 +14,7 @@ class EntryOnOrderDueCleared  extends Job implements ShouldQueue
 
     private Order $order;
     private float $paidAmount;
-    protected int $tries = 1;
+    protected int $tries = 3;
 
     public function __construct(Order $order, float $paidAmount)
     {

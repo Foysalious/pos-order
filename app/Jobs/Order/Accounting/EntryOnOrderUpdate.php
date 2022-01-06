@@ -14,7 +14,7 @@ class EntryOnOrderUpdate extends Job implements ShouldQueue
 
     private Order $order;
     private array $orderProductChangeData;
-    protected int $tries = 1;
+    protected int $tries = 3;
 
     /**
      * Create a new job instance.
