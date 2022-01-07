@@ -181,7 +181,7 @@ return [
             'balance' => 'auto',
             'maxProcesses' => 1,
             'memory' => 128,
-            'tries' => 3,
+            'tries' => 1,
             'nice' => 0,
             'timeout' => 180,
         ],
