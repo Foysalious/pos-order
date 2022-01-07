@@ -18,12 +18,7 @@ class AccountingRepository extends BaseRepository
     public function storeEntry(int $partner_id, array $data)
     {
         $url = "api/entries/";
-        try {
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($partner_id)->post($url, $data);
-        } catch (AccountingEntryServerError $e) {
-            app('sentry')->captureException($e);
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-        }
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($partner_id)->post($url, $data);
     }
 
     /**
@@ -38,11 +33,7 @@ class AccountingRepository extends BaseRepository
     {
 
         $url = "api/entries/source/" . $sourceType . '/' . $order_id;
-        try {
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($partner_id)->post($url, $data);
-        } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-        }
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($partner_id)->post($url, $data);
     }
 
     /**
@@ -63,10 +54,6 @@ class AccountingRepository extends BaseRepository
     public function deleteEntryBySource(int $partner_id, $source_type, $source_id)
     {
         $url = "api/entries/source/" . $source_type . '/' . $source_id;
-        try {
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($partner_id)->delete($url);
-        } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-        }
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($partner_id)->delete($url);
     }
 }

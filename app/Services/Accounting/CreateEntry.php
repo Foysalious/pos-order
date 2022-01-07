@@ -26,7 +26,6 @@ class CreateEntry extends BaseEntry
     public function create()
     {
         $data = $this->makeData();
-        Redis::set('order_' . $this->order->id, json_encode($data));
         $this->accountingRepository->storeEntry($this->order->partner_id, $data);
     }
 
