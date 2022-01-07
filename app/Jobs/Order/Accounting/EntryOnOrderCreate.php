@@ -27,7 +27,11 @@ class EntryOnOrderCreate extends Job implements ShouldQueue
 
     public function handle(CreateEntry $createEntry)
     {
-        if ($this->attempts() > 2) return;
-        $createEntry->setOrder($this->order)->create();
+        try {
+            $createEntry->setOrder($this->order)->create();
+        } catch (\Throwable $e) {
+            throw $e;
+        }
+
     }
 }
