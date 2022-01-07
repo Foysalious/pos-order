@@ -12,7 +12,6 @@ class EntryOnOrderCreate extends Job implements ShouldQueue
     use InteractsWithQueue, SerializesModels;
 
     private Order $order;
-    protected int $tries = 3;
 
     /**
      * Create a new job instance.
@@ -27,11 +26,6 @@ class EntryOnOrderCreate extends Job implements ShouldQueue
 
     public function handle(CreateEntry $createEntry)
     {
-        try {
-            $createEntry->setOrder($this->order)->create();
-        } catch (\Throwable $e) {
-            throw $e;
-        }
-
+        $createEntry->setOrder($this->order)->create();
     }
 }

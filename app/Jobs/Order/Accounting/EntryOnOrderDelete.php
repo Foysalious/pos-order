@@ -12,7 +12,6 @@ class EntryOnOrderDelete  extends Job implements ShouldQueue
     use InteractsWithQueue, SerializesModels;
 
     private Order $order;
-    protected int $tries = 3;
 
     public function __construct(Order $order)
     {
@@ -23,7 +22,6 @@ class EntryOnOrderDelete  extends Job implements ShouldQueue
 
     public function handle(DeleteEntry $deleteEntry)
     {
-        if ($this->attempts() > 2) return;
         $deleteEntry->setOrder($this->order)->delete();
     }
 }

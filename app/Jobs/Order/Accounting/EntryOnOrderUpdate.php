@@ -14,7 +14,6 @@ class EntryOnOrderUpdate extends Job implements ShouldQueue
 
     private Order $order;
     private array $orderProductChangeData;
-    protected int $tries = 3;
 
     /**
      * Create a new job instance.
@@ -34,7 +33,6 @@ class EntryOnOrderUpdate extends Job implements ShouldQueue
      */
     public function handle(UpdateEntry $updateEntry)
     {
-        if ($this->attempts() > 2) return;
         $updateEntry
             ->setOrder($this->order)
             ->setOrderProductChangeData($this->orderProductChangeData)

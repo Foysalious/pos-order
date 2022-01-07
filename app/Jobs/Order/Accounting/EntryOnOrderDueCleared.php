@@ -14,7 +14,6 @@ class EntryOnOrderDueCleared  extends Job implements ShouldQueue
 
     private Order $order;
     private float $paidAmount;
-    protected int $tries = 3;
 
     public function __construct(Order $order, float $paidAmount)
     {
@@ -29,7 +28,6 @@ class EntryOnOrderDueCleared  extends Job implements ShouldQueue
      */
     public function handle(OrderDueEntry $dueEntry)
     {
-        if ($this->attempts() > 2) return;
         $dueEntry->setOrder($this->order)->setPaidAmount($this->paidAmount)->create();
     }
 }

@@ -12,7 +12,6 @@ class EntryOnOrderCustomerUpdate extends Job implements ShouldQueue
     use InteractsWithQueue, SerializesModels;
 
     private Order $order;
-    protected int $tries = 3;
 
     /**
      * Create a new job instance.
@@ -27,7 +26,6 @@ class EntryOnOrderCustomerUpdate extends Job implements ShouldQueue
 
     public function handle(CustomerUpdateEntry $customerUpdateEntry)
     {
-        if ($this->attempts() > 2) return;
         $customerUpdateEntry->setOrder($this->order)->customerUpdateEntry();
     }
 }
