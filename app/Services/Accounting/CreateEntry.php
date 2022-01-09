@@ -2,6 +2,7 @@
 
 use App\Helper\Miscellaneous\RequestIdentification;
 use App\Models\Customer;
+use App\Models\EventNotification;
 use App\Repositories\Accounting\AccountingRepository;
 use App\Repositories\Accounting\Constants\EntryTypes;
 use App\Services\Accounting\Constants\Accounts;
@@ -13,7 +14,6 @@ use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\PriceCalculation;
 use App\Services\OrderSku\BatchManipulator;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Redis;
 
 class CreateEntry extends BaseEntry
 {
@@ -26,7 +26,7 @@ class CreateEntry extends BaseEntry
     public function create()
     {
         $data = $this->makeData();
-        $this->accountingRepository->storeEntry($this->order->partner_id, $data);
+        $this->accountingRepository->setOrder($this->order)->storeEntry($this->order->partner_id, $data);
     }
 
     public function makeData(): array
@@ -59,7 +59,7 @@ class CreateEntry extends BaseEntry
         $ordered_skus = $this->order->orderSkus()->get();
         $skus_ids = $ordered_skus->where('sku_id', '<>', null)->pluck('sku_id')->toArray();
         if ($skus_ids) {
-            $sku_details = collect($this->getSkuDetails($skus_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
+//            $sku_details = collect($this->getSkuDetails($skus_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
         }
         /** @var BatchManipulator $mapper */
         $mapper = App::make(BatchManipulator::class);
@@ -68,7 +68,7 @@ class CreateEntry extends BaseEntry
                 $batches = $mapper->setBatchDetail($sku->batch_detail)->getBatchDetails();
                 foreach ($batches as $batch) {
                     $data [] = [
-                        'id' => $sku_details[$sku->sku_id]['product_id'],
+                        'id' => 400,
                         'sku_id' => $sku->sku_id,
                         'name' => $sku->name,
                         'unit_price' => (double)$batch['cost'] ?? $sku->unit_price,

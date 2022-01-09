@@ -8,7 +8,6 @@ class Request extends DataTransferObject
 {
     public string $url;
     public string $method;
-    public ?string $headers;
-    public ?string $body;
-    public ?string $params;
+    public ?array $headers;
+    public ?array $json;
 }

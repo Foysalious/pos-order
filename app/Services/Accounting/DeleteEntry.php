@@ -7,6 +7,6 @@ class DeleteEntry extends BaseEntry
 {
     public function delete()
     {
-        $this->accountingRepository->deleteEntryBySource($this->order->partner_id,EntryTypes::POS, $this->order->id);
+        $this->accountingRepository->setOrder($this->order)->deleteEntryBySource(EntryTypes::POS);
     }
 }

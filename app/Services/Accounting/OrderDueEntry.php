@@ -31,7 +31,9 @@ class OrderDueEntry extends BaseEntry
     public function create()
     {
         $data = $this->makeData();
-        $this->accountingRepository->updateEntryBySource($data, $this->order->id, $this->order->partner_id);
+        $this->accountingRepository
+            ->setOrder($this->order)
+            ->updateEntryBySource($data, $this->order->id, $this->order->partner_id);
     }
 
     private function makeData(): array

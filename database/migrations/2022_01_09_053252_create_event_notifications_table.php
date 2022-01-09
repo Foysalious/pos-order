@@ -24,7 +24,7 @@ class CreateEventNotificationsTable extends Migration
                 ->restrictOnUpdate();
             $table->enum('service', Services::get())->index();
             $table->enum('event', Events::get())->index();
-            $table->enum('status', Statuses::get())->index();
+            $table->enum('status', Statuses::get())->default(Statuses::PENDING)->index();
             $table->json('request')->nullable();
             $table->json('response')->nullable();
             $table->timestamps();
