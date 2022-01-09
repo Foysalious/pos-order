@@ -66,6 +66,7 @@ class CreateEntry extends BaseEntry
         foreach ($ordered_skus as $sku) {
             if (!is_null($sku->sku_id)) {
                 $batches = $mapper->setBatchDetail($sku->batch_detail)->getBatchDetails();
+                $batches = is_null($batches) ? [['cost' => $sku->unit_price, 'quantity' => $sku->quantity]] : $batches;
                 foreach ($batches as $batch) {
                     $data [] = [
                         'id' => $sku_details[$sku->sku_id]['product_id'],
