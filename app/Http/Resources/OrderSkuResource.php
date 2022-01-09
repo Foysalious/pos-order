@@ -15,7 +15,7 @@ class OrderSkuResource extends JsonResource
      */
     public function toArray($request)
     {
-        $sku_details = json_decode($this->details);
+        $sku_details = json_decode($this->details, true);
         $default_product_app_thumb = config('s3.url') . "images/pos/services/thumbs/default.jpg";
         $unit_discount = $this->discount ? ($this->quantity > 0 ? (float) $this->discount->amount / $this->quantity : (float) $this->discount->amount)  : 0.0;
         $unit_discounted_price_without_vat = $this->unit_price - $unit_discount;
