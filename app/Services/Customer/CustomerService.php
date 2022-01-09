@@ -75,11 +75,12 @@ class CustomerService extends BaseService
     }
 
     /**
+     * Orders are soft deleted from customer model
      * @throws Exception
      */
     public function delete(int $partner_id, int|string $customer_id): JsonResponse
     {
-        $customer = $this->customerRepository->where([['id', $customer_id], ['partner_id', $partner_id]])->first();
+        $customer = Customer::where([['id', $customer_id], ['partner_id', $partner_id]])->first();
         if (!$customer) return $this->error('Customer Not Found', 404);
         $customer->delete();
         return $this->success();
