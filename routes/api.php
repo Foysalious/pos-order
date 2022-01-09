@@ -69,7 +69,7 @@ Route::group(['middleware' => 'ip.whitelist'], function () {
         Route::get('products/{product}/reviews', [ReviewController::class, 'index']);
         Route::get('/products-reviews', [ReviewController::class, 'getReviewsByProductIds']);
         Route::get('/partners/{partner_id}', [PartnerController::class, 'show']);
-        Route::get('/partners/store-or-get', [PartnerController::class, 'storeOrGet']);
+        Route::post('/partners/store-or-get', [PartnerController::class, 'storeOrGet']);
         Route::put('partners/{partner_id}', [PartnerController::class, 'updatePartnersTable']);
         Route::get('/partners/{partner_id}/customers/{customer_id}/purchase-amount-promo-usage', [CustomerController::class, 'getPurchaseAmountAndPromoUsed']);
         Route::get('/partners/{partner_id}/customers/{customer_id}/orders', [CustomerController::class, 'getOrdersByDateWise']);
