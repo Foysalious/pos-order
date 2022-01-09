@@ -26,7 +26,7 @@ class OrderSkuResource extends JsonResource
             'name' => $this->name,
             'sku_id' => $this->sku_id,
             'app_thumb' => $this->product_image ?: $default_product_app_thumb,
-            'combination' => $sku_details ?? null,
+            'combination' => $sku_details['combination'] ?? null,
             'quantity' => $this->quantity,
             'unit_original_price' => $this->unit_price,
             'unit_discount' => $unit_discount,
