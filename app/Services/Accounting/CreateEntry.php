@@ -40,7 +40,7 @@ class CreateEntry extends BaseEntry
             'source_id' => $this->order->id,
             'note' => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ? SalesChannel::WEBSTORE : SalesChannel::POS,
             'source_type' => EntryTypes::POS,
-            'amount' => round($order_price_details->getOriginalPrice(),2, PHP_ROUND_HALF_UP),
+            'amount' => round(($order_price_details->getOriginalPrice() + $order_price_details->getVat()),2, PHP_ROUND_HALF_UP),
             'amount_cleared' => $order_price_details->getPaid(),
             'total_discount' => $order_price_details->getDiscount(),
             'total_vat' => $order_price_details->getVat(),
