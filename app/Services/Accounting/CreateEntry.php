@@ -59,7 +59,7 @@ class CreateEntry extends BaseEntry
         $ordered_skus = $this->order->orderSkus()->get();
         $skus_ids = $ordered_skus->where('sku_id', '<>', null)->pluck('sku_id')->toArray();
         if ($skus_ids) {
-//            $sku_details = collect($this->getSkuDetails($skus_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
+           $sku_details = collect($this->getSkuDetails($skus_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
         }
         /** @var BatchManipulator $mapper */
         $mapper = App::make(BatchManipulator::class);
@@ -69,7 +69,7 @@ class CreateEntry extends BaseEntry
                 $batches = is_null($batches) ? [['cost' => $sku->unit_price, 'quantity' => $sku->quantity]] : $batches;
                 foreach ($batches as $batch) {
                     $data [] = [
-                        'id' => 400,
+                        'id' => $sku_details[$sku->sku_id]['product_id'],
                         'sku_id' => $sku->sku_id,
                         'name' => $sku->name,
                         'unit_price' => (double)$batch['cost'] ?? $sku->unit_price,
