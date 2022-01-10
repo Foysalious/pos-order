@@ -7,6 +7,7 @@ use App\Services\Discount\Handler as DiscountHandler;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\WarrantyUnits;
+use App\Services\Order\SkuDetails;
 use App\Services\Product\StockManager;
 use App\Traits\ModificationFields;
 use Illuminate\Validation\ValidationException;
@@ -39,7 +40,7 @@ class Creator
      */
     public function __construct(OrderSkuRepositoryInterface $orderSkuRepository, DiscountHandler $discountHandler,
                                 InventoryServerClient $client, StockManager $stockManager,
-                                protected BatchDetailCreator $batchDetailCreator)
+                                protected BatchDetailCreator $batchDetailCreator, private SkuDetails $skuDetails)
     {
         $this->orderSkuRepository = $orderSkuRepository;
         $this->discountHandler = $discountHandler;
@@ -109,7 +110,7 @@ class Creator
             $sku_data['order_id'] = $this->order->id;
             $sku_data['name'] = $sku->product_name ?? $sku_details[$sku->id]['product_name'] ?? 'Custom Item';
             $sku_data['sku_id'] = $sku->id ?: null;
-            $sku_data['details'] = isset($sku_details[$sku->id]) && $sku_details[$sku->id]['combination'] ? json_encode($sku_details[$sku->id]['combination']) : null;
+            $sku_data['details'] = isset($sku_details[$sku->id]) ? json_encode($this->skuDetails->setSkuDetails($sku_details[$sku->id])->getDetails()) : null;
             $sku_data['batch_detail'] = $this->makeBatchDetail($sku,$sku_details[$sku->id] ?? null);
             $sku_data['quantity'] = $sku->quantity;
             $sku_data['unit_weight'] = isset($sku_details[$sku->id]) && $sku_details[$sku->id]['weight'] ? $sku_details[$sku->id]['weight'] : null ;
