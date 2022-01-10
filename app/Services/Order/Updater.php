@@ -59,7 +59,8 @@ class Updater
     public function __construct(
         OrderRepositoryInterface $orderRepositoryInterface,
         OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
-        OrderLogCreator $orderLogCreator, OrderDiscountRepositoryInterface $orderDiscountRepository,
+        OrderLogCreator $orderLogCreator,
+        OrderDiscountRepositoryInterface $orderDiscountRepository,
         OrderPaymentRepositoryInterface $orderPaymentRepository,
         protected Handler $discountHandler,
         protected PaymentCreator $paymentCreator,
@@ -72,9 +73,7 @@ class Updater
         $this->orderRepositoryInterface = $orderRepositoryInterface;
         $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->orderLogCreator = $orderLogCreator;
-        $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->orderPaymentRepository = $orderPaymentRepository;
-        $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->orderDiscountRepository = $orderDiscountRepository;
     }
 
