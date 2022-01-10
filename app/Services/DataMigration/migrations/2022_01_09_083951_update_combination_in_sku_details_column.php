@@ -15,7 +15,9 @@ class UpdateCombinationInSkuDetailsColumn extends DataMigrationBase implements D
            foreach ($orderSkus as $orderSku) {
                $details = json_decode($orderSku->details);
                $orderSku->update(['details' => json_encode(['combination' => $details])]);
+               dump($orderSku->id . " updated");
            }
+            dump("Done");
         });
     }
 }
