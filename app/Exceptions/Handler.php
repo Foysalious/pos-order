@@ -82,7 +82,7 @@ class Handler extends ExceptionHandler
                     'line' => $e->getLine(),
                 ];
             }
-            return response($response, 500);
+            return response($response,(int) $e->getCode() ?: 500 );
         }
     }
 
