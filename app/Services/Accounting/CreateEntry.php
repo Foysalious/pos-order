@@ -82,7 +82,7 @@ class CreateEntry extends BaseEntry
                 $data [] = [
                     'id' => 0,
                     'name' => 'Custom Amount',
-                    'unit_price' => (double)$sku->unit_price,
+                    'unit_price' => 0,
                     'selling_price' => (double)$sku->unit_price,
                     'quantity' => (double)$sku->quantity
                 ];

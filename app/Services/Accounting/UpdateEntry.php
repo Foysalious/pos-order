@@ -129,7 +129,7 @@ class UpdateEntry extends BaseEntry
                 $data [] = [
                     'id' => 0,
                     'name' => 'Custom Amount',
-                    "unit_price" => (double)$item['unit_price'],
+                    "unit_price" => 0,
                     "selling_price" => (double)$item['unit_price'],
                     "quantity" => (double)$item['quantity'],
                     "type" => $product_type == self::NEWLY_ADDED_PRODUCT ? 'new' : OrderChangingTypes::REFUND,
@@ -289,7 +289,7 @@ class UpdateEntry extends BaseEntry
                 $data [] = [
                     'id' => 0,
                     'name' => 'Custom Amount',
-                    "unit_price" => (double)$order_sku->unit_price,
+                    "unit_price" => 0,
                     "selling_price" => (double)$order_sku->unit_price,
                     "quantity" => $each_product->getQuantityChangedValue(),
                     "type" => $each_product->isQuantityIncreased() ? OrderChangingTypes::QUANTITY_INCREASE : OrderChangingTypes::REFUND

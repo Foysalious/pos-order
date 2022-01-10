@@ -56,8 +56,7 @@ class OrderDueEntry extends BaseEntry
             'interest' => (double)$this->order->interest ?? 0,
             'note' => self::REFUND,
             'entry_at' => $this->order->updated_at->format('Y-m-d H:i:s'),
-            'reconcile_amount' => $this->paidAmount,
-//            'updated_entry' => 'to_be_decided',
+            'reconcile_amount' => -(abs($this->paidAmount)),
             'inventory_products' => null,
         ];
 
