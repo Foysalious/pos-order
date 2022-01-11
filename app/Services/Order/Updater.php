@@ -7,7 +7,7 @@ use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderDiscountRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
-use App\Interfaces\OrderSkusRepositoryInterface;
+use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
@@ -58,7 +58,7 @@ class Updater
 
     public function __construct(
         OrderRepositoryInterface $orderRepositoryInterface,
-        OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
+        OrderSkuRepositoryInterface $orderSkusRepositoryInterface,
         OrderLogCreator $orderLogCreator,
         OrderDiscountRepositoryInterface $orderDiscountRepository,
         OrderPaymentRepositoryInterface $orderPaymentRepository,
