@@ -82,7 +82,7 @@ class CacheAside
     /**
      * @return array|null
      */
-    public function getReGeneratedEntity()
+    public function reGeneratedEntity()
     {
         $data = $this->dataStoreObject->generate();
         $this->setOnCache($data);
@@ -96,7 +96,7 @@ class CacheAside
     private function setOnCache(array $data = null)
     {
         try {
-            $this->store->put($this->cacheObject->getCacheName(), json_encode($data), $this->cacheObject->getExpirationTimeInSeconds() / 60);
+            $this->store->put($this->cacheObject->getCacheName(), json_encode($data), $this->cacheObject->getExpirationTimeInSeconds());
         } catch (Throwable $e) {
             throw new CacheStoreException();
         }
