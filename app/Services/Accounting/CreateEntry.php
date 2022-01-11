@@ -1,6 +1,8 @@
 <?php namespace App\Services\Accounting;
 
 use App\Helper\Miscellaneous\RequestIdentification;
+use App\Models\Customer;
+use App\Models\EventNotification;
 use App\Repositories\Accounting\AccountingRepository;
 use App\Repositories\Accounting\Constants\EntryTypes;
 use App\Services\Accounting\Constants\Accounts;
@@ -24,13 +26,13 @@ class CreateEntry extends BaseEntry
     public function create()
     {
         $data = $this->makeData();
-        $this->accountingRepository->storeEntry($this->order->partner_id, $data);
+        $this->accountingRepository->setOrder($this->order)->storeEntry($this->order->partner_id, $data);
     }
 
     public function makeData(): array
     {
         $order_price_details = $this->getOrderPriceDetails(new PriceCalculation());
-        $customer = $this->order->customer ?? null;
+        $customer = Customer::where('id', $this->order->customer_id)->where('partner_id', $this->order->partner_id)->first();
         $data = [
             'created_from' => json_encode($this->withBothModificationFields((new RequestIdentification())->get())),
             'credit_account_key' => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ? Sales::SALES_FROM_ECOM : Sales::SALES_FROM_POS,
@@ -38,7 +40,7 @@ class CreateEntry extends BaseEntry
             'source_id' => $this->order->id,
             'note' => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ? SalesChannel::WEBSTORE : SalesChannel::POS,
             'source_type' => EntryTypes::POS,
-            'amount' => $order_price_details->getDiscountedPrice(),
+            'amount' => round(($order_price_details->getOriginalPrice() + $order_price_details->getVat()),2, PHP_ROUND_HALF_UP),
             'amount_cleared' => $order_price_details->getPaid(),
             'total_discount' => $order_price_details->getDiscount(),
             'total_vat' => $order_price_details->getVat(),
@@ -48,7 +50,7 @@ class CreateEntry extends BaseEntry
             'interest' => (double)$this->order->interest ?? 0,
             'inventory_products' => $this->getOrderedItemsData(),
         ];
-        return array_merge($data,$this->makeCustomerData($customer));
+        return array_merge($data, $this->makeCustomerData($customer));
     }
 
     private function getOrderedItemsData(): bool|string|null
@@ -57,21 +59,22 @@ class CreateEntry extends BaseEntry
         $ordered_skus = $this->order->orderSkus()->get();
         $skus_ids = $ordered_skus->where('sku_id', '<>', null)->pluck('sku_id')->toArray();
         if ($skus_ids) {
-            $sku_details = collect($this->getSkuDetails($skus_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
+           $sku_details = collect($this->getSkuDetails($skus_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
         }
         /** @var BatchManipulator $mapper */
         $mapper = App::make(BatchManipulator::class);
         foreach ($ordered_skus as $sku) {
             if (!is_null($sku->sku_id)) {
                 $batches = $mapper->setBatchDetail($sku->batch_detail)->getBatchDetails();
+                $batches = is_null($batches) ? [['cost' => $sku->unit_price, 'quantity' => $sku->quantity]] : $batches;
                 foreach ($batches as $batch) {
                     $data [] = [
                         'id' => $sku_details[$sku->sku_id]['product_id'],
                         'sku_id' => $sku->sku_id,
                         'name' => $sku->name,
-                        'unit_price' => (double) $batch['cost'] ?? $sku->unit_price,
+                        'unit_price' => (double)$batch['cost'] ?? $sku->unit_price,
                         'selling_price' => (double)$sku->unit_price ?? $sku->unit_price,
-                        'quantity' => (double) $batch['quantity'] ?? $sku->quantity
+                        'quantity' => (double)$batch['quantity'] ?? $sku->quantity
                     ];
                 }
 
@@ -79,9 +82,9 @@ class CreateEntry extends BaseEntry
                 $data [] = [
                     'id' => 0,
                     'name' => 'Custom Amount',
-                    'unit_price' => (double)$sku->unit_price,
+                    'unit_price' => 0,
                     'selling_price' => (double)$sku->unit_price,
-                    'quantity' => (double) $sku->quantity
+                    'quantity' => (double)$sku->quantity
                 ];
             }
         }

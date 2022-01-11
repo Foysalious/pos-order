@@ -2,6 +2,7 @@
 
 
 use App\Helper\Miscellaneous\RequestIdentification;
+use App\Models\Customer;
 use App\Repositories\Accounting\Constants\EntryTypes;
 use App\Services\Accounting\Constants\Accounts;
 use App\Services\Accounting\Constants\Cash;
@@ -12,6 +13,7 @@ use App\Services\Order\PriceCalculation;
 
 class OrderDueEntry extends BaseEntry
 {
+    const REFUND = 'refund';
     protected float $paidAmount;
 
     /**
@@ -29,13 +31,15 @@ class OrderDueEntry extends BaseEntry
     public function create()
     {
         $data = $this->makeData();
-        $this->accountingRepository->updateEntryBySource($data, $this->order->id, $this->order->partner_id);
+        $this->accountingRepository
+            ->setOrder($this->order)
+            ->updateEntryBySource($data, $this->order->id, $this->order->partner_id);
     }
 
     private function makeData(): array
     {
         $order_price_details = $this->getOrderPriceDetails(new PriceCalculation());
-        $customer = $this->order->customer ?? null;
+        $customer = Customer::where('id', $this->order->customer_id)->where('partner_id', $this->order->partner_id)->first();
 
         $data = [
             'created_from' => json_encode($this->withBothModificationFields((new RequestIdentification())->get())),
@@ -50,10 +54,9 @@ class OrderDueEntry extends BaseEntry
             'delivery_charge' => (double)$this->order->delivery_charge ?? 0,
             'bank_transaction_charge' => (double)$this->order->bank_transaction_charge ?? 0,
             'interest' => (double)$this->order->interest ?? 0,
-            'note' => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ? SalesChannel::WEBSTORE : SalesChannel::POS,
+            'note' => self::REFUND,
             'entry_at' => $this->order->updated_at->format('Y-m-d H:i:s'),
-            'reconcile_amount' => $this->paidAmount,
-//            'updated_entry' => 'to_be_decided',
+            'reconcile_amount' => -(abs($this->paidAmount)),
             'inventory_products' => null,
         ];
 

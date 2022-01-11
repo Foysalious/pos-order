@@ -1,10 +1,15 @@
 <?php namespace App\Services\Accounting;
 
+use App\Models\EventNotification;
+use App\Services\ClientServer\BaseClientServer;
+use App\Services\EventNotification\Request;
+use App\Services\EventNotification\Statuses;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
 use App\Services\Accounting\Exceptions\AccountingEntryServerError;
+use GuzzleHttp\Exception\GuzzleException;
+use Spatie\DataTransferObject\Exceptions\UnknownProperties;
 
-class AccountingEntryClient
+class AccountingEntryClient extends BaseClientServer
 {
     /** @var Client $client */
     protected Client $client;
@@ -12,89 +17,55 @@ class AccountingEntryClient
     protected string $apiKey;
     protected string $userType;
     protected int $userId;
-    protected $reportType;
+    private EventNotification $eventNotification;
+
+    /**
+     * @param EventNotification $eventNotification
+     * @return AccountingEntryClient
+     */
+    public function setEventNotification(EventNotification $eventNotification): AccountingEntryClient
+    {
+        $this->eventNotification = $eventNotification;
+        return $this;
+    }
 
     public function __construct(Client $client)
     {
-        $this->client = $client;
-        $this->baseUrl = rtrim(config('accounting.api_url'), '/');
+        parent::__construct($client);
         $this->apiKey = config('accounting.api_key');
     }
-
-    /**
-     * @param $uri
-     * @param null $data
-     * @return mixed
-     * @throws AccountingEntryServerError
-     */
-    public function get($uri, $data = null)
-    {
-        return $this->call('get', $uri, $data);
-    }
-
-    /**
-     * @param $uri
-     * @param $data
-     * @return mixed
-     * @throws AccountingEntryServerError
-     */
-    public function post($uri, $data)
-    {
-        return $this->call('post', $uri, $data);
-    }
-
-    /**
-     * @param $uri
-     * @param $data
-     * @return mixed
-     * @throws AccountingEntryServerError
-     */
-    public function put($uri, $data)
-    {
-        return $this->call('put', $uri, $data);
-    }
-
-    /**
-     * @param $uri
-     * @return mixed
-     * @throws AccountingEntryServerError
-     */
-    public function delete($uri)
-    {
-        return $this->call('delete', $uri);
-    }
-
 
     /**
      * @param      $method
      * @param      $uri
      * @param null $data
+     * @param bool $multipart
      * @return mixed
      * @throws AccountingEntryServerError
+     * @throws GuzzleException
+     * @throws UnknownProperties
      */
-    public function call($method, $uri, $data = null, $multipart = false)
+    public function call($method, $uri, $data = null, $multipart = false): mixed
     {
         try {
-            if (!$this->userType || !$this->userId ) {
-                throw new AccountingEntryServerError('Set user type and user id', 0);
-            }
-            $res = decodeGuzzleResponse(
-                $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))
-            );
-            if ($res['code'] != 200) {
-                throw new AccountingEntryServerError($res['message']);
-            }
+            if (!$this->userType || !$this->userId || !$this->eventNotification) throw new AccountingEntryServerError('User type and user id not set');
+            $url = $this->makeUrl($uri);
+            $method = strtoupper($method);
+            $options = $this->getOptions($data);
+            $request = new Request([
+                'url' => $url,
+                'method' => $method,
+                'headers' => $options['headers'],
+                'json' => $options['json'] ?? null
+            ]);
+            $this->eventNotification->update(['request' => json_encode($request->toArray())]);
+            $res = decodeGuzzleResponse($this->client->request($method, $url, $options));
+            $this->eventNotification->update(['response' => json_encode($res), 'status' => $res['code'] != 200 ? Statuses::FAILED : Statuses::SUCCESS]);
+            if ($res['code'] != 200) throw new AccountingEntryServerError($res['message']);
             return $res['data'] ?? $res['message'];
-
-        } catch (GuzzleException $e) {
-            $response = $e->getResponse() ? json_decode($e->getResponse()->getBody()->getContents(), true): null;
-            $message = null;
-            if (isset($response['message']) ) {
-                $message = $response['message'];
-            } else if (isset($response['detail'])) {
-                $message = json_encode($response['detail']);
-            }
-            throw new AccountingEntryServerError($message, $e->getCode() ?: 500);
+        } catch (GuzzleException $exception) {
+            $this->eventNotification->update(['response' => json_encode(['message' => $exception->getMessage(), 'code' => $exception->getCode()]), 'status' => Statuses::FAILED]);
+            throw $exception;
         }
     }
 
@@ -102,16 +73,16 @@ class AccountingEntryClient
      * @param $uri
      * @return string
      */
-    public function makeUrl($uri)
+    public function makeUrl($uri): string
     {
-        return $this->baseUrl . "/" . $uri;
+        return $this->getBaseUrl() . "/" . $uri;
     }
 
     /**
      * @param null $data
      * @return array
      */
-    public function getOptions($data = null)
+    public function getOptions($data = null): array
     {
         $options['headers'] = [
             'Content-Type' => 'application/json',
@@ -131,7 +102,7 @@ class AccountingEntryClient
      * @param $userType
      * @return $this
      */
-    public function setUserType($userType)
+    public function setUserType($userType): static
     {
         $this->userType = $userType;
         return $this;
@@ -142,9 +113,14 @@ class AccountingEntryClient
      * @param $userId
      * @return $this
      */
-    public function setUserId($userId)
+    public function setUserId($userId): static
     {
         $this->userId = $userId;
         return $this;
+    }
+
+    public function getBaseUrl(): string
+    {
+        return rtrim(config('accounting.api_url'), '/');
     }
 }

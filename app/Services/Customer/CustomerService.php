@@ -27,11 +27,11 @@ class CustomerService extends BaseService
 
     public function __construct(
         private CustomerRepositoryInterface $customerRepository,
-        private ReviewRepositoryInterface $reviewRepositoryInterface,
-        private Updater $updater,
+        private ReviewRepositoryInterface   $reviewRepositoryInterface,
+        private Updater                     $updater,
         private OrderSkuRepositoryInterface $orderSkuRepositoryInterface,
-        private AccountingRepository $accountingRepository,
-        protected OrderRepositoryInterface $orderRepository
+        private AccountingRepository        $accountingRepository,
+        protected OrderRepositoryInterface  $orderRepository
     )
     {
     }
@@ -75,22 +75,15 @@ class CustomerService extends BaseService
     }
 
     /**
+     * Orders are soft deleted from customer model
      * @throws Exception
      */
     public function delete(int $partner_id, int|string $customer_id): JsonResponse
     {
-        try {
-            $customer = $this->customerRepository->find($customer_id);
-            if (!$customer) return $this->error('Customer Not Found', 404);
-            DB::beginTransaction();
-            $this->accountingRepository->deleteCustomer($partner_id, $customer->id);
-            $customer->delete();
-            DB::commit();
-            return $this->success();
-        } catch (Exception $e) {
-            DB::rollback();
-            throw $e;
-        }
+        $customer = Customer::where([['id', $customer_id], ['partner_id', $partner_id]])->first();
+        if (!$customer) return $this->error('Customer Not Found', 404);
+        $customer->delete();
+        return $this->success();
     }
 
     public function getPurchaseAmountAndPromoUsed(int $partner_id, string $customer_id): JsonResponse
@@ -101,7 +94,7 @@ class CustomerService extends BaseService
             'total_purchase_amount' => 0,
             'total_used_promo' => 0
         ];
-        $orders = $this->orderRepository->getAllOrdersOfPartnersCustomer($partner_id,$customer_id);
+        $orders = $this->orderRepository->getAllOrdersOfPartnersCustomer($partner_id, $customer_id);
         /** @var PriceCalculation $order_calculator */
         $order_calculator = App::make(PriceCalculation::class);
         $orders->each(function ($order) use (&$return_data, $order_calculator) {
@@ -123,7 +116,7 @@ class CustomerService extends BaseService
         $status = $request->status ?? null;
         list($offset, $limit) = calculatePagination($request);
         $order_list = [];
-        $orders = $this->orderRepository->getAllOrdersOfPartnersCustomer($partner_id,$customer_id, 'desc', $limit, $offset);
+        $orders = $this->orderRepository->getAllOrdersOfPartnersCustomer($partner_id, $customer_id, 'desc', $limit, $offset);
         foreach ($orders as $order) {
             $date = convertTimezone($order->created_at)?->format('Y-m-d');
             $order_list[$date]['total_sale'] = $order_list[$date]['total_sale'] ?? 0;
@@ -137,16 +130,16 @@ class CustomerService extends BaseService
             $order_list[$date]['total_due'] += $order->due;
             if (!is_null($status) && ($status == PaymentStatuses::DUE || $status == 'Due')) {
                 if (is_null($order->paid_at)) {
-                    $order_list[$date]['orders'][] = new CustomerOrderResourceForPos($order,$delivery_info);
+                    $order_list[$date]['orders'][] = new CustomerOrderResourceForPos($order, $delivery_info);
                 }
             } else {
-                $order_list[$date]['orders'][] = new CustomerOrderResourceForPos($order,$delivery_info);
+                $order_list[$date]['orders'][] = new CustomerOrderResourceForPos($order, $delivery_info);
             }
         }
         //no datwise format needed
         $final_report = [];
-        collect($order_list)->each(function ($value,$date_key) use (&$final_report) {
-           $final_report [] = array_merge(['date' => $date_key], $value);
+        collect($order_list)->each(function ($value, $date_key) use (&$final_report) {
+            $final_report [] = array_merge(['date' => $date_key], $value);
         });
         return $this->success(ResponseMessages::SUCCESS, ['data' => $final_report]);
 
@@ -162,7 +155,7 @@ class CustomerService extends BaseService
     {
         /** @var ApiServerClient $apiServerClient */
         $apiServerClient = app(ApiServerClient::class);
-        $partnerInfo =  $apiServerClient->get('pos/v1/partners/'. $partnerId)['partner'];
+        $partnerInfo = $apiServerClient->get('pos/v1/partners/' . $partnerId)['partner'];
         return [
             'delivery_method' => $partnerInfo['delivery_method'],
             'is_registered_for_sdelivery' => $partnerInfo['is_registered_for_sdelivery'],

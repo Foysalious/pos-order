@@ -7,14 +7,17 @@ use App\Interfaces\CustomerRepositoryInterface;
 use App\Interfaces\OrderDiscountRepositoryInterface;
 use App\Interfaces\OrderPaymentRepositoryInterface;
 use App\Interfaces\OrderRepositoryInterface;
-use App\Interfaces\OrderSkuRepositoryInterface;
+use App\Interfaces\OrderSkusRepositoryInterface;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Services\ClientServer\Exceptions\BaseClientServerError;
+use App\Services\Customer\CustomerResolver;
 use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Discount\Handler;
 use App\Services\EMI\Calculations as EmiCalculation;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
+use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
 use App\Services\Order\Refund\AddProductInOrder;
 use App\Services\Order\Refund\DeleteProductFromOrder;
@@ -39,7 +42,7 @@ class Updater
     protected $skus, $existingOrder;
     protected Order $order;
     protected $orderLogCreator;
-    protected $orderRepositoryInterface, $OrderSkuRepositoryInterface, $orderPaymentRepository;
+    protected $orderRepositoryInterface, $orderSkusRepositoryInterface, $orderPaymentRepository;
     protected $orderDiscountRepository;
     protected $orderPaymentCreator;
     protected $paymentMethod;
@@ -51,24 +54,26 @@ class Updater
     protected ?string $delivery_thana;
     protected ?string $delivery_district;
     private array $stockUpdateEntry = [];
+    private ?Customer $customer;
 
-    public function __construct(OrderRepositoryInterface              $orderRepositoryInterface,
-                                OrderSkuRepositoryInterface          $OrderSkuRepositoryInterface,
-                                OrderLogCreator                       $orderLogCreator, OrderDiscountRepositoryInterface $orderDiscountRepository,
-                                OrderPaymentRepositoryInterface       $orderPaymentRepository,
-                                protected Handler                     $discountHandler,
-                                protected PaymentCreator              $paymentCreator,
-                                protected CustomerRepositoryInterface $customerRepository,
-                                protected PriceCalculation            $orderCalculator,
-                                protected EmiCalculation              $emiCalculation,
+    public function __construct(
+        OrderRepositoryInterface $orderRepositoryInterface,
+        OrderSkusRepositoryInterface $orderSkusRepositoryInterface,
+        OrderLogCreator $orderLogCreator,
+        OrderDiscountRepositoryInterface $orderDiscountRepository,
+        OrderPaymentRepositoryInterface $orderPaymentRepository,
+        protected Handler $discountHandler,
+        protected PaymentCreator $paymentCreator,
+        protected CustomerRepositoryInterface $customerRepository,
+        protected PriceCalculation $orderCalculator,
+        protected EmiCalculation $emiCalculation,
+        protected CustomerResolver $customerResolver,
     )
     {
         $this->orderRepositoryInterface = $orderRepositoryInterface;
-        $this->OrderSkuRepositoryInterface = $OrderSkuRepositoryInterface;
+        $this->orderSkusRepositoryInterface = $orderSkusRepositoryInterface;
         $this->orderLogCreator = $orderLogCreator;
-        $this->OrderSkuRepositoryInterface = $OrderSkuRepositoryInterface;
         $this->orderPaymentRepository = $orderPaymentRepository;
-        $this->OrderSkuRepositoryInterface = $OrderSkuRepositoryInterface;
         $this->orderDiscountRepository = $orderDiscountRepository;
     }
 
@@ -249,6 +254,18 @@ class Updater
     public function setCustomerId($customer_id)
     {
         $this->customer_id = $customer_id;
+        $this->resolveCustomer();
+        return $this;
+    }
+
+
+    /**
+     * @param Customer|null $customer
+     * @return $this
+     */
+    private function setCustomer(?Customer $customer): Updater
+    {
+        $this->customer = $customer;
         return $this;
     }
 
@@ -562,10 +579,13 @@ class Updater
         if (is_null($this->order->paid_at)) {
             throw new OrderException(trans('order.update.no_customer_update'), 400);
         }
+        if ($this->order->sales_channel_id == SalesChannelIds::WEBSTORE && !$this->customer_id) {
+            throw new OrderException(trans('order.update.no_customer_update'), 400);
+        }
         $previous_order = $this->setExistingOrder();
         $this->setDeliveryNameAndMobile();
         $this->orderRepositoryInterface->update($this->order, [
-                'customer_id' => $this->customer_id,
+                'customer_id' => $this->customer->id ?? null,
                 'delivery_name' => $this->delivery_name,
                 'delivery_mobile' => $this->delivery_mobile,
             ] + $this->modificationFields(false, true));
@@ -577,7 +597,7 @@ class Updater
 
     private function setDeliveryNameAndMobile()
     {
-        $customer = $this->customerRepository->where('id', $this->customer_id)->first();
+        $customer = $this->customerRepository->where('id', $this->customer_id)->where('partner_id', $this->partner_id)->first();
         $this->delivery_name = $this->delivery_name ?? $customer->name ?? null;
         $this->delivery_mobile = $this->delivery_mobile ?? $customer->mobile ?? null;
     }
@@ -633,5 +653,12 @@ class Updater
         if ($requested_order_sku_ids->diff($current_order_sku_ids)->count() > 0) {
             throw new OrderException('Invalid order sku item given', 400);
         }
+    }
+
+    private function resolveCustomer()
+    {
+        if (!isset($this->customer_id)) return $this->setCustomer(null);
+        $customer = $this->customerResolver->setPartnerId($this->order->partner_id)->setCustomerId($this->customer_id)->resolveCustomer();
+        return $this->setCustomer($customer);
     }
 }

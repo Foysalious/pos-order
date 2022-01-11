@@ -14,7 +14,6 @@ class EntryOnOrderUpdate extends Job implements ShouldQueue
 
     private Order $order;
     private array $orderProductChangeData;
-    protected int $tries = 1;
 
     /**
      * Create a new job instance.
@@ -23,6 +22,8 @@ class EntryOnOrderUpdate extends Job implements ShouldQueue
      */
     public function __construct(Order $order, array $order_product_change_data)
     {
+        $this->connection = 'pos_order_accounting_queue';
+        $this->queue = 'pos_order_accounting_queue';
         $this->order = $order;
         $this->orderProductChangeData = $order_product_change_data;
     }
@@ -32,7 +33,6 @@ class EntryOnOrderUpdate extends Job implements ShouldQueue
      */
     public function handle(UpdateEntry $updateEntry)
     {
-        if ($this->attempts() > 2) return;
         $updateEntry
             ->setOrder($this->order)
             ->setOrderProductChangeData($this->orderProductChangeData)

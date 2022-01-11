@@ -411,9 +411,9 @@
             <td>
                 {{$skus->name}}
 
-                @if(isset($skus->details))
+                @if(isset($skus->details['combination']))
                     @php
-                        $sku_details= json_decode($skus->details,true);
+                        $sku_details= json_decode($skus->details,true)['combination'];
                         $first_sku='';
                         $second_sku='';
                         $third_sku='';

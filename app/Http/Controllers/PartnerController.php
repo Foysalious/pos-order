@@ -53,4 +53,9 @@ class PartnerController extends Controller
         return $this->partnerService->updatePartner($partner_id,$request);
     }
 
+    public function storeOrGet(Request $request)
+    {
+        return $this->partnerService->storeOrGet($request);
+    }
+
 }

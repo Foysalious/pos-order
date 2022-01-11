@@ -3,9 +3,12 @@
 use App\Constants\ResponseMessages;
 use App\Http\Requests\PartnerUpdateRequest;
 use App\Http\Resources\PartnerResource;
+use App\Models\Partner;
 use App\Repositories\PartnerRepository;
 use App\Services\BaseService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class PartnerService extends  BaseService
 {
@@ -50,6 +53,18 @@ class PartnerService extends  BaseService
         $partner = $this->partnerRepository->where('id', $partnerId)->first();
         if(!$partner)
             return $this->error("Partner is not found", 404);
+        $partnerResource = new PartnerResource($partner);
+        return $this->success(ResponseMessages::SUCCESS, ['partner' => $partnerResource]);
+    }
+
+    public function storeOrGet(Request $request): JsonResponse
+    {
+        $partner = $this->partnerRepository->where('id', $request->partner_id)->first();
+        if(!$partner) {
+            Partner::insert(['id' => $request->partner_id, 'sub_domain' => $request->sub_domain, 'qr_code_account_type' => $request->qr_code_account_type,
+                'qr_code_image' => $request->qr_code_image]);
+            $partner = $this->partnerRepository->where('id', $request->partner_id)->first();
+        }
         $partnerResource = new PartnerResource($partner);
         return $this->success(ResponseMessages::SUCCESS, ['partner' => $partnerResource]);
     }
