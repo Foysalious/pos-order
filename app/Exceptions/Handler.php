@@ -4,6 +4,7 @@ use App\Traits\ResponseAPI;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
@@ -67,6 +68,8 @@ class Handler extends ExceptionHandler
             return $this->error($e->getMessage(), Response::HTTP_FORBIDDEN);
         } elseif ($e instanceof AuthenticationException) {
             return $this->error($e->getMessage(), Response::HTTP_UNAUTHORIZED);
+        } elseif ($e instanceof QueryException) {
+            return $this->error($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         } elseif ($e instanceof ValidationException) {
             $errors = $e->validator->errors()->all();
             return $this->error(getValidationErrorMessage($errors), Response::HTTP_UNPROCESSABLE_ENTITY);
