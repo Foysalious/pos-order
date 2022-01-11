@@ -69,6 +69,7 @@ class PartnerService extends  BaseService
                 'auto_printing' => $request->auto_printing,
                 'printer_name' => $request->printer_name,
                 'printer_model' => $request->printer_model,
+                'delivery_charge' => $request->delivery_charge,
                 'qr_code_account_type' => $request->qr_code_account_type,
                 'qr_code_image' => $request->qr_code_image
             ]);
