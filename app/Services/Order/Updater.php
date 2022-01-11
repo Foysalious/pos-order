@@ -585,7 +585,7 @@ class Updater
         $previous_order = $this->setExistingOrder();
         $this->setDeliveryNameAndMobile();
         $this->orderRepositoryInterface->update($this->order, [
-                'customer_id' => $this->customer->id,
+                'customer_id' => $this->customer->id ?? null,
                 'delivery_name' => $this->delivery_name,
                 'delivery_mobile' => $this->delivery_mobile,
             ] + $this->modificationFields(false, true));
