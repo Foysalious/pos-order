@@ -61,8 +61,17 @@ class PartnerService extends  BaseService
     {
         $partner = $this->partnerRepository->where('id', $request->partner_id)->first();
         if(!$partner) {
-            Partner::insert(['id' => $request->partner_id, 'sub_domain' => $request->sub_domain, 'qr_code_account_type' => $request->qr_code_account_type,
-                'qr_code_image' => $request->qr_code_image]);
+            Partner::insert([
+                'id' => $request->partner_id,
+                'name' => $request->name,
+                'sub_domain' => $request->sub_domain,
+                'sms_invoice' => $request->sms_invoice,
+                'auto_printing' => $request->auto_printing,
+                'printer_name' => $request->printer_name,
+                'printer_model' => $request->printer_model,
+                'qr_code_account_type' => $request->qr_code_account_type,
+                'qr_code_image' => $request->qr_code_image
+            ]);
             $partner = $this->partnerRepository->where('id', $request->partner_id)->first();
         }
         $partnerResource = new PartnerResource($partner);
