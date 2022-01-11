@@ -108,7 +108,7 @@ class Order extends BaseModel
 
     public function isWebStore()
     {
-        return $this->sales_channel_id = SalesChannelIds::WEBSTORE;
+        return $this->sales_channel_id == SalesChannelIds::WEBSTORE;
     }
 
     public function getDeliveryVendor()
