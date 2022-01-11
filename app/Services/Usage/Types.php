@@ -7,7 +7,11 @@ class Types
     use ConstGetter;
 
     const POS_ORDER_CREATE            = 'pos_order_create';
+    const POS_ORDER_UPDATE            = 'pos_order_update';
+    const POS_ORDER_DELETE            = 'pos_order_delete';
     const INVENTORY_CREATE            = 'inventory_create';
+    const INVENTORY_UPDATE            = 'inventory_update';
+    const INVENTORY_DELETE            = 'inventory_delete';
     const EXPENSE_TRACKER_TRANSACTION = 'expense_tracker_transaction';
     const SMS_MARKETING               = 'sms_marketing';
     const POS_DUE_COLLECTION          = 'pos_due_collection';
