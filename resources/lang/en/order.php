@@ -5,5 +5,6 @@ return [
   'update' => [
       'no_customer_update'  => 'কাস্টমার পরিবর্তন করতে পারবেন না',
       'updated'             => "অর্ডারটি আপডেট করা হয়েছে",
+      'no_customer_update_for_online_store'  => 'অনলাইন স্টোর এর কাস্টমার পরিবর্তন করতে পারবেন না',
   ]
 ];

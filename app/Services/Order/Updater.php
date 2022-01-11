@@ -580,7 +580,7 @@ class Updater
             throw new OrderException(trans('order.update.no_customer_update'), 400);
         }
         if ($this->order->sales_channel_id == SalesChannelIds::WEBSTORE && !$this->customer_id) {
-            throw new OrderException(trans('order.update.no_customer_update'), 400);
+            throw new OrderException(trans('order.update.no_customer_update_for_online_store'), 400);
         }
         $previous_order = $this->setExistingOrder();
         $this->setDeliveryNameAndMobile();
