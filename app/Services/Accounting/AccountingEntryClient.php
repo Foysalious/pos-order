@@ -55,7 +55,6 @@ class AccountingEntryClient extends BaseClientServer
             $request = new Request([
                 'url' => $url,
                 'method' => $method,
-                'headers' => $options['headers'],
                 'json' => $options['json'] ?? null
             ]);
             $this->eventNotification->update(['request' => json_encode($request->toArray())]);
