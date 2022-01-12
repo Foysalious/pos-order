@@ -10,6 +10,7 @@ use App\Services\Accounting\Constants\Sales;
 use App\Services\Order\Constants\SalesChannel;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\PriceCalculation;
+use Exception;
 
 class OrderDueEntry extends BaseEntry
 {
@@ -25,15 +26,15 @@ class OrderDueEntry extends BaseEntry
         $this->paidAmount = $paidAmount;
         return $this;
     }
+
     /**
      * @throws Exceptions\AccountingEntryServerError
+     * @throws Exception
      */
     public function create()
     {
         $data = $this->makeData();
-        $this->accountingRepository
-            ->setOrder($this->order)
-            ->updateEntryBySource($data, $this->order->id, $this->order->partner_id);
+        $this->getNotifier()->updateEntryBySource($data, $this->order->id, $this->order->partner_id);
     }
 
     private function makeData(): array

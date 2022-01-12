@@ -2,12 +2,13 @@
 
 use App\Events\OrderDeleted;
 use App\Jobs\Order\Accounting\EntryOnOrderDelete as OrderDeleteEntryJob;
+use App\Services\EventNotification\Events;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Queue\SerializesModels;
 
 class EntryOnOrderDelete
 {
-    use DispatchesJobs,SerializesModels;
+    use DispatchesJobs, SerializesModels, AccountingEventNotification;
 
 
     /**
@@ -18,6 +19,6 @@ class EntryOnOrderDelete
      */
     public function handle(OrderDeleted $event)
     {
-        $this->dispatch(new OrderDeleteEntryJob($event->getOrder()));
+        $this->dispatch(new OrderDeleteEntryJob($event->getOrder(), $this->createEventNotification($event->getOrder(), Events::ORDER_DELETE)));
     }
 }

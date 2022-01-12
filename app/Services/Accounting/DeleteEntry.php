@@ -2,11 +2,15 @@
 
 
 use App\Repositories\Accounting\Constants\EntryTypes;
+use App\Services\ClientServer\Exceptions\BaseClientServerError;
 
 class DeleteEntry extends BaseEntry
 {
+    /**
+     * @throws BaseClientServerError
+     */
     public function delete()
     {
-        $this->accountingRepository->setOrder($this->order)->deleteEntryBySource(EntryTypes::POS);
+        $this->getNotifier()->deleteEntryBySource(EntryTypes::POS);
     }
 }
