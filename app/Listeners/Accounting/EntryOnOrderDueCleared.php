@@ -20,8 +20,9 @@ class EntryOnOrderDueCleared
     public function handle(OrderDueCleared|OrderUpdated $event)
     {
         if (get_class($event) == OrderUpdated::class) {
-            if (empty($event->getOrderProductChangedData()) && !empty($event->getPaymentInfo())) {
+            if (!empty($event->getPaymentInfo())) {
                 $paid_amount = $event->getPaymentInfo()['paid_amount'];
+                if ($paid_amount < 0) return;
                 if (is_null($paid_amount) || $paid_amount == 0) return;
                 $this->dispatch(new OrderDueClearedJob($event->getOrder(), $paid_amount, $this->createEventNotification($event->getOrder(), Events::ORDER_UPDATE)));
             }
