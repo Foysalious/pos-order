@@ -192,6 +192,10 @@ class UpdateEntry extends BaseEntry
         array_walk($refunded, function ($item) use (&$sku_ids) {
             $sku_ids [] = $item->getSkuId();
         });
+        $price_changed = $this->orderProductChangeData['refund_exchanged']['price_updated_products'] ?? [];
+        array_walk($price_changed, function ($item) use (&$sku_ids) {
+            $sku_ids [] = $item->getSkuId();
+        });
         return $sku_ids;
     }
 
