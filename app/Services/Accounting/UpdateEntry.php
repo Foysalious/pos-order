@@ -92,8 +92,8 @@ class UpdateEntry extends BaseEntry
         if (isset($this->orderProductChangeData['deleted']['refunded_products'])) {
             $data = array_merge_recursive($this->makeNewAndDeletedProductsData($order_skus, $sku_details, self::FULLY_DELETED_PRODUCT), $data);
         }
-        if (isset($this->orderProductChangeData['price_updated_products'])) {
-            $data = array_merge_recursive($this->makePriceUpdatedProductsData($order_skus, $sku_details), $data);
+        if (isset($this->orderProductChangeData['refund_exchanged']['price_updated_products'])) {
+            $data = array_merge_recursive($this->makePriceUpdatedProductsData($this->orderProductChangeData['refund_exchanged']['price_updated_products'], $sku_details), $data);
         }
         return array_merge_recursive($this->makeRefundExchangedProductsData($order_skus, $sku_details), $data);
 
@@ -299,7 +299,7 @@ class UpdateEntry extends BaseEntry
                     'name' => 'Custom Amount',
                     "unit_price" => 0,
                     "selling_price" => $each_product->getOldUnitPrice(),
-                    "quantity" => $each_product->getQuantityChangedValue(),
+                    "quantity" => $each_product->getPreviousQuantity(),
                     "type" => OrderChangingTypes::REFUND
                 ]);
                 array_push($data, [
@@ -307,7 +307,7 @@ class UpdateEntry extends BaseEntry
                     'name' => 'Custom Amount',
                     "unit_price" => 0,
                     "selling_price" => $each_product->getCurrentUnitPrice(),
-                    "quantity" => $each_product->getQuantityChangedValue(),
+                    "quantity" => $each_product->getCurrentQuantity(),
                     "type" =>OrderChangingTypes::NEW
                 ]);
             }
