@@ -39,6 +39,7 @@ class OrderDueEntry extends BaseEntry
             'customer_is_supplier' => $customer->is_supplier,
             'customer_mobile' => $customer->mobile,
             'customer_name' => $customer->name,
+            'source_id' => $this->order->id,
             'source_type' => EntryTypes::DEPOSIT,
             'debit_account_key' => Cash::CASH,
             'credit_account_key' => $this->order->customer_id,
