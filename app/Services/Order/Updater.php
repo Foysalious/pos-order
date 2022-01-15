@@ -511,9 +511,11 @@ class Updater
             if (in_array($this->paymentMethod, [PaymentMethods::ADVANCE_BALANCE, PaymentMethods::CASH_ON_DELIVERY, PaymentMethods::QR_CODE])) {
                 $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod($this->paymentMethod)->setMethodDetails($cash_details)
                     ->setTransactionType(TransactionTypes::CREDIT)->create();
-            } elseif ($this->paymentMethod == PaymentMethods::PAYMENT_LINK) {
-                $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod(PaymentMethods::PAYMENT_LINK)->setMethodDetails($digital_payment_details)->setTransactionType(TransactionTypes::CREDIT)->create();
-            } elseif (in_array($this->paymentMethod, [PaymentMethods::OTHERS])) {
+            }
+//            elseif ($this->paymentMethod == PaymentMethods::PAYMENT_LINK) {
+//                $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod(PaymentMethods::PAYMENT_LINK)->setMethodDetails($digital_payment_details)->setTransactionType(TransactionTypes::CREDIT)->create();
+//            }
+            elseif (in_array($this->paymentMethod, [PaymentMethods::OTHERS])) {
                 $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod($this->paymentMethod)->setMethodDetails($other_details)->setTransactionType(TransactionTypes::CREDIT)->create();
             }
             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
