@@ -6,14 +6,11 @@ class CustomerUpdateEntry extends CreateEntry
 {
 
     /**
-     * @throws Exceptions\AccountingEntryServerError
+     * @throws Exceptions\AccountingEntryServerError|\Exception
      */
     public function customerUpdateEntry()
     {
-        $data = $this->makeData();
-        $this->accountingRepository
-            ->setOrder($this->order)
-            ->updateEntryBySource($data, $this->order->id, $this->order->partner_id);
+        $this->getNotifier()->updateEntryBySource($this->makeData(), $this->order->id, $this->order->partner_id);
     }
 
 }

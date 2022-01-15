@@ -1,6 +1,7 @@
 <?php namespace App\Jobs\Order\Accounting;
 
 use App\Jobs\Job;
+use App\Models\EventNotification;
 use App\Models\Order;
 use App\Services\Accounting\Exceptions\AccountingEntryServerError;
 use App\Services\Accounting\UpdateEntry;
@@ -20,7 +21,7 @@ class EntryOnOrderUpdate extends Job implements ShouldQueue
      * @param Order $order
      * @param array $order_product_change_data
      */
-    public function __construct(Order $order, array $order_product_change_data)
+    public function __construct(Order $order, array $order_product_change_data, private EventNotification $eventNotification)
     {
         $this->connection = 'pos_order_accounting_queue';
         $this->queue = 'pos_order_accounting_queue';
@@ -35,6 +36,7 @@ class EntryOnOrderUpdate extends Job implements ShouldQueue
     {
         $updateEntry
             ->setOrder($this->order)
+            ->setEventNotification($this->eventNotification)
             ->setOrderProductChangeData($this->orderProductChangeData)
             ->update();
     }

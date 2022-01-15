@@ -2,13 +2,14 @@
 
 use App\Events\OrderDueCleared;
 use App\Events\OrderUpdated;
+use App\Services\EventNotification\Events;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Queue\SerializesModels;
 use App\Jobs\Order\Accounting\EntryOnOrderDueCleared as OrderDueClearedJob;
 
 class EntryOnOrderDueCleared
 {
-    use DispatchesJobs,SerializesModels;
+    use DispatchesJobs, SerializesModels, AccountingEventNotification;
 
     /**
      * Handle the event.
@@ -19,14 +20,14 @@ class EntryOnOrderDueCleared
     public function handle(OrderDueCleared|OrderUpdated $event)
     {
         if (get_class($event) == OrderUpdated::class) {
-            if(empty($event->getOrderProductChangedData()) && !empty($event->getPaymentInfo())) {
+            if (empty($event->getOrderProductChangedData()) && !empty($event->getPaymentInfo())) {
                 $paid_amount = $event->getPaymentInfo()['paid_amount'];
                 if (is_null($paid_amount) || $paid_amount == 0) return;
-                $this->dispatch(new OrderDueClearedJob($event->getOrder(),$paid_amount));
+                $this->dispatch(new OrderDueClearedJob($event->getOrder(), $paid_amount, $this->createEventNotification($event->getOrder(), Events::ORDER_UPDATE)));
             }
-        } elseif (get_class($event) == OrderDueCleared::class){
+        } elseif (get_class($event) == OrderDueCleared::class) {
             if (!$event->getPaidAmount() || $event->getPaidAmount() == 0) return;
-            $this->dispatch(new OrderDueClearedJob($event->getOrder(),$event->getPaidAmount()));
+            $this->dispatch(new OrderDueClearedJob($event->getOrder(), $event->getPaidAmount(), $this->createEventNotification($event->getOrder(), Events::ORDER_UPDATE)));
         }
 
     }

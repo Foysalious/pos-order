@@ -23,7 +23,7 @@ class BaseRepository
         $this->client = $client;
     }
 
-    protected function setEventNotification(EventNotification $eventNotification): static
+    public function setEventNotification(EventNotification $eventNotification): static
     {
         $this->eventNotification = $eventNotification;
         return $this;

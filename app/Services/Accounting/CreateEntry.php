@@ -2,12 +2,12 @@
 
 use App\Helper\Miscellaneous\RequestIdentification;
 use App\Models\Customer;
-use App\Models\EventNotification;
 use App\Repositories\Accounting\AccountingRepository;
 use App\Repositories\Accounting\Constants\EntryTypes;
 use App\Services\Accounting\Constants\Accounts;
 use App\Services\Accounting\Constants\Cash;
 use App\Services\Accounting\Constants\Sales;
+use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\SalesChannel;
 use App\Services\Order\Constants\SalesChannelIds;
@@ -23,10 +23,12 @@ class CreateEntry extends BaseEntry
         parent::__construct($accountingRepository, $client);
     }
 
+    /**
+     * @throws BaseClientServerError
+     */
     public function create()
     {
-        $data = $this->makeData();
-        $this->accountingRepository->setOrder($this->order)->storeEntry($this->order->partner_id, $data);
+        $this->getNotifier()->storeEntry($this->order->partner_id, $this->makeData());
     }
 
     public function makeData(): array
@@ -40,7 +42,7 @@ class CreateEntry extends BaseEntry
             'source_id' => $this->order->id,
             'note' => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ? SalesChannel::WEBSTORE : SalesChannel::POS,
             'source_type' => EntryTypes::POS,
-            'amount' => round(($order_price_details->getOriginalPrice() + $order_price_details->getVat()),2, PHP_ROUND_HALF_UP),
+            'amount' => round(($order_price_details->getOriginalPrice() + $order_price_details->getVat()), 2, PHP_ROUND_HALF_UP),
             'amount_cleared' => $order_price_details->getPaid(),
             'total_discount' => $order_price_details->getDiscount(),
             'total_vat' => $order_price_details->getVat(),
@@ -59,7 +61,7 @@ class CreateEntry extends BaseEntry
         $ordered_skus = $this->order->orderSkus()->get();
         $skus_ids = $ordered_skus->where('sku_id', '<>', null)->pluck('sku_id')->toArray();
         if ($skus_ids) {
-           $sku_details = collect($this->getSkuDetails($skus_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
+            $sku_details = collect($this->getSkuDetails($skus_ids, $this->order->sales_channel_id))->keyBy('id')->toArray();
         }
         /** @var BatchManipulator $mapper */
         $mapper = App::make(BatchManipulator::class);

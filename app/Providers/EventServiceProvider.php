@@ -17,6 +17,8 @@ use App\Listeners\InventoryStockUpdateOnOrderPlace;
 use App\Listeners\PushNotificationForOrder;
 use App\Listeners\RewardOnOrderCreate as RewardOnOrderCreateListener;
 use App\Listeners\UsageOnOrderCreate;
+use App\Listeners\UsageOnOrderDelete;
+use App\Listeners\UsageOnOrderUpdate;
 use App\Listeners\WebstoreSettingsSyncOnOrderCreate;
 use App\Listeners\WebstoreSmsSendForOrder;
 use Illuminate\Auth\Events\Registered;
@@ -51,6 +53,7 @@ class EventServiceProvider extends ServiceProvider
             GenerateInvoiceOnOrderCreate::class,
             WebstoreSettingsSyncOnOrderUpdate::class,
             InventoryStockUpdateOnOrderUpdate::class,
+            UsageOnOrderUpdate::class,
         ],
         OrderDueCleared::class => [
             EntryOnOrderDueCleared::class,
@@ -58,6 +61,7 @@ class EventServiceProvider extends ServiceProvider
         OrderDeleted::class => [
             EntryOnOrderDelete::class,
             InventoryStockUpdateOnOrderDelete::class,
+            UsageOnOrderDelete::class,
         ],
         OrderCustomerUpdated::class => [
             GenerateInvoiceOnOrderCreate::class,

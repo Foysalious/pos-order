@@ -35,17 +35,14 @@ class UpdateEntry extends BaseEntry
      */
     public function update()
     {
-        $data = $this->makeData();
-        $this->accountingRepository
-            ->setOrder($this->order)
-            ->updateEntryBySource($data, $this->order->id, $this->order->partner_id);
+        $this->getNotifier()->updateEntryBySource($this->makeData(), $this->order->id, $this->order->partner_id);
     }
 
     /**
      * @param array $orderProductChangeData
      * @return UpdateEntry
      */
-    public function setOrderProductChangeData(array $orderProductChangeData)
+    public function setOrderProductChangeData(array $orderProductChangeData): static
     {
         $this->orderProductChangeData = $orderProductChangeData;
         return $this;
