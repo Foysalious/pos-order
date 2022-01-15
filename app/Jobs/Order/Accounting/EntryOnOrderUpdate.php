@@ -16,19 +16,24 @@ class EntryOnOrderUpdate extends Job implements ShouldQueue
     private Order $order;
     private array $orderProductChangeData;
     private array $previousOrderData;
+    private array $paymentInfo;
+
 
     /**
-     * Create a new job instance.
      * @param Order $order
      * @param array $order_product_change_data
+     * @param EventNotification $eventNotification
+     * @param array $previousOrderData
+     * @param array $paymentInfo
      */
-    public function __construct(Order $order, array $order_product_change_data, private EventNotification $eventNotification, array $previousOrderData)
+    public function __construct(Order $order, array $order_product_change_data, private EventNotification $eventNotification, array $previousOrderData, array $paymentInfo)
     {
         $this->connection = 'pos_order_accounting_queue';
         $this->queue = 'pos_order_accounting_queue';
         $this->order = $order;
         $this->orderProductChangeData = $order_product_change_data;
         $this->previousOrderData = $previousOrderData;
+        $this->paymentInfo = $paymentInfo;
     }
 
     /**
@@ -41,6 +46,7 @@ class EntryOnOrderUpdate extends Job implements ShouldQueue
             ->setEventNotification($this->eventNotification)
             ->setOrderProductChangeData($this->orderProductChangeData)
             ->setPreviousOrderData($this->previousOrderData)
+            ->setPaymentInfo($this->paymentInfo)
             ->update();
     }
 }

@@ -19,6 +19,7 @@ class UpdateEntry extends BaseEntry
 {
     protected array $orderProductChangeData;
     private array $previousOrderData;
+    private array $paymentInfo;
     const NEWLY_ADDED_PRODUCT = 'new';
     const FULLY_DELETED_PRODUCT = 'deleted';
     const QUANTITY_INCREASED = 'increased';
@@ -51,6 +52,16 @@ class UpdateEntry extends BaseEntry
     }
 
     /**
+     * @param array $paymentInfo
+     * @return UpdateEntry
+     */
+    public function setPaymentInfo(array $paymentInfo): UpdateEntry
+    {
+        $this->paymentInfo = $paymentInfo;
+        return $this;
+    }
+
+    /**
      * @param array $previousOrderData
      * @return UpdateEntry
      */
@@ -63,7 +74,11 @@ class UpdateEntry extends BaseEntry
     private function makeData(): array
     {
         $order_price_details = $this->getOrderPriceDetails(new PriceCalculation());
-
+        if (!empty($this->paymentInfo) && isset($this->paymentInfo['paid_amount'])) {
+            $last_paid_amount = $this->paymentInfo['paid_amount'];
+        } else {
+            $last_paid_amount = 0;
+        }
         $customer = Customer::where('id', $this->order->customer_id)->where('partner_id', $this->order->partner_id)->first();
         $inventory_products = $this->makeInventoryProducts();
         $data = [
@@ -74,7 +89,7 @@ class UpdateEntry extends BaseEntry
             'source_type' => EntryTypes::POS,
             'note' => $this->getNote(),
             'amount' => round(($order_price_details->getOriginalPrice() + $order_price_details->getVat()), 2, PHP_ROUND_HALF_UP),
-            'amount_cleared' => $order_price_details->getPaid(),
+            'amount_cleared' => $order_price_details->getPaid() - $last_paid_amount,
             'reconcile_amount' => (float)$this->calculateAmountChange($inventory_products),
             'total_discount' => $order_price_details->getDiscount(),
             'total_vat' => $order_price_details->getVat(),
