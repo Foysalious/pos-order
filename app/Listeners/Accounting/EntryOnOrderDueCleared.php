@@ -3,6 +3,7 @@
 use App\Events\OrderDueCleared;
 use App\Events\OrderUpdated;
 use App\Services\EventNotification\Events;
+use App\Services\Order\Constants\PaymentMethods;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Queue\SerializesModels;
 use App\Jobs\Order\Accounting\EntryOnOrderDueCleared as OrderDueClearedJob;
@@ -22,7 +23,8 @@ class EntryOnOrderDueCleared
         if (get_class($event) == OrderUpdated::class) {
             if (!empty($event->getPaymentInfo())) {
                 $paid_amount = $event->getPaymentInfo()['paid_amount'];
-                if ($paid_amount < 0) return;
+                $payment_method = $event->getPaymentInfo()['payment_method'];
+                if ($paid_amount < 0 || $payment_method == PaymentMethods::PAYMENT_LINK) return;
                 if (is_null($paid_amount) || $paid_amount == 0) return;
                 $this->dispatch(new OrderDueClearedJob($event->getOrder(), $paid_amount, $this->createEventNotification($event->getOrder(), Events::ORDER_UPDATE)));
             }
