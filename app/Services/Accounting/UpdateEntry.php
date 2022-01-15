@@ -73,7 +73,7 @@ class UpdateEntry extends BaseEntry
             'source_id' => $this->order->id,
             'source_type' => EntryTypes::POS,
             'note' => $this->getNote(),
-            'amount' => $order_price_details->getDiscountedPrice(),
+            'amount' => round(($order_price_details->getOriginalPrice() + $order_price_details->getVat()), 2, PHP_ROUND_HALF_UP),
             'amount_cleared' => $order_price_details->getPaid(),
             'reconcile_amount' => (float)$this->calculateAmountChange($inventory_products),
             'total_discount' => $order_price_details->getDiscount(),
