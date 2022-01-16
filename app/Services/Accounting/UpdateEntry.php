@@ -12,11 +12,14 @@ use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\PriceCalculation;
 use App\Services\Order\Refund\Objects\AddRefundTracker;
+use Exception;
 use Illuminate\Support\Collection;
 
 class UpdateEntry extends BaseEntry
 {
     protected array $orderProductChangeData;
+    private array $previousOrderData;
+    private array $paymentInfo;
     const NEWLY_ADDED_PRODUCT = 'new';
     const FULLY_DELETED_PRODUCT = 'deleted';
     const QUANTITY_INCREASED = 'increased';
@@ -31,7 +34,7 @@ class UpdateEntry extends BaseEntry
     }
 
     /**
-     * @throws Exceptions\AccountingEntryServerError
+     * @throws Exception
      */
     public function update()
     {
@@ -48,26 +51,53 @@ class UpdateEntry extends BaseEntry
         return $this;
     }
 
+    /**
+     * @param array $paymentInfo
+     * @return UpdateEntry
+     */
+    public function setPaymentInfo(array $paymentInfo): UpdateEntry
+    {
+        $this->paymentInfo = $paymentInfo;
+        return $this;
+    }
+
+    /**
+     * @param array $previousOrderData
+     * @return UpdateEntry
+     */
+    public function setPreviousOrderData(array $previousOrderData): UpdateEntry
+    {
+        $this->previousOrderData = $previousOrderData;
+        return $this;
+    }
+
     private function makeData(): array
     {
         $order_price_details = $this->getOrderPriceDetails(new PriceCalculation());
-
+        if (!empty($this->paymentInfo) && isset($this->paymentInfo['paid_amount'])) {
+            $last_paid_amount = $this->paymentInfo['paid_amount'];
+        } else {
+            $last_paid_amount = 0;
+        }
         $customer = Customer::where('id', $this->order->customer_id)->where('partner_id', $this->order->partner_id)->first();
         $inventory_products = $this->makeInventoryProducts();
         $data = [
             'created_from' => json_encode($this->withBothModificationFields((new RequestIdentification())->get())),
             'credit_account_key' => Sales::SALES_FROM_POS,
-            'debit_account_key' => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ? Accounts::SHEBA_ACCOUNT : Cash::CASH,
+            'debit_account_key' => Cash::CASH,
             'source_id' => $this->order->id,
             'source_type' => EntryTypes::POS,
             'note' => $this->getNote(),
-            'amount' => $order_price_details->getDiscountedPrice(),
-            'amount_cleared' => $order_price_details->getPaid(),
+            'amount' => round(($order_price_details->getOriginalPrice() + $order_price_details->getVat()), 2, PHP_ROUND_HALF_UP),
+            'amount_cleared' => $order_price_details->getPaid() - $last_paid_amount,
             'reconcile_amount' => (float)$this->calculateAmountChange($inventory_products),
             'total_discount' => $order_price_details->getDiscount(),
             'total_vat' => $order_price_details->getVat(),
+            'updated_discount' => (double) ($order_price_details->getDiscount() - $this->previousOrderData['discount']),
+            'updated_vat' => (double) ($order_price_details->getVat() - $this->previousOrderData['vat']),
             'entry_at' => convertTimezone($this->order->created_at)?->format('Y-m-d H:i:s'),
             'delivery_charge' => (double)$this->order->delivery_charge ?? 0,
+            'updated_delivery_charge' => (double) ($this->order->delivery_charge - $this->previousOrderData['delivery_charge']) ?? 0,
             'bank_transaction_charge' => (double)$this->order->bank_transaction_charge ?? 0,
             'interest' => (double)$this->order->interest ?? 0,
             'updated_entry' => 0,
@@ -278,7 +308,7 @@ class UpdateEntry extends BaseEntry
                         'name' => $sku_details[$sku_id]['name'] ?? '',
                         "unit_price" => (double)$batch['unit_price'],
                         "selling_price" => $each_product->isQuantityIncreased() ? $each_product->getCurrentUnitPrice() : $each_product->getOldUnitPrice(),
-                        "quantity" => (double)$batch['quantity'],
+                        "quantity" => $each_product->getQuantityChangedValue(),
                         "type" => $each_product->isQuantityIncreased() ? OrderChangingTypes::QUANTITY_INCREASE : OrderChangingTypes::REFUND
                     ];
                 }

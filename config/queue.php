@@ -67,7 +67,7 @@ return [
             'queue' => env('REDIS_QUEUE', 'order'),
             'retry_after' => 90,
             'block_for' => null,
-            'after_commit' => false,
+            'after_commit' => true,
         ],
         'pos_order_accounting_queue' => [
             'driver' => 'redis',
@@ -75,7 +75,7 @@ return [
             'queue' => 'pos_order_accounting_queue',
             'retry_after' => 90,
             'block_for' => null,
-            'after_commit' => false,
+            'after_commit' => true,
         ],
 
     ],

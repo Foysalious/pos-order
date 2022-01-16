@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Repositories\Accounting\Constants\UserType;
 use App\Services\Accounting\AccountingEntryClient;
 use App\Services\Accounting\CreateEntry;
+use App\Services\Accounting\DeleteEntry;
 use App\Services\Accounting\Exceptions\AccountingEntryServerError;
 use App\Services\EventNotification\Events;
 use Carbon\Carbon;
@@ -52,12 +53,25 @@ class MissingAccountingEntry extends Command
 //        $startDateTime = $this->ask('Start Date Time');
 //        $endDateTime = $this->ask('End Date Time');
         $order_id = (int)$this->ask('Order Id');
-        /** @var CreateEntry $createEntry */
-        $createEntry = app(CreateEntry::class);
+        $mutate = $this->choice("Create or Delete", ["create", "delete"]);
         /** @var Order $order */
-        $order = Order::find($order_id);
-        $createEntry->setOrder($order)->setEventNotification($this->createEventNotification($order, Events::ORDER_CREATE))->create();
-        dump("Entry For order " . $order->id);
+        $order = Order::withTrashed()->where('id', $order_id)->first();
+        if ($mutate == "create") {
+            /** @var CreateEntry $createEntry */
+            $createEntry = app(CreateEntry::class);
+            $event_notification = $this->createEventNotification($order, Events::ORDER_CREATE);
+            $createEntry->setOrder($order)->setEventNotification($event_notification)->create();
+            dump("Entry For order " . $order->id);
+        }
+        if ($mutate == "delete") {
+            /** @var DeleteEntry $deleteEntry */
+            $deleteEntry = app(DeleteEntry::class);
+            $event_notification = $this->createEventNotification($order, Events::ORDER_DELETE);
+            $deleteEntry->setOrder($order)->setEventNotification($event_notification)->delete();
+            dump("Entry delete For order " . $order->id);
+        }
+
+
 //        $startDateTimeUTC = convertTimezone(Carbon::parse($startDateTime)->shiftTimezone('Asia/Dhaka'), 'UTC')->format('Y-m-d H:i:s');
 //        $endDateTimeUTC = convertTimezone(Carbon::parse($endDateTime)->shiftTimezone('Asia/Dhaka'), 'UTC')->format('Y-m-d H:i:s');
 //        $url = 'api/entries/partner/orders?start_date=' . $startDateTime .'&end_date=' . $endDateTime;

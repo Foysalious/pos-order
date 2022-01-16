@@ -12,12 +12,19 @@ class OrderUpdated
     protected array $orderProductChangeData;
     protected array $payment_info;
     protected array $stockUpdateData;
+    private array $previousOrder;
+
     /**
      * @return mixed
      */
     public function getOrder()
     {
         return $this->order;
+    }
+
+    public function getPreviousOrder()
+    {
+        return $this->previousOrder;
     }
 
     /**
@@ -51,6 +58,7 @@ class OrderUpdated
     public function __construct(array $event_data)
     {
         $this->order = $event_data['order'];
+        $this->previousOrder = $event_data['previous_order'];
         $this->orderProductChangeData = $event_data['order_product_change_data'];
         $this->payment_info = $event_data['payment_info'];
         $this->stockUpdateData = $event_data['stock_update_data'];
