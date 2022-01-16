@@ -5,6 +5,7 @@ use App\Services\Discount\Constants\DiscountTypes;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Refund\Objects\AddRefundTracker;
 use App\Services\Order\Refund\Objects\ProductChangeTracker;
+use App\Services\Order\Refund\Objects\ProductPriceChangeTracker;
 use App\Services\OrderSku\BatchManipulator;
 use App\Services\Product\StockManager;
 use App\Traits\ModificationFields;
@@ -17,6 +18,7 @@ class UpdateProductInOrder extends ProductOrder
     use ModificationFields;
     private array $refunded_items_obj = [];
     private array $added_items_obj = [];
+    private array $price_updated_items_obj = [];
     private float $refunded_amount = 0;
     private array $stockUpdateData = [];
     private array $productChangeTrackerList = [];
@@ -67,7 +69,8 @@ class UpdateProductInOrder extends ProductOrder
         return [
             'refunded_amount' => $this->refunded_amount,
             'added_products' =>  $this->added_items_obj,
-            'refunded_products' => $this->refunded_items_obj
+            'refunded_products' => $this->refunded_items_obj,
+            'price_updated_products' => $this->price_updated_items_obj
         ];
     }
 
@@ -200,6 +203,21 @@ class UpdateProductInOrder extends ProductOrder
 
     }
 
+    private function makePriceUpdatedObject(ProductChangeTracker $product, OrderSku $old_order_sku, OrderSku $new_order_sku)
+    {
+        /** @var ProductPriceChangeTracker $obj */
+        $obj = App::make(ProductPriceChangeTracker::class);
+        return $obj->setSkuId($product->getSkuId())
+            ->setCurrentQuantity($product->getCurrentQuantity())
+            ->setPreviousQuantity($product->getPreviousQuantity())
+            ->setOldUnitPrice($product->getOldUnitPrice())
+            ->setCurrentUnitPrice($product->getCurrentUnitPrice())
+            ->setOrderSkuId($new_order_sku->id)
+            ->setOldBatchDetail($old_order_sku->batch_detail)
+            ->setUpdatedBatchDetail($new_order_sku->batch_detail);
+
+    }
+
     private function updateVatPercentage(ProductChangeTracker $product)
     {
         $order_sku = $this->order->orderSkus->where('id', $product->getOrderSkuId())->first();
@@ -210,8 +228,12 @@ class UpdateProductInOrder extends ProductOrder
     private function updatePrice(ProductChangeTracker $product)
     {
         $order_sku = $this->order->orderSkus->where('id', $product->getOrderSkuId())->first();
+        $old_order_sku = clone $order_sku;
         $order_sku->unit_price = $product->getCurrentUnitPrice();
         $order_sku->update($this->modificationFields(false,true));
+        if ($product->getCurrentUnitPrice() != $product->getOldUnitPrice()) {
+            $this->price_updated_items_obj [] = $this->makePriceUpdatedObject($product, $old_order_sku, $order_sku);
+        }
     }
 
     private function updateDiscount(ProductChangeTracker $product)

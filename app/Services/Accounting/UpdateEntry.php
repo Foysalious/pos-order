@@ -12,6 +12,7 @@ use App\Services\Inventory\InventoryServerClient;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\PriceCalculation;
 use App\Services\Order\Refund\Objects\AddRefundTracker;
+use App\Services\Order\Refund\Objects\ProductPriceChangeTracker;
 use Exception;
 use Illuminate\Support\Collection;
 
@@ -121,6 +122,9 @@ class UpdateEntry extends BaseEntry
         if (isset($this->orderProductChangeData['deleted']['refunded_products'])) {
             $data = array_merge_recursive($this->makeNewAndDeletedProductsData($order_skus, $sku_details, self::FULLY_DELETED_PRODUCT), $data);
         }
+        if (isset($this->orderProductChangeData['refund_exchanged']['price_updated_products'])) {
+            $data = array_merge_recursive($this->makePriceUpdatedProductsData($this->orderProductChangeData['refund_exchanged']['price_updated_products'], $sku_details), $data);
+        }
         return array_merge_recursive($this->makeRefundExchangedProductsData($order_skus, $sku_details), $data);
 
     }
@@ -202,6 +206,8 @@ class UpdateEntry extends BaseEntry
             $note = OrderChangingTypes::EXCHANGE;
         } else if (count($this->orderProductChangeData['refund_exchanged']['refunded_products'] ?? []) > 0) {
             $note = OrderChangingTypes::REFUND;
+        } else if (count($this->orderProductChangeData['refund_exchanged']['price_updated_products'] ?? []) > 0) {
+            $note = OrderChangingTypes::EXCHANGE;
         }
         return $note;
     }
@@ -216,6 +222,10 @@ class UpdateEntry extends BaseEntry
         });
         $refunded = $this->orderProductChangeData['refund_exchanged']['refunded_products'] ?? [];
         array_walk($refunded, function ($item) use (&$sku_ids) {
+            $sku_ids [] = $item->getSkuId();
+        });
+        $price_changed = $this->orderProductChangeData['refund_exchanged']['price_updated_products'] ?? [];
+        array_walk($price_changed, function ($item) use (&$sku_ids) {
             $sku_ids [] = $item->getSkuId();
         });
         return $sku_ids;
@@ -242,7 +252,7 @@ class UpdateEntry extends BaseEntry
 
     }
 
-    private function getBatchWiseCost(AddRefundTracker $item, string $quantity_change_type): array
+    private function getBatchWiseCost(AddRefundTracker|ProductPriceChangeTracker $item, string $quantity_change_type): array
     {
         $batch_detail = $item->getUpdatedBatchDetail();
         if ($quantity_change_type == self::QUANTITY_DECREASED) {
@@ -289,6 +299,56 @@ class UpdateEntry extends BaseEntry
         }
         return $data;
 
+    }
+
+    private function makePriceUpdatedProductsData(array $products, Collection $sku_details): array
+    {
+        $data = [];
+        /** @var ProductPriceChangeTracker $each_product */
+        foreach ($products as $each_product) {
+            $sku_id = $each_product->getSkuId();
+            if ($each_product->getSkuId() != null) {
+                $batch_wise_cost = $this->getBatchWiseCost($each_product, self::QUANTITY_INCREASED);
+                foreach ($batch_wise_cost as $batch) {
+                    array_push($data, [
+                        'id' => $sku_details[$sku_id]['product_id'],
+                        'sku_id' => $sku_details[$sku_id]['id'],
+                        'name' => $sku_details[$sku_id]['name'] ?? '',
+                        "unit_price" => (double)$batch['unit_price'],
+                        "selling_price" => $each_product->getOldUnitPrice(),
+                        "quantity" => $each_product->getPreviousQuantity(),
+                        "type" => OrderChangingTypes::REFUND
+                    ]);
+                    array_push($data, [
+                        'id' => $sku_details[$sku_id]['product_id'],
+                        'sku_id' => $sku_details[$sku_id]['id'],
+                        'name' => $sku_details[$sku_id]['name'] ?? '',
+                        "unit_price" => (double)$batch['unit_price'],
+                        "selling_price" => $each_product->getCurrentUnitPrice(),
+                        "quantity" => $each_product->getCurrentQuantity(),
+                        "type" => OrderChangingTypes::NEW
+                    ]);
+                }
+            } else {
+                array_push($data, [
+                    'id' => 0,
+                    'name' => 'Custom Amount',
+                    "unit_price" => 0,
+                    "selling_price" => $each_product->getOldUnitPrice(),
+                    "quantity" => $each_product->getPreviousQuantity(),
+                    "type" => OrderChangingTypes::REFUND
+                ]);
+                array_push($data, [
+                    'id' => 0,
+                    'name' => 'Custom Amount',
+                    "unit_price" => 0,
+                    "selling_price" => $each_product->getCurrentUnitPrice(),
+                    "quantity" => $each_product->getCurrentQuantity(),
+                    "type" =>OrderChangingTypes::NEW
+                ]);
+            }
+        }
+        return $data;
     }
 
     public function makeAddedRefundedProductsData(array $products, \Illuminate\Database\Eloquent\Collection $order_skus, Collection $sku_details): array
