@@ -84,7 +84,7 @@ class UpdateEntry extends BaseEntry
         $data = [
             'created_from' => json_encode($this->withBothModificationFields((new RequestIdentification())->get())),
             'credit_account_key' => Sales::SALES_FROM_POS,
-            'debit_account_key' => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ? Accounts::SHEBA_ACCOUNT : Cash::CASH,
+            'debit_account_key' => Cash::CASH,
             'source_id' => $this->order->id,
             'source_type' => EntryTypes::POS,
             'note' => $this->getNote(),
