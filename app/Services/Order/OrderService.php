@@ -50,6 +50,7 @@ use App\Services\Order\Constants\Statuses;
 use App\Services\Webstore\Order\States as WebStoreStatuses;
 use App\Services\Webstore\Order\StateTags;
 use Illuminate\Support\Facades\Cache;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class OrderService extends BaseService
 {
@@ -185,7 +186,7 @@ class OrderService extends BaseService
         $cache_aside->setCacheRequest($trending_cache_request);
         $data = $cache_aside->getMyEntity();
         if (!$data) return $this->getTrendingProducts($partner_id);
-        if (empty($data)) return $this->error('no product Found');
+        if (empty($data)) throw new NotFoundHttpException('no product Found');
         return $this->success(ResponseMessages::SUCCESS, ['data' => $data]);
     }
 
@@ -203,7 +204,7 @@ class OrderService extends BaseService
         if ($trending->count() > 0) {
             if (empty($products->getData()->data)) return $this->error('no product Found');
             else return $products;
-        } else return $this->error('no product Found');
+        } else throw new NotFoundHttpException('no product Found');
     }
 
     public function getOrderInvoice(int $partner_id, int $order_id): JsonResponse
