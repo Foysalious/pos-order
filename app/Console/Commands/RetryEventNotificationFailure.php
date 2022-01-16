@@ -51,17 +51,20 @@ class RetryEventNotificationFailure extends Command
     public function handle()
     {
         $event_notifications = EventNotification::where('status', 'failed')->with(['order' => function ($q) {
-            $q->select('id', 'partner_id');
+            $q->select('id', 'partner_id')->withTrashed();
         }])->orderBy('created_at')->get();
         foreach ($event_notifications as $event_notification) {
-            /** @var Request $request */
-            $request = json_decode($event_notification->request);
-            $uri = $this->removeDomainFromUrl($request->url);
-            /** @var AccountingEntryClient $accountingEntryClient */
-            $accountingEntryClient = app(AccountingEntryClient::class);
-            $accountingEntryClient->setEventNotification($event_notification)->setUserId($event_notification->order->partner_id)
-                ->setUserType(UserType::PARTNER)->call($request->method, $uri, (array)$request->json);
-
+            try {
+                /** @var Request $request */
+                $request = json_decode($event_notification->request);
+                $uri = $this->removeDomainFromUrl($request->url);
+                /** @var AccountingEntryClient $accountingEntryClient */
+                $accountingEntryClient = app(AccountingEntryClient::class);
+                $accountingEntryClient->setEventNotification($event_notification)->setUserId($event_notification->order->partner_id)
+                    ->setUserType(UserType::PARTNER)->call($request->method, $uri, (array)$request->json);
+            } catch (\Throwable $e) {
+                dump($event_notification->id . " " . $e->getMessage());
+            }
         }
     }
 
@@ -72,6 +75,6 @@ class RetryEventNotificationFailure extends Command
         for ($i = 3; $i < count($urlArr); $i++) {
             $uri .= ($urlArr[$i] . '/');
         }
-        return $uri;
+        return rtrim($uri, "/");
     }
 }
