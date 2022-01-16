@@ -55,7 +55,7 @@ class MissingAccountingEntry extends Command
         $order_id = (int)$this->ask('Order Id');
         $mutate = $this->choice("Create or Delete", ["create", "delete"]);
         /** @var Order $order */
-        $order = Order::find($order_id);
+        $order = Order::withTrashed()->where('id', $order_id)->first();
         if ($mutate == "create") {
             /** @var CreateEntry $createEntry */
             $createEntry = app(CreateEntry::class);
