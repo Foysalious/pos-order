@@ -62,6 +62,7 @@ class RetryEventNotificationFailure extends Command
                 $accountingEntryClient = app(AccountingEntryClient::class);
                 $accountingEntryClient->setEventNotification($event_notification)->setUserId($event_notification->order->partner_id)
                     ->setUserType(UserType::PARTNER)->call($request->method, $uri, (array)$request->json);
+                dump($event_notification->id . " -> Success");
             } catch (\Throwable $e) {
                 dump($event_notification->id . " " . $e->getMessage());
             }
