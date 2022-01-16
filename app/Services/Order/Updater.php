@@ -360,6 +360,9 @@ class Updater
             }
             if ($this->order->status == Statuses::PENDING || $this->order->status == Statuses::PROCESSING)
                 $this->calculateDeliveryChargeAndSave($this->order);
+            if ($this->hasDueError($this->order->refresh())) {
+                throw new OrderException("Can not update due order without customer", 403);
+            }
             $this->refundIfEligible();
             DB::commit();
         } catch (Exception $e) {
@@ -639,7 +642,7 @@ class Updater
      */
     private function validateEmiAndCalculateChargesForOrder(Order $order)
     {
-        $amount = $this->orderCalculator->setOrder($order)->getDue();
+        $amount = $this->getDueAmount($order);
         $min_emi_amount = config('emi.minimum_emi_amount');
         if ($amount < $min_emi_amount) {
             throw new OrderException("Emi is not available for order amount less than " . $min_emi_amount, 400);
@@ -678,5 +681,18 @@ class Updater
         $previous_vat = $priceCalculation->setOrder($order)->getVat();
         $previous_delivery_charge = $priceCalculation->setOrder($order)->getDeliveryCharge();
         return [$previous_discount, $previous_vat, $previous_delivery_charge];
+    }
+
+    private function hasDueError(Order $order): bool
+    {
+        if ($this->getDueAmount($order) > 0 && is_null($this->customer)) {
+            return true;
+        }
+        return false;
+    }
+
+    private function getDueAmount($order): float
+    {
+        return $this->orderCalculator->setOrder($order)->getDue();
     }
 }

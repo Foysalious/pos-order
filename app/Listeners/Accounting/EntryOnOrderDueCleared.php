@@ -26,11 +26,13 @@ class EntryOnOrderDueCleared
                 $payment_method = $event->getPaymentInfo()['payment_method'];
                 if ($paid_amount < 0 || $payment_method == PaymentMethods::PAYMENT_LINK) return;
                 if (is_null($paid_amount) || $paid_amount == 0) return;
+                if (!$event->getOrder()->customer_id) return;
                 $event_notification = $this->createEventNotification($event->getOrder(), Events::ORDER_UPDATE);
                 $this->dispatch(new OrderDueClearedJob($event->getOrder(), $paid_amount, $event_notification));
             }
         } elseif (get_class($event) == OrderDueCleared::class) {
             if (!$event->getPaidAmount() || $event->getPaidAmount() == 0) return;
+            if (!$event->getOrder()->customer_id) return;
             $event_notification = $this->createEventNotification($event->getOrder(), Events::ORDER_UPDATE);
             $this->dispatch(new OrderDueClearedJob($event->getOrder(), $event->getPaidAmount(), $event_notification));
         }
