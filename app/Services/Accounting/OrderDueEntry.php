@@ -43,7 +43,7 @@ class OrderDueEntry extends BaseEntry
             'source_type' => EntryTypes::DEPOSIT,
             'debit_account_key' => Cash::CASH,
             'credit_account_key' => $this->order->customer_id,
-            'reference' => 'Deposit From POS',
+            'note' => 'Deposit From POS',
             'entry_at' => convertTimezone($this->order->updated_at)?->format('Y-m-d H:i:s'),
         ];
         return array_merge($data,$this->makeCustomerData($customer));
