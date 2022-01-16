@@ -16,10 +16,10 @@ class EntryOnOrderCustomerUpdate
      *
      * @param OrderCustomerUpdated $event
      * @return void
-     * @throws AccountingEntryServerError
      */
     public function handle(OrderCustomerUpdated $event)
     {
-        $this->dispatch(new CustomerUpdateEntryJob($event->getOrder(), $this->createEventNotification($event->getOrder(), Events::ORDER_UPDATE)));
+        $event_notification = $this->createEventNotification($event->getOrder(), Events::ORDER_UPDATE);
+        $this->dispatch(new CustomerUpdateEntryJob($event->getOrder(), $event_notification));
     }
 }

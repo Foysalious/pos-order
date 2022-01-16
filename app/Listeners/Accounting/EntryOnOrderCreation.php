@@ -18,6 +18,7 @@ class EntryOnOrderCreation
      */
     public function handle(OrderPlaceTransactionCompleted $event)
     {
-        $this->dispatch(new EntryOnOrderCreate($event->getOrder(), $this->createEventNotification($event->getOrder(), Events::ORDER_CREATE)));
+        $event_notification = $this->createEventNotification($event->getOrder(), Events::ORDER_CREATE);
+        $this->dispatch(new EntryOnOrderCreate($event->getOrder(), $event_notification));
     }
 }
