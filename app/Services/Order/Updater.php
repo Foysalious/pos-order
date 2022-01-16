@@ -65,7 +65,6 @@ class Updater
         protected Handler $discountHandler,
         protected PaymentCreator $paymentCreator,
         protected CustomerRepositoryInterface $customerRepository,
-        protected PriceCalculation $orderCalculator,
         protected EmiCalculation $emiCalculation,
         protected CustomerResolver $customerResolver,
     )
@@ -604,9 +603,11 @@ class Updater
 
     private function refundIfEligible()
     {
-        $this->orderCalculator->setOrder($this->order->refresh());
-        $total_paid = $this->orderCalculator->getPaid();
-        $total_amount = $this->orderCalculator->getDiscountedPrice();
+        /** @var PriceCalculation $orderCalculator */
+        $orderCalculator = app(PriceCalculation::class);
+        $orderCalculator->setOrder($this->order->refresh());
+        $total_paid = $orderCalculator->getPaid();
+        $total_amount = $orderCalculator->getDiscountedPrice();
         $refunded = false;
         if ($total_paid > $total_amount) {
             $refund_amount = $total_paid - $total_amount;
@@ -617,10 +618,10 @@ class Updater
             $this->paymentCreator->create();
             $refunded = true;
         }
-        if (($refunded == false && $this->orderCalculator->getDue() > 0)) {
+        if (($refunded == false && $orderCalculator->getDue() > 0)) {
             $this->order->paid_at = null;
             $this->order->update($this->modificationFields(false, true));
-        } else if ($this->orderCalculator->getDue() == 0) {
+        } else if ($orderCalculator->getDue() == 0) {
             $this->order->paid_at = Carbon::now();
             $this->order->update($this->modificationFields(false, true));
         }
@@ -631,7 +632,9 @@ class Updater
      */
     private function validateEmiAndCalculateChargesForOrder(Order $order)
     {
-        $amount = $this->orderCalculator->setOrder($order)->getDue();
+        /** @var PriceCalculation $orderCalculator */
+        $orderCalculator = app(PriceCalculation::class);
+        $amount = $orderCalculator->setOrder($order)->getDue();
         $min_emi_amount = config('emi.minimum_emi_amount');
         if ($amount < $min_emi_amount) {
             throw new OrderException("Emi is not available for order amount less than " . $min_emi_amount, 400);
