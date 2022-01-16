@@ -1,16 +1,10 @@
 <?php namespace App\Services\Accounting;
 
 
-use App\Helper\Miscellaneous\RequestIdentification;
 use App\Models\Customer;
 use App\Repositories\Accounting\Constants\EntryTypes;
-use App\Services\Accounting\Constants\Accounts;
 use App\Services\Accounting\Constants\Cash;
-use App\Services\Accounting\Constants\Sales;
-use App\Services\Order\Constants\SalesChannel;
-use App\Services\Order\Constants\SalesChannelIds;
-use App\Services\Order\PriceCalculation;
-use Exception;
+use App\Services\ClientServer\Exceptions\BaseClientServerError;
 
 class OrderDueEntry extends BaseEntry
 {
@@ -28,39 +22,30 @@ class OrderDueEntry extends BaseEntry
     }
 
     /**
-     * @throws Exceptions\AccountingEntryServerError
-     * @throws Exception
+     * @throws BaseClientServerError
      */
     public function create()
     {
         $data = $this->makeData();
-        $this->getNotifier()->updateEntryBySource($data, $this->order->id, $this->order->partner_id);
+        $this->getNotifier()->storeEntry($this->order->partner_id, $data);
     }
 
     private function makeData(): array
     {
-        $order_price_details = $this->getOrderPriceDetails(new PriceCalculation());
         $customer = Customer::where('id', $this->order->customer_id)->where('partner_id', $this->order->partner_id)->first();
-
         $data = [
-            'created_from' => json_encode($this->withBothModificationFields((new RequestIdentification())->get())),
-            'credit_account_key' => Sales::SALES_FROM_POS,
-            'debit_account_key' => $this->order->sales_channel_id == SalesChannelIds::WEBSTORE ? Accounts::SHEBA_ACCOUNT : Cash::CASH,
+            'amount' => $this->paidAmount,
+            'customer_id' => $this->order->customer_id,
+            'customer_is_supplier' => $customer->is_supplier,
+            'customer_mobile' => $customer->mobile,
+            'customer_name' => $customer->name,
             'source_id' => $this->order->id,
-            'source_type' => EntryTypes::POS,
-            'amount' => $order_price_details->getDiscountedPrice(),
-            'amount_cleared' => $order_price_details->getPaid(),
-            'total_discount' => $order_price_details->getDiscount(),
-            'total_vat' => $order_price_details->getVat(),
-            'delivery_charge' => (double)$this->order->delivery_charge ?? 0,
-            'bank_transaction_charge' => (double)$this->order->bank_transaction_charge ?? 0,
-            'interest' => (double)$this->order->interest ?? 0,
-            'note' => self::REFUND,
-            'entry_at' => $this->order->updated_at->format('Y-m-d H:i:s'),
-            'reconcile_amount' => -(abs($this->paidAmount)),
-            'inventory_products' => null,
+            'source_type' => EntryTypes::DEPOSIT,
+            'debit_account_key' => Cash::CASH,
+            'credit_account_key' => $this->order->customer_id,
+            'note' => 'Deposit From POS',
+            'entry_at' => convertTimezone($this->order->updated_at)?->format('Y-m-d H:i:s'),
         ];
-
         return array_merge($data,$this->makeCustomerData($customer));
     }
 }

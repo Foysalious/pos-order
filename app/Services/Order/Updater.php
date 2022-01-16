@@ -343,6 +343,7 @@ class Updater
         try {
             DB::beginTransaction();
             $previous_order = $this->setExistingOrder();
+            list($previous_discount, $previous_vat, $previous_delivery_charge) = $this->getPreviousOrderData($previous_order);
             if (isset($this->customer_id) && ($this->customer_id != $this->order->customer_id)) {
                 $this->updateCustomer();
             }
@@ -358,6 +359,9 @@ class Updater
             }
             if ($this->order->status == Statuses::PENDING || $this->order->status == Statuses::PROCESSING)
                 $this->calculateDeliveryChargeAndSave($this->order);
+            if ($this->hasDueError($this->order->refresh())) {
+                throw new OrderException("Can not update due order without customer", 403);
+            }
             $this->refundIfEligible();
             DB::commit();
         } catch (Exception $e) {
@@ -368,7 +372,12 @@ class Updater
             'order' => $this->order->refresh(),
             'order_product_change_data' => $this->orderProductChangeData ?? [],
             'payment_info' => ['payment_method' => $this->paymentMethod, 'paid_amount' => $this->paidAmount ?? null],
-            'stock_update_data' => $this->stockUpdateEntry
+            'stock_update_data' => $this->stockUpdateEntry,
+            'previous_order' => [
+                'discount' => $previous_discount,
+                'vat' => $previous_vat,
+                'delivery_charge' => $previous_delivery_charge
+            ],
         ]));
     }
 
@@ -504,9 +513,11 @@ class Updater
             if (in_array($this->paymentMethod, [PaymentMethods::ADVANCE_BALANCE, PaymentMethods::CASH_ON_DELIVERY, PaymentMethods::QR_CODE])) {
                 $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod($this->paymentMethod)->setMethodDetails($cash_details)
                     ->setTransactionType(TransactionTypes::CREDIT)->create();
-            } elseif ($this->paymentMethod == PaymentMethods::PAYMENT_LINK) {
-                $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod(PaymentMethods::PAYMENT_LINK)->setMethodDetails($digital_payment_details)->setTransactionType(TransactionTypes::CREDIT)->create();
-            } elseif (in_array($this->paymentMethod, [PaymentMethods::OTHERS])) {
+            }
+//            elseif ($this->paymentMethod == PaymentMethods::PAYMENT_LINK) {
+//                $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod(PaymentMethods::PAYMENT_LINK)->setMethodDetails($digital_payment_details)->setTransactionType(TransactionTypes::CREDIT)->create();
+//            }
+            elseif (in_array($this->paymentMethod, [PaymentMethods::OTHERS])) {
                 $this->paymentCreator->setOrderId($this->order->id)->setAmount($this->paidAmount)->setMethod($this->paymentMethod)->setMethodDetails($other_details)->setTransactionType(TransactionTypes::CREDIT)->create();
             }
             $this->orderLogType = OrderLogTypes::PRODUCTS_AND_PRICES;
@@ -632,9 +643,7 @@ class Updater
      */
     private function validateEmiAndCalculateChargesForOrder(Order $order)
     {
-        /** @var PriceCalculation $orderCalculator */
-        $orderCalculator = app(PriceCalculation::class);
-        $amount = $orderCalculator->setOrder($order)->getDue();
+        $amount = $this->getDueAmount($order);
         $min_emi_amount = config('emi.minimum_emi_amount');
         if ($amount < $min_emi_amount) {
             throw new OrderException("Emi is not available for order amount less than " . $min_emi_amount, 400);
@@ -663,5 +672,30 @@ class Updater
         if (!isset($this->customer_id)) return $this->setCustomer(null);
         $customer = $this->customerResolver->setPartnerId($this->order->partner_id)->setCustomerId($this->customer_id)->resolveCustomer();
         return $this->setCustomer($customer);
+    }
+
+    private function getPreviousOrderData(Order $order): array
+    {
+        /** @var PriceCalculation $priceCalculation */
+        $priceCalculation = app(PriceCalculation::class);
+        $previous_discount = $priceCalculation->setOrder($order)->getDiscount();
+        $previous_vat = $priceCalculation->setOrder($order)->getVat();
+        $previous_delivery_charge = $priceCalculation->setOrder($order)->getDeliveryCharge();
+        return [$previous_discount, $previous_vat, $previous_delivery_charge];
+    }
+
+    private function hasDueError(Order $order): bool
+    {
+        if ($this->getDueAmount($order) > 0 && is_null($this->customer)) {
+            return true;
+        }
+        return false;
+    }
+
+    private function getDueAmount($order): float
+    {
+        /** @var PriceCalculation $orderCalculator */
+        $orderCalculator = app(PriceCalculation::class);
+        return $orderCalculator->setOrder($order)->getDue();
     }
 }

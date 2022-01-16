@@ -3,8 +3,8 @@
 use App\Jobs\Job;
 use App\Models\EventNotification;
 use App\Models\Order;
-use App\Services\Accounting\Exceptions\AccountingEntryServerError;
 use App\Services\Accounting\OrderDueEntry;
+use App\Services\ClientServer\Exceptions\BaseClientServerError;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -25,7 +25,8 @@ class EntryOnOrderDueCleared extends Job implements ShouldQueue
     }
 
     /**
-     * @throws AccountingEntryServerError
+     * @param OrderDueEntry $dueEntry
+     * @throws BaseClientServerError
      */
     public function handle(OrderDueEntry $dueEntry)
     {
