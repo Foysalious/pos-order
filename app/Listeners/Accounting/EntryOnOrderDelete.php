@@ -19,6 +19,7 @@ class EntryOnOrderDelete
      */
     public function handle(OrderDeleted $event)
     {
-        $this->dispatch(new OrderDeleteEntryJob($event->getOrder(), $this->createEventNotification($event->getOrder(), Events::ORDER_DELETE)));
+        $event_notification = $this->createEventNotification($event->getOrder(), Events::ORDER_DELETE);
+        $this->dispatch(new OrderDeleteEntryJob($event->getOrder(), $event_notification));
     }
 }
