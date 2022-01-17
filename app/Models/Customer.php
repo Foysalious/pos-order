@@ -11,12 +11,6 @@ class Customer extends BaseModel
     protected $guarded = [];
     public $incrementing = false;
     protected $keyType = 'string';
-    protected $cascadeDeletes = ['orders'];
-
-    public function orders()
-    {
-        return $this->hasMany(Order::class);
-    }
 
     public function details()
     {

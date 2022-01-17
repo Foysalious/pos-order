@@ -9,6 +9,7 @@ use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Interfaces\ReviewRepositoryInterface;
 use App\Models\Customer;
+use App\Models\Order;
 use App\Repositories\Accounting\AccountingRepository;
 use App\Services\APIServerClient\ApiServerClient;
 use App\Services\BaseService;
@@ -75,15 +76,34 @@ class CustomerService extends BaseService
     }
 
     /**
-     * Orders are soft deleted from customer model
+     * @param int $partner_id
+     * @param int|string $customer_id
+     * @return JsonResponse
      * @throws Exception
      */
     public function delete(int $partner_id, int|string $customer_id): JsonResponse
     {
-        $customer = Customer::where([['id', $customer_id], ['partner_id', $partner_id]])->first();
-        if (!$customer) return $this->error('Customer Not Found', 404);
-        $customer->delete();
+        try {
+            DB::beginTransaction();
+            $customer = Customer::where([['id', $customer_id], ['partner_id', $partner_id]])->first();
+            if (!$customer) return $this->error('Customer Not Found', 404);
+            $this->deleteOrders($partner_id, $customer_id);
+            $customer->delete();
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            app('sentry')->captureException($e);
+            throw $e;
+        }
         return $this->success();
+    }
+
+    private function deleteOrders($partnerId, $customerId)
+    {
+        $orders = Order::byPartnerAndCustomer($partnerId, $customerId)->get();
+        foreach ($orders as $order) {
+            $order->delete();
+        }
     }
 
     public function getPurchaseAmountAndPromoUsed(int $partner_id, string $customer_id): JsonResponse

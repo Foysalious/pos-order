@@ -80,6 +80,11 @@ class Order extends BaseModel
         return $this->logs()->where('type', OrderLogTypes::ORDER_STATUS);
     }
 
+    public function scopeByPartnerAndCustomer($query, $partner_id, $customer_id)
+    {
+        return $query->where('partner_id', $partner_id)->where('customer_id', $customer_id);
+    }
+
     public function paymentMethod()
     {
         $lastPayment = $this->payments()->where('transaction_type', TransactionTypes::CREDIT)->orderBy('id', 'desc')->select('id', 'method')->first();
