@@ -201,7 +201,7 @@ class OrderService extends BaseService
         $trending = $this->OrderSkuRepositoryInterface->getTrendingProducts($partner_id);
         $products = $this->getSkuDetailsForWebstore($partner_id, $trending);
         if ($trending->count() > 0) {
-            if (empty($products->getData()->data)) return $this->error('no product Found');
+            if (empty($products->getData()->data)) return $this->error('no product Found',404);
             else return $products;
         } else throw new NotFoundHttpException('no product Found');
     }
