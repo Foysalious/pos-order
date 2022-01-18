@@ -24,11 +24,10 @@ class TrendingDataStore implements DataStoreObject
 
     public function generate()
     {
-        $partnerOrder = Order::where('partner_id', $this->trendingCacheRequest->getPartnerId())->where('sales_channel_id', 2)->get();
-        if (count($partnerOrder) < 1) return null;
         /** @var OrderSkuRepositoryInterface $OrderSkuRepositoryInterface */
         $OrderSkuRepositoryInterface = app(OrderSkuRepositoryInterface::class);
         $trending = $OrderSkuRepositoryInterface->getTrendingProducts($this->trendingCacheRequest->getPartnerId());
+        if (count($trending) == 0) return null;
         /** @var OrderService $orderService */
         $orderService = app(OrderService::class);
         $products = $orderService->getSkuDetailsForWebstore($this->trendingCacheRequest->getPartnerId(), $trending);

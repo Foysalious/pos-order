@@ -82,7 +82,7 @@ class CacheAside
     /**
      * @return array|null
      */
-    public function reGeneratedEntity()
+    public function regenerateEntity()
     {
         $data = $this->dataStoreObject->generate();
         $this->setOnCache($data);

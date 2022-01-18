@@ -176,7 +176,7 @@ class OrderService extends BaseService
         return $this->success(ResponseMessages::SUCCESS, ['data' => collect($sku_details)]);
     }
 
-    public function getCachedTrendingProducts(int $partner_id)
+    public function getTrendingProducts(int $partner_id)
     {
         /** @var TrendingCacheRequest $cache_aside */
         $trending_cache_request = app(TrendingCacheRequest::class);
@@ -196,15 +196,6 @@ class OrderService extends BaseService
         return $products->getData()->data;
     }
 
-    public function getTrendingProducts(int $partner_id)
-    {
-        $trending = $this->OrderSkuRepositoryInterface->getTrendingProducts($partner_id);
-        $products = $this->getSkuDetailsForWebstore($partner_id, $trending);
-        if ($trending->count() > 0) {
-            if (empty($products->getData()->data)) return $this->error('no product Found',404);
-            else return $products;
-        } else throw new NotFoundHttpException('no product Found');
-    }
 
     public function getOrderInvoice(int $partner_id, int $order_id): JsonResponse
     {
