@@ -185,7 +185,6 @@ class OrderService extends BaseService
         $cache_aside = app(CacheAside::class);
         $cache_aside->setCacheRequest($trending_cache_request);
         $data = $cache_aside->getMyEntity();
-        if (!$data) return $this->getTrendingProducts($partner_id);
         if (empty($data)) throw new NotFoundHttpException('no product Found');
         return $this->success(ResponseMessages::SUCCESS, ['data' => $data]);
     }
@@ -202,7 +201,7 @@ class OrderService extends BaseService
         $trending = $this->OrderSkuRepositoryInterface->getTrendingProducts($partner_id);
         $products = $this->getSkuDetailsForWebstore($partner_id, $trending);
         if ($trending->count() > 0) {
-            if (empty($products->getData()->data)) return $this->error('no product Found');
+            if (empty($products->getData()->data)) return $this->error('no product Found',404);
             else return $products;
         } else throw new NotFoundHttpException('no product Found');
     }
