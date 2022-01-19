@@ -52,7 +52,7 @@ class OrderWithProductResource extends JsonResource
             'payment_status' => $this->paid_at ? PaymentStatuses::PAID : PaymentStatuses::DUE,
             'sales_channel_id' => $this->sales_channel_id,
             'note' => $this->note,
-            'invoice' => $this->invoice,
+            'invoice' => $this->invoice ?? '',
             'is_registered_for_sdelivery' => $is_registered_for_sdelivery,
             'delivery_method' => $this->getDeliveryVendor(),
             'delivery_request_id' => $this->delivery_request_id,
