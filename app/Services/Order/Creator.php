@@ -389,7 +389,7 @@ class Creator
                 $this->discountHandler->setVoucherId($this->voucher_id)->voucherDiscountCalculate($order);
             }
             if ($this->paymentMethod == PaymentMethods::EMI) {
-                $this->validateEmiAndCalculateChargesForOrder($order, new PriceCalculation());
+//                $this->validateEmiAndCalculateChargesForOrder($order, new PriceCalculation());
                 /** @var OrderObject $orderObject */
                 $orderObject = app(OrderObject::class);
                 $orderObject->setOrder($order);
