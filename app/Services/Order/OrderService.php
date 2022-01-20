@@ -177,7 +177,7 @@ class OrderService extends BaseService
         return $this->success(ResponseMessages::SUCCESS, ['data' => collect($sku_details)]);
     }
 
-    public function getCachedTrendingProducts(int $partner_id)
+    public function getTrendingProducts(int $partner_id)
     {
         /** @var TrendingCacheRequest $cache_aside */
         $trending_cache_request = app(TrendingCacheRequest::class);
@@ -186,7 +186,6 @@ class OrderService extends BaseService
         $cache_aside = app(CacheAside::class);
         $cache_aside->setCacheRequest($trending_cache_request);
         $data = $cache_aside->getMyEntity();
-        if (!$data) return $this->getTrendingProducts($partner_id);
         if (empty($data)) throw new NotFoundHttpException('no product Found');
         return $this->success(ResponseMessages::SUCCESS, ['data' => $data]);
     }
@@ -198,15 +197,6 @@ class OrderService extends BaseService
         return $products->getData()->data;
     }
 
-    public function getTrendingProducts(int $partner_id)
-    {
-        $trending = $this->OrderSkuRepositoryInterface->getTrendingProducts($partner_id);
-        $products = $this->getSkuDetailsForWebstore($partner_id, $trending);
-        if ($trending->count() > 0) {
-            if (empty($products->getData()->data)) return $this->error('no product Found');
-            else return $products;
-        } else throw new NotFoundHttpException('no product Found');
-    }
 
     public function getOrderInvoice(int $partner_id, int $order_id): JsonResponse
     {
@@ -224,12 +214,6 @@ class OrderService extends BaseService
     {
         $order = $this->orderRepository->getOrderDetailsByPartner($partner_id, $order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
-        if ($order->invoice == null) {
-            try {
-                app(InvoiceService::class)->setOrder($order)->generateInvoice();
-            } catch (Exception $exception) {
-            }
-        }
         $resource = new OrderWithProductResource($order, true);
         return $this->success(ResponseMessages::SUCCESS, ['order' => $resource]);
     }

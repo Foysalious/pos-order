@@ -139,8 +139,8 @@ class DataMigrationService extends BaseService
                         'partner_id' => $order['partner_id'],
                         'name' => $order['delivery_name'],
                         'mobile' => $order['delivery_mobile'],
-                        'deleted_at' => convertTimezone(Carbon::now())?->format('Y-m-d H:i:s'),
-                        'created_at' => convertTimezone(Carbon::now())?->format('Y-m-d H:i:s'),
+                        'deleted_at' => Carbon::now()->format('Y-m-d H:i:s'),
+                        'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                         'created_by_name' => 'data-migration'
                     ]);
                     $this->smanagerUserServerClient->post('api/v1/partners/'. $order['partner_id'] .'/users/store-or-get', [
@@ -148,8 +148,8 @@ class DataMigrationService extends BaseService
                         'partner_id' => $order['partner_id'],
                         'name' => $order['delivery_name'],
                         'mobile' => $order['delivery_mobile'],
-                        'deleted_at' => convertTimezone(Carbon::now())?->format('Y-m-d H:i:s'),
-                        'created_at' => convertTimezone(Carbon::now())?->format('Y-m-d H:i:s'),
+                        'deleted_at' => Carbon::now()->format('Y-m-d H:i:s'),
+                        'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                         'created_by_name' => 'data-migration'
                     ]);
                 }
