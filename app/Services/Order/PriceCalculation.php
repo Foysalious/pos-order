@@ -53,13 +53,11 @@ class PriceCalculation
         $this->discount = $this->productDiscount + $orderAndVoucherDiscount;
         $appliedOrderAndVoucherDiscount = ($orderAndVoucherDiscount > $this->productDiscountedPrice) ? $this->productDiscountedPrice : $orderAndVoucherDiscount;
         $originalTotal = $this->productDiscountedPrice - $appliedOrderAndVoucherDiscount;
-        $this->discountedPrice = $originalTotal + $this->order->interest + $this->order->bank_transaction_charge;
+        $this->discountedPrice = $originalTotal;
         $this->discountedPrice += $this->order->delivery_charge;
         $this->discountedPrice = round($this->discountedPrice,2, PHP_ROUND_HALF_UP);
         $this->calculatePaidAmount();
-//        $this->paid = round($this->paid ?: 0, 2);
         $this->due = ($this->discountedPrice - $this->paid) > 0 ? ($this->discountedPrice - $this->paid) : 0;
-//        $this->formatAllToTaka();
     }
 
     /**
