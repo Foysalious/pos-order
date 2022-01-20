@@ -3,6 +3,7 @@
 namespace App\Jobs\Order;
 
 use App\Jobs\Job;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Services\Order\EmailHandler;
@@ -18,15 +19,17 @@ class OrderEmail extends Job implements ShouldQueue
 
     private Order $order;
     private Partner $partner;
+    private Customer $customer;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(Order $order)
+    public function __construct(Order $order, Customer $customer)
     {
         $this->order = $order;
+        $this->customer = $customer;
     }
 
     /**
@@ -37,7 +40,7 @@ class OrderEmail extends Job implements ShouldQueue
     public function handle(EmailHandler $handler)
     {
         if ($this->attempts() <= 2) {
-            $handler->setOrder($this->order)->handle();
+            $handler->setOrder($this->order)->setCustomer($this->customer)->handle();
         }
     }
 }
