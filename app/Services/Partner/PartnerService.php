@@ -61,7 +61,7 @@ class PartnerService extends  BaseService
     {
         $partner = $this->partnerRepository->where('id', $request->partner_id)->first();
         if(!$partner) {
-            $partner = Partner::create([
+            $partner = Partner::updateOrCreate(['id' => $request->partner_id],[
                 'id' => $request->partner_id,
                 'name' => $request->name,
                 'sub_domain' => $request->sub_domain,
