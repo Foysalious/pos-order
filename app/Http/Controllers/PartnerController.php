@@ -48,9 +48,9 @@ class PartnerController extends Controller
      * @param PartnerUpdateRequest $request
      * @return JsonResponse
      */
-    public function updatePartnersTable($partner_id, PartnerUpdateRequest $request)
+    public function update($partner_id, PartnerUpdateRequest $request)
     {
-        return $this->partnerService->updatePartner($partner_id,$request);
+        return $this->partnerService->update($partner_id,$request);
     }
 
     public function storeOrGet(Request $request)

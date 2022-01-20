@@ -21,7 +21,7 @@ class PartnerService extends  BaseService
     }
 
 
-    public function updatePartner(int $partner_id, PartnerUpdateRequest $request)
+    public function update(int $partner_id, PartnerUpdateRequest $request)
     {
         $partner = $this->partnerRepository->where('id', $partner_id)->first();
 
@@ -29,12 +29,6 @@ class PartnerService extends  BaseService
                 'id' => $partner_id,
                 'name' => $request->name ?? null,
                 'sub_domain' => $request->sub_domain ?? null,
-                'sms_invoice' => $request->sms_invoice ?? 0,
-                'auto_printing' => $request->auto_printing ?? 0,
-                'printer_name' => $request->printer_name ?? null,
-                'printer_model' => $request->printer_model ?? null,
-                'qr_code_image'  => $request->qr_code_image ?? null,
-                'qr_code_account_type'  => $request->qr_code_account_type ?? null,
                 'delivery_charge' => $request->delivery_charge ?? null,
             ]);
 
