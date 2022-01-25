@@ -44,6 +44,7 @@ use App\Services\OrderLog\OrderLogGenerator;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
@@ -290,6 +291,22 @@ class OrderService extends BaseService
             ->setDeliveryDistrict($orderUpdateRequest->delivery_district ?? null)
             ->setCustomerId($orderUpdateRequest->customer_id)
             ->update();
+        return $this->success();
+    }
+
+    public function updateDeliveryInfo(Request $request, $partner_id, $order_id)
+    {
+        $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id)->load(['items' => function ($q) {
+            $q->with('discount');
+        }, 'customer', 'payments', 'discounts']);
+        if (!$orderDetails) return $this->error("You're not authorized to access this order", 403);
+        $this->updater->setPartnerId($partner_id)
+            ->setOrder($orderDetails)
+            ->setDeliveryAddress($request->address)
+            ->setDeliveryRequestId($request->delivery_request_id ?? null)
+            ->setDeliveryThana($request->delivery_thana ?? null)
+            ->setDeliveryDistrict($request->delivery_district ?? null)
+            ->updateDeliveryInformation();
         return $this->success();
     }
 

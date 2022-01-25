@@ -698,4 +698,19 @@ class Updater
         $orderCalculator = app(PriceCalculation::class);
         return $orderCalculator->setOrder($order)->getDue();
     }
+
+    public function updateDeliveryInformation()
+    {
+        $this->orderRepositoryInterface->update($this->order, $this->makeDeliveryData());
+    }
+
+    private function makeDeliveryData()
+    {
+        $data = [];
+        if (isset($this->delivery_request_id)) $data['delivery_request_id'] = $this->delivery_request_id;
+        if (isset($this->delivery_address)) $data['delivery_address'] = $this->delivery_address;
+        if (isset($this->delivery_district)) $data['delivery_district'] = $this->delivery_district;
+        if (isset($this->delivery_thana)) $data['delivery_thana'] = $this->delivery_thana;
+        return $data + $this->modificationFields(false, true);
+    }
 }

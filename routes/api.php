@@ -59,6 +59,7 @@ Route::group(['middleware' => 'ip.whitelist'], function () {
             });
         });
         Route::get('orders/{order_id}', [OrderController::class, 'getOrderInfoForPaymentLink']);
+        Route::put('orders/{order_id}/delivery', [OrderController::class, 'updateDeliveryInfo']);
         Route::get('partners/{partner_id}/order-by-partner-wise-order-id/{partner_wise_order_id}', [OrderController::class, 'getOrderInfoByPartnerWiseOrderId']);
         Route::group(['prefix' => 'partners/{partner}/orders/{order}'], function () {
             Route::post('update-status', [OrderController::class, 'updateStatus']);
