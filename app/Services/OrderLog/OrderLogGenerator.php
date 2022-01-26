@@ -76,16 +76,19 @@ class OrderLogGenerator
             ];
         } elseif ($this->log->type == OrderLogTypes::PAYMENTS) {
             $payment = $this->newObject->payments->last();
-            if($payment->transaction_type==TransactionTypes::DEBIT) {
+            if ($payment->transaction_type==TransactionTypes::DEBIT) {
                 $log_type_show_name_bn = 'ফেরত';
                 $log_type_show_name_en = 'Refund';
             } else {
-                if($payment->method==PaymentMethods::CASH_ON_DELIVERY || $payment->method==PaymentMethods::QR_CODE) {
+                if ($payment->method==PaymentMethods::CASH_ON_DELIVERY || $payment->method==PaymentMethods::QR_CODE || $payment->method==PaymentMethods::ADVANCE_BALANCE) {
                     $log_type_show_name_bn = 'নগদ  গ্রহণ';
                     $log_type_show_name_en = 'Cash Collection';
-                } else {
+                } elseif ($payment->method==PaymentMethods::PAYMENT_LINK || $payment->method==PaymentMethods::ONLINE || $payment->method==PaymentMethods::EMI || $payment->method==PaymentMethods::BKASH) {
                     $log_type_show_name_bn = 'অনলাইন গ্রহন';
                     $log_type_show_name_en = 'Online Collection';
+                } else {
+                    $log_type_show_name_bn = 'অন্যান্য';
+                    $log_type_show_name_en = 'Others';
                 }
             }
             return [

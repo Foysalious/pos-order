@@ -287,8 +287,8 @@
     <div id="details" class="clearfix">
         <div id="client">
             <div class="to">TO:</div>
-            <h2 class="name">{{ $order->customer->name }}</h2>
-            <div class="email">{{ $order->customer->email }}</div>
+            <h2 class="name">{{ $customer->name }}</h2>
+            <div class="email">{{ $customer->email }}</div>
         </div>
         <div id="invoice">
             <h1># {{ $order->id }}</h1>

@@ -22,6 +22,7 @@ use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\OrderSkuRepositoryInterface;
 use App\Jobs\Order\OrderEmail;
 use App\Jobs\Order\OrderPlacePushNotification;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderLog;
 use App\Services\AccessManager\AccessManager;
@@ -43,6 +44,7 @@ use App\Services\OrderLog\OrderLogGenerator;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
@@ -292,6 +294,22 @@ class OrderService extends BaseService
         return $this->success();
     }
 
+    public function updateDeliveryInfo(Request $request, $partner_id, $order_id)
+    {
+        $orderDetails = $this->orderRepository->where('partner_id', $partner_id)->find($order_id)->load(['items' => function ($q) {
+            $q->with('discount');
+        }, 'customer', 'payments', 'discounts']);
+        if (!$orderDetails) return $this->error("You're not authorized to access this order", 403);
+        $this->updater->setPartnerId($partner_id)
+            ->setOrder($orderDetails)
+            ->setDeliveryAddress($request->address)
+            ->setDeliveryRequestId($request->delivery_request_id ?? null)
+            ->setDeliveryThana($request->delivery_thana ?? null)
+            ->setDeliveryDistrict($request->delivery_district ?? null)
+            ->updateDeliveryInformation();
+        return $this->success();
+    }
+
     public function delete($partner_id, $order_id): JsonResponse
     {
         DB::beginTransaction();
@@ -459,9 +477,10 @@ class OrderService extends BaseService
     {
         $order = Order::where('partner_id', $partner)->find($order);
         if (!$order) return $this->error('Order Not Found', 404);
-        if (!$order->customer) return $this->error('Customer Not Found', 404);
-        if (!$order->customer->email) return $this->error('Email Not Found', 404);
-        dispatch(new OrderEmail($order));
+        if (!$order->customer_id) return $this->error('Customer Not Found', 404);
+        $customer = Customer::where('partner_id', $partner)->where('id', $order->customer_id)->first();
+        if (!$customer->email) return $this->error('Email Not Found', 404);
+        dispatch(new OrderEmail($order, $customer));
         return $this->success();
     }
 

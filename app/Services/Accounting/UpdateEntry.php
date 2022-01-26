@@ -75,7 +75,7 @@ class UpdateEntry extends BaseEntry
     private function makeData(): array
     {
         $order_price_details = $this->getOrderPriceDetails(new PriceCalculation());
-        if (!empty($this->paymentInfo) && isset($this->paymentInfo['paid_amount'])) {
+        if (!empty($this->paymentInfo) && isset($this->paymentInfo['paid_amount']) && $this->paymentInfo['paid_amount'] > 0) {
             $last_paid_amount = $this->paymentInfo['paid_amount'];
         } else {
             $last_paid_amount = 0;

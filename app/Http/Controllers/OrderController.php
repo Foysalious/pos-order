@@ -253,6 +253,11 @@ class OrderController extends Controller
         return $this->orderService->update($request, $partner_id, $order_id);
     }
 
+    public function updateDeliveryInfo(Request $request, $partner_id, $order_id)
+    {
+        return $this->orderService->updateDeliveryInfo($request, $partner_id, $order_id);
+    }
+
     public function getOrderInfoForPaymentLink($order_id): JsonResponse
     {
         return $this->orderService->getOrderInfoForPaymentLink($order_id);

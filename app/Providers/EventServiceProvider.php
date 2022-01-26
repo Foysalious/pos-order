@@ -41,7 +41,6 @@ class EventServiceProvider extends ServiceProvider
             EntryOnOrderCreation::class,
             RewardOnOrderCreateListener::class,
             UsageOnOrderCreate::class,
-            GenerateInvoiceOnOrderCreate::class,
             WebstoreSettingsSyncOnOrderCreate::class,
             InventoryStockUpdateOnOrderPlace::class,
             PushNotificationForOrder::class,
@@ -50,7 +49,6 @@ class EventServiceProvider extends ServiceProvider
         OrderUpdated::class => [
             EntryOnOrderUpdating::class,
             EntryOnOrderDueCleared::class,
-            GenerateInvoiceOnOrderCreate::class,
             WebstoreSettingsSyncOnOrderUpdate::class,
             InventoryStockUpdateOnOrderUpdate::class,
             UsageOnOrderUpdate::class,

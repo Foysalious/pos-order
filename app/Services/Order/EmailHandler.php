@@ -1,5 +1,6 @@
 <?php namespace App\Services\Order;
 
+use App\Models\Customer;
 use App\Models\Order;
 use App\Services\APIServerClient\ApiServerClient;
 use Illuminate\Support\Facades\Mail;
@@ -13,6 +14,7 @@ class EmailHandler
     private $order;
     private ApiServerClient $client;
     private OrderService $orderService;
+    private Customer $customer;
 
     public function __construct(ApiServerClient $client, OrderService $orderService)
     {
@@ -26,13 +28,19 @@ class EmailHandler
         return $this;
     }
 
+    public function setCustomer(Customer $customer)
+    {
+        $this->customer = $customer;
+        return $this;
+    }
+
     public function handle()
     {
         $partner = $this->client->get('v2/partners/' . $this->order->partner->sub_domain);
         $order_info = $this->orderService->getOrderInfo($this->order->partner_id, $this->order->id);
         $order_info = $order_info['items'];
-        Mail::send('emails.pos-order-bill', ['order' => $this->order, 'partner' => $partner, 'order_info' => $order_info], function ($m) {
-            $m->to($this->order->customer->email)->subject('Order Bills');
+        Mail::send('emails.pos-order-bill', ['order' => $this->order, 'partner' => $partner, 'order_info' => $order_info, 'customer' => $this->customer], function ($m) {
+            $m->to($this->customer->email)->subject('Order Bills');
         });
     }
 }
