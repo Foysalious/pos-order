@@ -10,7 +10,6 @@ use App\Listeners\Accounting\EntryOnOrderDelete;
 use App\Listeners\Accounting\EntryOnOrderDueCleared;
 use App\Listeners\Accounting\EntryOnOrderUpdating;
 use App\Listeners\Accounting\EntryOnOrderCustomerUpdate;
-use App\Listeners\GenerateInvoiceOnOrderCreate;
 use App\Listeners\InventoryStockUpdateOnOrderDelete;
 use App\Listeners\InventoryStockUpdateOnOrderUpdate;
 use App\Listeners\InventoryStockUpdateOnOrderPlace;
@@ -62,7 +61,6 @@ class EventServiceProvider extends ServiceProvider
             UsageOnOrderDelete::class,
         ],
         OrderCustomerUpdated::class => [
-            GenerateInvoiceOnOrderCreate::class,
             EntryOnOrderCustomerUpdate::class,
         ]
     ];
