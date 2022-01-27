@@ -1,12 +1,9 @@
 <?php namespace App\Services\Payment;
 
 use App\Http\Requests\PaymentRequest;
-use App\Interfaces\OrderRepositoryInterface;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Services\BaseService;
-use App\Services\Order\PriceCalculation;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
+
 
 class PaymentService extends BaseService
 {
@@ -17,17 +14,16 @@ class PaymentService extends BaseService
     /**
      * PaymentService constructor.
      * @param Creator $creator
-     * @param OrderRepositoryInterface $orderRepository
      * @param PaymentRepositoryInterface $paymentRepository
      */
-    public function __construct(Creator $creator, private OrderRepositoryInterface $orderRepository, private PaymentRepositoryInterface $paymentRepository)
+    public function __construct(Creator $creator, private PaymentRepositoryInterface $paymentRepository)
     {
         $this->creator = $creator;
     }
 
     public function store(PaymentRequest $request)
     {
-        $payment = $this->creator->setOrderId($request->pos_order_id)
+        $this->creator->setOrderId($request->pos_order_id)
             ->setAmount($request->amount)
             ->setTransactionType($request->transaction_type)
             ->setMethod($request->payment_method)
@@ -35,7 +31,6 @@ class PaymentService extends BaseService
             ->setEmiMonth($request->emi_month)
             ->setInterest($request->interest)
             ->create();
-        Log::info('payment', $request->all());
         return true;
     }
 
