@@ -353,7 +353,7 @@ class Updater
             $this->updateOrderPayments();
             if (isset($this->discount)) $this->updateDiscount();
             $updatedOrderPrice = $this->getOrderPriceCalculation($this->order->refresh());
-            $this->checkDiscountVatOrDeliveryChargeUpdated($updatedOrderPrice, $previousOrderPrice);
+            $this->checkPriceUpdated($updatedOrderPrice, $previousOrderPrice);
             $this->createLog($previous_order, $this->order->refresh());
             if ($this->paymentMethod == PaymentMethods::EMI) {
                 $this->validateEmiAndCalculateChargesForOrder($this->order->refresh());
@@ -712,9 +712,10 @@ class Updater
         return $data + $this->modificationFields(false, true);
     }
 
-    private function checkDiscountVatOrDeliveryChargeUpdated(PriceCalculation $updatedOrderPrice, PriceCalculation $previousOrderPrice)
+    private function checkPriceUpdated(PriceCalculation $updatedOrderPrice, PriceCalculation $previousOrderPrice)
     {
-        if ($updatedOrderPrice->getDiscount() != $previousOrderPrice->getDiscount()
+        if ($updatedOrderPrice->getDiscountedPrice() != $previousOrderPrice->getDiscountedPrice()
+            || $updatedOrderPrice->getDiscount() != $previousOrderPrice->getDiscount()
             || $updatedOrderPrice->getVat() !=  $previousOrderPrice->getVat()
             || $updatedOrderPrice->getDeliveryCharge() != $previousOrderPrice->getDeliveryCharge()) {
             $this->orderProductChangeData['price_changed'] = true;
