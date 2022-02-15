@@ -19,7 +19,6 @@ class EntryOnOrderUpdating
      */
     public function handle(OrderUpdated $event)
     {
-        if (empty($event->getOrderProductChangedData())) return;
         $event_notification = $this->createEventNotification($event->getOrder(), Events::ORDER_UPDATE);
         $this->dispatch(new EntryOnOrderUpdate($event->getOrder(), $event->getOrderProductChangedData(), $event_notification, $event->getPreviousOrder(), $event->getPaymentInfo()));
     }
