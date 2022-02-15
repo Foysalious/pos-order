@@ -32,4 +32,9 @@ class Partner extends BaseModel
     {
         return $this->hasMany(Order::class);
     }
+
+    public function isAutoSmsOn(): bool
+    {
+        return (bool)$this->order->partner->sms_invoice;
+    }
 }
