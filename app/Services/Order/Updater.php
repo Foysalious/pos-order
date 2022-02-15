@@ -343,16 +343,17 @@ class Updater
         try {
             DB::beginTransaction();
             $previous_order = $this->setExistingOrder();
-            list($previous_discount, $previous_vat, $previous_delivery_charge) = $this->getPreviousOrderData($previous_order);
+            $previousOrderPrice = $this->getOrderPriceCalculation($previous_order);
             if (isset($this->customer_id) && ($this->customer_id != $this->order->customer_id)) {
                 $this->updateCustomer();
             }
             $this->calculateOrderChangesAndUpdateSkus();
-
             $this->orderRepositoryInterface->update($this->order, $this->makeData());
             if (isset($this->voucher_id)) $this->updateVoucherDiscount();
             $this->updateOrderPayments();
             if (isset($this->discount)) $this->updateDiscount();
+            $updatedOrderPrice = $this->getOrderPriceCalculation($this->order->refresh());
+            $this->checkDiscountVatOrDeliveryChargeUpdated($updatedOrderPrice, $previousOrderPrice);
             $this->createLog($previous_order, $this->order->refresh());
             if ($this->paymentMethod == PaymentMethods::EMI) {
                 $this->validateEmiAndCalculateChargesForOrder($this->order->refresh());
@@ -374,9 +375,9 @@ class Updater
             'payment_info' => ['payment_method' => $this->paymentMethod, 'paid_amount' => $this->paidAmount ?? null],
             'stock_update_data' => $this->stockUpdateEntry,
             'previous_order' => [
-                'discount' => $previous_discount,
-                'vat' => $previous_vat,
-                'delivery_charge' => $previous_delivery_charge
+                'discount' => $previousOrderPrice->getDiscount(),
+                'vat' => $previousOrderPrice->getVat(),
+                'delivery_charge' => $previousOrderPrice->getDeliveryCharge()
             ],
         ]));
     }
@@ -674,14 +675,11 @@ class Updater
         return $this->setCustomer($customer);
     }
 
-    private function getPreviousOrderData(Order $order): array
+    private function getOrderPriceCalculation(Order $order): PriceCalculation
     {
         /** @var PriceCalculation $priceCalculation */
         $priceCalculation = app(PriceCalculation::class);
-        $previous_discount = $priceCalculation->setOrder($order)->getDiscount();
-        $previous_vat = $priceCalculation->setOrder($order)->getVat();
-        $previous_delivery_charge = $priceCalculation->setOrder($order)->getDeliveryCharge();
-        return [$previous_discount, $previous_vat, $previous_delivery_charge];
+        return $priceCalculation->setOrder($order);
     }
 
     private function hasDueError(Order $order): bool
@@ -712,5 +710,14 @@ class Updater
         if (isset($this->delivery_district)) $data['delivery_district'] = $this->delivery_district;
         if (isset($this->delivery_thana)) $data['delivery_thana'] = $this->delivery_thana;
         return $data + $this->modificationFields(false, true);
+    }
+
+    private function checkDiscountVatOrDeliveryChargeUpdated(PriceCalculation $updatedOrderPrice, PriceCalculation $previousOrderPrice)
+    {
+        if ($updatedOrderPrice->getDiscount() != $previousOrderPrice->getDiscount()
+            || $updatedOrderPrice->getVat() !=  $previousOrderPrice->getVat()
+            || $updatedOrderPrice->getDeliveryCharge() != $previousOrderPrice->getDeliveryCharge()) {
+            $this->orderProductChangeData['price_changed'] = true;
+        }
     }
 }
