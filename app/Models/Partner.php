@@ -35,6 +35,6 @@ class Partner extends BaseModel
 
     public function isAutoSmsOn(): bool
     {
-        return (bool)$this->order->partner->sms_invoice;
+        return (bool)$this->sms_invoice;
     }
 }
