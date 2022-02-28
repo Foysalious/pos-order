@@ -488,4 +488,13 @@ class OrderService extends BaseService
     {
         return $this->success(ResponseMessages::SUCCESS, ['count' => Order::where('partner_id', $partner)->withTrashed()->count()]);
     }
+
+    public function getPartnerWiseOrderIds(Request $request): JsonResponse
+    {
+        list($offset, $limit) = calculatePagination($request);
+        $request->validate(['order_ids' => 'required']);
+        $orderIds = !is_array($request->order_ids) ? json_decode($request->order_ids,1) : $request->order_ids;
+        $orders = $this->orderRepository->getPartnerWiseOrderIdsFromOrderIds($orderIds, $offset, $limit);
+        return $this->success(ResponseMessages::SUCCESS, ['orders' => $orders->keyBy('id')]);
+    }
 }

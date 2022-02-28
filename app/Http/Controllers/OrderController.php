@@ -543,4 +543,9 @@ class OrderController extends Controller
     {
         return $this->orderService->getOrderCount($partner);
     }
+
+    public function getPartnerWiseOrderIds(Request $request): JsonResponse
+    {
+        return $this->orderService->getPartnerWiseOrderIds($request);
+    }
 }
