@@ -5,6 +5,7 @@ use App\Http\Requests\PartnerUpdateRequest;
 use App\Http\Resources\PartnerResource;
 use App\Models\Partner;
 use App\Repositories\PartnerRepository;
+use App\Services\APIServerClient\ApiServerClient;
 use App\Services\BaseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -70,5 +71,12 @@ class PartnerService extends  BaseService
         }
         $partnerResource = new PartnerResource($partner);
         return $this->success(ResponseMessages::SUCCESS, ['partner' => $partnerResource]);
+    }
+
+    public function isWebstoreSmsActive($partnerId)
+    {
+        /** @var ApiServerClient $client */
+        $client = app(ApiServerClient::class);
+        return $client->get('pos/v1/partners/' . $partnerId)['partner']['is_webstore_sms_active'];
     }
 }

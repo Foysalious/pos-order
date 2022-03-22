@@ -11,6 +11,7 @@ use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
 use App\Services\OrderSms\WebstoreOrderSms;
+use App\Services\Partner\PartnerService;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ModificationFields;
@@ -82,9 +83,9 @@ class StatusChanger
             } else if ($this->status == Statuses::COMPLETED && $order_calculator->getDue() > 0) {
               $this->collectPayment($this->order, $order_calculator );
             }
-            /** @var Partner $partner */
-            $partner = $this->order->partner;
-            if ($this->status == Statuses::CANCELLED || $partner->isAutoSmsOn()) {
+            /** @var PartnerService $partnerService */
+            $partnerService = app(PartnerService::class);
+            if ($this->status == Statuses::CANCELLED || $partnerService->isWebstoreSmsActive($this->order->partner_id)) {
                 $this->sendSmsForStatusChange();
             }
         }
