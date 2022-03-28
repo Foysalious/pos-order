@@ -4,12 +4,14 @@ use App\Events\OrderDeleted;
 use App\Events\OrderDueCleared;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Models\Order;
+use App\Models\Partner;
 use App\Services\Order\Constants\DeliveryStatuses;
 use App\Services\Order\Constants\OrderLogTypes;
 use App\Services\Order\Constants\PaymentMethods;
 use App\Services\Order\Constants\SalesChannelIds;
 use App\Services\Order\Constants\Statuses;
 use App\Services\OrderSms\WebstoreOrderSms;
+use App\Services\Partner\PartnerService;
 use App\Services\Payment\Creator as PaymentCreator;
 use App\Services\Transaction\Constants\TransactionTypes;
 use App\Traits\ModificationFields;
@@ -69,21 +71,24 @@ class StatusChanger
     {
         $previous_order = $this->setExistingOrder();
         $this->orderRepository->update($this->order, $this->withUpdateModificationField(['status' => $this->status]));
-        $updated_order = $this->order->refresh()->load(['items', 'customer', 'payments', 'discounts']);
+        $updated_order = $this->order->refresh()->load(['items', 'customer', 'payments', 'discounts', 'partner']);
         $this->createLog($previous_order, $updated_order);
         /** @var PriceCalculation $order_calculator */
         $order_calculator = App::make(PriceCalculation::class);
         $order_calculator->setOrder($this->order);
 
         if ($this->order->sales_channel_id == SalesChannelIds::WEBSTORE) {
-              if ($this->status == Statuses::DECLINED || $this->status == Statuses::CANCELLED) {
-                  $this->cancelOrder();
-              }
-              else if ($this->status == Statuses::COMPLETED && $order_calculator->getDue() > 0) {
-                  $this->collectPayment($this->order, $order_calculator );
-              }
-            $this->sendSmsForStatusChange();
-          }
+            if ($this->status == Statuses::DECLINED || $this->status == Statuses::CANCELLED) {
+              $this->cancelOrder();
+            } else if ($this->status == Statuses::COMPLETED && $order_calculator->getDue() > 0) {
+              $this->collectPayment($this->order, $order_calculator );
+            }
+            /** @var PartnerService $partnerService */
+            $partnerService = app(PartnerService::class);
+            if ($this->status == Statuses::CANCELLED || $partnerService->isWebstoreSmsActive($this->order->partner_id)) {
+                $this->sendSmsForStatusChange();
+            }
+        }
     }
 
 
