@@ -202,11 +202,12 @@ class OrderController extends Controller
      *
      * @param $partner_id
      * @param $order_id
+     * @param Request $request
      * @return JsonResponse
      */
-    public function show($partner_id, $order_id): JsonResponse
+    public function show($partner_id, $order_id, Request $request): JsonResponse
     {
-        return $this->orderService->getOrderDetails($partner_id, $order_id);
+        return $this->orderService->getOrderDetails($partner_id, $order_id, $request);
     }
 
     /**
@@ -542,5 +543,10 @@ class OrderController extends Controller
     public function getOrderCount($partner)
     {
         return $this->orderService->getOrderCount($partner);
+    }
+
+    public function getPartnerWiseOrderIds(Request $request): JsonResponse
+    {
+        return $this->orderService->getPartnerWiseOrderIds($request);
     }
 }

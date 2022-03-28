@@ -211,10 +211,13 @@ class OrderService extends BaseService
     }
 
 
-    public function getOrderDetails($partner_id, $order_id): JsonResponse
+    public function getOrderDetails($partner_id, $order_id, Request $request): JsonResponse
     {
         $order = $this->orderRepository->getOrderDetailsByPartner($partner_id, $order_id);
         if (!$order) return $this->error("You're not authorized to access this order", 403);
+        if ($request->has('generate_invoice') && $request->generate_invoice == 1) {
+            $this->generateInvoice($order);
+        }
         $resource = new OrderWithProductResource($order, true);
         return $this->success(ResponseMessages::SUCCESS, ['order' => $resource]);
     }
@@ -487,5 +490,27 @@ class OrderService extends BaseService
     public function getOrderCount($partner)
     {
         return $this->success(ResponseMessages::SUCCESS, ['count' => Order::where('partner_id', $partner)->withTrashed()->count()]);
+    }
+
+    public function getPartnerWiseOrderIds(Request $request): JsonResponse
+    {
+        list($offset, $limit) = calculatePagination($request);
+        $request->validate(['order_ids' => 'required']);
+        $orderIds = !is_array($request->order_ids) ? json_decode($request->order_ids,1) : $request->order_ids;
+        $orders = $this->orderRepository->getPartnerWiseOrderIdsFromOrderIds($orderIds, $offset, $limit);
+        return $this->success(ResponseMessages::SUCCESS, ['orders' => $orders->keyBy('id')]);
+    }
+
+    /**
+     * @param Order $order
+     */
+    private function generateInvoice(Order $order)
+    {
+        if ($order->invoice == null) {
+            try {
+                app(InvoiceService::class)->setOrder($order)->generateInvoice();
+            } catch (Exception $exception) {
+            }
+        }
     }
 }

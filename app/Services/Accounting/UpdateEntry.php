@@ -208,6 +208,8 @@ class UpdateEntry extends BaseEntry
             $note = OrderChangingTypes::REFUND;
         } else if (count($this->orderProductChangeData['refund_exchanged']['price_updated_products'] ?? []) > 0) {
             $note = OrderChangingTypes::EXCHANGE;
+        } else if ($this->orderProductChangeData['price_changed']) {
+            $note = OrderChangingTypes::EXCHANGE;
         }
         return $note;
     }

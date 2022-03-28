@@ -79,4 +79,9 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
                 $q->skip($skip);
             })->get();
     }
+
+    public function getPartnerWiseOrderIdsFromOrderIds(array $orderIds, int $offset, int $limit)
+    {
+        return $this->model->whereIn('id', $orderIds)->select('id', 'partner_wise_order_id', 'sales_channel_id')->offset($offset)->limit($limit)->get();
+    }
 }

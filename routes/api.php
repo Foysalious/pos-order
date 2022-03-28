@@ -78,5 +78,6 @@ Route::group(['middleware' => 'ip.whitelist'], function () {
         Route::get('partners/{partner_id}/reports/customer-wise', [ReportController::class, 'getCustomerWise']);
         Route::put('partners/{partner_id}/update-status-for-ipn', [OrderController::class, 'updateOrderStatusForIpn']);
         Route::get('filters', [OrderController::class, 'getFilteringOptions']);
+        Route::get('partner-wise-order-ids', [OrderController::class, 'getPartnerWiseOrderIds']);
     });
 });

@@ -17,8 +17,8 @@ $price_calculator = (App::make(PriceCalculation::class))->setOrder($order)?>
     <tr>
         <td class=""><h3>{{ $item['name'] }}</h3></td>
         <td class="qty" style="background-color: #DDDDDD;"> {{ $item['quantity'] }} </td>
-        <td class="qty"> {{ $item['unit_discounted_price_without_vat'] }} </td>
-        <td class="unit"> {{ $item['quantity']*$item['unit_discounted_price_without_vat'] }} </td>
+        <td class="qty"> {{ $item['unit_price'] }} </td>
+        <td class="unit"> {{ $item['quantity']*$item['unit_price'] }} </td>
     </tr>
 @empty
     <tr>
